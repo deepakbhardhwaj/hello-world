@@ -5992,32 +5992,105 @@
         // Google Auth Provider setup
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
+        // 🚀 1. GOOGLE LOGIN SE DATA WAPAS LAANA
         function signInWithGoogle() {
             auth.signInWithPopup(googleProvider)
-            .then((result) => {
+            .then(async (result) => {
                 let user = result.user;
                 let loggedInEmail = user.email.toLowerCase();
 
-                // Database mein check karo
-                let users = Object.values(masterUsersDB);
-                let existingUser = users.find(u => u.email && u.email.toLowerCase() === loggedInEmail);
+                // ☁️ Cloud se user ko dhoondho
+                let snapshot = await db.collection("users").where("email", "==", loggedInEmail).get();
 
-                if (existingUser) {
-                    loggedInMobile = existingUser.mobile;
-                    localStorage.setItem('utsav_erp_active_session', loggedInMobile);
-                    checkPersistentLogin();
+                if (!snapshot.empty) {
+                    let userData = snapshot.docs[0].data();
+                    let mob = userData.mobile;
+                    loggedInMobile = mob;
+                    localStorage.setItem('utsav_erp_active_session', mob);
+
+                    // ☁️ Cloud se uski saari Companies dhoondho (As Owner ya Staff)
+                    let compSnapshot = await db.collection("companies").get();
+                    let myComps = [];
+                    
+                    compSnapshot.forEach(doc => {
+                        let comp = doc.data();
+                        comp.id = doc.id;
+                        masterCompsDB[doc.id] = comp; // Memory mein save karo
+                        
+                        // Check: Agar Owner hai ya Staff mein iska number hai
+                        if(comp.ownerMob === mob || (comp.staff && comp.staff.some(s => s.mobile === mob))) {
+                            myComps.push(doc.id);
+                        }
+                    });
+                    
+                    userData.companies = myComps;
+                    masterUsersDB[mob] = userData;
+                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                    localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+
+                    checkPersistentLogin(); // List dikhane ke liye aage bhejo
                 } else {
-                    // Yahan profile setup screen par bhejo
+                    // Agar bilkul naya user hai toh profile banwao
                     document.getElementById('auth-screen').style.display = 'flex';
                     document.getElementById('auth_setup_name').value = user.displayName || "";
                     document.getElementById('auth_setup_email').value = loggedInEmail;
-                    
-                    // 🚀 IMPORTANT: Purane flow se nikal kar setup screen dikhao
                     switchAuthView('view_new_user_setup');
                 }
             }).catch((error) => {
                 alert("Google Login Failed: " + error.message);
             });
+        }
+
+        // 🚀 2. PAGE REFRESH HONE PAR BHI DATA GAYAB NA HO
+        async function checkPersistentLogin() {
+            let authScreen = document.getElementById('auth-screen');
+            let mainApp = document.getElementById('main-app');
+            if (!authScreen) return;
+
+            let setupView = document.getElementById('view_new_user_setup');
+            if (setupView && getComputedStyle(setupView).display !== 'none') return; 
+
+            let activeMob = localStorage.getItem('utsav_erp_active_session');
+            
+            if (activeMob) {
+                loggedInMobile = activeMob;
+
+                try {
+                    let compSnapshot = await db.collection("companies").get();
+                    let myComps = [];
+                    compSnapshot.forEach(doc => {
+                        let comp = doc.data();
+                        comp.id = doc.id;
+                        masterCompsDB[doc.id] = comp;
+                        if(comp.ownerMob === activeMob || (comp.staff && comp.staff.some(s => s.mobile === activeMob))) {
+                            myComps.push(doc.id);
+                        }
+                    });
+                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                    
+                    if (!masterUsersDB[activeMob]) masterUsersDB[activeMob] = { mobile: activeMob, companies: [], name: "User" };
+                    masterUsersDB[activeMob].companies = myComps;
+                } catch(e) { console.log("Cloud sync delayed."); }
+
+                let user = masterUsersDB[activeMob];
+
+                if (!user.companies || user.companies.length === 0) {
+                    authScreen.style.display = 'flex';
+                    mainApp.style.display = 'none';
+                    openChoiceScreen(user.name); // Nayi company banane bhejo
+                } else if (user.companies.length === 1) {
+                    handleWorkspaceClick(user.companies[0]); // Ek hi company hai toh seedha andar bhejo
+                } else {
+                    authScreen.style.display = 'flex';
+                    mainApp.style.display = 'none';
+                    renderCompanyList();
+                    switchAuthView('view_select_comp'); // Bahut saari companies hain toh List dikhao
+                }
+            } else {
+                authScreen.style.display = 'flex';
+                mainApp.style.display = 'none';
+                switchAuthView('view_email_auth'); 
+            }
         }
 
         // 🚀 MAGIC LINK SETTINGS
@@ -6079,8 +6152,8 @@
         }
 
         // 🚀 3. SAVE PROFILE & LINK MOBILE (With Validation)
-        // 🚀 FIX 3: STRICT DUPLICATE USER PREVENTER
-        function saveNewUserProfile() {
+        // 🚀 FIX 1: SAVE USER TO CLOUD
+        async function saveNewUserProfile() {
             let name = document.getElementById('auth_setup_name').value.trim();
             let email = document.getElementById('auth_setup_email').value.trim().toLowerCase();
             let mob = document.getElementById('auth_setup_mobile').value.trim();
@@ -6089,35 +6162,22 @@
             if (mob.length !== 10 || isNaN(mob)) return alert("❌ Please enter a valid 10-digit mobile number!");
 
             let users = Object.values(masterUsersDB); 
-            
-            // 🚨 STRICT DUPLICATE CHECK: Kya ye number kisi doosri email ke sath registered hai?
             let mobExists = users.find(u => u.mobile === mob);
-            if (mobExists) {
-                if (mobExists.email && mobExists.email.toLowerCase() !== email) {
-                    alert(`❌ ERROR: This Mobile Number is already registered with another Email (${mobExists.email}).\n\nPlease use a different mobile number or login with that email.`);
-                    return;
-                }
+            if (mobExists && mobExists.email && mobExists.email.toLowerCase() !== email) {
+                return alert(`❌ ERROR: This Mobile Number is already registered with another Email (${mobExists.email}).`);
             }
 
-            // Save Data
             loggedInMobile = mob; 
+            let userObj = { name: name, mobile: mob, email: email, dob: "", companies: [] };
             
-            if(!masterUsersDB[mob]) {
-                masterUsersDB[mob] = { 
-                    name: name, 
-                    mobile: mob, 
-                    email: email, 
-                    dob: "", 
-                    companies: [] 
-                };
-            } else {
-                // Agar profile pehle se hai (par google link update ho raha hai)
-                masterUsersDB[mob].email = email;
-                masterUsersDB[mob].name = name;
-            }
-            
+            masterUsersDB[mob] = userObj;
             localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
             localStorage.setItem('utsav_erp_active_session', mob);
+
+            // ☁️ FIREBASE CLOUD SAVE
+            try {
+                await db.collection("users").doc(mob).set(userObj);
+            } catch(e) { console.error("Cloud User Save Error", e); }
 
             document.getElementById('lbl_user_name_choice').innerText = name.split(' ')[0];
             openChoiceScreen(name);
@@ -6628,22 +6688,75 @@
             }
         }
 
+        // 🚀 3. SCREEN PAR COMPANIES KI LIST BANANA
         function renderCompanyList() {
             let listDiv = document.getElementById('auth_company_list');
+            if(!listDiv) return;
+            
             listDiv.innerHTML = "";
-            let comps = masterUsersDB[loggedInMobile].companies;
+            let user = masterUsersDB[loggedInMobile] || { companies: [] };
+            
+            if (user.companies.length === 0) {
+                listDiv.innerHTML = "<p style='text-align:center; color:#64748B;'>No workspaces found.</p>";
+                return;
+            }
 
-            comps.forEach(cId => {
+            user.companies.forEach(cId => {
                 let comp = masterCompsDB[cId];
                 if (comp) {
-                    let role = comp.ownerMob === loggedInMobile ? "⭐ Owner" : "👤 Staff";
+                    // Check ki Owner hai ya Staff
+                    let isOwner = (comp.ownerMob === loggedInMobile);
+                    let role = isOwner ? "⭐ Owner" : "👤 Staff";
+                    
                     listDiv.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #CBD5E1; border-radius:10px; cursor:pointer; background:#F8FAFC;" onclick="launchWorkspace('${comp.id}')">
-                        <div><strong style="color:var(--text-primary); font-size:14px;">${comp.name}</strong><br><span style="font-size:11px; color:var(--text-secondary);">${role} | Code: ${comp.joinCode}</span></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #CBD5E1; border-radius:10px; cursor:pointer; background:#F8FAFC; margin-bottom:10px;" 
+                         onclick="handleWorkspaceClick('${comp.id}')">
+                        <div>
+                            <strong style="color:var(--text-primary); font-size:14px;">${comp.name}</strong><br>
+                            <span style="font-size:11px; color:var(--text-secondary);">${role} | Code: ${comp.joinCode}</span>
+                        </div>
                         <div style="font-size:20px;">➡️</div>
                     </div>`;
                 }
             });
+        }
+
+        // 🚀 4. LIST PAR CLICK KARNE KE BAAD KA LOGIC (Security Engine)
+        async function handleWorkspaceClick(compId) {
+            let comp = masterCompsDB[compId];
+            if (!comp) return;
+
+            // Check karo ki click karne wala Owner hai ya nahi
+            let isOwner = (comp.ownerMob === loggedInMobile);
+
+            if (isOwner) {
+                // ✅ OWNER HAI: Isko seedha Dashboard mein bhej do, koi permission nahi mangni!
+                launchWorkspace(compId);
+            } else {
+                // ❌ STAFF HAI: Ise check karo
+                let myStaff = comp.staff.find(s => s.mobile === loggedInMobile);
+                
+                if (myStaff && myStaff.status === 'Approved') {
+                    // Agar logout ho kar wapas aaya hai, toh dobara permission maango (Status ko Pending karo)
+                    let updatedStaff = comp.staff.map(s => {
+                        if(s.mobile === loggedInMobile) s.status = 'Pending';
+                        return s;
+                    });
+                    
+                    try {
+                        await db.collection("companies").doc(compId).update({ staff: updatedStaff });
+                        masterCompsDB[compId].staff = updatedStaff;
+                        localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                        
+                        alert(`🔒 Security Protocol:\n\nSince you logged out or refreshed the session, a new access request has been sent to the Owner.\n\nPlease ask the Owner to approve you again.`);
+                    } catch(e) {
+                        alert("Network error while requesting access.");
+                    }
+                } else if (myStaff && myStaff.status === 'Pending') {
+                    // Agar pehle se Pending hai, toh bol do wait kare
+                    alert(`⏳ Your request for "${comp.name}" is currently PENDING.\nPlease wait for the Owner to approve your access.`);
+                }
+            }
         }
 
         // ==========================================
@@ -7057,38 +7170,6 @@
             document.getElementById('companyProfileModal').style.display = 'none';
         }
 
-        // 🚀 FIX 1: YAADASHT WAPAS LAANE WALA FUNCTION
-        function checkPersistentLogin() {
-            let authScreen = document.getElementById('auth-screen');
-            let mainApp = document.getElementById('main-app');
-            
-            if (!authScreen) return;
-
-            let setupView = document.getElementById('view_new_user_setup');
-            if (setupView && getComputedStyle(setupView).display !== 'none') {
-                return; 
-            }
-
-            let activeMob = localStorage.getItem('utsav_erp_active_session');
-            let pendingInvite = localStorage.getItem('utsav_pending_invite');
-            
-            if (activeMob && masterUsersDB[activeMob]) {
-                loggedInMobile = activeMob; // 👈 🚀 YAHAN FIX HAI: App ko mobile yaad dila diya
-                let user = masterUsersDB[activeMob];
-                
-                if (pendingInvite || !user.companies || user.companies.length === 0) {
-                    authScreen.style.display = 'flex';
-                    mainApp.style.display = 'none';
-                    openChoiceScreen(user.name); 
-                } else {
-                    launchWorkspace(user.companies[0]);
-                }
-            } else {
-                authScreen.style.display = 'flex';
-                mainApp.style.display = 'none';
-                switchAuthView('view_email_auth'); 
-            }
-        }
         function confirmExitApp() { window.close(); }
 
         function saveDataLocally() { if (!currentUser) return; let data = { leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, bank: bankDB, bankTx: bankTxDB, loans: loansDB }; localStorage.setItem('utsav_erp_data_' + currentUser.email, JSON.stringify(data)); }
@@ -13678,38 +13759,6 @@
                 }
             }
             return true;
-        }
-        // 🚀 FIX 1: MISSING PERSISTENT LOGIN FUNCTION
-        function checkPersistentLogin() {
-            let authScreen = document.getElementById('auth-screen');
-            let mainApp = document.getElementById('main-app');
-            
-            if (!authScreen) return;
-
-            // Agar user apni profile set kar raha hai, toh use disturb mat karo
-            let setupView = document.getElementById('view_new_user_setup');
-            if (setupView && getComputedStyle(setupView).display !== 'none') {
-                return; 
-            }
-
-            let activeMob = localStorage.getItem('utsav_erp_active_session');
-            let pendingInvite = localStorage.getItem('utsav_pending_invite');
-            
-            if (activeMob && masterUsersDB[activeMob]) {
-                let user = masterUsersDB[activeMob];
-                // Agar invite hai YA koi company nahi hai
-                if (pendingInvite || !user.companies || user.companies.length === 0) {
-                    authScreen.style.display = 'flex';
-                    mainApp.style.display = 'none';
-                    openChoiceScreen(user.name); 
-                } else {
-                    launchWorkspace(user.companies[0]);
-                }
-            } else {
-                authScreen.style.display = 'flex';
-                mainApp.style.display = 'none';
-                switchAuthView('view_email_auth'); 
-            }
         }
 
         // ==========================================
