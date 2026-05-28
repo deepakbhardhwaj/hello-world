@@ -6041,7 +6041,7 @@
             });
         }
 
-        // 🚀 2. PAGE REFRESH HONE PAR BHI DATA GAYAB NA HO
+        // 🚀 FIX 3: REFRESH PAR DIRECT DASHBOARD AUTO-LOAD
         async function checkPersistentLogin() {
             let authScreen = document.getElementById('auth-screen');
             let mainApp = document.getElementById('main-app');
@@ -6051,6 +6051,7 @@
             if (setupView && getComputedStyle(setupView).display !== 'none') return; 
 
             let activeMob = localStorage.getItem('utsav_erp_active_session');
+            let savedWorkspace = localStorage.getItem('utsav_active_workspace'); // 🚀 Saved lock check
             
             if (activeMob) {
                 loggedInMobile = activeMob;
@@ -6072,19 +6073,25 @@
                     masterUsersDB[activeMob].companies = myComps;
                 } catch(e) { console.log("Cloud sync delayed."); }
 
+                // 🚨🚨🚨 HIGH-VALUE SNAPSHOT AUTO ROUTE: Refresh hone par seedha dashboard kholo
+                if (savedWorkspace && masterCompsDB[savedWorkspace]) {
+                    launchWorkspace(savedWorkspace);
+                    return;
+                }
+
                 let user = masterUsersDB[activeMob];
 
                 if (!user.companies || user.companies.length === 0) {
                     authScreen.style.display = 'flex';
                     mainApp.style.display = 'none';
-                    openChoiceScreen(user.name); // Nayi company banane bhejo
+                    openChoiceScreen(user.name); 
                 } else if (user.companies.length === 1) {
-                    handleWorkspaceClick(user.companies[0]); // Ek hi company hai toh seedha andar bhejo
+                    handleWorkspaceClick(user.companies[0]); 
                 } else {
                     authScreen.style.display = 'flex';
                     mainApp.style.display = 'none';
                     renderCompanyList();
-                    switchAuthView('view_select_comp'); // Bahut saari companies hain toh List dikhao
+                    switchAuthView('view_select_comp');
                 }
             } else {
                 authScreen.style.display = 'flex';
@@ -6305,22 +6312,32 @@
         // ==========================================
         // UI, AUTH & NAVIGATION
         // ==========================================
-        // 🚀 CRITICAL FIX 3: COMPLETE FIREBASE LOGOUT
+        // 🚀 FIX 4: LOGOUT ENGINE MEMORY RESET
         function logoutApp() {
             if (confirm("Are you sure you want to sign out?")) {
                 localStorage.removeItem('utsav_erp_active_session');
+                localStorage.removeItem('utsav_active_workspace'); // 🚀 Clear lock
                 
-                // 🚨 FIX: Firebase se permanently bahar nikalo
                 if (typeof auth !== 'undefined' && auth) {
                     auth.signOut().then(() => {
                         window.location.reload();
                     }).catch((error) => {
-                        window.location.reload(); // Error aaye tab bhi page refresh karo
+                        window.location.reload();
                     });
                 } else {
                     window.location.reload();
                 }
             }
+        }
+
+        // 🚀 FIX 5: SWITCH WORKSPACE MEMORY RESET
+        function openCompanySelector() {
+            closeNav();
+            localStorage.removeItem('utsav_active_workspace'); // 🚀 Clear lock so list renders
+            renderCompanyList();
+            switchAuthView('view_select_comp');
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
         }
         function closeAllMenus() {
             document.body.style.overflow = "auto";
@@ -6519,50 +6536,6 @@
             }; reader.readAsDataURL(file);
         }
 
-        // 🚀 CRITICAL FIX 2: SIGNUP CRASH FIX
-        function processSignup() {
-            let name = document.getElementById('auth_sign_name').value;
-            let mob = document.getElementById('auth_sign_mobile').value;
-            let email = document.getElementById('auth_sign_email').value;
-            let pass = document.getElementById('auth_sign_pass').value;
-
-            if (!name || !mob || !pass) return alert("Name, Mobile & Password required!");
-            if (masterUsersDB[mob]) return alert("This Mobile Number is already registered! Please Sign In.");
-
-            masterUsersDB[mob] = { name: name, mobile: mob, email: email, pass: pass, dob: document.getElementById('auth_sign_dob').value || "", companies: [] };
-            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-            localStorage.setItem('utsav_erp_active_session', mob);
-
-            loggedInMobile = mob;
-            document.getElementById('lbl_user_name_choice').innerText = name.split(' ')[0];
-            
-            // 🚨 FIX: "user.name" ki jagah sirf "name" aayega
-            openChoiceScreen(name); 
-        }
-
-        function processLogin() {
-            let mob = document.getElementById('auth_log_mobile').value;
-            let pass = document.getElementById('auth_log_pass').value;
-
-            if (!mob || !pass) return alert("Mobile & Password required!");
-            let user = masterUsersDB[mob];
-            if (!user) return alert("Mobile Number not found! Create a profile first.");
-            if (user.pass !== pass) return alert("Incorrect Password!");
-
-            loggedInMobile = mob;
-            localStorage.setItem('utsav_erp_active_session', mob);
-
-            if (user.companies.length === 0) {
-                document.getElementById('lbl_user_name_choice').innerText = user.name.split(' ')[0];
-                openChoiceScreen(user.name);
-            } else if (user.companies.length === 1) {
-                launchWorkspace(user.companies[0]);
-            } else {
-                renderCompanyList();
-                switchAuthView('view_select_comp');
-            }
-        }
-
         // ==========================================
         // 🚀 BULLETPROOF CREATE COMPANY & CODE GENERATOR
         // ==========================================
@@ -6721,40 +6694,27 @@
             });
         }
 
-        // 🚀 4. LIST PAR CLICK KARNE KE BAAD KA LOGIC (Security Engine)
+        // 🚀 FIX 1: WORKSPACE CLICK LOGIC (LOOP REMOVED)
         async function handleWorkspaceClick(compId) {
             let comp = masterCompsDB[compId];
             if (!comp) return;
 
-            // Check karo ki click karne wala Owner hai ya nahi
             let isOwner = (comp.ownerMob === loggedInMobile);
 
             if (isOwner) {
-                // ✅ OWNER HAI: Isko seedha Dashboard mein bhej do, koi permission nahi mangni!
+                // Owner hamesha seedha andar jayega
                 launchWorkspace(compId);
             } else {
-                // ❌ STAFF HAI: Ise check karo
+                // Staff Check
                 let myStaff = comp.staff.find(s => s.mobile === loggedInMobile);
                 
                 if (myStaff && myStaff.status === 'Approved') {
-                    // Agar logout ho kar wapas aaya hai, toh dobara permission maango (Status ko Pending karo)
-                    let updatedStaff = comp.staff.map(s => {
-                        if(s.mobile === loggedInMobile) s.status = 'Pending';
-                        return s;
-                    });
-                    
-                    try {
-                        await db.collection("companies").doc(compId).update({ staff: updatedStaff });
-                        masterCompsDB[compId].staff = updatedStaff;
-                        localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-                        
-                        alert(`🔒 Security Protocol:\n\nSince you logged out or refreshed the session, a new access request has been sent to the Owner.\n\nPlease ask the Owner to approve you again.`);
-                    } catch(e) {
-                        alert("Network error while requesting access.");
-                    }
+                    // ✅ FIXED: Agar status Approved hai, toh bina kisi loop ke seedha dashboard kholo!
+                    launchWorkspace(compId);
                 } else if (myStaff && myStaff.status === 'Pending') {
-                    // Agar pehle se Pending hai, toh bol do wait kare
                     alert(`⏳ Your request for "${comp.name}" is currently PENDING.\nPlease wait for the Owner to approve your access.`);
+                } else {
+                    alert("❌ Access Denied: You are not a member of this workspace.");
                 }
             }
         }
@@ -6815,11 +6775,14 @@
             }
         }
 
-        // 🚀 2. UNIFIED LAUNCH WORKSPACE (With Security Engine)
-        // 🚀 CRITICAL FIX 1: PREVENT DATA WIPEOUT ON LOGIN
+        // 🚀 FIX 2: LAUNCH WORKSPACE WITH SESSION LOCK
         function launchWorkspace(compId) {
             try {
                 currentWorkspaceId = compId;
+                
+                // 🔒 MEMORY LOCK: Active company ko save kar lo taaki refresh par yaad rahe
+                localStorage.setItem('utsav_active_workspace', compId);
+
                 let user = masterUsersDB[loggedInMobile];
                 let comp = masterCompsDB[compId];
 
@@ -6834,7 +6797,7 @@
                 if (!isOwner) {
                     let myStaffRecord = comp.staff.find(s => s.mobile === loggedInMobile);
                     if (!myStaffRecord || myStaffRecord.status !== 'Approved') {
-                        alert(`⛔ ACCESS DENIED!\n\nYour request to join "${comp.name}" is still PENDING.\nPlease contact the Owner to approve your access.`);
+                        alert(`⛔ ACCESS DENIED!\n\nYour request to join "${comp.name}" is still PENDING.`);
                         document.getElementById('main-app').style.display = 'none';
                         document.getElementById('auth-screen').style.display = 'flex';
                         openChoiceScreen(user.name);
@@ -6854,7 +6817,6 @@
 
                 currentUser = { email: compId, name: user.name, company: comp.name, logo: comp.logo };
 
-                // 🚨🚨🚨 SABSE BADA FIX: Yahan pehle purana data memory mein load karna zaroori hai!
                 loadLocalData(); 
 
                 let topImg = document.getElementById('top_logo_img'); if (topImg && comp.logo) { topImg.src = comp.logo; topImg.style.display = 'block'; }
@@ -6869,7 +6831,7 @@
                 document.getElementById('main-app').style.display = 'block';
 
                 fetchLeadsFromFirestore();
-                updateDataAndUI(); // Ab ye safe hai
+                updateDataAndUI(); 
 
                 let btnHome = document.getElementById('btn-home');
                 if (btnHome) { openTab('home', btnHome); } 
@@ -6881,7 +6843,6 @@
                 alert("App Error (launchWorkspace): " + error.message);
                 document.getElementById('main-app').style.display = 'none';
                 document.getElementById('auth-screen').style.display = 'flex';
-                console.error(error);
             }
         }
 
@@ -7097,39 +7058,6 @@
             originalDeleteEmi(passedEditId, passedPartyId);
         };
 
-        // 9. 🚀 HIDE ADD BUTTONS IF NO PERMISSION
-        let originalUpdateDataAndUI = updateDataAndUI;
-        updateDataAndUI = function () {
-            originalUpdateDataAndUI();
-
-            // Check Add permission and hide/show Floating Action Button (FAB)
-            let fabContainer = document.getElementById('main-fab-container');
-            if (fabContainer) {
-                if (!currentPermissions.actions.add) {
-                    fabContainer.style.display = 'none';
-                } else {
-                    // Sirf tab dikhao jab allow ho (purani condition ke hisaab se)
-                    let activeTab = document.querySelector('.active-section');
-                    if (activeTab) {
-                        const hiddenTabs = ['home', 'events', 'party-master', 'bank-hub', 'reports-hub'];
-                        if (hiddenTabs.includes(activeTab.id)) {
-                            fabContainer.style.display = 'none';
-                        } else {
-                            fabContainer.style.display = 'flex';
-                        }
-                    }
-                }
-            }
-        };
-
-        function openCompanySelector() {
-            closeNav();
-            renderCompanyList();
-            switchAuthView('view_select_comp');
-            document.getElementById('auth-screen').style.display = 'flex';
-            document.getElementById('main-app').style.display = 'none';
-        }
-
         // 🚀 EDIT PROFILE SYNC: Agar Andar se Profile Update ki toh wo Bahar (Master DB) mein bhi save hogi
         function saveProfileData() {
             profileDB = {
@@ -7172,9 +7100,70 @@
 
         function confirmExitApp() { window.close(); }
 
-        function saveDataLocally() { if (!currentUser) return; let data = { leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, bank: bankDB, bankTx: bankTxDB, loans: loansDB }; localStorage.setItem('utsav_erp_data_' + currentUser.email, JSON.stringify(data)); }
+        // ==========================================
+        // 🚀 FIREBASE REAL-TIME CLOUD SYNC ENGINE
+        // ==========================================
+        let unsubscribeWorkspace = null;
 
-        function loadLocalData() { leadsDB = {}; partiesDB = {}; salesDB = {}; purchaseDB = {}; expenseDB = {}; globalTasksDB = {}; bankDB = {}; bankTxDB = {}; loansDB = {}; if (!currentUser) return; let saved = localStorage.getItem('utsav_erp_data_' + currentUser.email); if (saved) { let data = JSON.parse(saved); leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {}; purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {}; bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {}; if (data.expenseCats) expenseCats = data.expenseCats; Object.values(leadsDB).forEach(l => { if (!l.notes) l.notes = []; if (!l.photos) l.photos = []; if (!l.tasks) l.tasks = []; if (!l.dates && l.date) l.dates = [{ name: "Main Event", date: l.date, time: "" }]; }); Object.values(partiesDB).forEach(p => { if (!p.transactions) p.transactions = []; }); } if (!bankDB['ACC_CASH']) { bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; } else if (bankDB['ACC_CASH'].name === 'Cash in Hand') { bankDB['ACC_CASH'].name = 'Cash'; } if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true }; }
+        function loadLocalData() {
+            // Purana local data saaf karo taaki cloud ka fresh data aaye
+            leadsDB = {}; partiesDB = {}; salesDB = {}; purchaseDB = {}; expenseDB = {}; 
+            globalTasksDB = {}; bankDB = {}; bankTxDB = {}; loansDB = {}; 
+            
+            if (!currentWorkspaceId) return;
+
+            // Agar koi purana connection chal raha hai toh usko todo
+            if (unsubscribeWorkspace) unsubscribeWorkspace();
+
+            console.log("🔄 Connecting Workspace to Real-Time Cloud...");
+
+            // ☁️ FIREBASE LIVE LISTENER (Ye khud detect karega jab koi aur data add karega)
+            unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId)
+            .onSnapshot((doc) => {
+                if (doc.exists) {
+                    let data = doc.data();
+                    leadsDB = data.leads || {}; 
+                    partiesDB = data.parties || {}; 
+                    salesDB = data.sales || {}; 
+                    purchaseDB = data.purchase || {}; 
+                    expenseDB = data.expense || {}; 
+                    globalTasksDB = data.globalTasks || {}; 
+                    bankDB = data.bank || {}; 
+                    bankTxDB = data.bankTx || {}; 
+                    loansDB = data.loans || {}; 
+                    if (data.expenseCats) expenseCats = data.expenseCats;
+                } 
+                
+                // System Bank Accounts Check
+                if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
+                if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
+
+                console.log("⚡ Live Data Synced with other devices!");
+                
+                // 🚨 UI Update karo, Par wapas Cloud par save mat karo! (Warna infinite loop ban jayega)
+                updateDataAndUI(true); 
+            }, (error) => {
+                console.error("Cloud Sync Error:", error);
+            });
+        }
+
+        function saveDataLocally() { 
+            if (!currentWorkspaceId) return; 
+            
+            // Saara data pack karo
+            let data = { 
+                leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
+                expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
+                bank: bankDB, bankTx: bankTxDB, loans: loansDB 
+            }; 
+            
+            // 1. Local backup (agar offline hua toh kaam aayega)
+            localStorage.setItem('utsav_erp_data_' + currentWorkspaceId, JSON.stringify(data)); 
+            
+            // 2. ☁️ FIREBASE CLOUD PUSH (Ye upload hote hi baaki sabke mobile update kar dega)
+            db.collection("workspace_data").doc(currentWorkspaceId).set(data, { merge: true })
+            .catch(e => console.error("Cloud Save Failed:", e));
+        }
         function fetchLeadsFromFirestore() {
             console.log("🔄 Starting Real-time Sync for Leads...");
             
@@ -7194,43 +7183,6 @@
             }, (error) => {
                 console.error("❌ Sync Error:", error);
             });
-        }
-        // 🚀 SMART FIX 4: FY Filter in Home Dashboard
-        function updateDataAndUI() {
-            saveDataLocally();
-            if (typeof renderLeadsList === 'function') renderLeadsList();
-            if (typeof renderEventsDashboard === 'function') renderEventsDashboard();
-            if (typeof renderPartiesList === 'function') renderPartiesList();
-            if (typeof renderSalesSubFilters === 'function') renderSalesSubFilters();
-            if (typeof renderSalesList === 'function') renderSalesList();
-            if (typeof updateSalesDashboard === 'function') updateSalesDashboard();
-            if (typeof renderPurchaseSubFilters === 'function') renderPurchaseSubFilters();
-            if (typeof renderPurchaseList === 'function') renderPurchaseList();
-            if (typeof updatePurchaseDashboard === 'function') updatePurchaseDashboard();
-            if (typeof renderExpenseList === 'function') renderExpenseList();
-            if (typeof renderTasksDashboard === 'function') renderTasksDashboard(currentTaskFilter);
-            if (typeof renderCalendar === 'function') renderCalendar();
-            if (typeof updateDynamicPayModes === 'function') updateDynamicPayModes();
-            if (typeof renderBankList === 'function') renderBankList();
-            if (currentReportType === 'dash' && typeof renderReportsDashboard === 'function') renderReportsDashboard();
-
-            let totRev = 0, totExp = 0;
-            // 🔥 NAYA: .filter(r => shouldShowInFY(r)) sabme add kiya gaya hai
-            Object.values(salesDB).filter(r => shouldShowInFY(r)).forEach(s => {
-                if (s.type === 'Invoice') { totRev += s.finalTotal; }
-                if (s.type === 'OtherIncome' && !s.isFundAdd) { totRev += s.amount; }
-            });
-            Object.values(purchaseDB).filter(r => shouldShowInFY(r)).forEach(p => { if (p.type === 'PB') totExp += p.finalTotal; });
-            Object.values(expenseDB).filter(r => shouldShowInFY(r)).forEach(e => { totExp += e.amount; });
-
-            let overviewNetProfit = totRev - totExp;
-
-            let revEl = document.querySelector('.data-card-value.text-blue');
-            let expEl = document.querySelector('.data-card:nth-child(2) .data-card-value');
-            let pnlEl = document.querySelector('.data-card-value.text-green');
-            if (revEl) revEl.innerText = "₹" + totRev.toLocaleString('en-IN');
-            if (expEl) expEl.innerText = "₹" + totExp.toLocaleString('en-IN');
-            if (pnlEl) { pnlEl.innerText = "₹" + Math.abs(overviewNetProfit).toLocaleString('en-IN') + (overviewNetProfit < 0 ? " (Loss)" : ""); pnlEl.className = "data-card-value " + (overviewNetProfit >= 0 ? "text-danger" : "text-green"); }
         }
 
         // 🚀 SMART FIX: Debounce Engine for Super-Fast Search
@@ -13257,8 +13209,6 @@
 
         // FIX 3: Hardware Back Button Control (Mobile App jaisa experience)
         history.pushState({ page: 'start' }, document.title, location.href);
-        // FIX 3: Hardware Back Button Control (Mobile App jaisa experience)
-        history.pushState({ page: 'start' }, document.title, location.href);
         // ==========================================
         // 🚀 100% BULLETPROOF MOBILE BACK BUTTON (Hash Trap Logic)
         // ==========================================
@@ -14407,21 +14357,75 @@
             // Revert back button action for Sales Hub
             document.getElementById('ab_save_btn').setAttribute('onclick', "confirmApplyToBills()");
         }
-        // ==========================================
-        // 🚀 BUG FIX: AUTO-REFRESH OPEN LEDGERS ON DELETE/UPDATE
-        // ==========================================
-        let oldUpdateDataAndUI_BugFix = updateDataAndUI;
-        updateDataAndUI = function () {
-            oldUpdateDataAndUI_BugFix();
+        // 🚀 FIX: SMART UI UPDATER (Infinite Loop Preventer)
+        function updateDataAndUI(fromCloud = false) {
+            
+            // Agar user ne button dabaya hai, tabhi Firebase par upload karo
+            if (!fromCloud) {
+                saveDataLocally(); 
+            }
+            
+            // Baaki saari screens ko turant update karo
+            if (typeof renderLeadsList === 'function') renderLeadsList();
+            if (typeof renderEventsDashboard === 'function') renderEventsDashboard();
+            if (typeof renderPartiesList === 'function') renderPartiesList();
+            if (typeof renderSalesSubFilters === 'function') renderSalesSubFilters();
+            if (typeof renderSalesList === 'function') renderSalesList();
+            if (typeof updateSalesDashboard === 'function') updateSalesDashboard();
+            if (typeof renderPurchaseSubFilters === 'function') renderPurchaseSubFilters();
+            if (typeof renderPurchaseList === 'function') renderPurchaseList();
+            if (typeof updatePurchaseDashboard === 'function') updatePurchaseDashboard();
+            if (typeof renderExpenseList === 'function') renderExpenseList();
+            if (typeof renderTasksDashboard === 'function') renderTasksDashboard(currentTaskFilter);
+            if (typeof renderCalendar === 'function') renderCalendar();
+            if (typeof updateDynamicPayModes === 'function') updateDynamicPayModes();
+            if (typeof renderBankList === 'function') renderBankList();
+            if (currentReportType === 'dash' && typeof renderReportsDashboard === 'function') renderReportsDashboard();
 
-            // 1. Agar Party Ledger khula hai, toh usko auto-refresh kardo
+            // Home Dashboard Calculation Update
+            let totRev = 0, totExp = 0;
+            Object.values(salesDB).filter(r => shouldShowInFY(r)).forEach(s => {
+                if (s.type === 'Invoice') { totRev += s.finalTotal; }
+                if (s.type === 'OtherIncome' && !s.isFundAdd) { totRev += s.amount; }
+            });
+            Object.values(purchaseDB).filter(r => shouldShowInFY(r)).forEach(p => { if (p.type === 'PB') totExp += p.finalTotal; });
+            Object.values(expenseDB).filter(r => shouldShowInFY(r)).forEach(e => { totExp += e.amount; });
+
+            let overviewNetProfit = totRev - totExp;
+
+            let revEl = document.querySelector('.data-card-value.text-blue');
+            let expEl = document.querySelector('.data-card:nth-child(2) .data-card-value');
+            let pnlEl = document.querySelector('.data-card-value.text-green');
+            if (revEl) revEl.innerText = "₹" + totRev.toLocaleString('en-IN');
+            if (expEl) expEl.innerText = "₹" + totExp.toLocaleString('en-IN');
+            if (pnlEl) { 
+                pnlEl.innerText = "₹" + Math.abs(overviewNetProfit).toLocaleString('en-IN') + (overviewNetProfit < 0 ? " (Loss)" : ""); 
+                pnlEl.className = "data-card-value " + (overviewNetProfit >= 0 ? "text-danger" : "text-green"); 
+            }
+
+            // Security check for Floating buttons
+            let fabContainer = document.getElementById('main-fab-container');
+            if (fabContainer) {
+                if (!currentPermissions.actions.add) {
+                    fabContainer.style.display = 'none';
+                } else {
+                    let activeTab = document.querySelector('.active-section');
+                    if (activeTab) {
+                        if (window.hideFabTabs && window.hideFabTabs.includes(activeTab.id)) {
+                            fabContainer.style.display = 'none';
+                        } else {
+                            fabContainer.style.display = 'flex';
+                        }
+                    }
+                }
+            }
+            
+            // Auto Refresh Open Ledgers
             if (typeof activePartyId !== 'undefined' && activePartyId && document.getElementById('partyLedgerPanel').classList.contains('open')) {
                 let fromD = document.getElementById('pl_from_date') ? document.getElementById('pl_from_date').value : null;
                 let toD = document.getElementById('pl_to_date') ? document.getElementById('pl_to_date').value : null;
                 openPartyLedger(activePartyId, null, fromD, toD);
             }
-
-            // 2. Agar Bank/Cash Ledger khula hai, toh usko auto-refresh kardo
             if (typeof activeBankId !== 'undefined' && activeBankId && document.getElementById('bankLedgerPanel').classList.contains('open')) {
                 let fromD = document.getElementById('bl_from_date') ? document.getElementById('bl_from_date').value : null;
                 let toD = document.getElementById('bl_to_date') ? document.getElementById('bl_to_date').value : null;
@@ -14635,8 +14639,6 @@
             }
         };
 
-        // Settings Hide Fab aur Nav ke liye
-        hideFabTabs.push('settings-hub');
         // Staff List Load karne ka function
         function loadStaffForAssignment(selectId, preFillMobile = "") {
             const sel = document.getElementById(selectId);
