@@ -3034,17 +3034,11 @@
             </div>
 
             <div class="premium-sticky-filters">
-            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
-                <button class="btn-main" style="flex:1; min-width: 140px; background:linear-gradient(135deg, #10B981, #047857); border-radius:8px;" onclick="openOutwardChallanModal()">🚚 Send to Event</button>
-                <button class="btn-main" style="flex:1; min-width: 100px; background:var(--purple); border-radius:8px;" onclick="openGodownModal()">🏭 Godowns</button>
-                <button class="btn-main" style="flex:1; min-width: 100px; background:#0284C7; border-radius:8px;" onclick="openDirectStockModal()">➕ Add Stock</button>
-                <button class="btn-main" style="flex:1; min-width: 100px; background:#F59E0B; color:black; border-radius:8px;" onclick="openStockAuditModal()">⚖️ Audit Stock</button>
+                <div class="search-container" style="margin-bottom:0;">
+                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" class="search-input" placeholder="Search parties by name or phone..." oninput="filterSearch('party', this.value)">
+                </div>
             </div>
-            <div class="search-container" style="margin-bottom:0;">
-                <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" class="search-input" id="inv_hub_search" placeholder="Search item in Godown..." oninput="renderInventoryHubList()">
-            </div>
-        </div>
 
             <div id="party-list-container"></div>
             <button class="pill-floating-btn" style="background: linear-gradient(135deg, #0F172A, #334155);"
@@ -5963,7 +5957,7 @@
                 <span>ERP</span>
             </button>
         </div>
-    </div> ```
+    </div>
 
     <!-- 🚀 1. TEAM MANAGEMENT MODAL -->
     <div id="teamModal" class="modal-overlay" style="z-index: 8500;">
@@ -16671,45 +16665,7 @@
                 originalGenerateCurrentReport();
             }
         };
-        // ==========================================
-        // 🚀 SMART AUTO-FIX ENGINE (Layout & Overlap Fixer)
-        // ==========================================
-        (function applyMasterFix() {
-            // 1. Move all Panels to the body root
-            document.querySelectorAll('.side-panel-overlay').forEach(el => document.body.appendChild(el));
-            document.querySelectorAll('.side-panel').forEach(el => document.body.appendChild(el));
-            
-            // 2. Move all Modals to root (This guarantees they always open ON TOP of panels)
-            let seenModals = {};
-            document.querySelectorAll('.modal-overlay').forEach(m => {
-                if (m.id) {
-                    if (seenModals[m.id]) {
-                        seenModals[m.id].remove(); // Delete duplicate copy-pasted modals
-                    } else {
-                        seenModals[m.id] = m;
-                        document.body.appendChild(m); // Move original modal to absolute top layer
-                    }
-                }
-            });
-
-            // 3. Fix Broken Sections (Move Inventory Hub safely inside App)
-            let mainApp = document.getElementById('main-app');
-            if (mainApp) {
-                document.querySelectorAll('body > .section').forEach(sec => mainApp.appendChild(sec));
-            }
-
-            // 4. Fix Duplicate Bottom Nav Bars
-            let navBars = document.querySelectorAll('.nav-bar');
-            if (navBars.length > 1) {
-                for (let i = 1; i < navBars.length; i++) navBars[i].remove(); // Remove extra nav bars
-            }
-
-            // 5. Restore Missing Bottom Buttons
-            let nav = document.querySelector('.nav-bar');
-            if (nav) nav.style.display = 'flex';
-
-            console.log("✅ Auto-Fix Engine Applied! Layout and Overlaps cleared.");
-        })();
+    
     </script>
 </body>
 
