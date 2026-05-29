@@ -6110,6 +6110,12 @@
                 <button class="btn-main" style="flex:1; background:linear-gradient(135deg, #10B981, #047857); border-radius:8px;" onclick="openOutwardChallanModal()">🚚 Send to Event (Outward)</button>
                 <button class="btn-main" style="flex:0.6; background:var(--purple); border-radius:8px;" onclick="openGodownModal()">🏭 Godowns</button>
             </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="btn-main" style="flex:1; background:linear-gradient(135deg, #10B981, #047857); border-radius:8px;" onclick="openOutwardChallanModal()">🚚 Send to Event (Outward)</button>
+                <button class="btn-main" style="flex:0.6; background:var(--purple); border-radius:8px;" onclick="openGodownModal()">🏭 Godowns</button>
+                
+                <button class="btn-main" style="flex:0.6; background:#0284C7; border-radius:8px;" onclick="openDirectStockModal()">➕ Add Stock</button>
+            </div>
             <div class="search-container" style="margin-bottom:0;">
                 <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" class="search-input" id="inv_hub_search" placeholder="Search item in Godown..." oninput="renderInventoryHubList()">
@@ -6192,6 +6198,32 @@
             </div>
 
             <button type="button" class="btn-main" style="background:var(--success);" onclick="processSmartReturn()">✅ Confirm Return & Update Books</button>
+        </div>
+    </div>
+    <div id="directStockModal" class="modal-overlay" style="z-index: 6500;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>📦 Add Opening Stock</h3>
+                <button class="modal-close" onclick="document.getElementById('directStockModal').style.display='none';">&times;</button>
+            </div>
+            <p style="font-size:11px; color:var(--text-secondary); margin-top:0;">Use this to add items you already own without creating a purchase bill.</p>
+            <form onsubmit="event.preventDefault(); saveDirectStock();">
+                <div class="form-group">
+                    <label class="form-label">Item Name</label>
+                    <input type="text" id="ds_name" class="form-input" placeholder="e.g. Fiber Chair" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" id="ds_qty" class="form-input" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Godown 🏭</label>
+                        <select id="ds_godown" class="form-select" required></select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-main" style="background:#0284C7; margin-top:10px;">✅ Add to Inventory</button>
+            </form>
         </div>
     </div>
 
@@ -16031,6 +16063,183 @@
             alert(`✅ Material Dispatched Successfully to ${leadsDB[evId].func}!`);
             renderInventoryHubList();
         };
+        // ========================================================
+        // 🚀 1. DIRECT OPENING STOCK FUNCTIONS
+        // ========================================================
+        function openDirectStockModal() {
+            document.getElementById('ds_name').value = '';
+            document.getElementById('ds_qty').value = '';
+            let sel = document.getElementById('ds_godown');
+            sel.innerHTML = '';
+            Object.values(warehousesDB).forEach(w => {
+                sel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+            });
+            document.getElementById('directStockModal').style.display = 'flex';
+        }
+
+        function saveDirectStock() {
+            let name = document.getElementById('ds_name').value.trim();
+            let qty = parseInt(document.getElementById('ds_qty').value);
+            let gId = document.getElementById('ds_godown').value;
+
+            if(!name || !qty || !gId) return alert("Please fill all fields!");
+
+            // Agar item pehle se nahi hai toh naya banao
+            if (!itemsDB[name]) {
+                itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
+            }
+            // Agar godown nahi hai toh usme 0 set karo
+            if (!itemsDB[name].godowns[gId]) {
+                itemsDB[name].godowns[gId] = 0;
+            }
+
+            // Stock Jodd (Add) do
+            itemsDB[name].totalStock += qty;
+            itemsDB[name].godowns[gId] += qty;
+
+            updateDataAndUI();
+            document.getElementById('directStockModal').style.display = 'none';
+            alert(`✅ ${qty} x '${name}' added to your Godown successfully!`);
+        }
+
+
+        // ========================================================
+        // 🚀 2. STRICT INVOICE SAVING (PREVENTS FAKE STOCK BILLING)
+        // ========================================================
+        let originalSaveDirectInvoiceData = typeof saveDirectInvoiceData !== 'undefined' ? saveDirectInvoiceData : function(){};
+
+        saveDirectInvoiceData = function() { 
+            let partyId = document.getElementById('di_party').value; 
+            let eventTitle = document.getElementById('di_event').value; 
+            let date = document.getElementById('di_date').value; 
+            
+            let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
+            let returnDate = document.getElementById('di_return_date') ? document.getElementById('di_return_date').value : null;
+            let godownId = document.getElementById('di_godown_select') ? document.getElementById('di_godown_select').value : 'WH_MAIN';
+            let labourAmt = parseFloat(document.getElementById('di_labour')?.value) || 0;
+            let transportAmt = parseFloat(document.getElementById('di_transport')?.value) || 0;
+
+            if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
+            if (invoiceType === 'Rental' && !returnDate) { 
+                return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); 
+            }
+
+            let items = []; 
+            document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
+                let name = row.querySelector('.i-item-name').value.trim(); 
+                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
+                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
+                let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; 
+                let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
+                if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); 
+            }); 
+            
+            if (items.length === 0) return alert("Please add at least one valid item!"); 
+
+            // 🚨🚨 STRICT INVENTORY LOCK 🚨🚨
+            // Agar rental hai, toh pehle check karo ki stock hai ya nahi!
+            if (invoiceType === 'Rental' && !editingSalesId) {
+                for (let i = 0; i < items.length; i++) {
+                    let item = items[i];
+                    let dbItem = itemsDB[item.name];
+                    let available = (dbItem && dbItem.godowns[godownId]) ? dbItem.godowns[godownId] : 0;
+                    
+                    if (item.qty > available) {
+                        alert(`🚨 OUT OF STOCK ALARM!\n\nYou are trying to rent out ${item.qty} x '${item.name}', but you only have ${available} available in the selected Godown.\n\nPlease use "Fetch Godown Stock" button to add correct items.\n\nInvoice saving cancelled!`);
+                        return; // 🛑 YAHIN PAR BILL BANNA RUK JAYEGA!
+                    }
+                }
+            }
+
+            // Agar sab theek hai, toh stock DEDUCT karo
+            if (invoiceType === 'Rental' && !editingSalesId) {
+                items.forEach(item => {
+                    if (itemsDB[item.name] && itemsDB[item.name].godowns[godownId] !== undefined) {
+                        itemsDB[item.name].godowns[godownId] -= item.qty; 
+                    }
+                });
+            }
+
+            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
+            baseTotal += (labourAmt + transportAmt);
+
+            let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
+            let totalAfterDiscount = baseTotal - discount; 
+            if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
+            
+            let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
+            let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
+            let finalGrandTotal = totalAfterDiscount + taxAmount; 
+            
+            let party = partiesDB[partyId]; 
+            let targetEventId = null; let eventCodeStr = null; 
+            
+            if (!editingSalesId) { 
+                if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
+                    targetEventId = tempEventIdForInvoice; 
+                    let ev = leadsDB[targetEventId]; 
+                    eventCodeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); 
+                } 
+            } else { 
+                targetEventId = salesDB[editingSalesId].eventId; 
+            } 
+            
+            if (editingSalesId) { party.balance -= salesDB[editingSalesId].finalTotal; } 
+            
+            let manuallyEnteredAdvance = parseFloat(document.getElementById('di_advance').value) || 0; 
+            if (manuallyEnteredAdvance > finalGrandTotal && !editingSalesId) manuallyEnteredAdvance = finalGrandTotal; 
+            
+            let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; 
+            let oldAdvanceAmount = 0; let receiptToUpdate = null; 
+            
+            if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { 
+                receiptToUpdate = salesDB[selectedOldAdvanceId]; 
+                oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); 
+            } 
+            
+            let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
+            let payMode = document.getElementById('di_pay_mode') ? document.getElementById('di_pay_mode').value : "ACC_CASH"; 
+            
+            let balanceDue = finalGrandTotal - totalAdvanceApplied; 
+            if (balanceDue < 0) balanceDue = 0; 
+            
+            let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
+            let status = 'Due'; 
+            if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
+            else if (totalAdvanceApplied > 0) status = 'Partial'; 
+            
+            salesDB[id] = { 
+                id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, 
+                items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, 
+                advance: totalAdvanceApplied, balanceDue, status,
+                invoiceType: invoiceType, returnDate: returnDate, godownId: godownId, rentalStatus: 'Deployed',
+                labour: labourAmt, transport: transportAmt
+            }; 
+            
+            party.balance += finalGrandTotal; 
+            
+            if (!editingSalesId) { 
+                if (receiptToUpdate) { 
+                    receiptToUpdate.usedAmount += oldAdvanceAmount; 
+                    receiptToUpdate.availableAmount -= oldAdvanceAmount; 
+                    if (!receiptToUpdate.linkedInvoices) receiptToUpdate.linkedInvoices = []; 
+                    receiptToUpdate.linkedInvoices.push(id); 
+                } 
+                if (manuallyEnteredAdvance > 0) { 
+                    party.balance -= manuallyEnteredAdvance; 
+                    let recId = generateDocId('Receipt'); 
+                    salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; 
+                    if (typeof logBankTransaction === 'function') logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Receipt: Advance for ${id} (${party.name})`, recId, date); 
+                } 
+            } 
+            
+            tempEventIdForInvoice = null; 
+            updateDataAndUI(); 
+            document.getElementById('directInvoiceModal').style.display = 'none'; 
+            setSalesTab('Invoice', document.getElementById('st-invoices')); 
+            openTab('sales-hub', null); 
+            alert("✅ Invoice Saved and Inventory Stock Deducted!");
+        }
     </script>
 </body>
 
