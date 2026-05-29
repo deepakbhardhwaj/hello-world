@@ -5047,6 +5047,16 @@
                                 <option value="Rental">Rental / Material Outward (Props & Inventory)</option>
                             </select>
                         </div>
+                        <div class="form-row" id="di_rental_fields" style="display:none; margin-bottom:12px; padding:10px; background:#FEF2F2; border:1px dashed #FCA5A5; border-radius:8px;">
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label" style="color:var(--danger);">Return Due Date</label>
+                                <input type="date" id="di_return_date" class="form-input">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label" style="color:var(--purple);">Dispatch From Godown 🏭</label>
+                                <select id="di_godown_select" class="form-select"></select>
+                            </div>
+                        </div>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
@@ -5057,6 +5067,17 @@
                         </div>
                         <div id="inv_items_container"></div>
                     </div>
+                    <div class="form-row" style="margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+                        <div class="form-group">
+                            <label class="form-label">Labour Charge (₹)</label>
+                            <input type="number" id="di_labour" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Transport Charge (₹)</label>
+                            <input type="number" id="di_transport" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()">
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number"
                                 id="di_discount" class="form-input" value="0" oninput="calculateDirectInvoiceTotal()">
@@ -6072,7 +6093,7 @@
                 <h2 class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Live Godown</h2>
             </div>
         </div>
-        
+
         <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
             <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
                 <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
@@ -6128,6 +6149,49 @@
                 </div>
                 <button type="button" class="btn-main" onclick="saveOutwardChallan()">Dispatch Material</button>
             </form>
+        </div>
+    </div>
+    <div id="returnStockModal" class="modal-overlay" style="z-index: 6500;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="return-modal-title">Process Material Return</h3>
+                <button class="modal-close" onclick="document.getElementById('returnStockModal').style.display='none';">&times;</button>
+            </div>
+            <input type="hidden" id="return_inv_id">
+            
+            <div style="background:#F8FAFC; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #E2E8F0; overflow-x: auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px;" id="return_items_table">
+                    <thead>
+                        <tr style="background:#E2E8F0; text-align:left;">
+                            <th style="padding:8px;">Item Name</th>
+                            <th style="padding:8px; text-align:center;">Sent Qty</th>
+                            <th style="padding:8px; text-align:center; color:var(--success);">✅ Safe Return</th>
+                            <th style="padding:8px; text-align:center; color:var(--danger);">❌ Lost/Destroy</th>
+                            <th style="padding:8px; text-align:center; color:var(--warning);">🔧 Repairable</th>
+                        </tr>
+                    </thead>
+                    <tbody id="return_items_body"></tbody>
+                </table>
+            </div>
+
+            <div class="form-row" style="background:#FEF2F2; border:1px dashed #FCA5A5; padding:12px; border-radius:8px; margin-bottom:15px;">
+                <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="color:var(--danger);">Apply Penalty to Client Bill (₹)</label>
+                    <input type="number" id="return_penalty_amt" class="form-input" value="0" style="font-weight:bold; font-size:16px;">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="color:var(--danger);">Penalty Reason / Note</label>
+                    <input type="text" id="return_penalty_note" class="form-input" placeholder="e.g. 1 Table Lost, 1 Sofa Scratched">
+                </div>
+            </div>
+
+            <div class="form-group" id="return_loss_group" style="display:none; background:#FFFBEB; border:1px dashed #FDE68A; padding:12px; border-radius:8px; margin-bottom:15px;">
+                <label class="form-label" style="color:var(--warning);">Original Value of LOST Asset (₹)</label>
+                <div style="font-size:10px; color:var(--text-secondary); margin-bottom:6px;">This amount will be booked as an Expense (Asset Loss) to keep your Profit & Loss accurate, without deducting real cash.</div>
+                <input type="number" id="return_asset_loss_value" class="form-input" value="0" style="font-weight:bold;">
+            </div>
+
+            <button type="button" class="btn-main" style="background:var(--success);" onclick="processSmartReturn()">✅ Confirm Return & Update Books</button>
         </div>
     </div>
 
@@ -10255,9 +10319,190 @@
         function openApplyBillsModal(recId) { targetReceiptId = recId; let rec = salesDB[recId]; let partyId = rec.partyId; let body = document.getElementById('ab_modal_body'); body.innerHTML = `<div style="margin-bottom:15px; font-size:14px;"><strong>Available to Apply:</strong> <span style="color:var(--success); font-weight:800;">₹${rec.availableAmount.toLocaleString('en-IN')}</span></div>`; let bills = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.partyId === partyId && s.balanceDue > 0); if (bills.length === 0) { body.innerHTML += `<p style="color:var(--text-secondary); font-size:13px; text-align:center; padding:20px; background:#F8FAFC; border-radius:12px;">No pending bills found for this party.</p>`; document.getElementById('ab_save_btn').style.display = 'none'; } else { let listHtml = ''; bills.forEach(bill => { let date = new Date(bill.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); listHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border-color); border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);"><div><div style="font-weight:800; font-size:15px; color:var(--danger);">Due: ₹${bill.balanceDue.toLocaleString('en-IN')}</div><div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-top:6px;">${bill.event} • ${date}</div></div><input type="checkbox" class="bill-checkbox" value="${bill.id}" style="width:24px; height:24px; cursor:pointer; accent-color:var(--success);"></div>`; }); body.innerHTML += listHtml; document.getElementById('ab_save_btn').style.display = 'block'; } document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('applyBillsModal').style.display = 'flex'; }
         function confirmApplyToBills() { let rec = salesDB[targetReceiptId]; let checkboxes = document.querySelectorAll('.bill-checkbox:checked'); if (checkboxes.length === 0) { alert("Please select at least one bill!"); return; } let totalApplied = 0; checkboxes.forEach(cb => { let billId = cb.value; let bill = salesDB[billId]; if (rec.availableAmount > 0 && bill.balanceDue > 0) { let applyAmt = Math.min(rec.availableAmount, bill.balanceDue); bill.advance += applyAmt; bill.balanceDue -= applyAmt; if (bill.balanceDue <= 0) bill.status = 'Paid'; else bill.status = 'Partial'; rec.usedAmount += applyAmt; rec.availableAmount -= applyAmt; if (!rec.linkedInvoices) rec.linkedInvoices = []; if (!rec.linkedInvoices.includes(bill.id)) rec.linkedInvoices.push(bill.id); totalApplied += applyAmt; } }); updateDataAndUI(); document.getElementById('applyBillsModal').style.display = 'none'; viewDetails(targetReceiptId, 'sales'); alert(`Success! ₹${totalApplied.toLocaleString('en-IN')} applied to pending bills.`); }
 
-        function calculateDirectInvoiceTotal() { let baseTotal = 0; let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); rows.forEach(row => { let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; baseTotal += (qty * rate); }); let discount = parseFloat(document.getElementById('di_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount; let manuallyEnteredAdvance = parseFloat(document.getElementById('di_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal && !editingSalesId) { alert("Advance amount cannot be greater than the bill total!"); document.getElementById('di_advance').value = finalGrandTotal; manuallyEnteredAdvance = finalGrandTotal; } let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; let oldAdvanceAmount = 0; if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { oldAdvanceAmount = Math.min(salesDB[selectedOldAdvanceId].availableAmount, finalGrandTotal); } let totalAdvanceApplied = manuallyEnteredAdvance + oldAdvanceAmount; if (editingSalesId) { totalAdvanceApplied = salesDB[editingSalesId].advance; } let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0; document.getElementById('di_final_total').value = finalGrandTotal; document.getElementById('di_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN'); }
+        function calculateDirectInvoiceTotal() { 
+            let baseTotal = 0; 
+            document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
+                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
+                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
+                baseTotal += (qty * rate); 
+            }); 
+            
+            // 🚀 NAYA: Labour aur Transport charge add karna
+            let labour = parseFloat(document.getElementById('di_labour')?.value) || 0;
+            let transport = parseFloat(document.getElementById('di_transport')?.value) || 0;
+            baseTotal += (labour + transport);
 
-        function saveDirectInvoiceData() { let partyId = document.getElementById('di_party').value; let eventTitle = document.getElementById('di_event').value; let date = document.getElementById('di_date').value; if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } let items = []; document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { let name = row.querySelector('.i-item-name').value; let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); }); if (items.length === 0) return alert("Please add at least one item!"); let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); let discount = parseFloat(document.getElementById('di_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount; let party = partiesDB[partyId]; let targetEventId = null; let eventCodeStr = null; if (!editingSalesId) { if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { targetEventId = tempEventIdForInvoice; let ev = leadsDB[targetEventId]; eventCodeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); } else if (convertingQuoteId) { let cleanPhone = String(party.phone).trim(); let existingLeadId = Object.keys(leadsDB).find(lId => String(leadsDB[lId].phone).trim() === cleanPhone && leadsDB[lId].status !== 'Won'); if (existingLeadId) { targetEventId = existingLeadId; leadsDB[targetEventId].status = 'Won'; leadsDB[targetEventId].eventStatus = 'Upcoming'; leadsDB[targetEventId].budget = finalGrandTotal; leadsDB[targetEventId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Converted to Invoice. Deal WON!" }); eventCodeStr = createEventCode(leadsDB[targetEventId].name, leadsDB[targetEventId].func, leadsDB[targetEventId].date); } else { targetEventId = "EVT" + Date.now(); leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: cleanPhone, func: eventTitle, date: date, dates: [{ name: "Main Event", date: date, time: "" }], cat: "Other", budget: finalGrandTotal, status: 'Won', eventStatus: 'Upcoming', venue: party.address || "", source: 'Direct', notes: [{ time: new Date().toLocaleString(), text: "Auto-Created Event from Direct Invoice." }], photos: [], tasks: [], expenses: [] }; eventCodeStr = createEventCode(party.name, eventTitle, date); } } } else { targetEventId = salesDB[editingSalesId].eventId; eventCodeStr = null; } if (editingSalesId) { party.balance -= salesDB[editingSalesId].finalTotal; } let manuallyEnteredAdvance = parseFloat(document.getElementById('di_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal && !editingSalesId) manuallyEnteredAdvance = finalGrandTotal; let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; let oldAdvanceAmount = 0; let receiptToUpdate = null; if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { receiptToUpdate = salesDB[selectedOldAdvanceId]; oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); } let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); let payMode = document.getElementById('di_pay_mode') ? document.getElementById('di_pay_mode').value : "ACC_CASH"; let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0; let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); let status = 'Due'; if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; else if (totalAdvanceApplied > 0) status = 'Partial'; salesDB[id] = { id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status }; party.balance += finalGrandTotal; if (!editingSalesId) { if (receiptToUpdate) { receiptToUpdate.usedAmount += oldAdvanceAmount; receiptToUpdate.availableAmount -= oldAdvanceAmount; if (!receiptToUpdate.linkedInvoices) receiptToUpdate.linkedInvoices = []; receiptToUpdate.linkedInvoices.push(id); } if (manuallyEnteredAdvance > 0) { party.balance -= manuallyEnteredAdvance; let recId = generateDocId('Receipt'); salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Receipt: Advance for ${id} (${party.name})`, recId, date); } } if (convertingQuoteId) { salesDB[convertingQuoteId].status = 'Invoiced'; convertingQuoteId = null; } tempEventIdForInvoice = null; updateDataAndUI(); document.getElementById('directInvoiceModal').style.display = 'none'; setSalesTab('Invoice', document.getElementById('st-invoices')); openTab('sales-hub', null); }
+            let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
+            let totalAfterDiscount = baseTotal - discount; 
+            if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
+            
+            let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
+            let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
+            let finalGrandTotal = totalAfterDiscount + taxAmount; 
+            
+            let manuallyEnteredAdvance = parseFloat(document.getElementById('di_advance').value) || 0; 
+            if (manuallyEnteredAdvance > finalGrandTotal && !editingSalesId) { 
+                alert("Advance amount cannot be greater than the bill total!"); 
+                document.getElementById('di_advance').value = finalGrandTotal; 
+                manuallyEnteredAdvance = finalGrandTotal; 
+            } 
+            
+            let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; 
+            let oldAdvanceAmount = 0; 
+            if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { 
+                oldAdvanceAmount = Math.min(salesDB[selectedOldAdvanceId].availableAmount, finalGrandTotal); 
+            } 
+            let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
+            
+            let balanceDue = finalGrandTotal - totalAdvanceApplied; 
+            if (balanceDue < 0) balanceDue = 0; 
+            
+            document.getElementById('di_final_total').value = finalGrandTotal; 
+            document.getElementById('di_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN'); 
+        }
+
+        function saveDirectInvoiceData() { 
+            let partyId = document.getElementById('di_party').value; 
+            let eventTitle = document.getElementById('di_event').value; 
+            let date = document.getElementById('di_date').value; 
+            
+            // 🚀 NAYA: Rental details uthana
+            let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
+            let returnDate = document.getElementById('di_return_date') ? document.getElementById('di_return_date').value : null;
+            let godownId = document.getElementById('di_godown_select') ? document.getElementById('di_godown_select').value : 'WH_MAIN';
+            let labourAmt = parseFloat(document.getElementById('di_labour')?.value) || 0;
+            let transportAmt = parseFloat(document.getElementById('di_transport')?.value) || 0;
+
+            if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
+            
+            // Agar Rental hai toh Return Date zaruri hai
+            if (invoiceType === 'Rental' && !returnDate) { 
+                alert("🚨 Return Due Date is mandatory for Rental Invoices!"); 
+                return; 
+            }
+
+            let items = []; 
+            document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
+                let name = row.querySelector('.i-item-name').value; 
+                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
+                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
+                let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; 
+                let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
+                if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); 
+            }); 
+            
+            if (items.length === 0) return alert("Please add at least one item!"); 
+
+            // 🚀 NAYA: STOCK DEDUCTION LOGIC
+            if (invoiceType === 'Rental' && !editingSalesId) {
+                items.forEach(item => {
+                    if (itemsDB[item.name]) {
+                        if (!itemsDB[item.name].godowns[godownId]) itemsDB[item.name].godowns[godownId] = 0;
+                        // Godown se stock kam karo
+                        itemsDB[item.name].godowns[godownId] -= item.qty; 
+                    }
+                });
+            }
+
+            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
+            baseTotal += (labourAmt + transportAmt); // Add extra charges
+
+            let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
+            let totalAfterDiscount = baseTotal - discount; 
+            if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
+            
+            let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
+            let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
+            let finalGrandTotal = totalAfterDiscount + taxAmount; 
+            
+            let party = partiesDB[partyId]; 
+            let targetEventId = null; let eventCodeStr = null; 
+            
+            if (!editingSalesId) { 
+                if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
+                    targetEventId = tempEventIdForInvoice; 
+                    let ev = leadsDB[targetEventId]; 
+                    eventCodeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); 
+                } else if (convertingQuoteId) { 
+                    let cleanPhone = String(party.phone).trim(); 
+                    let existingLeadId = Object.keys(leadsDB).find(lId => String(leadsDB[lId].phone).trim() === cleanPhone && leadsDB[lId].status !== 'Won'); 
+                    if (existingLeadId) { 
+                        targetEventId = existingLeadId; 
+                        leadsDB[targetEventId].status = 'Won'; 
+                        leadsDB[targetEventId].eventStatus = 'Upcoming'; 
+                        leadsDB[targetEventId].budget = finalGrandTotal; 
+                        leadsDB[targetEventId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Converted to Invoice. Deal WON!" }); 
+                        eventCodeStr = createEventCode(leadsDB[targetEventId].name, leadsDB[targetEventId].func, leadsDB[targetEventId].date); 
+                    } else { 
+                        targetEventId = "EVT" + Date.now(); 
+                        leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: cleanPhone, func: eventTitle, date: date, dates: [{ name: "Main Event", date: date, time: "" }], cat: "Other", budget: finalGrandTotal, status: 'Won', eventStatus: 'Upcoming', venue: party.address || "", source: 'Direct', notes: [{ time: new Date().toLocaleString(), text: "Auto-Created Event from Direct Invoice." }], photos: [], tasks: [], expenses: [] }; 
+                        eventCodeStr = createEventCode(party.name, eventTitle, date); 
+                    } 
+                } 
+            } else { 
+                targetEventId = salesDB[editingSalesId].eventId; 
+                eventCodeStr = null; 
+            } 
+            
+            if (editingSalesId) { party.balance -= salesDB[editingSalesId].finalTotal; } 
+            
+            let manuallyEnteredAdvance = parseFloat(document.getElementById('di_advance').value) || 0; 
+            if (manuallyEnteredAdvance > finalGrandTotal && !editingSalesId) manuallyEnteredAdvance = finalGrandTotal; 
+            
+            let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; 
+            let oldAdvanceAmount = 0; let receiptToUpdate = null; 
+            
+            if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { 
+                receiptToUpdate = salesDB[selectedOldAdvanceId]; 
+                oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); 
+            } 
+            
+            let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
+            let payMode = document.getElementById('di_pay_mode') ? document.getElementById('di_pay_mode').value : "ACC_CASH"; 
+            
+            let balanceDue = finalGrandTotal - totalAdvanceApplied; 
+            if (balanceDue < 0) balanceDue = 0; 
+            
+            let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
+            let status = 'Due'; 
+            if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
+            else if (totalAdvanceApplied > 0) status = 'Partial'; 
+            
+            // 🚀 NAYA: DB mein Rental Fields aur Labour wagaira bhi save karna
+            salesDB[id] = { 
+                id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, 
+                items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, 
+                advance: totalAdvanceApplied, balanceDue, status,
+                invoiceType: invoiceType, returnDate: returnDate, godownId: godownId, rentalStatus: 'Deployed',
+                labour: labourAmt, transport: transportAmt
+            }; 
+            
+            party.balance += finalGrandTotal; 
+            
+            if (!editingSalesId) { 
+                if (receiptToUpdate) { 
+                    receiptToUpdate.usedAmount += oldAdvanceAmount; 
+                    receiptToUpdate.availableAmount -= oldAdvanceAmount; 
+                    if (!receiptToUpdate.linkedInvoices) receiptToUpdate.linkedInvoices = []; 
+                    receiptToUpdate.linkedInvoices.push(id); 
+                } 
+                if (manuallyEnteredAdvance > 0) { 
+                    party.balance -= manuallyEnteredAdvance; 
+                    let recId = generateDocId('Receipt'); 
+                    salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; 
+                    logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Receipt: Advance for ${id} (${party.name})`, recId, date); 
+                } 
+            } 
+            
+            if (convertingQuoteId) { salesDB[convertingQuoteId].status = 'Invoiced'; convertingQuoteId = null; } 
+            
+            tempEventIdForInvoice = null; 
+            updateDataAndUI(); 
+            document.getElementById('directInvoiceModal').style.display = 'none'; 
+            setSalesTab('Invoice', document.getElementById('st-invoices')); 
+            openTab('sales-hub', null); 
+            alert("✅ Invoice Saved and Inventory Stock Deducted!");
+        }
 
         function unlinkInvoice(id) { if (confirm("🚨 Detach this invoice from its Event Dashboard?\nIt will become a standalone general bill.")) { let record = salesDB[id]; record.eventId = null; let newId = generateDocId('Invoice', null); changeSalesId(id, newId); updateDataAndUI(); document.getElementById('quoteViewModal').style.display = 'none'; viewDetails(newId, 'sales'); } }
         function openAttachEventModal(invId) { targetInvoiceToAttach = invId; let sel = document.getElementById('ae_event_select'); sel.innerHTML = '<option value="">-- Select Event --</option>'; Object.values(leadsDB).filter(l => l.status === 'Won').forEach(ev => { sel.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`; }); document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('attachEventModal').style.display = 'flex'; }
@@ -15290,53 +15535,6 @@
         // 🚀 VERSION 9.0: INVENTORY & CHALLAN ENGINE
         // ==========================================
 
-        function renderInventoryHubList() {
-            let container = document.getElementById('inventory-list-container');
-            if (!container) return;
-            container.innerHTML = "";
-
-            let search = document.getElementById('inv_hub_search').value.toLowerCase();
-            let totalInGodown = 0;
-            let totalDeployed = 0;
-            let visibleCount = 0;
-
-            Object.values(itemsDB).forEach(item => {
-                let inGodown = item.godowns['WH_MAIN'] || 0;
-                let deployed = (item.totalStock || 0) - inGodown;
-
-                totalInGodown += inGodown;
-                totalDeployed += deployed;
-
-                if (search && !item.name.toLowerCase().includes(search)) return;
-                visibleCount++;
-
-                container.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);">
-                    <div style="flex:1;">
-                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
-                        <div style="font-size:11px; color:var(--text-secondary); font-weight:600;">Total Purchased: ${item.totalStock}</div>
-                    </div>
-                    <div style="display:flex; gap:15px; text-align:center;">
-                        <div style="background:#EFF6FF; padding:8px 12px; border-radius:8px; border:1px solid #BFDBFE;">
-                            <div style="font-size:9px; color:var(--accent-color); font-weight:800; text-transform:uppercase;">In Godown</div>
-                            <div style="font-size:16px; font-weight:900; color:#1E3A8A;">${inGodown}</div>
-                        </div>
-                        <div style="background:#FFFBEB; padding:8px 12px; border-radius:8px; border:1px solid #FDE68A;">
-                            <div style="font-size:9px; color:var(--warning); font-weight:800; text-transform:uppercase;">On Event</div>
-                            <div style="font-size:16px; font-weight:900; color:#9A3412;">${deployed}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-
-            document.getElementById('inv_stat_godown').innerText = totalInGodown;
-            document.getElementById('inv_stat_deployed').innerText = totalDeployed;
-
-            if (visibleCount === 0) {
-                container.innerHTML = `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.<br><br><span style='font-size:11px;'>Note: Khareede gaye Asset Form mein 'Rental Item' select karne par hi stock yahan dikhega.</span></div>`;
-            }
-        }
-
         function openOutwardChallanModal() {
             document.getElementById('outwardForm').reset();
             document.getElementById('out_date').valueAsDate = new Date();
@@ -15437,11 +15635,24 @@
         function toggleInvoiceType() {
             let type = document.getElementById('di_invoice_type');
             let btnGodown = document.getElementById('btn_fetch_godown');
-            if(type && btnGodown) {
-                if(type.value === 'Rental') {
+            let rentalFields = document.getElementById('di_rental_fields'); // Naya section
+            
+            if (type && btnGodown) {
+                if (type.value === 'Rental') {
                     btnGodown.style.display = 'block';
+                    if (rentalFields) rentalFields.style.display = 'flex';
+                    
+                    // Godowns ki list load karo
+                    let sel = document.getElementById('di_godown_select');
+                    if (sel) {
+                        sel.innerHTML = '';
+                        Object.values(warehousesDB).forEach(w => {
+                            sel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                        });
+                    }
                 } else {
                     btnGodown.style.display = 'none';
+                    if (rentalFields) rentalFields.style.display = 'none';
                 }
             }
         }
@@ -15470,23 +15681,43 @@
             list.innerHTML = '';
             Object.values(warehousesDB).forEach(w => {
                 list.innerHTML += `<div style="padding:10px; border:1px solid #E2E8F0; border-radius:8px; margin-bottom:8px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center;">
-                    <div><div style="font-size:13px; font-weight:800; color:var(--text-primary);">${w.name}</div><div style="font-size:10px; color:#64748B;">📍 ${w.address || 'No Address'}</div></div>
-                    ${w.isDefault ? '<span style="font-size:9px; background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:bold;">Main</span>' : ''}
+                    <div>
+                        <div style="font-size:13px; font-weight:800; color:var(--text-primary);">${w.name}</div>
+                        <div style="font-size:10px; color:#64748B;">📍 ${w.address || 'No Address'}</div>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        ${w.isDefault ? '<span style="font-size:9px; background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:bold;">Main</span>' : ''}
+                        <button type="button" onclick="editGodown('${w.id}')" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;" title="Edit">✏️</button>
+                    </div>
                 </div>`;
             });
             document.getElementById('godownModal').style.display = 'flex';
         }
 
+        function editGodown(id) {
+            let w = warehousesDB[id];
+            let newName = prompt("Edit Godown Name:", w.name);
+            if (!newName || newName.trim() === "") return;
+            let newAdd = prompt("Edit Address/Location:", w.address);
+            
+            warehousesDB[id].name = newName.trim();
+            warehousesDB[id].address = newAdd ? newAdd.trim() : "";
+            
+            updateDataAndUI();
+            openGodownModal();
+            if(typeof loadGodownsIntoSelect === 'function') loadGodownsIntoSelect();
+        }
+
         function saveGodown() {
+            let id = document.getElementById('godownModal').dataset.editId || "WH_" + Date.now();
             let name = document.getElementById('gdn_name').value.trim();
             let add = document.getElementById('gdn_address').value.trim();
-            if(!name) return alert("Godown name required!");
-            let id = "WH_" + Date.now();
-            warehousesDB[id] = { id: id, name: name, address: add, isDefault: false };
+            
+            warehousesDB[id] = { id: id, name: name, address: add, isDefault: (id === 'WH_MAIN') };
             updateDataAndUI();
+            document.getElementById('godownModal').dataset.editId = "";
             document.getElementById('godownForm').reset();
             openGodownModal();
-            loadGodownsIntoSelect();
         }
 
         // 🚀 Hooks to auto-load godowns when modals open
@@ -15506,7 +15737,41 @@
         // 🚀 OVERRIDE: Render Inventory with Godown Breakdown
         function renderInventoryHubList() {
             let container = document.getElementById('inventory-list-container');
-            if (!container) return; container.innerHTML = "";
+            if (!container) return; 
+            container.innerHTML = "";
+
+            // ==========================================
+            // 🚀 NAYA: OVERDUE RENTALS UI LOGIC (Sabse upar dikhega)
+            // ==========================================
+            let todayStr = new Date().toISOString().split('T')[0];
+            // Sirf wahi invoice dhundho jo Rental hain, jinka samaan wapas nahi aaya aur Return Date nikal chuki hai
+            let overdueInvoices = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.invoiceType === 'Rental' && s.rentalStatus !== 'Returned' && s.returnDate < todayStr);
+
+            if (overdueInvoices.length > 0) {
+                let overdueHtml = `<div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
+                    <h3 style="margin:0 0 12px 0; color:var(--danger); font-size:14px; text-transform:uppercase; font-weight:900;">🚨 Overdue Rentals (${overdueInvoices.length})</h3>`;
+                
+                overdueInvoices.forEach(inv => {
+                    let pName = partiesDB[inv.partyId] ? partiesDB[inv.partyId].name : 'Unknown';
+                    let pPhone = partiesDB[inv.partyId] ? partiesDB[inv.partyId].phone : '';
+                    let fDate = new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                    
+                    overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
+                        <div>
+                            <strong style="color:var(--text-primary); font-size:13.5px;">${pName}</strong> <span style="font-size:10px; color:#64748B;">(${inv.id})</span>
+                            <div style="font-size:11.5px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold; box-shadow:var(--shadow-sm);">📞 Call</a>
+                            <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
+                        </div>
+                    </div>`;
+                });
+                overdueHtml += `</div>`;
+                container.innerHTML += overdueHtml; 
+            }
+            // ==========================================
+
             let search = document.getElementById('inv_hub_search').value.toLowerCase();
             let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
 
@@ -15549,9 +15814,145 @@
                     </div>
                 </div>`;
             });
+            
             document.getElementById('inv_stat_godown').innerText = totalInGodown;
             document.getElementById('inv_stat_deployed').innerText = totalDeployed;
-            if (visibleCount === 0) container.innerHTML = `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.</div>`;
+            
+            if (visibleCount === 0) {
+                container.innerHTML += `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.</div>`;
+            }
+        }
+
+        // 🚀 1. OPEN RETURN MODAL
+        function markRentalReturned(invId) {
+            let inv = salesDB[invId];
+            if(!inv) return;
+            
+            document.getElementById('return_inv_id').value = invId;
+            document.getElementById('return-modal-title').innerText = "Return Materials: " + (inv.event || inv.id);
+            
+            let tbody = document.getElementById('return_items_body');
+            tbody.innerHTML = '';
+            
+            inv.items.forEach((item, idx) => {
+                // Har item ke liye row banegi jisme aap qty divide kar sakte hain
+                tbody.innerHTML += `
+                <tr style="border-bottom:1px solid #CBD5E1; background:white;">
+                    <td style="padding:8px; font-weight:700; color:var(--text-primary);">${item.name} <input type="hidden" class="ret-item-name" value="${item.name}"></td>
+                    <td style="padding:8px; text-align:center;"><strong class="ret-item-sent">${item.qty}</strong></td>
+                    <td style="padding:8px; text-align:center;"><input type="number" class="form-input ret-item-safe" value="${item.qty}" max="${item.qty}" min="0" style="width:60px; text-align:center; padding:4px; font-weight:bold; border-color:var(--success);" oninput="calcReturnLoss()"></td>
+                    <td style="padding:8px; text-align:center;"><input type="number" class="form-input ret-item-lost" value="0" max="${item.qty}" min="0" style="width:60px; text-align:center; padding:4px; font-weight:bold; border-color:var(--danger);" oninput="calcReturnLoss()"></td>
+                    <td style="padding:8px; text-align:center;"><input type="number" class="form-input ret-item-repair" value="0" max="${item.qty}" min="0" style="width:60px; text-align:center; padding:4px; font-weight:bold; border-color:var(--warning);" oninput="calcReturnLoss()"></td>
+                </tr>`;
+            });
+            
+            // Form Reset
+            document.getElementById('return_penalty_amt').value = 0;
+            document.getElementById('return_penalty_note').value = "";
+            document.getElementById('return_asset_loss_value').value = 0;
+            document.getElementById('return_loss_group').style.display = 'none';
+            
+            document.getElementById('returnStockModal').style.display = 'flex';
+        }
+
+        // 🚀 2. AUTO-SHOW LOSS BOX IF ITEM IS LOST
+        function calcReturnLoss() {
+            let hasLost = false;
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
+                if(lost > 0) hasLost = true;
+            });
+            document.getElementById('return_loss_group').style.display = hasLost ? 'block' : 'none';
+        }
+
+        // 🚀 3. FINAL PROCESSING & ACCOUNT TALLYING
+        function processSmartReturn() {
+            let invId = document.getElementById('return_inv_id').value;
+            let inv = salesDB[invId];
+            if(!inv) return;
+            
+            let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0;
+            let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty";
+            let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0;
+            
+            let error = false;
+            
+            // ⚠️ Validation Check: Sent Qty = Safe + Lost + Repair
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let name = row.querySelector('.ret-item-name').value;
+                let sent = parseInt(row.querySelector('.ret-item-sent').innerText);
+                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0;
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
+                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+                
+                if((safe + lost + repair) !== sent) {
+                    alert(`Error in item '${name}': Total returned quantities (${safe + lost + repair}) must equal the Sent quantity (${sent}).`);
+                    error = true;
+                }
+            });
+            
+            if(error) return;
+            
+            // 🛠️ Step 1: Process Inventory (Stock Update)
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let name = row.querySelector('.ret-item-name').value;
+                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0;
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
+                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+                
+                if (itemsDB[name]) {
+                    // Safe + Repairable items Godown mein wapas jayenge
+                    let returnedQty = safe + repair;
+                    if (!itemsDB[name].godowns[inv.godownId]) itemsDB[name].godowns[inv.godownId] = 0;
+                    itemsDB[name].godowns[inv.godownId] += returnedQty;
+                    
+                    // Lost items permanently stock se minus (Kyunki bhejne time already minus hua tha, ab wapas nahi aayega toh automatically minus hi rahega. Par totalStock se bhi hatana padega)
+                    if(lost > 0) {
+                        itemsDB[name].totalStock -= lost;
+                    }
+                }
+            });
+            
+            // 🛠️ Step 2: Add Penalty to Client's Bill
+            if (penaltyAmt > 0) {
+                inv.finalTotal += penaltyAmt;
+                inv.balanceDue += penaltyAmt;
+                
+                // Bill mein item ki tarah add kar diya
+                inv.items.push({ 
+                    name: "Penalty: " + penaltyNote, 
+                    desc: "Damage/Lost materials", 
+                    unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt 
+                });
+                
+                // Party Ledger Update (Uska udhaar badha diya)
+                if(partiesDB[inv.partyId]) {
+                    partiesDB[inv.partyId].balance += penaltyAmt;
+                }
+                
+                // Status update
+                inv.status = inv.balanceDue > 0 ? (inv.advance > 0 ? 'Partial' : 'Due') : 'Paid';
+            }
+            
+            // 🛠️ Step 3: Book Asset Loss in P&L (Bina Cash kam kiye)
+            if (assetLossValue > 0) {
+                let expId = "EXP" + Date.now();
+                let cat = "Asset Loss / Write-off";
+                if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); }
+                
+                expenseDB[expId] = {
+                    id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid',
+                    date: new Date().toISOString().split('T')[0], 
+                    mode: 'SYSTEM_LOSS', // 👈 MAGIC: Ye Cash/Bank se deduct nahi hoga!
+                    eventId: inv.eventId, partyId: null, notes: `Write-off for lost items in Invoice ${invId}`, linkedDates: []
+                };
+            }
+            
+            inv.rentalStatus = 'Returned'; // Invoice ko "Returned" mark kar diya
+            
+            updateDataAndUI();
+            document.getElementById('returnStockModal').style.display = 'none';
+            alert("✅ Stock Processed & Books Updated Perfectly!");
         }
 
         // 🚀 OVERRIDE: Save Asset (Multi-Godown Support)
