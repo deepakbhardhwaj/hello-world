@@ -5039,28 +5039,26 @@
         <div id="directInvoiceModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h3 id="di-modal-title">Create Tax Invoice</h3><button class="modal-close"
-                        onclick="document.getElementById('directInvoiceModal').style.display='none'; editingSalesId=null; tempEventIdForInvoice=null;">&times;</button>
+                    <h3 id="di-modal-title">Create Tax Invoice</h3>
+                    <button class="modal-close" onclick="document.getElementById('directInvoiceModal').style.display='none'; editingSalesId=null; tempEventIdForInvoice=null;">&times;</button>
                 </div>
                 <form id="diForm" onsubmit="event.preventDefault();" novalidate>
-                    <div id="di_autopilot_badge"
-                        style="display:none; background:#EFF6FF; color:#1D4ED8; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:16px; border:1px solid #BFDBFE; display:flex; align-items:center; gap:6px;">
-                    </div>
+                    <div id="di_autopilot_badge" style="display:none; background:#EFF6FF; color:#1D4ED8; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:16px; border:1px solid #BFDBFE; display:flex; align-items:center; gap:6px;"></div>
+                    
                     <div class="form-group">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0;">Select Client/Party</label><button type="button"
-                                class="link-btn" onclick="openPartyModal()">+ Add New</button>
-                        </div><input type="text" class="select-search-box" placeholder="Search Client..."
-                            oninput="loadPartiesIntoSelect('di_party', document.getElementById('di_party').value, this.value)"><select
-                            id="di_party" class="form-select" required></select>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0;">Select Client/Party</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New</button>
+                        </div>
+                        <input type="text" class="select-search-box" placeholder="Search Client..." oninput="loadPartiesIntoSelect('di_party', document.getElementById('di_party').value, this.value)">
+                        <select id="di_party" class="form-select" required></select>
                     </div>
+
                     <div class="form-row">
-                        <div class="form-group"><label class="form-label">Bill / Event Title</label><input type="text"
-                                id="di_event" class="form-input" placeholder="e.g. Wedding Decor" required></div>
-                        <div class="form-group"><label class="form-label">Invoice Date</label><input type="date"
-                                id="di_date" class="form-input" required></div>
+                        <div class="form-group"><label class="form-label">Bill / Event Title</label><input type="text" id="di_event" class="form-input" placeholder="e.g. Wedding Decor" required></div>
+                        <div class="form-group"><label class="form-label">Invoice Date</label><input type="date" id="di_date" class="form-input" required></div>
                     </div>
+
                     <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
                         <div class="form-group" style="margin-bottom: 12px;">
                             <label class="form-label" style="color:var(--accent-color);">Invoice Type</label>
@@ -5069,76 +5067,59 @@
                                 <option value="Rental">Rental / Material Outward (Props & Inventory)</option>
                             </select>
                         </div>
+                        
                         <div class="form-row" id="di_rental_fields" style="display:none; margin-bottom:12px; padding:10px; background:#FEF2F2; border:1px dashed #FCA5A5; border-radius:8px;">
                             <div class="form-group" style="margin:0;">
                                 <label class="form-label" style="color:var(--danger);">Return Due Date</label>
                                 <input type="date" id="di_return_date" class="form-input">
                             </div>
                             <div class="form-group" style="margin:0;">
-                                <label class="form-label" style="color:var(--purple);">Dispatch From Godown 🏭</label>
+                                <label class="form-label" style="color:var(--purple);">Dispatch From 🏭</label>
                                 <select id="di_godown_select" class="form-select"></select>
                             </div>
                         </div>
-                        
+
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
                             <div style="display: flex; gap: 8px;">
-                                <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Godown Stock</button>
+                                <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Stock</button>
                                 <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addInvoiceItem()">+ Add Item</button>
                             </div>
                         </div>
                         <div id="inv_items_container"></div>
                     </div>
+
                     <div class="form-row" style="margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
-                        <div class="form-group">
-                            <label class="form-label">Labour Charge (₹)</label>
-                            <input type="number" id="di_labour" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Transport Charge (₹)</label>
-                            <input type="number" id="di_transport" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()">
-                        </div>
+                        <div class="form-group"><label class="form-label">Labour Charge (₹)</label><input type="number" id="di_labour" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
+                        <div class="form-group"><label class="form-label">Transport Charge (₹)</label><input type="number" id="di_transport" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number"
-                                id="di_discount" class="form-input" value="0" oninput="calculateDirectInvoiceTotal()">
-                        </div>
-                        <div class="form-group"><label class="form-label">Add GST (%)</label><select id="di_gst"
-                                class="form-select" onchange="calculateDirectInvoiceTotal()">
-                                <option value="0">0% (No GST)</option>
-                                <option value="5">5%</option>
-                                <option value="12">12%</option>
-                                <option value="18">18%</option>
-                            </select></div>
+                        <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number" id="di_discount" class="form-input" value="0" oninput="calculateDirectInvoiceTotal()"></div>
+                        <div class="form-group"><label class="form-label">Add GST (%)</label><select id="di_gst" class="form-select" onchange="calculateDirectInvoiceTotal()">
+                            <option value="0">0% (No GST)</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option>
+                        </select></div>
                     </div>
-                    <div class="form-group"><label class="form-label">Grand Total (₹)</label><input type="number"
-                            id="di_final_total" class="form-input" readonly
-                            style="background: #F1F5F9; font-weight: bold; font-size: 16px; color:var(--accent-color);">
-                    </div>
-                    <div class="form-group" id="available_advance_group"
-                        style="display:none; background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 8px; margin-top: 16px;">
-                        <label class="form-label" style="color: var(--warning);">Use Available Advance</label><select
-                            id="di_use_advance" class="form-select" onchange="calculateDirectInvoiceTotal()">
+
+                    <div class="form-group"><label class="form-label">Grand Total (₹)</label><input type="number" id="di_final_total" class="form-input" readonly style="background: #F1F5F9; font-weight: bold; font-size: 16px; color:var(--accent-color);"></div>
+
+                    <div class="form-group" id="available_advance_group" style="display:none; background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                        <label class="form-label" style="color: var(--warning);">Use Available Advance</label>
+                        <select id="di_use_advance" class="form-select" onchange="calculateDirectInvoiceTotal()">
                             <option value="0">Do not use advance</option>
                         </select>
                     </div>
-                    <div class="form-row"
-                        style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
-                        <div class="form-group"><label class="form-label" style="color: var(--success);">New Advance
-                                Received (₹)</label><input type="number" id="di_advance" class="form-input"
-                                placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
-                        <div class="form-group"><label class="form-label">Payment Mode</label><select id="di_pay_mode"
-                                class="form-select dynamic-pay-mode"></select></div>
+
+                    <div class="form-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
+                        <div class="form-group"><label class="form-label" style="color: var(--success);">New Advance Received (₹)</label><input type="number" id="di_advance" class="form-input" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
+                        <div class="form-group"><label class="form-label">Payment Mode</label><select id="di_pay_mode" class="form-select dynamic-pay-mode"></select></div>
                     </div>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px;">
-                        <span style="color: var(--text-secondary); font-weight: 700;">Balance Due:</span><span
-                            id="di_balance_due"
-                            style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px;">
+                        <span style="color: var(--text-secondary); font-weight: 700;">Balance Due:</span>
+                        <span id="di_balance_due" style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
                     </div>
-                    <button type="button" class="btn-main" style="background: var(--success);"
-                        onclick="saveDirectInvoiceData()">Save Invoice</button>
+                    <button type="button" class="btn-main" style="background: var(--success);" onclick="saveDirectInvoiceData()">Save Invoice</button>
                 </form>
             </div>
         </div>
@@ -5960,6 +5941,30 @@
             </button>
         </div>
     </div>
+    <div class="nav-bar">
+            <button id="btn-crm" class="nav-btn" onclick="openTab('crm', this)">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>CRM</span>
+            </button>
+            <button id="btn-events" class="nav-btn" onclick="openTab('events', this)">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Events</span>
+            </button>
+            <button id="btn-home" class="nav-btn active-btn" onclick="openTab('home', this)">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Home</span>
+            </button>
+            <button id="btn-tasks" class="nav-btn" onclick="openTab('tasks', this)">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Tasks</span>
+            </button>
+            <button id="btn-erp" class="nav-btn" onclick="openTab('erp', this)">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <span>ERP</span>
+            </button>
+        </div>
+    </div> ```
+
     <!-- 🚀 1. TEAM MANAGEMENT MODAL -->
     <div id="teamModal" class="modal-overlay" style="z-index: 8500;">
         <div class="modal-content" style="max-width: 500px;">
