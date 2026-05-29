@@ -5970,36 +5970,72 @@
     </div>
 
     <script>
-        // Attach event listener for "+ Add New Staff" button
-        document.addEventListener('DOMContentLoaded', function () {
-            var addStaffBtn = document.getElementById('btn-add-staff');
-            if (addStaffBtn) {
-                addStaffBtn.addEventListener('click', function () {
-                    document.getElementById('addStaffModal').style.display = 'flex';
-                });
+        // ==========================================
+        // 🔒 SMART DEVICE SESSION LOCK (1 MOBILE + 1 PC)
+        // ==========================================
+        let sessionListener = null;
+
+        async function manageDeviceSession(mob) {
+            // Detect karo ki user Mobile par hai ya PC par
+            let deviceType = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
+            
+            // Ek naya random token banao is device ke liye
+            let myToken = "TOK_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+            
+            // Local memory me token save karo
+            localStorage.setItem('utsav_device_token', myToken);
+
+            // Cloud DB me is device ka token update karo
+            try {
+                await db.collection("users").doc(mob).set({
+                    ["session_" + deviceType]: myToken
+                }, { merge: true });
+            } catch(e) { console.error("Session Update Error", e); }
+
+            // ⚡ LIVE LISTENER: Agar cloud me token badla (yani kisi aur ne same device type se login kiya) toh isko bahar phenk do!
+            if (sessionListener) sessionListener();
+            sessionListener = db.collection("users").doc(mob).onSnapshot((doc) => {
+                if (doc.exists) {
+                    let data = doc.data();
+                    let activeToken = data["session_" + deviceType];
+                    let localToken = localStorage.getItem('utsav_device_token');
+
+                    // Agar cloud ka token aur mere phone ka token alag hai -> KICK OUT!
+                    if (activeToken && localToken && activeToken !== localToken) {
+                        alert(`⚠️ SESSION EXPIRED!\n\nYour account was logged in from another ${deviceType}.\nFor security, you have been logged out from this device.`);
+                        forceLogoutApp();
+                    }
+                }
+            });
+        }
+
+        function forceLogoutApp() {
+            localStorage.removeItem('utsav_erp_active_session');
+            localStorage.removeItem('utsav_active_workspace');
+            localStorage.removeItem('utsav_device_token');
+            if (typeof auth !== 'undefined' && auth) {
+                auth.signOut().then(() => { window.location.reload(); }).catch(() => { window.location.reload(); });
+            } else {
+                window.location.reload();
             }
-        });
+        }
 
         // ==========================================
         // 🚀 FIREBASE INITIALIZATION & OTP ENGINE
         // =========================================
-        // Initialize Firebase
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const auth = firebase.auth();
-        const db = firebase.firestore(); // Cloud Database hum aage shift karenge
+    
         let confirmationResult; // OTP verify karne ke liye
 
         // Google Auth Provider setup
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // 🚀 1. GOOGLE LOGIN SE DATA WAPAS LAANA
+        // 🚀 FIX: LOGIN KARTA HI PURANA DATA WAPAS
         function signInWithGoogle() {
             auth.signInWithPopup(googleProvider)
             .then(async (result) => {
                 let user = result.user;
                 let loggedInEmail = user.email.toLowerCase();
 
-                // ☁️ Cloud se user ko dhoondho
                 let snapshot = await db.collection("users").where("email", "==", loggedInEmail).get();
 
                 if (!snapshot.empty) {
@@ -6008,16 +6044,11 @@
                     loggedInMobile = mob;
                     localStorage.setItem('utsav_erp_active_session', mob);
 
-                    // ☁️ Cloud se uski saari Companies dhoondho (As Owner ya Staff)
                     let compSnapshot = await db.collection("companies").get();
                     let myComps = [];
-                    
                     compSnapshot.forEach(doc => {
-                        let comp = doc.data();
-                        comp.id = doc.id;
-                        masterCompsDB[doc.id] = comp; // Memory mein save karo
-                        
-                        // Check: Agar Owner hai ya Staff mein iska number hai
+                        let comp = doc.data(); comp.id = doc.id;
+                        masterCompsDB[doc.id] = comp; 
                         if(comp.ownerMob === mob || (comp.staff && comp.staff.some(s => s.mobile === mob))) {
                             myComps.push(doc.id);
                         }
@@ -6028,17 +6059,68 @@
                     localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
                     localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
 
-                    checkPersistentLogin(); // List dikhane ke liye aage bhejo
+                    manageDeviceSession(mob); // 🔒 Device Lock On
+                    checkPersistentLogin(); 
                 } else {
-                    // Agar bilkul naya user hai toh profile banwao
                     document.getElementById('auth-screen').style.display = 'flex';
                     document.getElementById('auth_setup_name').value = user.displayName || "";
                     document.getElementById('auth_setup_email').value = loggedInEmail;
                     switchAuthView('view_new_user_setup');
                 }
-            }).catch((error) => {
-                alert("Google Login Failed: " + error.message);
-            });
+            }).catch((error) => { alert("Google Login Failed: " + error.message); });
+        }
+
+        // 🚀 FIX: NAYE PHONE PAR MOBILE NUMBER DALTE HI PURANA DATA SYNC KARNA
+        async function saveNewUserProfile() {
+            let name = document.getElementById('auth_setup_name').value.trim();
+            let email = document.getElementById('auth_setup_email').value.trim().toLowerCase();
+            let mob = document.getElementById('auth_setup_mobile').value.trim();
+
+            if (!name || !email || !mob) return alert("❌ All fields are required!");
+            if (mob.length !== 10 || isNaN(mob)) return alert("❌ Please enter a valid 10-digit mobile number!");
+
+            // ☁️ SMART CHECK: Kya ye mobile number Cloud par pehle se hai?
+            try {
+                let userDoc = await db.collection("users").doc(mob).get();
+                if (userDoc.exists) {
+                    // Purana User mil gaya! Uska email update karo aur usko uski company me bhej do!
+                    await db.collection("users").doc(mob).update({ email: email, name: name });
+                    
+                    loggedInMobile = mob;
+                    localStorage.setItem('utsav_erp_active_session', mob);
+
+                    let compSnapshot = await db.collection("companies").get();
+                    let myComps = [];
+                    compSnapshot.forEach(doc => {
+                        let comp = doc.data(); comp.id = doc.id;
+                        masterCompsDB[doc.id] = comp;
+                        if(comp.ownerMob === mob || (comp.staff && comp.staff.some(s => s.mobile === mob))) myComps.push(doc.id);
+                    });
+                    
+                    let userData = userDoc.data();
+                    userData.companies = myComps;
+                    masterUsersDB[mob] = userData;
+                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                    localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+
+                    manageDeviceSession(mob); // 🔒 Device Lock On
+                    checkPersistentLogin(); // Seedha dashboard!
+                    return;
+                }
+            } catch(e) { console.log(e); }
+
+            // Agar sach me Naya User hai
+            loggedInMobile = mob; 
+            let userObj = { name: name, mobile: mob, email: email, dob: "", companies: [] };
+            masterUsersDB[mob] = userObj;
+            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+            localStorage.setItem('utsav_erp_active_session', mob);
+
+            try { await db.collection("users").doc(mob).set(userObj); } catch(e) { console.error(e); }
+
+            manageDeviceSession(mob); // 🔒 Device Lock On
+            document.getElementById('lbl_user_name_choice').innerText = name.split(' ')[0];
+            openChoiceScreen(name);
         }
 
         // 🚀 FIX 3: REFRESH PAR DIRECT DASHBOARD AUTO-LOAD
@@ -6158,37 +6240,6 @@
             }
         }
 
-        // 🚀 3. SAVE PROFILE & LINK MOBILE (With Validation)
-        // 🚀 FIX 1: SAVE USER TO CLOUD
-        async function saveNewUserProfile() {
-            let name = document.getElementById('auth_setup_name').value.trim();
-            let email = document.getElementById('auth_setup_email').value.trim().toLowerCase();
-            let mob = document.getElementById('auth_setup_mobile').value.trim();
-
-            if (!name || !email || !mob) return alert("❌ All fields are required!");
-            if (mob.length !== 10 || isNaN(mob)) return alert("❌ Please enter a valid 10-digit mobile number!");
-
-            let users = Object.values(masterUsersDB); 
-            let mobExists = users.find(u => u.mobile === mob);
-            if (mobExists && mobExists.email && mobExists.email.toLowerCase() !== email) {
-                return alert(`❌ ERROR: This Mobile Number is already registered with another Email (${mobExists.email}).`);
-            }
-
-            loggedInMobile = mob; 
-            let userObj = { name: name, mobile: mob, email: email, dob: "", companies: [] };
-            
-            masterUsersDB[mob] = userObj;
-            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-            localStorage.setItem('utsav_erp_active_session', mob);
-
-            // ☁️ FIREBASE CLOUD SAVE
-            try {
-                await db.collection("users").doc(mob).set(userObj);
-            } catch(e) { console.error("Cloud User Save Error", e); }
-
-            document.getElementById('lbl_user_name_choice').innerText = name.split(' ')[0];
-            openChoiceScreen(name);
-        }
         // ==========================================
         // DATABASE & STATE MANAGEMENT (Update 8.8 CA-Level)
         // ==========================================
@@ -6489,7 +6540,7 @@
             if (targetView) {
                 targetView.style.display = 'block';
             } else {
-                console.warn("Galti: viewId '" + viewId + "' HTML mein nahi mila.");
+                console.warn("Error: viewId '" + viewId + "' not found in HTML.");
             }
         }
 
@@ -6602,7 +6653,7 @@
                 tempAuthLogo = "";
                 tempAuthSig = "";
 
-                alert(`🎉 Company Workspace Created Successfully!\n\n🏢 Company Name: ${compName}\n🔐 Your Shareable Join Code: ${generatedCode}\n\nThis code will hamesha be visible inside your 'Team & Staff' side panel.`);
+                alert(`🎉 Company Workspace Created Successfully!\n\n🏢 Company Name: ${compName}\n🔐 Your Shareable Join Code: ${generatedCode}\n\nThis code will always be visible inside your 'Team & Staff' side panel.`);
                 
                 // Directly launch dashboard
                 launchWorkspace(compId);
@@ -6922,56 +6973,6 @@
             document.getElementById('permissionModal').style.display = 'flex';
         }
 
-        // 5. Save Permissions
-        function saveStaffPermissions() {
-            let mobile = document.getElementById('perm_staff_mobile').value;
-            let comp = masterCompsDB[currentWorkspaceId];
-            let staffIndex = comp.staff.findIndex(s => s.mobile === mobile);
-            
-            if(staffIndex === -1) return;
-
-            // Form se permissions object banayein
-            let perms = {
-                modules: {
-                    crm: document.getElementById('perm_mod_crm').checked,
-                    event: document.getElementById('perm_mod_event').checked,
-                    sales: document.getElementById('perm_mod_sales').checked,
-                    purch: document.getElementById('perm_mod_purch').checked,
-                    exp: document.getElementById('perm_mod_exp').checked,
-                    bank: document.getElementById('perm_mod_bank').checked,
-                    rep: document.getElementById('perm_mod_rep').checked
-                },
-                actions: { 
-                    add: true, // Add default allowed
-                    edit: document.getElementById('perm_act_edit').checked, 
-                    del: document.getElementById('perm_act_del').checked 
-                }
-            };
-
-            // Data Save
-            comp.staff[staffIndex].permissions = perms;
-            comp.staff[staffIndex].status = 'Approved'; // 👈 APPROVAL HERE
-            
-            localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-            document.getElementById('permissionModal').style.display = 'none';
-            
-            openTeamModal(); // Refresh list
-            alert("✅ Access Granted & Permissions Saved!");
-        }
-
-        function rejectOrRemoveStaff(mobile, action) {
-            if (!confirm(`Are you sure you want to ${action} this person?`)) return;
-            let comp = masterCompsDB[currentWorkspaceId];
-            let staffIndex = comp.staff.findIndex(s => s.mobile === mobile);
-            comp.staff.splice(staffIndex, 1);
-            if (masterUsersDB[mobile]) {
-                masterUsersDB[mobile].companies = masterUsersDB[mobile].companies.filter(id => id !== currentWorkspaceId);
-                localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-            }
-            localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-            openTeamModal();
-        }
-
         // 6. Security Engine: Apply Rules
         function enforceStaffPermissions(compId) {
             let comp = masterCompsDB[compId];
@@ -7103,48 +7104,117 @@
         // ==========================================
         // 🚀 FIREBASE REAL-TIME CLOUD SYNC ENGINE
         // ==========================================
+        // 🚀 TEAM REAL-TIME CLOUD SYNC ENGINE
         let unsubscribeWorkspace = null;
+        let unsubscribeCompany = null; // 👈 Naya listener Staff ke liye
 
         function loadLocalData() {
-            // Purana local data saaf karo taaki cloud ka fresh data aaye
             leadsDB = {}; partiesDB = {}; salesDB = {}; purchaseDB = {}; expenseDB = {}; 
             globalTasksDB = {}; bankDB = {}; bankTxDB = {}; loansDB = {}; 
             
             if (!currentWorkspaceId) return;
 
-            // Agar koi purana connection chal raha hai toh usko todo
             if (unsubscribeWorkspace) unsubscribeWorkspace();
+            if (unsubscribeCompany) unsubscribeCompany(); // Purana todo
 
             console.log("🔄 Connecting Workspace to Real-Time Cloud...");
 
-            // ☁️ FIREBASE LIVE LISTENER (Ye khud detect karega jab koi aur data add karega)
-            unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId)
-            .onSnapshot((doc) => {
+            // 1. DATA LISTENER
+            unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId).onSnapshot((doc) => {
                 if (doc.exists) {
                     let data = doc.data();
-                    leadsDB = data.leads || {}; 
-                    partiesDB = data.parties || {}; 
-                    salesDB = data.sales || {}; 
-                    purchaseDB = data.purchase || {}; 
-                    expenseDB = data.expense || {}; 
-                    globalTasksDB = data.globalTasks || {}; 
-                    bankDB = data.bank || {}; 
-                    bankTxDB = data.bankTx || {}; 
-                    loansDB = data.loans || {}; 
+                    leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {}; 
+                    purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {}; 
+                    bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {}; 
                     if (data.expenseCats) expenseCats = data.expenseCats;
                 } 
-                
-                // System Bank Accounts Check
                 if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
                 if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
-
-                console.log("⚡ Live Data Synced with other devices!");
-                
-                // 🚨 UI Update karo, Par wapas Cloud par save mat karo! (Warna infinite loop ban jayega)
                 updateDataAndUI(true); 
-            }, (error) => {
-                console.error("Cloud Sync Error:", error);
+            }, (error) => { console.error("Cloud Sync Error:", error); });
+
+            // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates)
+            unsubscribeCompany = db.collection("companies").doc(currentWorkspaceId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    let compData = doc.data();
+                    compData.id = doc.id;
+                    masterCompsDB[doc.id] = compData; // Memory update
+                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+
+                    // Agar Owner ne 'Team' dabba khol rakha hai toh LIVE update karo
+                    let teamModal = document.getElementById('teamModal');
+                    if (teamModal && teamModal.style.display === 'flex') {
+                        openTeamModal(); 
+                    }
+                }
             });
+        }
+
+        // 🚀 STAFF ACTIONS CLOUD SAVE
+        async function saveStaffPermissions() {
+            let mobile = document.getElementById('perm_staff_mobile').value;
+            let comp = masterCompsDB[currentWorkspaceId];
+            let staffIndex = comp.staff.findIndex(s => s.mobile === mobile);
+            if(staffIndex === -1) return;
+
+            comp.staff[staffIndex].permissions = {
+                modules: {
+                    crm: document.getElementById('perm_mod_crm').checked, event: document.getElementById('perm_mod_event').checked,
+                    sales: document.getElementById('perm_mod_sales').checked, purch: document.getElementById('perm_mod_purch').checked,
+                    exp: document.getElementById('perm_mod_exp').checked, bank: document.getElementById('perm_mod_bank').checked, rep: document.getElementById('perm_mod_rep').checked
+                },
+                actions: { add: true, edit: document.getElementById('perm_act_edit').checked, del: document.getElementById('perm_act_del').checked }
+            };
+            comp.staff[staffIndex].status = 'Approved'; 
+            
+            try { await db.collection("companies").doc(currentWorkspaceId).update({ staff: comp.staff }); } catch(e) { console.error("Error", e); }
+
+            localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+            document.getElementById('permissionModal').style.display = 'none';
+            openTeamModal(); 
+            alert("✅ Access Granted & Saved to Cloud!");
+        }
+
+        async function rejectOrRemoveStaff(mobile, action) {
+            if (!confirm(`Are you sure you want to ${action} this person?`)) return;
+            let comp = masterCompsDB[currentWorkspaceId];
+            let staffIndex = comp.staff.findIndex(s => s.mobile === mobile);
+            comp.staff.splice(staffIndex, 1);
+            
+            try { await db.collection("companies").doc(currentWorkspaceId).update({ staff: comp.staff }); } catch(e) { }
+
+            if (masterUsersDB[mobile]) {
+                masterUsersDB[mobile].companies = masterUsersDB[mobile].companies.filter(id => id !== currentWorkspaceId);
+                localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+            }
+            localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+            openTeamModal();
+        }
+
+        async function addStaffByOwner() {
+            let name = document.getElementById('new_staff_name').value.trim();
+            let mob = document.getElementById('new_staff_mobile').value.trim();
+            let comp = masterCompsDB[currentWorkspaceId];
+
+            if (!name || !mob) return alert("Please fill Name and Mobile!");
+            if (comp.staff.some(s => s.mobile === mob)) return alert("❌ This mobile number is already in the team!");
+
+            comp.staff.push({ mobile: mob, name: name, status: 'Approved', role: 'Staff', permissions: { modules: { crm: true, event: true, sales: false, purch: false, exp: false, bank: false, rep: false }, actions: { add: true, edit: false, del: false } } });
+
+            try { await db.collection("companies").doc(currentWorkspaceId).update({ staff: comp.staff }); } catch(e) { }
+
+            if (!masterUsersDB[mob]) { masterUsersDB[mob] = { name: name, mobile: mob, email: "", companies: [currentWorkspaceId] }; } 
+            else { if (!masterUsersDB[mob].companies.includes(currentWorkspaceId)) masterUsersDB[mob].companies.push(currentWorkspaceId); }
+
+            localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+            document.getElementById('addStaffModal').style.display = 'none';
+
+            let inviteLink = `${window.location.origin}${window.location.pathname}?invite=${comp.joinCode}&cname=${encodeURIComponent(comp.name)}`;
+            if(confirm(`✅ Staff Added!\n\nDo you want to send the Login Invite Link to ${name} via WhatsApp?`)) {
+                window.open('https://wa.me/91' + mob + '?text=' + encodeURIComponent(`Hello ${name},\n\nYou have been added as Staff in *${comp.name}*.\n🔗 ${inviteLink}`), '_blank');
+            }
+            openTeamModal();
         }
 
         function saveDataLocally() { 
@@ -7290,7 +7360,7 @@
                 console.log("✅ Lead saved to Cloud!");
             } catch (e) {
                 console.error("❌ Sync Error:", e);
-                alert("Internet connection error! Lead save nahi ho saki.");
+                alert("❌ Internet connection error! Could not save the lead.");
             }
         }
 
@@ -8694,13 +8764,13 @@
         // ==========================================
         // 🚀 BANK KO DEFAULT SET KARNE KA FUNCTION (Step 1)
         function setDefaultBank(id) {
-            if (id === 'CASH' || id === 'ACC_CASH' || id === 'ACC_CHEQUE') return alert("System accounts ko default set nahi kar sakte.");
+            if (id === 'CASH' || id === 'ACC_CASH' || id === 'ACC_CHEQUE') return alert("❌ System accounts cannot be set as default.");
             Object.values(bankDB).forEach(b => {
                 if (b.type === 'Bank' || b.type === 'Cash') b.isDefault = false;
             });
             if (bankDB[id]) bankDB[id].isDefault = true;
             updateDataAndUI();
-            alert(`${bankDB[id].name} ko Invoice/Bill printing ke liye Default Bank set kar diya gaya hai!`);
+            alert(`⭐ ${bankDB[id].name} has been set as the Default Bank for Invoice/Bill printing!`);
             closeAllMenus();
         }
 
@@ -14665,47 +14735,7 @@
         console.log("Firebase Init check:", firebase.apps.length > 0 ? "Success" : "Failed");
         console.log("Project ID in Config:", firebaseConfig.projectId);
         
-        function addStaffByOwner() {
-            let name = document.getElementById('new_staff_name').value.trim();
-            let mob = document.getElementById('new_staff_mobile').value.trim();
-            let comp = masterCompsDB[currentWorkspaceId];
-
-            if (!name || !mob) return alert("Please fill Name and Mobile!");
-            if (comp.staff.some(s => s.mobile === mob)) return alert("❌ This mobile number is already in the team!");
-
-            // Default Permissions for new staff
-            let defaultPerms = {
-                modules: { crm: true, event: true, sales: false, purch: false, exp: false, bank: false, rep: false },
-                actions: { add: true, edit: false, del: false }
-            };
-
-            // Owner se directly add hone par status 'Approved' rahega
-            comp.staff.push({ mobile: mob, name: name, status: 'Approved', role: 'Staff', permissions: defaultPerms });
-
-            if (!masterUsersDB[mob]) {
-                masterUsersDB[mob] = { name: name, mobile: mob, email: "", companies: [currentWorkspaceId] };
-            } else {
-                if (!masterUsersDB[mob].companies.includes(currentWorkspaceId)) {
-                    masterUsersDB[mob].companies.push(currentWorkspaceId);
-                }
-            }
-
-            localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-
-            document.getElementById('addStaffModal').style.display = 'none';
-
-            // 🚀 INVITE LINK GENERATION
-            let inviteLink = `${window.location.origin}${window.location.pathname}?invite=${comp.joinCode}&cname=${encodeURIComponent(comp.name)}`;
-            
-            let waMsg = `Hello ${name},\n\nYou have been added as Staff in *${comp.name}*.\n\nClick the link below to securely login/register and join your workspace:\n🔗 ${inviteLink}\n\nWelcome to the team!`;
-
-            if(confirm(`✅ Staff Added Successfully!\n\nDo you want to send the Login Invite Link to ${name} via WhatsApp?`)) {
-                window.open('https://wa.me/91' + mob + '?text=' + encodeURIComponent(waMsg), '_blank');
-            }
-            
-            openTeamModal();
-        }
+    
         // 🚀 Naya Choice Screen Handler
         // 🚀 FIX 2: SCREEN CHANGE LOGIC ADDED
         function openChoiceScreen(userName) {
