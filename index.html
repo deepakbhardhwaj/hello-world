@@ -16671,6 +16671,45 @@
                 originalGenerateCurrentReport();
             }
         };
+        // ==========================================
+        // 🚀 SMART AUTO-FIX ENGINE (Layout & Overlap Fixer)
+        // ==========================================
+        (function applyMasterFix() {
+            // 1. Move all Panels to the body root
+            document.querySelectorAll('.side-panel-overlay').forEach(el => document.body.appendChild(el));
+            document.querySelectorAll('.side-panel').forEach(el => document.body.appendChild(el));
+            
+            // 2. Move all Modals to root (This guarantees they always open ON TOP of panels)
+            let seenModals = {};
+            document.querySelectorAll('.modal-overlay').forEach(m => {
+                if (m.id) {
+                    if (seenModals[m.id]) {
+                        seenModals[m.id].remove(); // Delete duplicate copy-pasted modals
+                    } else {
+                        seenModals[m.id] = m;
+                        document.body.appendChild(m); // Move original modal to absolute top layer
+                    }
+                }
+            });
+
+            // 3. Fix Broken Sections (Move Inventory Hub safely inside App)
+            let mainApp = document.getElementById('main-app');
+            if (mainApp) {
+                document.querySelectorAll('body > .section').forEach(sec => mainApp.appendChild(sec));
+            }
+
+            // 4. Fix Duplicate Bottom Nav Bars
+            let navBars = document.querySelectorAll('.nav-bar');
+            if (navBars.length > 1) {
+                for (let i = 1; i < navBars.length; i++) navBars[i].remove(); // Remove extra nav bars
+            }
+
+            // 5. Restore Missing Bottom Buttons
+            let nav = document.querySelector('.nav-bar');
+            if (nav) nav.style.display = 'flex';
+
+            console.log("✅ Auto-Fix Engine Applied! Layout and Overlaps cleared.");
+        })();
     </script>
 </body>
 
