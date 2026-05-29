@@ -47,7 +47,8 @@
         // 🚀 FIX: Prevent Firebase "RPC Listen Stream" Disconnections & Missing Data
         window.db.settings({
             experimentalForceLongPolling: true,
-            useFetchStreams: false
+            useFetchStreams: false,
+            merge: true  // 👈 BAS YE EK LINE JODNI HAI
         });
 
         console.log("✅ Firebase & Database Connected Successfully!");
@@ -2100,6 +2101,7 @@
 
             <a href="javascript:void(0);" class="nav-link" id="btn_team_manage"
                 onclick="openTeamModal(); closeNav();">👥 Team & Staff</a>
+            <a href="javascript:void(0);" class="nav-link" onclick="openTab('inventory-hub', this); closeNav();">📦 Inventory & Godown</a>
             <a href="javascript:void(0);" class="nav-link" onclick="openTab('settings-hub', this); closeNav();">⚙️ App
                 Settings</a>
             <a href="javascript:void(0);" class="nav-link"
@@ -5030,14 +5032,21 @@
                         <div class="form-group"><label class="form-label">Invoice Date</label><input type="date"
                                 id="di_date" class="form-input" required></div>
                     </div>
-                    <div
-                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Services /
-                                Items</label><button type="button"
-                                style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);"
-                                onclick="addInvoiceItem()">+ Add Item</button>
+                    <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label class="form-label" style="color:var(--accent-color);">Invoice Type</label>
+                            <select id="di_invoice_type" class="form-select" onchange="toggleInvoiceType()">
+                                <option value="Event">Standard Event (Services / Packages)</option>
+                                <option value="Rental">Rental / Material Outward (Props & Inventory)</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Godown Stock</button>
+                                <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addInvoiceItem()">+ Add Item</button>
+                            </div>
                         </div>
                         <div id="inv_items_container"></div>
                     </div>
@@ -15389,6 +15398,18 @@
         // Fix Floating button visibility for Inventory Hub
         if (!window.hideFabTabs.includes('inventory-hub')) {
             window.hideFabTabs.push('inventory-hub');
+        }
+        // 🚀 INVOICE TYPE TOGGLE (Sales Hub me Godown Button dikhane ke liye)
+        function toggleInvoiceType() {
+            let type = document.getElementById('di_invoice_type');
+            let btnGodown = document.getElementById('btn_fetch_godown');
+            if(type && btnGodown) {
+                if(type.value === 'Rental') {
+                    btnGodown.style.display = 'block';
+                } else {
+                    btnGodown.style.display = 'none';
+                }
+            }
         }
     </script>
 </body>
