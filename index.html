@@ -947,7 +947,7 @@
             height: 100%;
             background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(3px);
-            z-index: 3000;
+            z-index: 9999 !important; /* 🚀 FIX: Made sure form is ALWAYS on top of floating buttons */
             display: none;
             align-items: flex-end;
             justify-content: center;
@@ -964,6 +964,7 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 10000 !important; /* 🚀 FIX: Form Layer on Top */
         }
 
         @keyframes slideUpModal {
@@ -6570,6 +6571,28 @@
                 document.getElementById('auth_comp_logo_text').style.display = 'none';
             }; reader.readAsDataURL(file);
         }
+        // 🚀 FIX 1: Missing Transfer Lead Function
+        function transferLead(leadId, newAssigneeMobile) {
+            if (!leadId || !leadsDB[leadId]) return;
+            
+            leadsDB[leadId].assignedTo = newAssigneeMobile;
+            
+            // Staff ka naam nikalne ke liye
+            let staffName = "Unassigned";
+            if (newAssigneeMobile && masterUsersDB[newAssigneeMobile]) {
+                staffName = masterUsersDB[newAssigneeMobile].name;
+            } else if (newAssigneeMobile) {
+                staffName = newAssigneeMobile;
+            }
+
+            leadsDB[leadId].notes.push({ 
+                time: new Date().toLocaleString('en-IN'), 
+                text: "Lead assigned/transferred to: " + staffName 
+            });
+
+            updateDataAndUI();
+            alert(`✅ Lead successfully assigned to ${staffName}`);
+        }
 
         // Signature Upload Logic For Auth Screen
         function handleAuthSigUpload(event) {
@@ -6995,7 +7018,9 @@
                 }
             }
 
-            // Sidebar Tabs Check
+            // ----------------------------------------------------
+            // Sidebar Tabs Check (Jo aapne bheja tha)
+            // ----------------------------------------------------
             let p = currentPermissions.modules;
             let links = document.querySelectorAll('.nav-link');
             links.forEach(link => {
@@ -7008,6 +7033,33 @@
                 if (text.includes('Vendor') || text.includes('Make Payment')) link.style.display = p.purch ? 'flex' : 'none';
                 if (text.includes('Expense')) link.style.display = p.exp ? 'flex' : 'none';
             });
+
+            // ----------------------------------------------------
+            // 🚀 NAYA FIX: BOTTOM NAVIGATION BAR TABS HIDE/SHOW
+            // ----------------------------------------------------
+            let btnHome = document.getElementById('btn-home');
+            let btnCrm = document.getElementById('btn-crm');
+            let btnEvents = document.getElementById('btn-events');
+            let btnTasks = document.getElementById('btn-tasks');
+            let btnErp = document.getElementById('btn-erp');
+
+            if(btnCrm) btnCrm.style.display = p.crm ? 'flex' : 'none';
+            if(btnEvents) btnEvents.style.display = p.event ? 'flex' : 'none';
+            
+            // ERP Button tabhi dikhega agar kisi ek hub (Sales, Purchase, etc.) ka access ho
+            let hasAnyErpAccess = (p.sales || p.purch || p.exp || p.bank || p.rep);
+            if(btnErp) btnErp.style.display = hasAnyErpAccess ? 'flex' : 'none';
+
+            // 🚀 SECURITY: Agar user ne restricted tab pehle se kholi hui hai, toh use forcefully HOME par fenko!
+            let activeSection = document.querySelector('.active-section');
+            if (activeSection) {
+                let id = activeSection.id;
+                if (id === 'crm' && !p.crm) openTab('home', btnHome);
+                if (id === 'events' && !p.event) openTab('home', btnHome);
+                if ((id === 'sales-hub' || id === 'purchase-hub' || id === 'expense-hub' || id === 'bank-hub' || id === 'reports-hub' || id === 'party-master') && !hasAnyErpAccess) {
+                    openTab('home', btnHome);
+                }
+            }
         }
 
         // 7. Security Interceptors for Delete/Edit
@@ -7327,6 +7379,12 @@
                 return;
             }
 
+            // 🚀 FIX: Auto-Assign to Staff if they created it
+            let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
+            let dropdownAssign = document.getElementById('l_assign_to').value;
+            // Agar owner nahi hai aur dropdown khali hai, toh khud ko assign kar lega
+            let finalAssignee = dropdownAssign || (isOwner ? "" : loggedInMobile);
+
             // Naya Lead Object banao
             let id = editingLeadId ? editingLeadId : "L" + Date.now();
             let leadObj = {
@@ -7338,7 +7396,7 @@
                 cat: document.getElementById('l_category').value,
                 budget: document.getElementById('l_budget').value || "0",
                 status: status,
-                assignedTo: document.getElementById('l_assign_to').value,
+                assignedTo: finalAssignee, // 👈 Yahan change hua hai
                 venue: document.getElementById('l_venue').value,
                 source: document.getElementById('l_source').value,
                 notes: editingLeadId ? leadsDB[id].notes : [{ time: new Date().toLocaleString('en-IN'), text: "Lead created in system." }],
