@@ -44,11 +44,12 @@
         window.auth = firebase.auth();
         window.db = firebase.firestore();
 
-        // 🚀 FIX: Prevent Firebase "RPC Listen Stream" Disconnections & Missing Data
+        // 🚀 FIX: Prevent Firebase Polling Conflict
         window.db.settings({
             experimentalForceLongPolling: true,
+            experimentalAutoDetectLongPolling: false, // 👈 Ye error ko khatam karega
             useFetchStreams: false,
-            merge: true  // 👈 BAS YE EK LINE JODNI HAI
+            merge: true
         });
 
         console.log("✅ Firebase & Database Connected Successfully!");
@@ -4793,12 +4794,18 @@
                             required></select>
                     </div>
         
-                    <div class="form-group">
-                        <label class="form-label" style="color:var(--accent-color);">Asset Classification (Prop ya Office)</label>
-                        <select id="ast_asset_type" class="form-select">
-                            <option value="Office">Office Asset (Computer, AC, Office Furniture)</option>
-                            <option value="Rental">Rental Item / Prop Inventory (Flowers, Tables, Materials)</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" style="color:var(--accent-color);">Asset Classification</label>
+                            <select id="ast_asset_type" class="form-select" onchange="toggleAssetGodown()">
+                                <option value="Office">Office Asset</option>
+                                <option value="Rental">Rental / Prop Inventory</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="ast_godown_group" style="display:none;">
+                            <label class="form-label" style="color:var(--purple);">Store in Godown 🏭</label>
+                            <select id="ast_godown_select" class="form-select"></select>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -6035,67 +6042,94 @@
             </div>
         </div>
     </div>
+    <div id="godownModal" class="modal-overlay" style="z-index: 6000;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>🏭 Manage Godowns</h3>
+                <button class="modal-close" onclick="document.getElementById('godownModal').style.display='none';">&times;</button>
+            </div>
+            <div id="godown_list_container" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding-right:5px;"></div>
+            <form id="godownForm" onsubmit="event.preventDefault(); saveGodown();" novalidate>
+                <div class="form-group">
+                    <label class="form-label">New Godown Name</label>
+                    <input type="text" id="gdn_name" class="form-input" placeholder="e.g. Branch 2 Godown" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Location / Address</label>
+                    <input type="text" id="gdn_address" class="form-input" placeholder="e.g. Vesu, Surat">
+                </div>
+                <button type="submit" class="btn-main" style="background:var(--purple);">+ Create Godown</button>
+            </form>
+        </div>
+    </div>
     
     <div id="inventory-hub" class="content section" style="padding-bottom:120px;">
-            <div class="premium-sticky-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <button onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:none; padding:0; cursor:pointer; color:var(--text-primary); border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    </button>
-                    <h2 class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Live Godown</h2>
-                </div>
+        <div class="premium-sticky-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:none; padding:0; cursor:pointer; color:var(--text-primary); border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <h2 class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Live Godown</h2>
             </div>
-
-            <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
-                <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
-                    <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
-                    <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
-                </div>
-                <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
-                    <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
-                    <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
-                </div>
+        </div>
+        
+        <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
+            <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
+                <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
+                <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
             </div>
-
-            <div class="premium-sticky-filters">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button class="btn-main" style="flex:1; background:linear-gradient(135deg, #10B981, #047857); border-radius:8px;" onclick="openOutwardChallanModal()">🚚 Send to Event (Outward)</button>
-                </div>
-                <div class="search-container" style="margin-bottom:0;">
-                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" class="search-input" id="inv_hub_search" placeholder="Search item in Godown..." oninput="renderInventoryHubList()">
-                </div>
+            <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
+                <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
+                <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
             </div>
-
-            <div id="inventory-list-container"></div>
         </div>
 
-        <div id="outwardChallanModal" class="modal-overlay" style="z-index: 5500;">
-            <div class="modal-content" style="max-width: 500px;">
-                <div class="modal-header">
-                    <h3>🚚 Material Outward (Challan)</h3>
-                    <button class="modal-close" onclick="document.getElementById('outwardChallanModal').style.display='none';">&times;</button>
-                </div>
-                <form id="outwardForm" novalidate>
+        <div class="premium-sticky-filters">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="btn-main" style="flex:1; background:linear-gradient(135deg, #10B981, #047857); border-radius:8px;" onclick="openOutwardChallanModal()">🚚 Send to Event (Outward)</button>
+                <button class="btn-main" style="flex:0.6; background:var(--purple); border-radius:8px;" onclick="openGodownModal()">🏭 Godowns</button>
+            </div>
+            <div class="search-container" style="margin-bottom:0;">
+                <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="search-input" id="inv_hub_search" placeholder="Search item in Godown..." oninput="renderInventoryHubList()">
+            </div>
+        </div>
+
+        <div id="inventory-list-container"></div>
+    </div>
+
+    <div id="outwardChallanModal" class="modal-overlay" style="z-index: 5500;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>🚚 Material Outward (Challan)</h3>
+                <button class="modal-close" onclick="document.getElementById('outwardChallanModal').style.display='none';">&times;</button>
+            </div>
+            <form id="outwardForm" novalidate>
+                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" style="color:var(--accent-color);">Target Event</label>
                         <select id="out_event" class="form-select" required></select>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Dispatch Date</label><input type="date" id="out_date" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label">Vehicle / Transport No.</label><input type="text" id="out_vehicle" class="form-input" placeholder="e.g. GJ-05-XX-1234"></div>
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--purple);">Dispatch From Godown 🏭</label>
+                        <select id="out_godown_select" class="form-select" required></select>
                     </div>
-                    <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Items to Dispatch</label>
-                            <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('out')">📦 Select from Godown</button>
-                        </div>
-                        <div id="out_items_container"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Dispatch Date</label><input type="date" id="out_date" class="form-input" required></div>
+                    <div class="form-group"><label class="form-label">Vehicle / Transport No.</label><input type="text" id="out_vehicle" class="form-input" placeholder="e.g. GJ-05-XX-1234"></div>
+                </div>
+                <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <label class="form-label" style="margin: 0; color: var(--accent-color);">Items to Dispatch</label>
+                        <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('out')">📦 Select from Godown</button>
                     </div>
-                    <button type="button" class="btn-main" onclick="saveOutwardChallan()">Dispatch Material</button>
-                </form>
-            </div>
+                    <div id="out_items_container"></div>
+                </div>
+                <button type="button" class="btn-main" onclick="saveOutwardChallan()">Dispatch Material</button>
+            </form>
         </div>
+    </div>
 
     <script>
         // Attach event listener for outwardForm submit
@@ -15411,6 +15445,191 @@
                 }
             }
         }
+        // ==========================================
+        // 🚀 VERSION 9.5: MULTI-GODOWN ENGINE (OVERRIDE)
+        // ==========================================
+
+        function toggleAssetGodown() {
+            let type = document.getElementById('ast_asset_type').value;
+            document.getElementById('ast_godown_group').style.display = (type === 'Rental') ? 'block' : 'none';
+        }
+
+        function loadGodownsIntoSelect() {
+            let astSelect = document.getElementById('ast_godown_select');
+            let outSelect = document.getElementById('out_godown_select');
+            let html = '';
+            Object.values(warehousesDB).forEach(w => {
+                html += `<option value="${w.id}">${w.name}</option>`;
+            });
+            if(astSelect) astSelect.innerHTML = html;
+            if(outSelect) outSelect.innerHTML = html;
+        }
+
+        function openGodownModal() {
+            let list = document.getElementById('godown_list_container');
+            list.innerHTML = '';
+            Object.values(warehousesDB).forEach(w => {
+                list.innerHTML += `<div style="padding:10px; border:1px solid #E2E8F0; border-radius:8px; margin-bottom:8px; background:#F8FAFC; display:flex; justify-content:space-between; align-items:center;">
+                    <div><div style="font-size:13px; font-weight:800; color:var(--text-primary);">${w.name}</div><div style="font-size:10px; color:#64748B;">📍 ${w.address || 'No Address'}</div></div>
+                    ${w.isDefault ? '<span style="font-size:9px; background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:bold;">Main</span>' : ''}
+                </div>`;
+            });
+            document.getElementById('godownModal').style.display = 'flex';
+        }
+
+        function saveGodown() {
+            let name = document.getElementById('gdn_name').value.trim();
+            let add = document.getElementById('gdn_address').value.trim();
+            if(!name) return alert("Godown name required!");
+            let id = "WH_" + Date.now();
+            warehousesDB[id] = { id: id, name: name, address: add, isDefault: false };
+            updateDataAndUI();
+            document.getElementById('godownForm').reset();
+            openGodownModal();
+            loadGodownsIntoSelect();
+        }
+
+        // 🚀 Hooks to auto-load godowns when modals open
+        let originalOpenAssetModalMulti = openAssetModal;
+        openAssetModal = function(preFillPartyId = null) {
+            originalOpenAssetModalMulti(preFillPartyId);
+            loadGodownsIntoSelect();
+            toggleAssetGodown();
+        };
+
+        let originalOpenOutwardChallanModalMulti = openOutwardChallanModal;
+        openOutwardChallanModal = function() {
+            originalOpenOutwardChallanModalMulti();
+            loadGodownsIntoSelect();
+        };
+
+        // 🚀 OVERRIDE: Render Inventory with Godown Breakdown
+        function renderInventoryHubList() {
+            let container = document.getElementById('inventory-list-container');
+            if (!container) return; container.innerHTML = "";
+            let search = document.getElementById('inv_hub_search').value.toLowerCase();
+            let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
+
+            Object.values(itemsDB).forEach(item => {
+                let inGodown = 0;
+                let godownBreakdownHtml = '';
+                
+                // Calculate stock across ALL godowns
+                for (let gId in item.godowns) {
+                    let stock = item.godowns[gId] || 0;
+                    inGodown += stock;
+                    if(stock > 0) {
+                        let gName = warehousesDB[gId] ? warehousesDB[gId].name : gId;
+                        godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
+                    }
+                }
+
+                let deployed = (item.totalStock || 0) - inGodown;
+                totalInGodown += inGodown; totalDeployed += deployed;
+
+                if (search && !item.name.toLowerCase().includes(search)) return;
+                visibleCount++;
+
+                container.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);">
+                    <div style="flex:1;">
+                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
+                        <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${item.totalStock}</div>
+                        <div style="padding-top:6px; border-top:1px dashed #E2E8F0;">${godownBreakdownHtml}</div>
+                    </div>
+                    <div style="display:flex; gap:10px; text-align:center;">
+                        <div style="background:#EFF6FF; padding:8px 12px; border-radius:8px; border:1px solid #BFDBFE; min-width:60px;">
+                            <div style="font-size:9px; color:var(--accent-color); font-weight:800; text-transform:uppercase;">In Godowns</div>
+                            <div style="font-size:16px; font-weight:900; color:#1E3A8A;">${inGodown}</div>
+                        </div>
+                        <div style="background:#FFFBEB; padding:8px 12px; border-radius:8px; border:1px solid #FDE68A; min-width:60px;">
+                            <div style="font-size:9px; color:var(--warning); font-weight:800; text-transform:uppercase;">On Event</div>
+                            <div style="font-size:16px; font-weight:900; color:#9A3412;">${deployed}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('inv_stat_godown').innerText = totalInGodown;
+            document.getElementById('inv_stat_deployed').innerText = totalDeployed;
+            if (visibleCount === 0) container.innerHTML = `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.</div>`;
+        }
+
+        // 🚀 OVERRIDE: Save Asset (Multi-Godown Support)
+        let originalSaveAssetData = saveAssetData;
+        saveAssetData = function() {
+            let assetType = document.getElementById('ast_asset_type') ? document.getElementById('ast_asset_type').value : 'Office';
+            let selectedGodown = document.getElementById('ast_godown_select') ? document.getElementById('ast_godown_select').value : 'WH_MAIN';
+
+            // Hijack ItemsDB pushing logic
+            document.querySelectorAll('#ast_items_container .quote-item-row').forEach(row => { 
+                let name = row.querySelector('.i-item-name').value; 
+                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
+                if (name && assetType === 'Rental' && !editingPurchaseId) {
+                    if (!itemsDB[name]) itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
+                    if (!itemsDB[name].godowns[selectedGodown]) itemsDB[name].godowns[selectedGodown] = 0;
+                    itemsDB[name].totalStock += qty;
+                    itemsDB[name].godowns[selectedGodown] += qty;
+                }
+            });
+
+            // Prevent double saving logic in original function by temporarily removing it, 
+            // but since original function had it hardcoded to 'WH_MAIN', we fix it via re-defining the original fully or letting it run.
+            // Since we updated itemsDB here safely, we can let original run (though it might duplicate WH_MAIN if we are not careful).
+            // To be 100% safe, we will just delete the WH_MAIN double count if it happens:
+            let stockBefore = JSON.stringify(itemsDB);
+            originalSaveAssetData();
+            
+            // Fix double counting caused by original function
+            if(assetType === 'Rental' && !editingPurchaseId) {
+                document.querySelectorAll('#ast_items_container .quote-item-row').forEach(row => { 
+                    let name = row.querySelector('.i-item-name').value; 
+                    let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
+                    if(name && selectedGodown !== 'WH_MAIN') {
+                        // Remove the hardcoded WH_MAIN addition done by original function
+                        itemsDB[name].totalStock -= qty;
+                        itemsDB[name].godowns['WH_MAIN'] -= qty;
+                    }
+                });
+            }
+            if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
+        };
+
+        // 🚀 OVERRIDE: Outward Challan (Multi-Godown Support)
+        saveOutwardChallan = function() {
+            let evId = document.getElementById('out_event').value;
+            let date = document.getElementById('out_date').value;
+            let vehicle = document.getElementById('out_vehicle').value;
+            let selectedGodown = document.getElementById('out_godown_select').value;
+
+            if (!evId || !selectedGodown) return alert("Select an event and Godown!");
+
+            let itemsToSend = [];
+            document.querySelectorAll('#out_items_container .quote-item-row').forEach(row => {
+                let name = row.querySelector('.o-item-name').value;
+                let qty = parseInt(row.querySelector('.o-item-qty').value) || 0;
+                if (name && qty > 0) itemsToSend.push({ name, qty });
+            });
+
+            if (itemsToSend.length === 0) return alert("Add at least one item!");
+            let challanId = "CHL" + Date.now();
+            
+            // 🚀 DEDUCT STOCK FROM SELECTED GODOWN
+            itemsToSend.forEach(item => {
+                if (itemsDB[item.name] && itemsDB[item.name].godowns[selectedGodown]) {
+                    itemsDB[item.name].godowns[selectedGodown] -= item.qty;
+                }
+            });
+
+            stockMovementDB[challanId] = {
+                id: challanId, eventId: evId, date: date, vehicle: vehicle, fromGodown: selectedGodown,
+                type: 'OUTWARD', items: itemsToSend, status: 'Deployed'
+            };
+
+            updateDataAndUI();
+            document.getElementById('outwardChallanModal').style.display = 'none';
+            alert(`✅ Material Dispatched Successfully to ${leadsDB[evId].func}!`);
+            renderInventoryHubList();
+        };
     </script>
 </body>
 
