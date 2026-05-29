@@ -7897,8 +7897,16 @@
         function jumpToLedger(partyId) { closePanel(); setTimeout(() => { openPartyLedger(partyId); }, 400); }
         function togglePrivacy() { privacyMode = !privacyMode; let ev = leadsDB[activeWorkspaceEventId]; if (ev) renderWorkspace(ev.id); }
         function closePanel() { document.getElementById('detailPanel').classList.remove('open'); setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; currentLeadId = null; activeWorkspaceEventId = null; }, 300); }
-        function saveAndClosePanel() { if (currentLeadId && leadsDB[currentLeadId].status !== 'Won') { let pendingNote = document.getElementById('p_new_note').value; if (pendingNote) { addNote(); } updateLeadStatus(false); } updateDataAndUI(); closePanel(); }
-
+        function saveAndClosePanel() { 
+            // 🚀 FIX: Added safety check (leadsDB[currentLeadId]) before reading status
+            if (currentLeadId && leadsDB[currentLeadId] && leadsDB[currentLeadId].status !== 'Won') { 
+                let pendingNote = document.getElementById('p_new_note').value; 
+                if (pendingNote) { addNote(); } 
+                updateLeadStatus(false); 
+            } 
+            updateDataAndUI(); 
+            closePanel(); 
+        }
         function renderEventTasks(ev) { let tCont = document.getElementById('ws_tasks_list'); tCont.innerHTML = ""; if (!ev.tasks) ev.tasks = []; if (ev.tasks.length === 0) { tCont.innerHTML = "<p style='font-size:12px; font-weight:500; color:#94A3B8; margin:0;'>No tasks pending.</p>"; } ev.tasks.forEach((t, idx) => { let dlHtml = ""; if (t.deadline) { let dt = new Date(t.deadline); let formattedDl = dt.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); let start = dt.toISOString().replace(/-|:|\.\d\d\d/g, ""); let endDt = new Date(dt.getTime() + 60 * 60 * 1000); let end = endDt.toISOString().replace(/-|:|\.\d\d\d/g, ""); let calLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.text)}&dates=${start}/${end}`; dlHtml = `<div style="font-size:10px; font-weight:700; color:var(--danger); margin-top:6px; display:flex; align-items:center; gap:5px;">⏰ Due: ${formattedDl} <a href="${calLink}" target="_blank" style="color:var(--accent-color); text-decoration:none;">📅 Cal</a></div>`; } tCont.innerHTML += `<div class="task-item" style="align-items:flex-start;"><input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleEventTask(${idx})" style="margin-top:2px;"><div style="flex:1;"><div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>${dlHtml}</div><button onclick="deleteEventTask(${idx})" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px;">&times;</button></div>`; }); }
         function addEventTask() { let input = document.getElementById('ws_new_task'); let deadlineInput = document.getElementById('ws_task_deadline'); let text = input.value; let deadline = deadlineInput.value; if (!text || !activeWorkspaceEventId) return; leadsDB[activeWorkspaceEventId].tasks.push({ id: "TSK" + Date.now(), text: text, done: false, deadline: deadline }); input.value = ""; deadlineInput.value = ""; saveDataLocally(); renderEventTasks(leadsDB[activeWorkspaceEventId]); }
         function toggleEventTask(idx) { leadsDB[activeWorkspaceEventId].tasks[idx].done = !leadsDB[activeWorkspaceEventId].tasks[idx].done; saveDataLocally(); renderEventTasks(leadsDB[activeWorkspaceEventId]); }
@@ -8212,7 +8220,18 @@
         // ==========================================
         // COMMAND CENTER (TASKS & CALENDAR)
         // ==========================================
-        function openQuickTaskModal() { closeAllMenus(); document.getElementById('quickTaskForm').reset(); toggleTaskLeadSelect(); document.getElementById('quickTaskModal').style.display = 'flex'; }
+        function openQuickTaskModal() { 
+            closeAllMenus(); 
+            document.getElementById('quickTaskForm').reset(); 
+            toggleTaskLeadSelect(); 
+            
+            // 🚀 FIX 3: LIVE LOAD STAFF LIST WHEN MODAL OPENS
+            if(typeof loadStaffForAssignment === 'function') {
+                loadStaffForAssignment('qt_assign_to');
+            }
+
+            document.getElementById('quickTaskModal').style.display = 'flex'; 
+        }
         function toggleTaskLeadSelect() { let type = document.getElementById('qt_type').value; document.getElementById('qt_lead_group').style.display = type === 'Event' ? 'block' : 'none'; if (type === 'Event') loadEventsIntoSelect('qt_lead', ""); }
         function saveQuickTask() { let type = document.getElementById('qt_type').value; let text = document.getElementById('qt_text').value; let deadline = document.getElementById('qt_deadline').value; let assignedTo = document.getElementById('qt_assign_to').value; if (!text) return alert("Task description required!"); let tId = "TSK" + Date.now(); if (type === 'Event') { let lId = document.getElementById('qt_lead').value; if (!lId) return alert("Select an Event!"); leadsDB[lId].tasks.push({ id: tId, text: text, done: false, deadline: deadline, assignedTo: assignedTo }); } else { globalTasksDB[tId] = { id: tId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: new Date().toISOString().split('T')[0] }; } updateDataAndUI(); document.getElementById('quickTaskModal').style.display = 'none'; alert("Task Added!"); }
 
@@ -13313,18 +13332,23 @@
         // 🚀 SMART MOBILE UI & BACK BUTTON FIXES
         // ==========================================
 
-        // FIX 1: Form Save hone par forcefully Tab change na ho
-        let originalOpenTab = openTab;
+        // 🚀 FIX 2: GLOBAL SECURITY INTERCEPTOR FOR ALL TABS (DASHBOARD CARDS BLOCK)
+        let originalOpenTabSecurity = openTab;
         openTab = function (tabName, btnElement) {
-            // Agar code automatically tab change karne ki koshish kar raha hai (btnElement = null)
-            // Aur hum abhi Events, CRM ya Home tab mein hain, toh tab change ko rok do!
-            if (!btnElement) {
-                let currentActive = document.querySelector('.active-section');
-                if (currentActive && (currentActive.id === 'events' || currentActive.id === 'crm' || currentActive.id === 'home')) {
-                    return;
-                }
+            // Check Permissions before opening any tab
+            if (typeof currentPermissions !== 'undefined' && currentPermissions.modules) {
+                let p = currentPermissions.modules;
+                
+                if (tabName === 'crm' && !p.crm) return alert("⛔ ACCESS DENIED! You don't have permission for CRM/Leads.");
+                if (tabName === 'events' && !p.event) return alert("⛔ ACCESS DENIED! You don't have permission for Events.");
+                if (tabName === 'sales-hub' && !p.sales) return alert("⛔ ACCESS DENIED! You don't have permission for Sales Hub.");
+                if (tabName === 'purchase-hub' && !p.purch) return alert("⛔ ACCESS DENIED! You don't have permission for Purchase Hub.");
+                if (tabName === 'expense-hub' && !p.exp) return alert("⛔ ACCESS DENIED! You don't have permission for Expenses.");
+                if (tabName === 'bank-hub' && !p.bank) return alert("⛔ ACCESS DENIED! You don't have permission for Cash & Bank.");
+                if (tabName === 'reports-hub' && !p.rep) return alert("⛔ ACCESS DENIED! You don't have permission for Reports.");
             }
-            originalOpenTab(tabName, btnElement);
+            // Agar permission hai, toh tab open karo
+            originalOpenTabSecurity(tabName, btnElement);
         };
 
         // FIX 2: Workspace se buttons dabane par background mein tab change na ho
