@@ -15946,7 +15946,7 @@
                             </div>
                             <div style="display:flex; gap:8px;">
                                 <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
-                                <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
+                                <button onclick="window.openReturnStockModal('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 163, 74, 0.3);">✅ Process Return</button>
                             </div>
                         </div>`;
                     }
@@ -16370,7 +16370,7 @@
                                 <span>Inv: ${inv.id} | 📅 Due Return: ${returnDateStr}</span>
                                 <div style="display:flex; gap:6px;">
                                     <button onclick="document.getElementById('itemDetailModal').style.display='none'; viewDetails('${inv.id}', 'sales');" style="background:white; color:var(--accent-color); border:1px solid #BFDBFE; padding:3px 6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">👁️ Preview</button>
-                                    <button onclick="document.getElementById('itemDetailModal').style.display='none'; markRentalReturned('${inv.id}');" style="background:var(--success); color:white; border:none; padding:3px 6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">✅ Inward</button>
+                                    <button onclick="window.openReturnStockModal('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 163, 74, 0.3);">✅ Process Return</button>
                                 </div>
                             </div>
                         </div>`;
@@ -16652,26 +16652,138 @@
                 alert(`✅ Audit complete. ${diff} units marked as lost and booked in Expenses.`);
             }
         }
-        function markRentalReturned(id) {
-            if(confirm("Mark all items from this rental invoice as safely returned to Godown?")) {
-                let inv = salesDB[id];
-                if(inv) {
-                    inv.rentalStatus = 'Returned';
-                    // Wapas godown mein stock add karo
-                    if(inv.items) {
-                        inv.items.forEach(item => {
-                            let gId = inv.godownId || 'WH_MAIN';
-                            if(itemsDB[item.name]) {
-                                if(!itemsDB[item.name].godowns[gId]) itemsDB[item.name].godowns[gId] = 0;
-                                itemsDB[item.name].godowns[gId] += item.qty;
-                            }
-                        });
-                    }
-                    updateDataAndUI();
-                    alert("Stock returned successfully to Godown!");
-                }
+        // 3. Smart Material Return (Inward/Damage/Lost Engine)
+        window.openReturnStockModal = function(id) {
+            let inv = (typeof salesDB !== 'undefined' && salesDB) ? salesDB[id] : null;
+            if (!inv) return alert("Invoice not found!");
+
+            document.getElementById('return_inv_id').value = id;
+            document.getElementById('return_penalty_amt').value = 0;
+            document.getElementById('return_penalty_note').value = "";
+            document.getElementById('return_asset_loss_value').value = 0;
+            document.getElementById('return_loss_group').style.display = 'none';
+
+            let tbody = document.getElementById('return_items_body');
+            tbody.innerHTML = "";
+
+            if (inv.items && inv.items.length > 0) {
+                inv.items.forEach((item) => {
+                    let qty = parseInt(item.qty) || 0;
+                    tbody.innerHTML += `
+                    <tr style="border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding:10px;">
+                            <strong style="color:var(--text-primary); font-size:13px;">${item.name}</strong>
+                            <input type="hidden" class="ret-item-name" value="${item.name}">
+                        </td>
+                        <td style="padding:10px; text-align:center; font-weight:900; font-size:15px; color:var(--text-secondary);" class="ret-item-sent">${qty}</td>
+                        <td style="padding:10px;">
+                            <input type="number" class="form-input ret-item-safe" value="${qty}" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--success); border-color:#BBF7D0; background:#F0FDF4;">
+                        </td>
+                        <td style="padding:10px;">
+                            <input type="number" class="form-input ret-item-lost" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--danger); border-color:#FECACA; background:#FEF2F2;">
+                        </td>
+                        <td style="padding:10px;">
+                            <input type="number" class="form-input ret-item-repair" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--warning); border-color:#FDE68A; background:#FFFBEB;">
+                        </td>
+                    </tr>`;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px;">No items found.</td></tr>`;
             }
-        }
+
+            if(typeof closeAllMenus === 'function') closeAllMenus();
+            document.getElementById('returnStockModal').style.display = 'flex';
+        };
+
+        window.calcReturnLoss = function() {
+            let hasLost = false;
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
+                if(lost > 0) hasLost = true;
+            });
+            document.getElementById('return_loss_group').style.display = hasLost ? 'block' : 'none';
+        };
+
+        window.processSmartReturn = function() {
+            let invId = document.getElementById('return_inv_id').value;
+            let inv = salesDB[invId];
+            if(!inv) return;
+            
+            let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0;
+            let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty";
+            let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0;
+            let error = false;
+            
+            // Validate sent vs returned quantities
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let name = row.querySelector('.ret-item-name').value;
+                let sent = parseInt(row.querySelector('.ret-item-sent').innerText);
+                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0;
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
+                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+                
+                if((safe + lost + repair) !== sent) {
+                    alert(`Error in item '${name}': Safe(${safe}) + Lost(${lost}) + Repair(${repair}) must equal Sent(${sent}).`);
+                    error = true;
+                }
+            });
+            
+            if(error) return;
+            
+            // Step 1: Stock Update
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let name = row.querySelector('.ret-item-name').value;
+                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0;
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
+                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+                
+                if (itemsDB[name]) {
+                    let returnedQty = safe + repair; // Safe and Repairable goes back to stock
+                    let gId = inv.godownId || 'WH_MAIN';
+                    if (!itemsDB[name].godowns[gId]) itemsDB[name].godowns[gId] = 0;
+                    itemsDB[name].godowns[gId] += returnedQty;
+                    
+                    if(lost > 0) {
+                        itemsDB[name].totalStock -= lost; // Permanently remove lost
+                        itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; 
+                    }
+                }
+            });
+            
+            // Step 2: Penalty addition to Client's Invoice
+            if (penaltyAmt > 0) {
+                inv.finalTotal += penaltyAmt;
+                inv.balanceDue += penaltyAmt;
+                
+                inv.items.push({ 
+                    name: "Penalty: " + penaltyNote, 
+                    desc: "Damage/Lost materials", 
+                    unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt 
+                });
+                
+                if(partiesDB[inv.partyId]) partiesDB[inv.partyId].balance += penaltyAmt;
+                inv.status = inv.balanceDue > 0 ? (inv.advance > 0 ? 'Partial' : 'Due') : 'Paid';
+            }
+            
+            // Step 3: Asset Loss recorded in P&L
+            if (assetLossValue > 0) {
+                let expId = "EXP" + Date.now();
+                let cat = "Asset Loss / Write-off";
+                if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); }
+                
+                expenseDB[expId] = {
+                    id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid',
+                    date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', 
+                    eventId: inv.eventId || null, partyId: null, notes: `Write-off for lost items in Invoice ${invId}`, linkedDates: []
+                };
+            }
+            
+            inv.rentalStatus = 'Returned'; 
+            
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            document.getElementById('returnStockModal').style.display = 'none';
+            alert("✅ Stock Return Processed & Books Updated Perfectly!");
+        };
 
         // 🚀 INVENTORY VALUATION REPORT INJECTOR
         let originalGenerateCurrentReport = generateCurrentReport;
