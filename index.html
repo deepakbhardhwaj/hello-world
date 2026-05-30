@@ -10016,7 +10016,6 @@
                 let party = partiesDB[q.partyId]; 
                 
                 let targetEvId = q.eventId;
-                // Agar event ID directly quote me nahi hai, toh phone number se dhoondho
                 if (!targetEvId && party) {
                     targetEvId = Object.keys(leadsDB).find(lId => String(leadsDB[lId].phone).trim() === String(party.phone).trim() && leadsDB[lId].status !== 'Won' && leadsDB[lId].status !== 'Lost');
                 }
@@ -10024,9 +10023,8 @@
                 if (targetEvId && leadsDB[targetEvId]) { 
                     leadsDB[targetEvId].status = 'Lost'; 
                     leadsDB[targetEvId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Rejected. Marked as Lost." }); 
-                    try { db.collection("leads").doc(targetEvId).update({status: 'Lost'}); } catch(e){}
                 } 
-                updateDataAndUI(); 
+                updateDataAndUI(); // 👈 Ye cloud par update bhej dega
                 document.getElementById('quoteViewModal').style.display = 'none'; 
                 viewDetails(id, 'sales'); 
             } 
@@ -10412,7 +10410,6 @@
             }); 
             if (items.length === 0) return alert("Please add at least one valid item!"); 
 
-            // 🚨 STRICT INVENTORY LOCK
             if (invoiceType === 'Rental' && !editingSalesId) {
                 for (let i = 0; i < items.length; i++) {
                     let item = items[i];
@@ -10425,7 +10422,6 @@
                 }
             }
 
-            // Deduct Stock
             if (invoiceType === 'Rental' && !editingSalesId) {
                 items.forEach(item => {
                     if (itemsDB[item.name] && itemsDB[item.name].godowns[godownId] !== undefined) {
@@ -10436,11 +10432,9 @@
 
             let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
             baseTotal += (labourAmt + transportAmt);
-
             let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
             let totalAfterDiscount = baseTotal - discount; 
             if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
-            
             let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
             let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
             let finalGrandTotal = totalAfterDiscount + taxAmount; 
@@ -10455,7 +10449,6 @@
                     q.status = 'Invoiced'; 
                     targetEventId = q.eventId;
                     
-                    // Fallback: Agar quote mein eventId save nahi hui, toh phone number se dhoondho
                     if (!targetEventId) {
                         let cleanPhone = String(party.phone).trim();
                         targetEventId = Object.keys(leadsDB).find(lId => String(leadsDB[lId].phone).trim() === cleanPhone && leadsDB[lId].status !== 'Won' && leadsDB[lId].status !== 'Lost');
@@ -10465,13 +10458,10 @@
                         leadsDB[targetEventId].status = 'Won';
                         leadsDB[targetEventId].eventStatus = 'Upcoming';
                         leadsDB[targetEventId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Converted to Invoice. Deal WON!" });
-                        try { db.collection("leads").doc(targetEventId).update({status: 'Won', eventStatus: 'Upcoming'}); } catch(e){}
                     } else {
-                        // Agar phir bhi na mile toh naya Event bana do
                         targetEventId = "EVT" + Date.now();
                         leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: party.phone, func: eventTitle, date: date, dates: [{ name: "Main Event", date: date, time: "" }], cat: "Other", budget: finalGrandTotal, status: 'Won', eventStatus: 'Upcoming', venue: party.address || "", source: 'Direct', notes: [{ time: new Date().toLocaleString(), text: "Auto-Created Event from Quote Conversion." }], photos: [], tasks: [], expenses: [] }; 
                     }
-                    
                     eventCodeStr = createEventCode(party.name, eventTitle, date);
                     convertingQuoteId = null; 
                 } else if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
@@ -10490,7 +10480,6 @@
             
             let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; 
             let oldAdvanceAmount = 0; let receiptToUpdate = null; 
-            
             if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { 
                 receiptToUpdate = salesDB[selectedOldAdvanceId]; 
                 oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); 
@@ -10501,12 +10490,11 @@
             let balanceDue = finalGrandTotal - totalAdvanceApplied; 
             if (balanceDue < 0) balanceDue = 0; 
             
+            let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
             let status = 'Due'; 
             if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
             else if (totalAdvanceApplied > 0) status = 'Partial'; 
             
-            let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
-
             salesDB[id] = { 
                 id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, 
                 items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, 
@@ -10533,7 +10521,7 @@
             } 
             
             tempEventIdForInvoice = null; 
-            updateDataAndUI(); 
+            updateDataAndUI(); // 👈 Ye cloud par update bhej dega
             document.getElementById('directInvoiceModal').style.display = 'none'; 
             setSalesTab('Invoice', document.getElementById('st-invoices')); 
             openTab('sales-hub', null); 
@@ -15842,7 +15830,6 @@
             loadGodownsIntoSelect();
         };
 
-        // 🚀 FULL INVENTORY HUB RENDER ENGINE
         function renderInventoryHubList() {
             let container = document.getElementById('inventory-list-container');
             if (!container) return; 
@@ -15875,7 +15862,7 @@
                 container.innerHTML += overdueHtml; 
             }
 
-            let search = document.getElementById('inv_hub_search').value.toLowerCase();
+            let search = document.getElementById('inv_hub_search') ? document.getElementById('inv_hub_search').value.toLowerCase() : "";
             let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
 
             Object.values(itemsDB).forEach(item => {
@@ -15917,8 +15904,10 @@
                 </div>`;
             });
             
-            document.getElementById('inv_stat_godown').innerText = totalInGodown;
-            document.getElementById('inv_stat_deployed').innerText = totalDeployed;
+            let statGodown = document.getElementById('inv_stat_godown');
+            let statDeployed = document.getElementById('inv_stat_deployed');
+            if(statGodown) statGodown.innerText = totalInGodown;
+            if(statDeployed) statDeployed.innerText = totalDeployed;
             
             if (visibleCount === 0) {
                 container.innerHTML += `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.</div>`;
@@ -16327,10 +16316,6 @@
         // ==========================================
         // 🚀 VERSION 9.8: ITEM DETAILS & CHALLAN PRINT ENGINE
         // ==========================================
-
-        // 1. Making Inventory List Clickable
-        let originalRenderInventoryHubList = renderInventoryHubList;
-        renderInventoryHubList = function() {
             originalRenderInventoryHubList();
             
             // Re-render hone ke baad, rows ko clickable banate hain
