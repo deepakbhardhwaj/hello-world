@@ -16543,21 +16543,28 @@
             if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
             else { alert("Popup blocked! Allow popups to print."); }
         }
-        function hideNavAndFabs() {
+        // ==============================================================
+        // 🚀 SMART NAVIGATION & TRANSACTION BUTTONS RECOVERY ENGINE
+        // ==============================================================
+        window.hideNavAndFabs = function() {
             let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
             if(nav) nav.style.setProperty('display', 'none', 'important');
-            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => {
+                btn.style.setProperty('display', 'none', 'important');
+            });
+            
             let mainFab = document.getElementById('main-fab-container');
             if(mainFab) mainFab.style.setProperty('display', 'none', 'important');
-        }
+        };
 
-        function showNavAndFabs() {
+        window.showNavAndFabs = function() {
             let activeTab = document.querySelector('.active-section');
             let tabName = activeTab ? activeTab.id : 'home';
             let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
             let fullScreenTabs = ['sales-hub', 'purchase-hub', 'expense-hub', 'party-master', 'bank-hub'];
             
-            // 🔄 Agar current tab full-screen wali hai toh bottom nav hidden hi rahega
+            // 1. Bottom Navigation Bar visibility rules
             if (nav) {
                 if (fullScreenTabs.includes(tabName)) {
                     nav.style.setProperty('display', 'none', 'important');
@@ -16566,22 +16573,37 @@
                 }
             }
             
-            let mainFab = document.getElementById('main-fab-container');
-            if (mainFab) {
-                if (window.hideFabTabs && window.hideFabTabs.includes(tabName)) {
-                    mainFab.style.setProperty('display', 'none', 'important');
-                } else {
-                    mainFab.style.setProperty('display', 'flex', 'important');
+            // 2. Pehle saare floating buttons ko safely hide karo
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => {
+                btn.style.setProperty('display', 'none', 'important');
+            });
+            
+            // 3. AUTO-DETECT VIEW: Sahi list check karke transaction button wapas dikhao
+            if (tabName === 'party-master') {
+                let btn = document.querySelector('#party-master .pill-floating-btn');
+                if (btn) btn.style.setProperty('display', 'flex', 'important');
+            } 
+            else if (tabName === 'expense-hub') {
+                let btn = document.querySelector('#expense-hub .pill-floating-btn');
+                if (btn) btn.style.setProperty('display', 'flex', 'important');
+            } 
+            else if (tabName === 'sales-hub') {
+                // Agar Sales Hub ki koi andar wali list open hai, tabhi button dikhao
+                let listView = document.getElementById('sales-list-view');
+                if (listView && listView.style.display === 'block') {
+                    let btn = document.getElementById('sales_dynamic_pill');
+                    if (btn) btn.style.setProperty('display', 'flex', 'important');
+                }
+            } 
+            else if (tabName === 'purchase-hub') {
+                // Agar Purchase Hub ki koi andar wali list open hai, tabhi button dikhao
+                let listView = document.getElementById('purchase-list-view');
+                if (listView && listView.style.display === 'block') {
+                    let btn = document.getElementById('purchase_dynamic_pill');
+                    if (btn) btn.style.setProperty('display', 'flex', 'important');
                 }
             }
-            
-            // 👥 Purane saare hidden buttons clear karke sirf active screen ka floating button ON karega
-            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
-            if (activeTab) {
-                let activeBtn = activeTab.querySelector('.pill-floating-btn');
-                if (activeBtn) activeBtn.style.setProperty('display', 'flex', 'important');
-            }
-        }
+        };
         // ==========================================
         // 🚀 VERSION 10.0: STOCK AUDIT & VALUATION REPORT ENGINE
         // ==========================================
