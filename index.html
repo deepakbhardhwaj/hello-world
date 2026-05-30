@@ -15530,12 +15530,14 @@
         }
         // 🚀 MASTER MODAL LAYERING FIX
         document.querySelectorAll('.modal-overlay').forEach(m => {
-            if (m.id !== 'splash-screen' && m.id !== 'auth-screen') {
+            if (m.id !== 'splash-screen' && m.id !== 'auth-screen' && m.id !== 'inventorySelectModal') {
                 m.style.zIndex = '9600'; // Saare main forms 9600 par rahenge
             }
         });
-        if (document.getElementById('quoteViewModal')) document.getElementById('quoteViewModal').style.zIndex = '9700'; // Preview sabse upar (9700)
-        if (document.getElementById('imgPreviewModal')) document.getElementById('imgPreviewModal').style.zIndex = '9800'; // Photo preview uske bhi upar
+        if (document.getElementById('quoteViewModal')) document.getElementById('quoteViewModal').style.zIndex = '9700'; 
+        if (document.getElementById('imgPreviewModal')) document.getElementById('imgPreviewModal').style.zIndex = '9800'; 
+        // 📦 Inventory select karne wale popup ko strictly top layer (25000 z-index) par lock kiya
+        if (document.getElementById('inventorySelectModal')) document.getElementById('inventorySelectModal').style.setProperty('z-index', '25000', 'important');
         // 🚀 SETTINGS HUB LOGIC
         function initSettingsHub() {
             if (typeof appSettings !== 'undefined') {
@@ -16541,22 +16543,44 @@
             if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
             else { alert("Popup blocked! Allow popups to print."); }
         }
-        // 🚀 SMART OVERLAP & ROUTING FIXER
         function hideNavAndFabs() {
-            let nav = document.querySelector('.nav-bar');
-            if(nav) nav.style.display = 'none';
-            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.display = 'none');
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            if(nav) nav.style.setProperty('display', 'none', 'important');
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
             let mainFab = document.getElementById('main-fab-container');
-            if(mainFab) mainFab.style.display = 'none';
+            if(mainFab) mainFab.style.setProperty('display', 'none', 'important');
         }
 
         function showNavAndFabs() {
-            let nav = document.querySelector('.nav-bar');
-            if(nav) nav.style.display = 'flex';
-            // 🚀 Restores display flex with important priority when closing panels
-            document.querySelectorAll('.active-section .pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'flex', 'important'));
+            let activeTab = document.querySelector('.active-section');
+            let tabName = activeTab ? activeTab.id : 'home';
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            let fullScreenTabs = ['sales-hub', 'purchase-hub', 'expense-hub', 'party-master', 'bank-hub'];
+            
+            // 🔄 Agar current tab full-screen wali hai toh bottom nav hidden hi rahega
+            if (nav) {
+                if (fullScreenTabs.includes(tabName)) {
+                    nav.style.setProperty('display', 'none', 'important');
+                } else {
+                    nav.style.setProperty('display', 'flex', 'important');
+                }
+            }
+            
             let mainFab = document.getElementById('main-fab-container');
-            if(mainFab) mainFab.style.display = 'flex';
+            if (mainFab) {
+                if (window.hideFabTabs && window.hideFabTabs.includes(tabName)) {
+                    mainFab.style.setProperty('display', 'none', 'important');
+                } else {
+                    mainFab.style.setProperty('display', 'flex', 'important');
+                }
+            }
+            
+            // 👥 Purane saare hidden buttons clear karke sirf active screen ka floating button ON karega
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            if (activeTab) {
+                let activeBtn = activeTab.querySelector('.pill-floating-btn');
+                if (activeBtn) activeBtn.style.setProperty('display', 'flex', 'important');
+            }
         }
         // ==========================================
         // 🚀 VERSION 10.0: STOCK AUDIT & VALUATION REPORT ENGINE
