@@ -16316,26 +16316,6 @@
         // ==========================================
         // 🚀 VERSION 9.8: ITEM DETAILS & CHALLAN PRINT ENGINE
         // ==========================================
-            originalRenderInventoryHubList();
-            
-            // Re-render hone ke baad, rows ko clickable banate hain
-            let container = document.getElementById('inventory-list-container');
-            if(container) {
-                // Find all generated rows
-                let rows = container.querySelectorAll('div[style*="box-shadow"]');
-                rows.forEach(row => {
-                    let nameEl = row.querySelector('div[style*="font-size:15px;"]');
-                    if (nameEl && nameEl.innerText !== '🚨 Overdue Rentals') {
-                        let itemName = nameEl.innerText;
-                        row.style.cursor = 'pointer';
-                        row.style.transition = '0.2s';
-                        row.onmouseover = () => row.style.transform = 'translateY(-2px)';
-                        row.onmouseout = () => row.style.transform = 'translateY(0)';
-                        row.onclick = () => openItemDetails(itemName);
-                    }
-                });
-            }
-        };
 
         // 2. Open Item Detailed View
         function openItemDetails(itemName) {
