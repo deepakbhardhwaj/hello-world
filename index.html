@@ -5614,8 +5614,8 @@
         <div id="quoteViewModal" class="modal-overlay" style="z-index: 5000;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="qv_modal_title">Details</h3><button class="modal-close"
-                        onclick="document.getElementById('quoteViewModal').style.display='none';">&times;</button>
+                    <h3 id="qv_modal_title">Details</h3>
+                    <button class="modal-close" onclick="document.getElementById('quoteViewModal').style.display='none'; showNavAndFabs();">&times;</button>
                 </div>
                 <div id="quoteViewBody" style="font-size:13px; line-height:1.5;"></div>
             </div>
@@ -5999,7 +5999,7 @@
             </form>
         </div>
     </div>
-    <div id="inventorySelectModal" class="modal-overlay" style="z-index: 9999;">
+    <div id="inventorySelectModal" class="modal-overlay" style="z-index: 10500;">
         <div class="modal-content" style="max-width: 450px; height: 80vh; display: flex; flex-direction: column; padding: 0; border-radius: 16px 16px 0 0;">
             <div class="modal-header" style="padding: 16px; margin: 0; background: #F8FAFC; border-bottom: 1px solid var(--border-color);">
                 <h3 style="font-weight:900;">Select Items from Stock</h3>
@@ -6161,7 +6161,7 @@
                 <h3>📦 Add Opening Stock</h3>
                 <button class="modal-close" onclick="document.getElementById('directStockModal').style.display='none';">&times;</button>
             </div>
-            <p style="font-size:11px; color:var(--text-secondary); margin-top:0;">Use this to add items you already own without creating a purchase bill.</p>
+            <p style="font-size:11px; color:var(--text-secondary); margin-top:0;">Use this to add items you already own.</p>
             <form onsubmit="event.preventDefault(); saveDirectStock();">
                 <div class="form-group">
                     <label class="form-label">Item Name</label>
@@ -6173,9 +6173,13 @@
                         <input type="number" id="ds_qty" class="form-input" min="1" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Select Godown 🏭</label>
-                        <select id="ds_godown" class="form-select" required></select>
+                        <label class="form-label">Total Value (₹)</label>
+                        <input type="number" id="ds_value" class="form-input" placeholder="Total Worth" required>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Select Godown 🏭</label>
+                    <select id="ds_godown" class="form-select" required></select>
                 </div>
                 <button type="submit" class="btn-main" style="background:#0284C7; margin-top:10px;">✅ Add to Inventory</button>
             </form>
@@ -7765,16 +7769,12 @@
             let homeContainer = document.getElementById('home-hot-leads');
             if (!crmContainer) return;
 
-            // Purana HTML saaf karo
             crmContainer.innerHTML = "";
-            if (homeContainer) homeContainer.innerHTML = "";
+            if (homeContainer) homeContainer.innerHTML = ""; // 🚀 Fix: Clear previous home leads
 
             let counts = { total: 0, new: 0, active: 0, lost: 0 };
-
-            // 🚀 Performance Optimization: Document Fragment ka use
             let fragment = document.createDocumentFragment();
 
-            // Data ko sort karein
             let sortedLeads = Object.values(leadsDB).sort((a, b) => {
                 let dateA = a.date ? new Date(a.date) : new Date('2099-01-01');
                 let dateB = b.date ? new Date(b.date) : new Date('2099-01-01');
@@ -7782,7 +7782,6 @@
             });
 
             sortedLeads.forEach(lead => {
-                // 🚀 NEW SECURITY LAYER: Agar user Owner nahi hai, toh sirf apni leads dikhao
                 let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
                 if (!isOwner && lead.assignedTo !== loggedInMobile) return;
                 if (lead.status === "Won") return;
@@ -7792,7 +7791,21 @@
                 if (["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) counts.active++;
                 if (lead.status === "Lost") counts.lost++;
 
-                // Filter & Search Logic
+                // 🚀 HOME DASHBOARD ACTIVE LEADS INJECTOR
+                if (homeContainer && (lead.status === "Hot" || lead.status === "Meeting Scheduled")) {
+                    homeContainer.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #F1F5F9; cursor:pointer;" onclick="openTab('crm', document.getElementById('btn-crm')); setTimeout(()=>openPanel('${lead.id}'), 300);">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">${lead.name}</strong>
+                            <div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">${lead.func} • ${lead.date || 'TBD'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="status-badge ${lead.status === 'Hot' ? 'badge-hot' : 'badge-meet'}">${lead.status}</span>
+                            <div style="font-size:11px; font-weight:700; color:var(--success); margin-top:4px;">₹${(parseFloat(lead.budget)||0).toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>`;
+                }
+
                 let show = true;
                 if (currentFilter === 'New' && lead.status !== 'New') show = false;
                 if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
@@ -7807,7 +7820,6 @@
                     else if (lead.status === "Lost") badgeClass = "badge-lost";
                     let assignedTag = lead.assignedTo ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block;">👤 Assigned</span>` : '';
 
-                    // Naya Element banayein (Fragment mein dalne ke liye)
                     let div = document.createElement('div');
                     div.className = "list-row";
                     div.id = `row-${lead.id}`;
@@ -7834,16 +7846,25 @@
                 }
             });
 
-            // 🚀 Performance: Poori list ek sath display karo
             crmContainer.appendChild(fragment);
 
-            // Stats update
             document.getElementById('crm-stat-total').innerText = counts.total;
             document.getElementById('crm-stat-new').innerText = counts.new;
             document.getElementById('crm-stat-active').innerText = counts.active;
             document.getElementById('crm-stat-lost').innerText = counts.lost;
 
             if (crmContainer.innerHTML === "") crmContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary);'>No leads found.</p>";
+            if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
+        }
+
+        // 🚀 FIREBASE CLOUD DELETE FIX
+        function actionDelete(id, event) { 
+            event.stopPropagation(); event.preventDefault(); closeAllMenus(); 
+            if (confirm("Are you sure you want to permanently delete this lead?")) { 
+                db.collection("leads").doc(id).delete().catch(e=>console.log("Cloud delete error:", e));
+                delete leadsDB[id]; 
+                updateDataAndUI(); 
+            } 
         }
 
         // ==========================================
@@ -8769,6 +8790,7 @@
 
         // 🚀 FINAL UPDATED PARTY LEDGER (With Separate Dr / Cr Columns)
         function openPartyLedger(id, specificLoanId = null, fromDate = null, toDate = null) {
+            hideNavAndFabs();
             activePartyId = id; let party = partiesDB[id];
             if (!party) return;
 
@@ -9145,9 +9167,7 @@
         function closePartyLedger() {
             document.getElementById('partyLedgerPanel').classList.remove('open');
             setTimeout(() => { document.getElementById('partyOverlay').style.display = 'none'; activePartyId = null; }, 300);
-
-            // 🚀 FIX: Ledger band hote hi Floating Button wapas aa jayega
-            document.querySelectorAll('.active-section .pill-floating-btn').forEach(btn => btn.style.display = 'flex');
+            showNavAndFabs(); // 🚀 NAV BAR WAPAS LAANE KE LIYE
         }
 
         // ==========================================
@@ -9266,6 +9286,7 @@
 
         // 🚀 1. UPDATED BANK/CASH LEDGER (Mobile UI: Newest First, Tally Format)
         function openBankLedger(id, fromDate = null, toDate = null) {
+            hideNavAndFabs();
             activeBankId = id; let b = bankDB[id];
             if (!b) return;
 
@@ -9579,9 +9600,7 @@
         function closeBankLedger() {
             document.getElementById('bankLedgerPanel').classList.remove('open');
             setTimeout(() => { document.getElementById('bankOverlay').style.display = 'none'; activeBankId = null; }, 300);
-
-            // 🚀 FIX: Bank Ledger band hote hi Floating Button wapas aa jayega
-            document.querySelectorAll('.active-section .pill-floating-btn').forEach(btn => btn.style.display = 'flex');
+            showNavAndFabs(); // 🚀 NAV BAR WAPAS LAANE KE LIYE
         }
 
         // ==========================================
@@ -10377,7 +10396,6 @@
             let eventTitle = document.getElementById('di_event').value; 
             let date = document.getElementById('di_date').value; 
             
-            // 🚀 NAYA: Rental details uthana
             let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
             let returnDate = document.getElementById('di_return_date') ? document.getElementById('di_return_date').value : null;
             let godownId = document.getElementById('di_godown_select') ? document.getElementById('di_godown_select').value : 'WH_MAIN';
@@ -10386,7 +10404,6 @@
 
             if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
             
-            // Agar Rental hai toh Return Date zaruri hai
             if (invoiceType === 'Rental' && !returnDate) { 
                 alert("🚨 Return Due Date is mandatory for Rental Invoices!"); 
                 return; 
@@ -10404,31 +10421,10 @@
             
             if (items.length === 0) return alert("Please add at least one item!"); 
 
-            // 🚀 NAYA: STOCK DEDUCTION LOGIC
-            if (invoiceType === 'Rental' && !editingSalesId) {
-                items.forEach(item => {
-                    if (itemsDB[item.name]) {
-                        if (!itemsDB[item.name].godowns[godownId]) itemsDB[item.name].godowns[godownId] = 0;
-                        // Godown se stock kam karo
-                        itemsDB[item.name].godowns[godownId] -= item.qty; 
-                    }
-                });
-            }
-
-            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
-            baseTotal += (labourAmt + transportAmt); // Add extra charges
-
-            let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
-            let totalAfterDiscount = baseTotal - discount; 
-            if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
-            
-            let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
-            let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
-            let finalGrandTotal = totalAfterDiscount + taxAmount; 
-            
-            let party = partiesDB[partyId]; 
             let targetEventId = null; let eventCodeStr = null; 
-            
+            let party = partiesDB[partyId]; 
+
+            // 🚀 QUOTE ACCEPT TO EVENT CONVERSION LOGIC
             if (!editingSalesId) { 
                 if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
                     targetEventId = tempEventIdForInvoice; 
@@ -10441,19 +10437,48 @@
                         targetEventId = existingLeadId; 
                         leadsDB[targetEventId].status = 'Won'; 
                         leadsDB[targetEventId].eventStatus = 'Upcoming'; 
-                        leadsDB[targetEventId].budget = finalGrandTotal; 
                         leadsDB[targetEventId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Converted to Invoice. Deal WON!" }); 
                         eventCodeStr = createEventCode(leadsDB[targetEventId].name, leadsDB[targetEventId].func, leadsDB[targetEventId].date); 
                     } else { 
                         targetEventId = "EVT" + Date.now(); 
-                        leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: cleanPhone, func: eventTitle, date: date, dates: [{ name: "Main Event", date: date, time: "" }], cat: "Other", budget: finalGrandTotal, status: 'Won', eventStatus: 'Upcoming', venue: party.address || "", source: 'Direct', notes: [{ time: new Date().toLocaleString(), text: "Auto-Created Event from Direct Invoice." }], photos: [], tasks: [], expenses: [] }; 
+                        leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: cleanPhone, func: eventTitle, date: date, dates: [{ name: "Main Event", date: date, time: "" }], cat: "Other", budget: 0, status: 'Won', eventStatus: 'Upcoming', venue: party.address || "", source: 'Direct', notes: [{ time: new Date().toLocaleString(), text: "Auto-Created Event from Direct Invoice." }], photos: [], tasks: [], expenses: [] }; 
                         eventCodeStr = createEventCode(party.name, eventTitle, date); 
                     } 
                 } 
             } else { 
                 targetEventId = salesDB[editingSalesId].eventId; 
-                eventCodeStr = null; 
             } 
+
+            let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
+
+            // 🚀 INVENTORY STOCK DEDUCTION & CHALLAN GENERATION FOR RENTALS
+            if (invoiceType === 'Rental' && !editingSalesId) {
+                let itemsToSend = [];
+                items.forEach(item => {
+                    if (itemsDB[item.name]) {
+                        if (!itemsDB[item.name].godowns[godownId]) itemsDB[item.name].godowns[godownId] = 0;
+                        itemsDB[item.name].godowns[godownId] -= item.qty; 
+                        itemsToSend.push({ name: item.name, qty: item.qty });
+                    }
+                });
+
+                if (itemsToSend.length > 0) {
+                    let challanId = "CHL" + Date.now();
+                    stockMovementDB[challanId] = {
+                        id: challanId, eventId: targetEventId || "Direct Rent", date: date, vehicle: `Rented via Bill #${id}`, fromGodown: godownId,
+                        type: 'OUTWARD', items: itemsToSend, status: 'Deployed'
+                    };
+                }
+            }
+
+            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
+            baseTotal += (labourAmt + transportAmt); 
+            let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
+            let totalAfterDiscount = baseTotal - discount; 
+            if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
+            let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
+            let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
+            let finalGrandTotal = totalAfterDiscount + taxAmount; 
             
             if (editingSalesId) { party.balance -= salesDB[editingSalesId].finalTotal; } 
             
@@ -10470,16 +10495,13 @@
             
             let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
             let payMode = document.getElementById('di_pay_mode') ? document.getElementById('di_pay_mode').value : "ACC_CASH"; 
-            
             let balanceDue = finalGrandTotal - totalAdvanceApplied; 
             if (balanceDue < 0) balanceDue = 0; 
             
-            let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
             let status = 'Due'; 
             if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
             else if (totalAdvanceApplied > 0) status = 'Partial'; 
             
-            // 🚀 NAYA: DB mein Rental Fields aur Labour wagaira bhi save karna
             salesDB[id] = { 
                 id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, 
                 items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, 
@@ -10501,7 +10523,7 @@
                     party.balance -= manuallyEnteredAdvance; 
                     let recId = generateDocId('Receipt'); 
                     salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; 
-                    logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Receipt: Advance for ${id} (${party.name})`, recId, date); 
+                    if (typeof logBankTransaction === 'function') logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Receipt: Advance for ${id} (${party.name})`, recId, date); 
                 } 
             } 
             
@@ -10512,7 +10534,7 @@
             document.getElementById('directInvoiceModal').style.display = 'none'; 
             setSalesTab('Invoice', document.getElementById('st-invoices')); 
             openTab('sales-hub', null); 
-            alert("✅ Invoice Saved and Inventory Stock Deducted!");
+            alert("✅ Invoice Saved successfully!");
         }
 
         function unlinkInvoice(id) { if (confirm("🚨 Detach this invoice from its Event Dashboard?\nIt will become a standalone general bill.")) { let record = salesDB[id]; record.eventId = null; let newId = generateDocId('Invoice', null); changeSalesId(id, newId); updateDataAndUI(); document.getElementById('quoteViewModal').style.display = 'none'; viewDetails(newId, 'sales'); } }
@@ -11555,6 +11577,7 @@
         // UNIFIED DETAILS & PRINT VIEW
         // ==========================================
         function viewDetails(id, context = 'sales') {
+            hideNavAndFabs();
             let record = null;
             if (context === 'sales') { record = salesDB[id]; }
             else if (context === 'purchase') { record = purchaseDB[id]; }
@@ -16084,25 +16107,27 @@
             let name = document.getElementById('ds_name').value.trim();
             let qty = parseInt(document.getElementById('ds_qty').value);
             let gId = document.getElementById('ds_godown').value;
+            let value = parseFloat(document.getElementById('ds_value').value) || 0; 
 
-            if(!name || !qty || !gId) return alert("Please fill all fields!");
+            if(!name || !qty || !gId || value <= 0) return alert("Please fill all fields including value!");
 
-            // Agar item pehle se nahi hai toh naya banao
-            if (!itemsDB[name]) {
-                itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
-            }
-            // Agar godown nahi hai toh usme 0 set karo
-            if (!itemsDB[name].godowns[gId]) {
-                itemsDB[name].godowns[gId] = 0;
-            }
+            if (!itemsDB[name]) itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
+            if (!itemsDB[name].godowns[gId]) itemsDB[name].godowns[gId] = 0;
 
-            // Stock Jodd (Add) do
             itemsDB[name].totalStock += qty;
             itemsDB[name].godowns[gId] += qty;
 
+            // 🚀 CREATE ASSET RECORD FOR BALANCE SHEET
+            let assetId = "AST" + Date.now();
+            purchaseDB[assetId] = {
+                id: assetId, type: 'Asset', partyId: 'SYS_OPENING', eventId: null, event: `Opening Stock: ${name}`, 
+                date: new Date().toISOString().split('T')[0], items: [{name: name, desc: 'Added manually to inventory', unit: 'Pcs', qty: qty, rate: (value/qty), amount: value}], 
+                discount: 0, total: value, gstPercent: 0, taxAmount: 0, finalTotal: value, advance: value, balanceDue: 0, status: 'Paid'
+            };
+
             updateDataAndUI();
             document.getElementById('directStockModal').style.display = 'none';
-            alert(`✅ ${qty} x '${name}' added to your Godown successfully!`);
+            alert(`✅ ${qty} x '${name}' added to Godown & Assets Value!`);
         }
 
 
@@ -16473,6 +16498,22 @@
             if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
             else { alert("Popup blocked! Allow popups to print."); }
         }
+        // 🚀 SMART OVERLAP & ROUTING FIXER
+        function hideNavAndFabs() {
+            let nav = document.querySelector('.nav-bar');
+            if(nav) nav.style.display = 'none';
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.display = 'none');
+            let mainFab = document.getElementById('main-fab-container');
+            if(mainFab) mainFab.style.display = 'none';
+        }
+
+        function showNavAndFabs() {
+            let nav = document.querySelector('.nav-bar');
+            if(nav) nav.style.display = 'flex';
+            document.querySelectorAll('.active-section .pill-floating-btn').forEach(btn => btn.style.display = 'flex');
+            let mainFab = document.getElementById('main-fab-container');
+            if(mainFab) mainFab.style.display = 'flex';
+        }
         // ==========================================
         // 🚀 VERSION 10.0: STOCK AUDIT & VALUATION REPORT ENGINE
         // ==========================================
@@ -16546,15 +16587,27 @@
                 return;
             }
 
-            let diff = expected - actual; // Missing / Lost quantity
+            let diff = expected - actual;
             if(confirm(`System expects ${expected}. You found ${actual}.\n\nThis means ${diff} items are MISSING/LOST.\n\nAre you sure you want to mark ${diff} items as Lost/Written-off?`)) {
                 item.godowns[gId] = actual;
                 item.totalStock -= diff;
                 item.totalLost = (item.totalLost || 0) + diff;
                 
+                // 🚀 NAYA: CREATE EXPENSE ENTRY FOR P&L (Balance Sheet Match)
+                let lossValue = parseFloat(prompt(`To keep your Profit & Loss accurate, please enter the approximate total value (₹) of these ${diff} lost items:`)) || 0;
+                if (lossValue > 0) {
+                    let expId = "EXP" + Date.now();
+                    let cat = "Asset Loss / Write-off";
+                    if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); }
+                    expenseDB[expId] = {
+                        id: expId, type: 'General', cat: cat, amount: lossValue, paid: lossValue, balanceDue: 0, status: 'Paid',
+                        date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', eventId: null, partyId: null, notes: `Stock Audit Write-off: ${diff} x ${name}`, linkedDates: []
+                    };
+                }
+
                 updateDataAndUI();
                 document.getElementById('stockAuditModal').style.display = 'none';
-                alert(`✅ Audit complete. ${diff} units marked as lost.`);
+                alert(`✅ Audit complete. ${diff} units marked as lost and booked in Expenses.`);
             }
         }
 
