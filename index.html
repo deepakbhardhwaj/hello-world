@@ -15927,35 +15927,34 @@
         function renderInventoryHubList() {
             let container = document.getElementById('inventory-list-container');
             if (!container) return; 
-            
+
             try {
                 container.innerHTML = "";
                 let todayStr = new Date().toISOString().split('T')[0];
                 let overdueCount = 0;
                 let overdueHtml = "";
 
-                // 🛡️ Safely check overdue invoices
-                if (typeof salesDB === 'object' && salesDB !== null) {
-                    Object.values(salesDB).forEach(inv => {
-                        if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.rentalStatus !== 'Returned' && inv.returnDate && inv.returnDate < todayStr) {
-                            overdueCount++;
-                            let pName = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].name : 'Unknown';
-                            let pPhone = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].phone : '';
-                            let fDate = new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                            
-                            overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
-                                <div>
-                                    <strong style="color:var(--text-primary); font-size:13.5px;">${pName}</strong> <span style="font-size:10px; color:#64748B;">(${inv.id})</span>
-                                    <div style="font-size:11px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
-                                </div>
-                                <div style="display:flex; gap:8px;">
-                                    <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
-                                    <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
-                                </div>
-                            </div>`;
-                        }
-                    });
-                }
+                // 🛡️ Safe Overdue Rentals Check
+                let safeSales = salesDB || {};
+                Object.values(safeSales).forEach(inv => {
+                    if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.rentalStatus !== 'Returned' && inv.returnDate && inv.returnDate < todayStr) {
+                        overdueCount++;
+                        let pName = (inv.partyId && partiesDB && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].name : 'Unknown';
+                        let pPhone = (inv.partyId && partiesDB && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].phone : '';
+                        let fDate = new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                        
+                        overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
+                            <div>
+                                <strong style="color:var(--text-primary); font-size:13.5px;">${pName}</strong> <span style="font-size:10px; color:#64748B;">(${inv.id})</span>
+                                <div style="font-size:11px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
+                                <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
+                            </div>
+                        </div>`;
+                    }
+                });
 
                 if (overdueCount > 0) {
                     container.innerHTML += `<div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
@@ -15969,55 +15968,53 @@
                 let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
                 let itemsHtml = "";
 
-                if (typeof itemsDB === 'object' && itemsDB !== null) {
-                    Object.values(itemsDB).forEach(item => {
-                        if (!item || !item.name) return; // 🛡️ Skip corrupted items
+                // 🛡️ Safe Items Rendering
+                let safeItems = itemsDB || {};
+                Object.values(safeItems).forEach(item => {
+                    if (!item || typeof item !== 'object' || !item.name) return; // Skip corrupted items
 
-                        let inGodown = 0;
-                        let godownBreakdownHtml = '';
-                        
-                        let godownsList = item.godowns || {};
-                        for (let gId in godownsList) {
-                            let stock = parseInt(godownsList[gId]) || 0;
-                            inGodown += stock;
-                            if(stock > 0) {
-                                let gName = (typeof warehousesDB !== 'undefined' && warehousesDB[gId]) ? warehousesDB[gId].name : gId;
-                                godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
-                            }
+                    let inGodown = 0;
+                    let godownBreakdownHtml = '';
+                    let godownsList = item.godowns || {};
+                    
+                    for (let gId in godownsList) {
+                        let stock = parseInt(godownsList[gId]) || 0;
+                        inGodown += stock;
+                        if(stock > 0) {
+                            let gName = (typeof warehousesDB !== 'undefined' && warehousesDB[gId]) ? warehousesDB[gId].name : gId;
+                            godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
                         }
+                    }
 
-                        let tStock = parseInt(item.totalStock) || 0;
-                        let deployed = tStock - inGodown;
-                        totalInGodown += inGodown; 
-                        totalDeployed += deployed;
+                    let tStock = parseInt(item.totalStock) || 0;
+                    let deployed = tStock - inGodown;
+                    totalInGodown += inGodown; 
+                    totalDeployed += deployed;
 
-                        // Case insensitive search
-                        if (search && !String(item.name).toLowerCase().includes(search)) return;
-                        visibleCount++;
+                    if (search && !String(item.name).toLowerCase().includes(search)) return;
+                    visibleCount++;
 
-                        // Safely escape single quotes for the click handler
-                        let safeName = String(item.name).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    let safeName = String(item.name).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-                        itemsHtml += `
-                        <div onclick="if(typeof openItemDetails === 'function') openItemDetails('${safeName}')" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;">
-                            <div style="flex:1;">
-                                <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
-                                <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${tStock}</div>
-                                <div style="padding-top:6px; border-top:1px dashed #E2E8F0;">${godownBreakdownHtml}</div>
+                    itemsHtml += `
+                    <div onclick="if(typeof openItemDetails === 'function') openItemDetails('${safeName}')" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;">
+                        <div style="flex:1;">
+                            <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
+                            <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${tStock}</div>
+                            <div style="padding-top:6px; border-top:1px dashed #E2E8F0;">${godownBreakdownHtml}</div>
+                        </div>
+                        <div style="display:flex; gap:10px; text-align:center;">
+                            <div style="background:#EFF6FF; padding:8px 12px; border-radius:8px; border:1px solid #BFDBFE; min-width:60px;">
+                                <div style="font-size:9px; color:var(--accent-color); font-weight:800; text-transform:uppercase;">In Godown</div>
+                                <div style="font-size:16px; font-weight:900; color:#1E3A8A;">${inGodown}</div>
                             </div>
-                            <div style="display:flex; gap:10px; text-align:center;">
-                                <div style="background:#EFF6FF; padding:8px 12px; border-radius:8px; border:1px solid #BFDBFE; min-width:60px;">
-                                    <div style="font-size:9px; color:var(--accent-color); font-weight:800; text-transform:uppercase;">In Godowns</div>
-                                    <div style="font-size:16px; font-weight:900; color:#1E3A8A;">${inGodown}</div>
-                                </div>
-                                <div style="background:#FFFBEB; padding:8px 12px; border-radius:8px; border:1px solid #FDE68A; min-width:60px;">
-                                    <div style="font-size:9px; color:var(--warning); font-weight:800; text-transform:uppercase;">On Event</div>
-                                    <div style="font-size:16px; font-weight:900; color:#9A3412;">${deployed}</div>
-                                </div>
+                            <div style="background:#FFFBEB; padding:8px 12px; border-radius:8px; border:1px solid #FDE68A; min-width:60px;">
+                                <div style="font-size:9px; color:var(--warning); font-weight:800; text-transform:uppercase;">On Event</div>
+                                <div style="font-size:16px; font-weight:900; color:#9A3412;">${deployed}</div>
                             </div>
-                        </div>`;
-                    });
-                }
+                        </div>
+                    </div>`;
+                });
                 
                 container.innerHTML += itemsHtml;
 
@@ -16032,7 +16029,8 @@
 
             } catch (error) {
                 console.error("Inventory Render Error: ", error);
-                container.innerHTML = `<div style="background:#FEF2F2; color:#991B1B; padding:15px; border-radius:8px; border:1px solid #FCA5A5; font-size:12px; font-weight:bold;">⚠️ Data Error: One of your items has corrupted data. ${error.message}</div>`;
+                let errHtml = `<div style="background:#FEF2F2; color:#991B1B; padding:15px; border-radius:8px; border:1px solid #FCA5A5; font-size:12px; font-weight:bold; margin-top:20px;">⚠️ Internal Error: The system caught a corrupted item. But your app will keep running. (${error.message})</div>`;
+                if(container) container.innerHTML = errHtml;
             }
         }
 
