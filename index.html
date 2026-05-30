@@ -5965,7 +5965,7 @@
             </form>
         </div>
     </div>
-    <div id="inventorySelectModal" class="modal-overlay" style="z-index: 10500;">
+    <div id="inventorySelectModal" class="modal-overlay" style="z-index: 20000;">
         <div class="modal-content" style="max-width: 450px; height: 80vh; display: flex; flex-direction: column; padding: 0; border-radius: 16px 16px 0 0;">
             <div class="modal-header" style="padding: 16px; margin: 0; background: #F8FAFC; border-bottom: 1px solid var(--border-color);">
                 <h3 style="font-weight:900;">Select Items from Stock</h3>
@@ -7573,22 +7573,21 @@
         function saveDataLocally() { 
             if (!currentWorkspaceId) return; 
             
-            // 🚀 APP FREEZE FIX: Saving process ko background (async) mein daal diya
-            setTimeout(() => {
-                let data = { 
-                    leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
-                    expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
-                    bank: bankDB, bankTx: bankTxDB, loans: loansDB,
-                    items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB 
-                }; 
-                
-                // 1. Local backup 
-                localStorage.setItem('utsav_erp_data_' + currentWorkspaceId, JSON.stringify(data)); 
-                
-                // 2. ☁️ FIREBASE CLOUD PUSH (Instant Sync)
-                db.collection("workspace_data").doc(currentWorkspaceId).set(data, { merge: true })
-                .catch(e => console.error("Cloud Save Failed:", e));
-            }, 0);
+            // 🚀 CRITICAL FIX: Removed setTimeout to prevent Data Loss & Race Conditions
+            // Data turant pack karke Firebase ko bhejna zaroori hai, warna cloud purana data wapas bhej dega
+            let dataToSave = { 
+                leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
+                expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
+                bank: bankDB, bankTx: bankTxDB, loans: loansDB,
+                items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB 
+            }; 
+            
+            // 1. Local backup (Instant Memory Lock)
+            localStorage.setItem('utsav_erp_data_' + currentWorkspaceId, JSON.stringify(dataToSave)); 
+            
+            // 2. ☁️ FIREBASE CLOUD PUSH (Handled async natively by Firebase engine)
+            db.collection("workspace_data").doc(currentWorkspaceId).set(dataToSave, { merge: true })
+            .catch(e => console.error("Cloud Save Failed:", e));
         }
 
         function fetchLeadsFromFirestore() {
@@ -9040,8 +9039,8 @@
             // ... (upar ka openPartyLedger ka code waise hi rahega) ...
             footerEl.innerHTML = footerHtml;
 
-            // 🚀 FIX: Ledger khulte hi Floating Button gayab ho jayega
-            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.display = 'none');
+            // 🚀 ULTRA FIX: Overriding the CSS !important layer to force-hide the button safely
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
 
             document.getElementById('partyOverlay').style.display = 'block';
             setTimeout(() => { document.getElementById('partyLedgerPanel').classList.add('open'); }, 10);
@@ -10011,11 +10010,10 @@
 
             updateDataAndUI();
             document.getElementById('quotationModal').style.display = 'none';
-            setSalesTab('Quotation', document.getElementById('st-quotations'));
-            openTab('sales-hub', null);
-
-            // Reset the source ID
             currentQuoteSourceLeadId = null;
+            // 🚀 Forcefully opens Sales Hub and renders Quotation List view directly
+            openTab('sales-hub', document.getElementById('btn-erp'));
+            openSalesListView('Quotation', 'Quotations');
         }
         // 🚀 SMART QUOTE REJECTION
         function rejectQuotation(id) { 
@@ -16555,7 +16553,8 @@
         function showNavAndFabs() {
             let nav = document.querySelector('.nav-bar');
             if(nav) nav.style.display = 'flex';
-            document.querySelectorAll('.active-section .pill-floating-btn').forEach(btn => btn.style.display = 'flex');
+            // 🚀 Restores display flex with important priority when closing panels
+            document.querySelectorAll('.active-section .pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'flex', 'important'));
             let mainFab = document.getElementById('main-fab-container');
             if(mainFab) mainFab.style.display = 'flex';
         }
