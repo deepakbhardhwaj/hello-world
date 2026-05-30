@@ -15850,10 +15850,10 @@
                     overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
                         <div>
                             <strong style="color:var(--text-primary); font-size:13.5px;">${pName}</strong> <span style="font-size:10px; color:#64748B;">(${inv.id})</span>
-                            <div style="font-size:11.5px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
+                            <div style="font-size:11px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold; box-shadow:var(--shadow-sm);">📞 Call</a>
+                            <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
                             <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
                         </div>
                     </div>`;
@@ -15869,8 +15869,10 @@
                 let inGodown = 0;
                 let godownBreakdownHtml = '';
                 
-                for (let gId in item.godowns) {
-                    let stock = item.godowns[gId] || 0;
+                // 🚀 Safety Check logic applied here
+                let godownsList = item.godowns || {};
+                for (let gId in godownsList) {
+                    let stock = godownsList[gId] || 0;
                     inGodown += stock;
                     if(stock > 0) {
                         let gName = warehousesDB[gId] ? warehousesDB[gId].name : gId;
@@ -15885,7 +15887,7 @@
                 visibleCount++;
 
                 container.innerHTML += `
-                <div onclick="openItemDetails('${item.name}')" style="cursor:pointer; transition:0.2s; display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div onclick="openItemDetails('${item.name}')" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                     <div style="flex:1;">
                         <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
                         <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${item.totalStock}</div>
@@ -15906,43 +15908,12 @@
             
             let statGodown = document.getElementById('inv_stat_godown');
             let statDeployed = document.getElementById('inv_stat_deployed');
-            if(statGodown) statGodown.innerText = totalInGodown;
-            if(statDeployed) statDeployed.innerText = totalDeployed;
+            if (statGodown) statGodown.innerText = totalInGodown;
+            if (statDeployed) statDeployed.innerText = totalDeployed;
             
             if (visibleCount === 0) {
                 container.innerHTML += `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.</div>`;
             }
-        }
-        // 🚀 1. OPEN RETURN MODAL
-        function markRentalReturned(invId) {
-            let inv = salesDB[invId];
-            if(!inv) return;
-            
-            document.getElementById('return_inv_id').value = invId;
-            document.getElementById('return-modal-title').innerText = "Return Materials: " + (inv.event || inv.id);
-            
-            let tbody = document.getElementById('return_items_body');
-            tbody.innerHTML = '';
-            
-            inv.items.forEach((item, idx) => {
-                // Har item ke liye row banegi jisme aap qty divide kar sakte hain
-                tbody.innerHTML += `
-                <tr style="border-bottom:1px solid #CBD5E1; background:white;">
-                    <td style="padding:8px; font-weight:700; color:var(--text-primary);">${item.name} <input type="hidden" class="ret-item-name" value="${item.name}"></td>
-                    <td style="padding:8px; text-align:center;"><strong class="ret-item-sent">${item.qty}</strong></td>
-                    <td style="padding:8px; text-align:center;"><input type="number" class="form-input ret-item-safe" value="${item.qty}" max="${item.qty}" min="0" style="width:60px; text-align:center; padding:4px; font-weight:bold; border-color:var(--success);" oninput="calcReturnLoss()"></td>
-                    <td style="padding:8px; text-align:center;"><input type="number" class="form-input ret-item-lost" value="0" max="${item.qty}" min="0" style="width:60px; text-align:center; padding:4px; font-weight:bold; border-color:var(--danger);" oninput="calcReturnLoss()"></td>
-                    <td style="padding:8px; text-align:center;"><input type="number" class="form-input ret-item-repair" value="0" max="${item.qty}" min="0" style="width:60px; text-align:center; padding:4px; font-weight:bold; border-color:var(--warning);" oninput="calcReturnLoss()"></td>
-                </tr>`;
-            });
-            
-            // Form Reset
-            document.getElementById('return_penalty_amt').value = 0;
-            document.getElementById('return_penalty_note').value = "";
-            document.getElementById('return_asset_loss_value').value = 0;
-            document.getElementById('return_loss_group').style.display = 'none';
-            
-            document.getElementById('returnStockModal').style.display = 'flex';
         }
 
         // 🚀 2. AUTO-SHOW LOSS BOX IF ITEM IS LOST
