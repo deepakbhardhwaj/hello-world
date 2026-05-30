@@ -10327,7 +10327,61 @@
             modal.style.display = 'flex';
         }
 
-        function openConvertModal(quoteId) { closeAllMenus(); convertingQuoteId = quoteId; let quote = salesDB[quoteId]; editingSalesId = null; document.getElementById('di-modal-title').innerText = "Create Tax Invoice (From Quote)"; document.getElementById('di_advance').removeAttribute('readonly'); document.getElementById('di_advance').style.background = 'var(--surface-color)'; loadPartiesIntoSelect('di_party', quote.partyId); document.getElementById('diForm').reset(); document.getElementById('di_event').value = quote.event; document.getElementById('di_date').value = new Date().toISOString().split('T')[0]; document.getElementById('di_discount').value = quote.discount; document.getElementById('inv_items_container').innerHTML = ''; invItemCount = 0; quote.items.forEach(item => { addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); let lastRow = rows[rows.length - 1]; lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate; }); handlePartySelectionForInvoice(); calculateDirectInvoiceTotal(); document.getElementById('directInvoiceModal').style.display = 'flex'; }
+        function openConvertModal(quoteId) { 
+            closeAllMenus(); 
+            convertingQuoteId = quoteId; 
+            let quote = salesDB[quoteId]; 
+            if(!quote) return alert("Error: Quotation not found!");
+            
+            editingSalesId = null; 
+            let titleEl = document.getElementById('di-modal-title');
+            if(titleEl) titleEl.innerText = "Create Tax Invoice (From Quote)"; 
+            
+            let advEl = document.getElementById('di_advance');
+            if(advEl) {
+                advEl.removeAttribute('readonly'); 
+                advEl.style.background = 'var(--surface-color)'; 
+            }
+            
+            loadPartiesIntoSelect('di_party', quote.partyId); 
+            let formEl = document.getElementById('diForm');
+            if(formEl) formEl.reset(); 
+            
+            document.getElementById('di_event').value = quote.event || ''; 
+            document.getElementById('di_date').value = new Date().toISOString().split('T')[0]; 
+            document.getElementById('di_discount').value = quote.discount || 0; 
+            
+            let itemsContainer = document.getElementById('inv_items_container');
+            itemsContainer.innerHTML = ''; 
+            invItemCount = 0; 
+            
+            if(quote.items && quote.items.length > 0) {
+                quote.items.forEach(item => { 
+                    addInvoiceItem(); 
+                    let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); 
+                    if(rows.length > 0) {
+                        let lastRow = rows[rows.length - 1]; 
+                        let nameInp = lastRow.querySelector('.i-item-name');
+                        let qtyInp = lastRow.querySelector('.i-item-qty');
+                        let rateInp = lastRow.querySelector('.i-item-rate');
+                        let unitInp = lastRow.querySelector('.i-item-unit');
+                        let descInp = lastRow.querySelector('.i-item-desc');
+                        
+                        if(nameInp) nameInp.value = item.name || ''; 
+                        if(qtyInp) qtyInp.value = item.qty || 1; 
+                        if(rateInp) rateInp.value = item.rate || 0; 
+                        if(unitInp && item.unit) unitInp.value = item.unit;
+                        if(descInp && item.desc) descInp.value = item.desc;
+                    }
+                }); 
+            } else {
+                addInvoiceItem();
+            }
+            
+            handlePartySelectionForInvoice(); 
+            calculateDirectInvoiceTotal(); 
+            document.getElementById('directInvoiceModal').style.display = 'flex'; 
+        }
         function actionConvert(id) { 
             // 🚀 FIX: Agar pehle se Invoiced hai, toh rok do
             if (salesDB[id] && salesDB[id].status === 'Invoiced') {
@@ -15222,12 +15276,12 @@
 
             // Home Dashboard Calculation Update
             let totRev = 0, totExp = 0;
-            Object.values(salesDB).filter(r => shouldShowInFY(r)).forEach(s => {
-                if (s.type === 'Invoice') { totRev += s.finalTotal; }
-                if (s.type === 'OtherIncome' && !s.isFundAdd) { totRev += s.amount; }
+            Object.values(salesDB).filter(r => r && shouldShowInFY(r)).forEach(s => {
+                if (s && s.type === 'Invoice') { totRev += (s.finalTotal || 0); }
+                if (s && s.type === 'OtherIncome' && !s.isFundAdd) { totRev += (s.amount || 0); }
             });
-            Object.values(purchaseDB).filter(r => shouldShowInFY(r)).forEach(p => { if (p.type === 'PB') totExp += p.finalTotal; });
-            Object.values(expenseDB).filter(r => shouldShowInFY(r)).forEach(e => { totExp += e.amount; });
+            Object.values(purchaseDB).filter(r => r && shouldShowInFY(r)).forEach(p => { if (p && p.type === 'PB') totExp += (p.finalTotal || 0); });
+            Object.values(expenseDB).filter(r => r && shouldShowInFY(r)).forEach(e => { if (e) totExp += (e.amount || 0); });
 
             let overviewNetProfit = totRev - totExp;
 
@@ -15836,16 +15890,18 @@
             container.innerHTML = "";
 
             let todayStr = new Date().toISOString().split('T')[0];
-            let overdueInvoices = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.invoiceType === 'Rental' && s.rentalStatus !== 'Returned' && s.returnDate < todayStr);
+            
+            // 🛡️ Safety Guard: Prevents crashes from deleted/null records
+            let overdueInvoices = Object.values(salesDB).filter(s => s && s.type === 'Invoice' && s.invoiceType === 'Rental' && s.rentalStatus !== 'Returned' && s.returnDate && s.returnDate < todayStr);
 
             if (overdueInvoices.length > 0) {
                 let overdueHtml = `<div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
                     <h3 style="margin:0 0 12px 0; color:var(--danger); font-size:14px; text-transform:uppercase; font-weight:900;">🚨 Overdue Rentals (${overdueInvoices.length})</h3>`;
                 
                 overdueInvoices.forEach(inv => {
-                    let pName = partiesDB[inv.partyId] ? partiesDB[inv.partyId].name : 'Unknown';
-                    let pPhone = partiesDB[inv.partyId] ? partiesDB[inv.partyId].phone : '';
-                    let fDate = new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                    let pName = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].name : 'Unknown';
+                    let pPhone = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].phone : '';
+                    let fDate = inv.returnDate ? new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
                     
                     overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
                         <div>
@@ -15866,16 +15922,18 @@
             let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
 
             Object.values(itemsDB).forEach(item => {
+                // 🛡️ Safety Guard: Skip corrupted items
+                if (!item || typeof item !== 'object' || !item.name) return;
+
                 let inGodown = 0;
                 let godownBreakdownHtml = '';
                 
-                // 🚀 Safety Check logic applied here
                 let godownsList = item.godowns || {};
                 for (let gId in godownsList) {
                     let stock = godownsList[gId] || 0;
                     inGodown += stock;
                     if(stock > 0) {
-                        let gName = warehousesDB[gId] ? warehousesDB[gId].name : gId;
+                        let gName = (typeof warehousesDB !== 'undefined' && warehousesDB[gId]) ? warehousesDB[gId].name : gId;
                         godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
                     }
                 }
