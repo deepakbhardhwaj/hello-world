@@ -1799,6 +1799,7 @@
 </head>
 
 <body>
+    <datalist id="item_master_list"></datalist>
 
     <!-- Splash Screen -->
     <div id="splash-screen">
@@ -1808,7 +1809,7 @@
         </div>
     </div>
 
-    <div id="auth-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; overflow-y: auto;">
+    <div id="auth-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; overflow-y: auto;">
 
         <div class="auth-card auth-view" id="view_email_auth" style="border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 40px rgba(15,23,42,0.08); border: 1px solid white; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px);">
             <div class="auth-logo">
@@ -4376,24 +4377,21 @@
                     line-height: 1.5;
                     box-sizing: border-box;
                 }
+            <style>
+                /* 🚀 Settings Hub Premium UI */
+                .settings-grid { display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto; }
+                .set-bento-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); transition: 0.3s; position: relative; overflow: hidden; }
+                .set-bento-card:hover { border-color: var(--accent-color); box-shadow: 0 10px 40px rgba(37, 99, 235, 0.1); transform: translateY(-2px); }
+                .set-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; padding: 6px 12px; border-radius: 20px; }
+                .settings-nav-pill { display: flex; gap: 8px; overflow-x: auto; padding: 10px 4px; margin-bottom: 20px; position: sticky; top: 56px; z-index: 100; background: rgba(248, 250, 252, 0.9); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(226, 232, 240, 0.7); }
+                .set-pill { background: white; border: 1px solid #E2E8F0; padding: 10px 18px; border-radius: 30px; font-size: 12px; font-weight: 800; color: #64748B; cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02); }
+                .set-pill:hover { border-color: #CBD5E1; color: #0F172A; }
+                .set-pill.active-set-pill { background: linear-gradient(135deg, #0F172A, #1E293B) !important; color: white !important; border-color: #0F172A !important; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2) !important; transform: translateY(-2px); }
             </style>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                <div>
-                    <h2 class="section-title"
-                        style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">Settings Hub</h2>
-                    <p style="margin: 2px 0 0 0; font-size: 10.5px; font-weight: 600; color: var(--text-secondary);">
-                        Configure your business</p>
-                </div>
-                <button onclick="saveMasterSettings()"
-                    style="background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 0 14px; height: 36px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 6px;">💾
-                    Save</button>
-            </div>
-
             <div class="settings-nav-pill">
-                <button class="set-pill active-set-pill" id="pill-bill" onclick="switchHubTab('hub-bill', this)">📄
-                    Billing</button>
-                <button class="set-pill" id="pill-sec" onclick="switchHubTab('hub-sec', this)">🔒 Security</button>
+                <button class="set-pill active-set-pill" id="pill-bill" onclick="switchHubTab('hub-bill', this)">📄 Billing</button>
+                <button class="set-pill" id="pill-sec" onclick="switchHubTab('hub-sec', this)">🛡️ Security</button>
                 <button class="set-pill" id="pill-wa" onclick="switchHubTab('hub-wa', this)">💬 WhatsApp</button>
                 <button class="set-pill" id="pill-ui" onclick="switchHubTab('hub-ui', this)">🎨 Theme</button>
             </div>
@@ -4401,118 +4399,82 @@
             <div class="settings-grid">
                 <div id="hub-bill" class="hub-tab-content" style="display: block;">
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #2563EB; background: #EFF6FF;">🔢 Invoice Prefix Settings
-                        </div>
-                        <div class="set-row" style="margin-bottom:0;">
-                            <div class="set-group"><label class="form-label">Sales Invoice Prefix</label><input
-                                    type="text" id="set_prefix_inv" class="set-input" placeholder="INV"></div>
-                            <div class="set-group"><label class="form-label">Quotation Prefix</label><input type="text"
-                                    id="set_prefix_qt" class="set-input" placeholder="EST"></div>
+                        <div class="set-badge" style="color: #2563EB; background: #EFF6FF;">🔢 Invoice Prefix Settings</div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <div class="form-group"><label class="form-label">Sales Invoice Prefix</label><input type="text" id="set_prefix_inv" class="form-input" placeholder="INV"></div>
+                            <div class="form-group"><label class="form-label">Quotation Prefix</label><input type="text" id="set_prefix_qt" class="form-input" placeholder="EST"></div>
                         </div>
                     </div>
                     <div class="set-bento-card">
                         <div class="set-badge" style="color: #059669; background: #ECFDF5;">💰 Tax & Compliance</div>
-                        <div class="set-row" style="align-items: flex-end; margin-bottom:0;">
-                            <div class="set-group"><label class="form-label">Default GST %</label><select
-                                    id="set_def_gst" class="form-select set-input" style="padding: 0 10px;">
-                                    <option value="0">0%</option>
-                                    <option value="5">5%</option>
-                                    <option value="12">12%</option>
-                                    <option value="18">18%</option>
-                                </select></div>
-                            <div class="set-group">
-                                <label
-                                    style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; background:#F8FAFC; border:1px solid #E2E8F0; height:36px; padding:0 12px; border-radius:8px; cursor:pointer;">
-                                    <input type="checkbox" id="set_show_bank"
-                                        style="width:16px; height:16px; accent-color:var(--accent-color);"> Print Bank
-                                    Info
+                        <div class="form-row" style="align-items: flex-end; margin-bottom:0;">
+                            <div class="form-group"><label class="form-label">Default GST %</label><select id="set_def_gst" class="form-select"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option></select></div>
+                            <div class="form-group">
+                                <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; background:#F8FAFC; border:1px solid #E2E8F0; height:36px; padding:0 12px; border-radius:8px; cursor:pointer;">
+                                    <input type="checkbox" id="set_show_bank" style="width:16px; height:16px; accent-color:var(--accent-color);"> Print Bank Info
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #D97706; background: #FFFBEB;">📜 Default Terms &
-                            Conditions</div>
-                        <textarea id="set_tnc" class="set-textarea"
-                            placeholder="Enter terms that appear on every PDF..."></textarea>
+                        <div class="set-badge" style="color: #D97706; background: #FFFBEB;">📜 Default Terms & Conditions</div>
+                        <textarea id="set_tnc" class="form-input" style="height: 100px; resize:vertical;" placeholder="Enter terms that appear on every PDF..."></textarea>
+                    </div>
+                    
+                    <div class="set-bento-card" id="set_inventory_toggle_card" style="display:none;">
+                        <div class="set-badge" style="color: var(--purple); background: #FAF5FF;">📦 Advanced Modules</div>
+                        <p style="font-size:11px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Enable Inventory, Godown & Rental Prop Tracking System for this workspace.</p>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; cursor:pointer;">
+                            <input type="checkbox" id="set_manage_inventory" style="width:16px; height:16px; accent-color:var(--accent-color);"> Activate Inventory Management
+                        </label>
                     </div>
                 </div>
 
                 <div id="hub-sec" class="hub-tab-content" style="display: none;">
                     <div class="set-bento-card" style="border-color: #FCA5A5; background: #FEF2F2;">
                         <div class="set-badge" style="color: #DC2626; background: #FEE2E2;">🛡️ App Screen Lock</div>
-                        <p style="font-size:11px; color: #991B1B; margin:0 0 10px 0; font-weight:600;">Secure dashboard
-                            with a 4-digit PIN.</p>
-                        <input type="password" id="set_app_pin" class="set-input"
-                            placeholder="Set 4-Digit PIN (Blank to disable)" maxlength="4"
-                            style="text-align:center; font-size:18px; letter-spacing:10px; font-weight:900; height:40px; border-color:#FCA5A5; background:white;">
+                        <p style="font-size:12px; color: #991B1B; margin:0 0 10px 0; font-weight:600;">Secure dashboard with a 4-digit PIN.</p>
+                        <input type="password" id="set_app_pin" class="form-input" placeholder="Set 4-Digit PIN (Blank to disable)" maxlength="4" style="text-align:center; font-size:20px; letter-spacing:10px; font-weight:900; height:45px; border-color:#FCA5A5; background:white;">
                     </div>
                     <div class="set-bento-card">
                         <div class="set-badge" style="color: #D97706; background: #FFFBEB;">♻️ Smart Recycle Bin</div>
-                        <p style="font-size:11px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">
-                            Recover deleted leads, bills, and transactions safely.</p>
-                        <button class="btn-main"
-                            style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; box-shadow:none; height:36px; font-size:12px;"
-                            onclick="openRecycleBin()">🗑️ Open Recycle Bin</button>
+                        <p style="font-size:12px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Recover deleted leads, bills, and transactions safely.</p>
+                        <button class="btn-main" style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; box-shadow:none; height:40px; font-size:13px;" onclick="openRecycleBin()">🗑️ Open Recycle Bin</button>
                     </div>
                     <div class="set-bento-card">
                         <div class="set-badge" style="color: #059669; background: #ECFDF5;">💾 Database Backup</div>
-                        <p style="font-size:11px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">
-                            Export data into a JSON file for offline backup.</p>
+                        <p style="font-size:12px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Export data into a JSON file for offline backup.</p>
                         <div style="display:flex; gap:10px;">
-                            <button class="btn-main"
-                                style="background:var(--success); flex:1; box-shadow:none; height:36px; font-size:12px;"
-                                onclick="exportBackupData()">📥 Download Backup</button>
-                            <button class="btn-main"
-                                style="background:var(--accent-color); flex:1; box-shadow:none; height:36px; font-size:12px;"
-                                onclick="document.getElementById('import_backup_file').click()">🔄 Restore Data</button>
-                            <input type="file" id="import_backup_file" style="display:none;" accept=".json"
-                                onchange="importBackupData(event)">
+                            <button class="btn-main" style="background:var(--success); flex:1; box-shadow:none; height:40px; font-size:12px;" onclick="exportBackupData()">📥 Download Backup</button>
+                            <button class="btn-main" style="background:var(--accent-color); flex:1; box-shadow:none; height:40px; font-size:12px;" onclick="document.getElementById('import_backup_file').click()">🔄 Restore Data</button>
+                            <input type="file" id="import_backup_file" style="display:none;" accept=".json" onchange="importBackupData(event)">
                         </div>
                     </div>
-                    <div class="set-bento-card" style="border: 1px dashed #FECACA;">
-                        <div class="set-badge"
-                            style="color: #DC2626; background: transparent; padding:0; margin-bottom:8px;">⚠️ Danger
-                            Zone</div>
-                        <button class="btn-main"
-                            style="background:white; color:var(--danger); border:1px solid #FECACA; box-shadow:none; font-size:12px; width: 100%; height:36px;"
-                            onclick="factoryResetApp()">🔥 Clear All System Data (Reset)</button>
+                    <div class="set-bento-card" style="border: 1px dashed #FECACA; background: #FFF5F5;">
+                        <div class="set-badge" style="color: #DC2626; background: transparent; padding:0; margin-bottom:8px;">⚠️ Danger Zone</div>
+                        <button class="btn-main" style="background:white; color:var(--danger); border:1px solid #FECACA; box-shadow:none; font-size:12px; width: 100%; height:40px; margin-bottom:10px;" onclick="deleteCompanyWorkspace()">❌ Delete This Workspace Permanently</button>
+                        <button class="btn-main" style="background:white; color:var(--danger); border:1px solid #FECACA; box-shadow:none; font-size:12px; width: 100%; height:40px;" onclick="factoryResetApp()">🔥 Clear App Data (Logout Device)</button>
                     </div>
-                </div>
-                <div class="set-bento-card" id="set_inventory_toggle_card" style="display:none;">
-                    <div class="set-badge" style="color: var(--purple); background: #FAF5FF;">📦 Advanced Modules</div>
-                    <p style="font-size:11px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Enable Inventory, Godown & Rental Prop Tracking System for this workspace.</p>
-                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; cursor:pointer;">
-                        <input type="checkbox" id="set_manage_inventory" style="width:16px; height:16px; accent-color:var(--accent-color);"> Activate Inventory Management
-                    </label>
                 </div>
 
                 <div id="hub-wa" class="hub-tab-content" style="display: none;">
                     <div class="set-bento-card">
                         <div class="set-badge" style="color: #166534; background: #DCFCE7;">📄 Invoice Template</div>
-                        <textarea id="set_wa_inv" class="set-textarea"
-                            placeholder="Hello [Client], Your bill for [Total] is ready..."></textarea>
+                        <textarea id="set_wa_inv" class="form-input" style="height:100px;" placeholder="Hello [Client], Your bill for [Total] is ready..."></textarea>
                     </div>
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #7E22CE; background: #FAF5FF;">⭐ Review/Feedback Request
-                        </div>
-                        <textarea id="set_wa_review" class="set-textarea"
-                            placeholder="Hello [Client], please review us at [Link]..."></textarea>
+                        <div class="set-badge" style="color: #7E22CE; background: #FAF5FF;">⭐ Review Request</div>
+                        <textarea id="set_wa_review" class="form-input" style="height:100px;" placeholder="Hello [Client], please review us at [Link]..."></textarea>
                     </div>
                 </div>
 
                 <div id="hub-ui" class="hub-tab-content" style="display: none;">
                     <div class="set-bento-card" style="display:flex; flex-direction:column; gap:10px;">
-                        <button id="dark_mode_toggle_hub" class="btn-main"
-                            style="background:#0F172A; color:white; height:40px; border-radius:10px; font-size:13px; box-shadow:none;"
-                            onclick="toggleDarkMode()">🌙 Toggle Dark / Light Theme</button>
-                        <button id="privacy_toggle_hub" class="btn-main"
-                            style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; height:40px; border-radius:10px; font-size:13px; box-shadow:none;"
-                            onclick="togglePrivacy()">👁️ Privacy Mode (Blur Amounts)</button>
+                        <button id="dark_mode_toggle_hub" class="btn-main" style="background:#0F172A; color:white; height:45px; border-radius:12px; font-size:14px; box-shadow:none;" onclick="toggleDarkMode()">🌙 Toggle Dark / Light Theme</button>
+                        <button id="privacy_toggle_hub" class="btn-main" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; height:45px; border-radius:12px; font-size:14px; box-shadow:none;" onclick="togglePrivacy()">👁️ Privacy Mode (Blur Amounts)</button>
                     </div>
                 </div>
             </div>
-        </div>
 
         <div id="recycleBinModal" class="modal-overlay" style="z-index: 8500;">
             <div class="modal-content"
@@ -6165,7 +6127,7 @@
             <form onsubmit="event.preventDefault(); saveDirectStock();">
                 <div class="form-group">
                     <label class="form-label">Item Name</label>
-                    <input type="text" id="ds_name" class="form-input" placeholder="e.g. Fiber Chair" required>
+                    <input type="text" id="ds_name" class="form-input" list="item_master_list" placeholder="e.g. Fiber Chair" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -7929,6 +7891,7 @@
         }
 
         function openPanel(id) {
+            hideNavAndFabs();
             currentLeadId = id;
             let lead = leadsDB[id];
             if (lead.status === 'Won') { activeWorkspaceEventId = id; renderWorkspace(id); }
@@ -8255,7 +8218,11 @@
         }
         function jumpToLedger(partyId) { closePanel(); setTimeout(() => { openPartyLedger(partyId); }, 400); }
         function togglePrivacy() { privacyMode = !privacyMode; let ev = leadsDB[activeWorkspaceEventId]; if (ev) renderWorkspace(ev.id); }
-        function closePanel() { document.getElementById('detailPanel').classList.remove('open'); setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; currentLeadId = null; activeWorkspaceEventId = null; }, 300); }
+        function closePanel() { 
+            document.getElementById('detailPanel').classList.remove('open'); 
+            setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; currentLeadId = null; activeWorkspaceEventId = null; }, 300); 
+            showNavAndFabs(); // 🚀 FIX: Panel band hote hi Navbar wapas aayega
+        }
         function saveAndClosePanel() { 
             // 🚀 FIX: Added safety check (leadsDB[currentLeadId]) before reading status
             if (currentLeadId && leadsDB[currentLeadId] && leadsDB[currentLeadId].status !== 'Won') { 
@@ -10341,8 +10308,14 @@
         }
 
         function openConvertModal(quoteId) { closeAllMenus(); convertingQuoteId = quoteId; let quote = salesDB[quoteId]; editingSalesId = null; document.getElementById('di-modal-title').innerText = "Create Tax Invoice (From Quote)"; document.getElementById('di_advance').removeAttribute('readonly'); document.getElementById('di_advance').style.background = 'var(--surface-color)'; loadPartiesIntoSelect('di_party', quote.partyId); document.getElementById('diForm').reset(); document.getElementById('di_event').value = quote.event; document.getElementById('di_date').value = new Date().toISOString().split('T')[0]; document.getElementById('di_discount').value = quote.discount; document.getElementById('inv_items_container').innerHTML = ''; invItemCount = 0; quote.items.forEach(item => { addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); let lastRow = rows[rows.length - 1]; lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate; }); handlePartySelectionForInvoice(); calculateDirectInvoiceTotal(); document.getElementById('directInvoiceModal').style.display = 'flex'; }
-        function actionConvert(id) { document.getElementById('quoteViewModal').style.display = 'none'; setTimeout(() => { openConvertModal(id); }, 200); }
-
+        function actionConvert(id) { 
+            // 🚀 FIX: Agar pehle se Invoiced hai, toh rok do
+            if (salesDB[id] && salesDB[id].status === 'Invoiced') {
+                return alert('⚠️ This Quotation is already converted to an Invoice!');
+            }
+            document.getElementById('quoteViewModal').style.display = 'none'; 
+            setTimeout(() => { openConvertModal(id); }, 200); 
+        }
         function openLinkAdvanceModal(invId) { targetInvoiceId = invId; let inv = salesDB[invId]; let partyId = inv.partyId; let body = document.getElementById('la_modal_body'); body.innerHTML = `<div style="margin-bottom:15px; font-size:14px;"><strong>Bill Balance Due:</strong> <span style="color:var(--danger); font-weight:800;">₹${inv.balanceDue.toLocaleString('en-IN')}</span></div>`; let advances = Object.values(salesDB).filter(s => s.type === 'Receipt' && s.partyId === partyId && s.availableAmount > 0); if (advances.length === 0) { body.innerHTML += `<p style="color:var(--text-secondary); font-size:13px; text-align:center; padding:20px; background:#F8FAFC; border-radius:12px;">No available advances found for this party.</p>`; document.getElementById('la_save_btn').style.display = 'none'; } else { let listHtml = ''; advances.forEach(adv => { let date = new Date(adv.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); listHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border-color); border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);"><div><div style="font-weight:800; font-size:15px; color:var(--success);">Advance: ₹${adv.availableAmount.toLocaleString('en-IN')}</div><div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-top:6px;">Date: ${date} • Mode: ${bankDB[adv.mode] ? bankDB[adv.mode].name : adv.mode}</div></div><input type="checkbox" class="adv-checkbox" value="${adv.id}" style="width:24px; height:24px; cursor:pointer; accent-color:var(--success);"></div>`; }); body.innerHTML += listHtml; document.getElementById('la_save_btn').style.display = 'block'; } document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('linkAdvanceModal').style.display = 'flex'; }
         function confirmLinkAdvances() { let inv = salesDB[targetInvoiceId]; let checkboxes = document.querySelectorAll('.adv-checkbox:checked'); if (checkboxes.length === 0) { alert("Please select at least one advance to link!"); return; } let totalApplied = 0; checkboxes.forEach(cb => { let advId = cb.value; let adv = salesDB[advId]; if (inv.balanceDue > 0 && adv.availableAmount > 0) { let applyAmt = Math.min(inv.balanceDue, adv.availableAmount); inv.advance += applyAmt; inv.balanceDue -= applyAmt; adv.usedAmount += applyAmt; adv.availableAmount -= applyAmt; if (!adv.linkedInvoices) adv.linkedInvoices = []; if (!adv.linkedInvoices.includes(inv.id)) adv.linkedInvoices.push(inv.id); totalApplied += applyAmt; } }); if (inv.balanceDue <= 0) inv.status = 'Paid'; else inv.status = 'Partial'; updateDataAndUI(); document.getElementById('linkAdvanceModal').style.display = 'none'; viewDetails(targetInvoiceId, 'sales'); alert(`Success! ₹${totalApplied.toLocaleString('en-IN')} linked to this bill.`); }
 
@@ -10922,7 +10895,15 @@
             calculateAssetTotal();
         }
 
-        function addAssetItem() { pbItemCount++; let container = document.getElementById('ast_items_container'); let rowId = 'ast_item_' + Date.now(); let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateAssetTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Asset Name</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateAssetTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateAssetTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Asset details / serial no. (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
+        function addAssetItem() { 
+            pbItemCount++; 
+            let container = document.getElementById('ast_items_container'); 
+            let rowId = 'ast_item_' + Date.now(); 
+            
+            // 🚀 IS ROW HTML KE ANDAR ASSET NAME FIELD MEIN list="item_master_list" CODER LOCK KIYA HAI
+            let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateAssetTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Asset Name</label><input type="text" class="form-input i-item-name" list="item_master_list" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateAssetTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateAssetTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Asset details / serial no. (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; 
+            container.insertAdjacentHTML('beforeend', rowHtml); 
+        }
 
         function calculateAssetTotal() {
             let baseTotal = 0;
@@ -14301,7 +14282,33 @@
             }
             event.target.value = ''; // Reset input
         }
-
+        async function deleteCompanyWorkspace() {
+            let compName = masterCompsDB[currentWorkspaceId].name;
+            let code = prompt(`🚨 DANGER ZONE 🚨\nYou are about to permanently delete the workspace "${compName}".\n\nAll leads, invoices, expenses, and inventory for this workspace will be PERMANENTLY DELETED.\n\nTo confirm, type exactly: DELETE WORKSPACE`);
+            
+            if (code === "DELETE WORKSPACE") {
+                try {
+                    // Firebase se company uda do
+                    await db.collection("companies").doc(currentWorkspaceId).delete();
+                    
+                    // User ke account se link hata do
+                    let user = masterUsersDB[loggedInMobile];
+                    user.companies = user.companies.filter(c => c !== currentWorkspaceId);
+                    await db.collection("users").doc(loggedInMobile).update({ companies: user.companies });
+                    
+                    // Local memory clear karo
+                    localStorage.removeItem('utsav_erp_data_' + currentWorkspaceId);
+                    localStorage.removeItem('utsav_active_workspace');
+                    
+                    alert("Workspace deleted successfully.");
+                    window.location.reload();
+                } catch(e) { 
+                    alert("Error deleting workspace: Check your internet connection."); 
+                }
+            } else if(code) {
+                alert("Incorrect code. Deletion cancelled.");
+            }
+        }
         // 🚀 FIX 4: ADMIN LEVEL DELETE ALL DATA
         function factoryResetApp() {
             if (!loggedInMobile) return;
@@ -15154,6 +15161,19 @@
             // Revert back button action for Sales Hub
             document.getElementById('ab_save_btn').setAttribute('onclick', "confirmApplyToBills()");
         }
+        // ==========================================
+        // 🚀 SMART ITEM MASTER DROPDOWN POPULATOR
+        // ==========================================
+        function updateItemMasterList() {
+            let dl = document.getElementById('item_master_list');
+            if(!dl) return;
+            dl.innerHTML = ""; // Purani list clear karo
+            
+            // itemsDB se saare unique names uthakar dropdown me daalo
+            Object.keys(itemsDB).sort().forEach(itemName => {
+                dl.innerHTML += `<option value="${itemName}">`;
+            });
+        }
         // 🚀 FIX: SMART UI UPDATER (Infinite Loop Preventer)
         function updateDataAndUI(fromCloud = false) {
             
@@ -15231,6 +15251,7 @@
                 let toD = document.getElementById('bl_to_date') ? document.getElementById('bl_to_date').value : null;
                 openBankLedger(activeBankId, fromD, toD);
             }
+            updateItemMasterList()
         };
         // ==========================================
         // 🚀 SMART SEPARATE OTHER INCOME SECTION
@@ -16054,6 +16075,7 @@
         };
 
         // 🚀 OVERRIDE: Outward Challan (Multi-Godown Support)
+        // 🚀 OVERRIDE: Outward Challan (With Stock Validation limit)
         saveOutwardChallan = function() {
             let evId = document.getElementById('out_event').value;
             let date = document.getElementById('out_date').value;
@@ -16070,9 +16092,20 @@
             });
 
             if (itemsToSend.length === 0) return alert("Add at least one item!");
+            
+            // 🚨 STRICT STOCK LIMIT CHECK
+            for (let i = 0; i < itemsToSend.length; i++) {
+                let item = itemsToSend[i];
+                let available = (itemsDB[item.name] && itemsDB[item.name].godowns[selectedGodown]) ? itemsDB[item.name].godowns[selectedGodown] : 0;
+                if (item.qty > available) {
+                    alert(`🚨 OUT OF STOCK ALARM!\n\nYou are trying to dispatch ${item.qty} x '${item.name}', but only ${available} are available in this Godown.\n\nDispatch Cancelled!`);
+                    return; // Rok do!
+                }
+            }
+
             let challanId = "CHL" + Date.now();
             
-            // 🚀 DEDUCT STOCK FROM SELECTED GODOWN
+            // DEDUCT STOCK FROM SELECTED GODOWN
             itemsToSend.forEach(item => {
                 if (itemsDB[item.name] && itemsDB[item.name].godowns[selectedGodown]) {
                     itemsDB[item.name].godowns[selectedGodown] -= item.qty;
