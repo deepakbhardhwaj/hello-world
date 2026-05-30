@@ -339,9 +339,9 @@
         }
 
         .active-section {
-            display: block;
-            animation: appTabSwitch 0.35s cubic-bezier(0.17, 0.84, 0.44, 1);
-            /* Yahan se 'forwards' hata diya */
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         @keyframes appTabSwitch {
@@ -4475,6 +4475,10 @@
                     </div>
                 </div>
             </div>
+            
+            <div style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <button type="button" class="btn-main" style="background: linear-gradient(135deg, var(--accent-color), #1E3A8A); padding: 14px; font-size: 14px; font-weight: 800; border-radius: 12px; width: 100%; box-shadow: 0 4px 12px rgba(37,99,235,0.2);" onclick="saveMasterSettings()">💾 Save App Configurations</button>
+            </div>
 
         <div id="recycleBinModal" class="modal-overlay" style="z-index: 8500;">
             <div class="modal-content"
@@ -7321,6 +7325,7 @@
             // ----------------------------------------------------
             let p = currentPermissions.modules;
             let links = document.querySelectorAll('.nav-link');
+            let isInvActive = appSettings.manageInventory || false;
             links.forEach(link => {
                 let text = link.innerText;
                 if(text.includes('Sales')) link.style.display = p.sales ? 'flex' : 'none';
@@ -7330,6 +7335,11 @@
                 if (text.includes('Invoice') || text.includes('Receive')) link.style.display = p.sales ? 'flex' : 'none';
                 if (text.includes('Vendor') || text.includes('Make Payment')) link.style.display = p.purch ? 'flex' : 'none';
                 if (text.includes('Expense')) link.style.display = p.exp ? 'flex' : 'none';
+                
+                // 📦 LIVE INVENTORY & GODOWN LOCK
+                if (text.includes('Inventory') || text.includes('Godown') || text.includes('Challan') || text.includes('Stock') || text.includes('Audit')) {
+                    link.style.display = isInvActive ? 'flex' : 'none';
+                }
             });
 
             // ----------------------------------------------------
@@ -10030,7 +10040,40 @@
             } 
         }
 
-        function openDirectInvoiceModal(preFillPartyId = null) { editingSalesId = null; document.getElementById('di-modal-title').innerText = "Create Tax Invoice"; document.getElementById('di_advance').removeAttribute('readonly'); document.getElementById('di_advance').style.background = 'var(--surface-color)'; loadPartiesIntoSelect('di_party', preFillPartyId); document.getElementById('diForm').reset(); document.getElementById('di_date').valueAsDate = new Date(); document.getElementById('inv_items_container').innerHTML = ''; addInvoiceItem(); calculateDirectInvoiceTotal(); handlePartySelectionForInvoice(); let badge = document.getElementById('di_autopilot_badge'); if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { badge.style.display = 'flex'; badge.innerHTML = `🔗 Auto-Linked to Event: <b>${leadsDB[tempEventIdForInvoice].name} - ${leadsDB[tempEventIdForInvoice].func}</b>`; } else { badge.style.display = 'none'; } document.getElementById('directInvoiceModal').style.display = 'flex'; }
+        function openDirectInvoiceModal(preFillPartyId = null) { 
+            editingSalesId = null; 
+            document.getElementById('di-modal-title').innerText = "Create Tax Invoice"; 
+            document.getElementById('di_advance').removeAttribute('readonly'); 
+            document.getElementById('di_advance').style.background = 'var(--surface-color)'; 
+            loadPartiesIntoSelect('di_party', preFillPartyId); 
+            document.getElementById('diForm').reset(); 
+            document.getElementById('di_date').valueAsDate = new Date(); 
+            document.getElementById('inv_items_container').innerHTML = ''; 
+            addInvoiceItem(); 
+            calculateDirectInvoiceTotal(); 
+            handlePartySelectionForInvoice(); 
+            
+            // 📦 RENTAL OPTION COMPLIANCE ENGINE
+            let typeSel = document.getElementById('di_invoice_type');
+            if (typeSel) {
+                let rentalOpt = typeSel.querySelector('option[value="Rental"]');
+                if (rentalOpt) {
+                    rentalOpt.style.display = (appSettings.manageInventory) ? 'block' : 'none';
+                }
+                // Default drop to 'Event' if inventory is disabled
+                if(!appSettings.manageInventory) typeSel.value = 'Event';
+            }
+
+            let badge = document.getElementById('di_autopilot_badge'); 
+            if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
+                badge.style.display = 'flex'; 
+                badge.innerHTML = `🔗 Auto-Linked to Event: <b>${leadsDB[tempEventIdForInvoice].name} - ${leadsDB[tempEventIdForInvoice].func}</b>`; 
+            } else { 
+                badge.style.display = 'none'; 
+            } 
+            toggleInvoiceType(); // Refresh fields view
+            document.getElementById('directInvoiceModal').style.display = 'flex'; 
+        }
         function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function handlePartySelectionForInvoice() { if (editingSalesId) return; let pId = document.getElementById('di_party').value; let advanceGroup = document.getElementById('available_advance_group'); let advanceSelect = document.getElementById('di_use_advance'); advanceSelect.innerHTML = '<option value="0">Do not use advance</option>'; let hasAdvance = false; if (pId) { Object.values(salesDB).forEach(s => { if (s.type === 'Receipt' && s.partyId === pId && s.availableAmount > 0) { advanceSelect.innerHTML += `<option value="${s.id}">Use Available: ₹${s.availableAmount.toLocaleString('en-IN')}</option>`; hasAdvance = true; } }); } advanceGroup.style.display = hasAdvance ? 'block' : 'none'; calculateDirectInvoiceTotal(); }
         document.getElementById('di_party').addEventListener('change', handlePartySelectionForInvoice);
@@ -10452,6 +10495,9 @@
 
             if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
             if (invoiceType === 'Rental' && !returnDate) { return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); }
+            if (invoiceType === 'Rental' && !appSettings.manageInventory) {
+                return alert("🚨 Rental Invoices are disabled in App Settings!");
+            }
 
             let items = []; 
             document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
@@ -15891,7 +15937,7 @@
 
             let todayStr = new Date().toISOString().split('T')[0];
             
-            // 🛡️ Safety Guard: Prevents crashes from deleted/null records
+            // 🛡️ Safety Guard: Added 's && s.type' to prevent crashes
             let overdueInvoices = Object.values(salesDB).filter(s => s && s.type === 'Invoice' && s.invoiceType === 'Rental' && s.rentalStatus !== 'Returned' && s.returnDate && s.returnDate < todayStr);
 
             if (overdueInvoices.length > 0) {
