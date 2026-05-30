@@ -14588,10 +14588,7 @@
         }
 
         function saveMasterSettings() {
-            // Naye Tab ke inputs ko target kar rahe hain
             let pin = document.getElementById('set_app_pin') ? document.getElementById('set_app_pin').value : "";
-
-            // Safety check: Agar elements null honge toh error nahi aayega
             let invPrefix = document.getElementById('set_prefix_inv') ? document.getElementById('set_prefix_inv').value : appSettings.invPrefix;
             let qtPrefix = document.getElementById('set_prefix_qt') ? document.getElementById('set_prefix_qt').value : appSettings.qtPrefix;
             let defGst = document.getElementById('set_def_gst') ? document.getElementById('set_def_gst').value : appSettings.defGst;
@@ -14604,19 +14601,16 @@
             let manageInventory = document.getElementById('set_manage_inventory') ? document.getElementById('set_manage_inventory').checked : (appSettings.manageInventory || false);
 
             appSettings = {
-                invPrefix: invPrefix,
-                qtPrefix: qtPrefix,
-                defGst: parseInt(defGst) || 0,
-                showBank: showBank,
-                appPin: pin,
-                tnc: tnc,
-                waInv: waInv,
-                waQt: waQt,
-                waReview: waReview,
+                invPrefix: invPrefix, qtPrefix: qtPrefix, defGst: parseInt(defGst) || 0,
+                showBank: showBank, appPin: pin, tnc: tnc, waInv: waInv, waQt: waQt, waReview: waReview,
                 manageInventory: manageInventory // 🚀 Saved to master configuration
             };
 
             localStorage.setItem('utsav_app_settings', JSON.stringify(appSettings));
+            
+            // 🚀 SMART FIX: Auto-refresh sidebar tabs instantly without reloading page!
+            if(currentWorkspaceId) enforceStaffPermissions(currentWorkspaceId);
+
             alert("✅ Settings Saved Successfully!");
         }
 
@@ -15933,90 +15927,112 @@
         function renderInventoryHubList() {
             let container = document.getElementById('inventory-list-container');
             if (!container) return; 
-            container.innerHTML = "";
-
-            let todayStr = new Date().toISOString().split('T')[0];
             
-            // 🛡️ Safety Guard: Added 's && s.type' to prevent crashes
-            let overdueInvoices = Object.values(salesDB).filter(s => s && s.type === 'Invoice' && s.invoiceType === 'Rental' && s.rentalStatus !== 'Returned' && s.returnDate && s.returnDate < todayStr);
+            try {
+                container.innerHTML = "";
+                let todayStr = new Date().toISOString().split('T')[0];
+                let overdueCount = 0;
+                let overdueHtml = "";
 
-            if (overdueInvoices.length > 0) {
-                let overdueHtml = `<div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
-                    <h3 style="margin:0 0 12px 0; color:var(--danger); font-size:14px; text-transform:uppercase; font-weight:900;">🚨 Overdue Rentals (${overdueInvoices.length})</h3>`;
-                
-                overdueInvoices.forEach(inv => {
-                    let pName = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].name : 'Unknown';
-                    let pPhone = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].phone : '';
-                    let fDate = inv.returnDate ? new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
-                    
-                    overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
-                        <div>
-                            <strong style="color:var(--text-primary); font-size:13.5px;">${pName}</strong> <span style="font-size:10px; color:#64748B;">(${inv.id})</span>
-                            <div style="font-size:11px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
-                            <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
-                        </div>
-                    </div>`;
-                });
-                overdueHtml += `</div>`;
-                container.innerHTML += overdueHtml; 
-            }
-
-            let search = document.getElementById('inv_hub_search') ? document.getElementById('inv_hub_search').value.toLowerCase() : "";
-            let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
-
-            Object.values(itemsDB).forEach(item => {
-                // 🛡️ Safety Guard: Skip corrupted items
-                if (!item || typeof item !== 'object' || !item.name) return;
-
-                let inGodown = 0;
-                let godownBreakdownHtml = '';
-                
-                let godownsList = item.godowns || {};
-                for (let gId in godownsList) {
-                    let stock = godownsList[gId] || 0;
-                    inGodown += stock;
-                    if(stock > 0) {
-                        let gName = (typeof warehousesDB !== 'undefined' && warehousesDB[gId]) ? warehousesDB[gId].name : gId;
-                        godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
-                    }
+                // 🛡️ Safely check overdue invoices
+                if (typeof salesDB === 'object' && salesDB !== null) {
+                    Object.values(salesDB).forEach(inv => {
+                        if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.rentalStatus !== 'Returned' && inv.returnDate && inv.returnDate < todayStr) {
+                            overdueCount++;
+                            let pName = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].name : 'Unknown';
+                            let pPhone = (inv.partyId && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].phone : '';
+                            let fDate = new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                            
+                            overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:13.5px;">${pName}</strong> <span style="font-size:10px; color:#64748B;">(${inv.id})</span>
+                                    <div style="font-size:11px; color:var(--danger); font-weight:800; margin-top:4px;">Was due on: ${fDate}</div>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
+                                    <button onclick="markRentalReturned('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 101, 52, 0.2);">✅ Return Stock</button>
+                                </div>
+                            </div>`;
+                        }
+                    });
                 }
 
-                let deployed = (item.totalStock || 0) - inGodown;
-                totalInGodown += inGodown; totalDeployed += deployed;
+                if (overdueCount > 0) {
+                    container.innerHTML += `<div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
+                        <h3 style="margin:0 0 12px 0; color:var(--danger); font-size:14px; text-transform:uppercase; font-weight:900;">🚨 Overdue Rentals (${overdueCount})</h3>
+                        ${overdueHtml}
+                    </div>`;
+                }
 
-                if (search && !item.name.toLowerCase().includes(search)) return;
-                visibleCount++;
+                let searchEl = document.getElementById('inv_hub_search');
+                let search = searchEl ? searchEl.value.toLowerCase() : "";
+                let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
+                let itemsHtml = "";
 
-                container.innerHTML += `
-                <div onclick="openItemDetails('${item.name}')" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <div style="flex:1;">
-                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
-                        <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${item.totalStock}</div>
-                        <div style="padding-top:6px; border-top:1px dashed #E2E8F0;">${godownBreakdownHtml}</div>
-                    </div>
-                    <div style="display:flex; gap:10px; text-align:center;">
-                        <div style="background:#EFF6FF; padding:8px 12px; border-radius:8px; border:1px solid #BFDBFE; min-width:60px;">
-                            <div style="font-size:9px; color:var(--accent-color); font-weight:800; text-transform:uppercase;">In Godowns</div>
-                            <div style="font-size:16px; font-weight:900; color:#1E3A8A;">${inGodown}</div>
-                        </div>
-                        <div style="background:#FFFBEB; padding:8px 12px; border-radius:8px; border:1px solid #FDE68A; min-width:60px;">
-                            <div style="font-size:9px; color:var(--warning); font-weight:800; text-transform:uppercase;">On Event</div>
-                            <div style="font-size:16px; font-weight:900; color:#9A3412;">${deployed}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            
-            let statGodown = document.getElementById('inv_stat_godown');
-            let statDeployed = document.getElementById('inv_stat_deployed');
-            if (statGodown) statGodown.innerText = totalInGodown;
-            if (statDeployed) statDeployed.innerText = totalDeployed;
-            
-            if (visibleCount === 0) {
-                container.innerHTML += `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.</div>`;
+                if (typeof itemsDB === 'object' && itemsDB !== null) {
+                    Object.values(itemsDB).forEach(item => {
+                        if (!item || !item.name) return; // 🛡️ Skip corrupted items
+
+                        let inGodown = 0;
+                        let godownBreakdownHtml = '';
+                        
+                        let godownsList = item.godowns || {};
+                        for (let gId in godownsList) {
+                            let stock = parseInt(godownsList[gId]) || 0;
+                            inGodown += stock;
+                            if(stock > 0) {
+                                let gName = (typeof warehousesDB !== 'undefined' && warehousesDB[gId]) ? warehousesDB[gId].name : gId;
+                                godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
+                            }
+                        }
+
+                        let tStock = parseInt(item.totalStock) || 0;
+                        let deployed = tStock - inGodown;
+                        totalInGodown += inGodown; 
+                        totalDeployed += deployed;
+
+                        // Case insensitive search
+                        if (search && !String(item.name).toLowerCase().includes(search)) return;
+                        visibleCount++;
+
+                        // Safely escape single quotes for the click handler
+                        let safeName = String(item.name).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                        itemsHtml += `
+                        <div onclick="if(typeof openItemDetails === 'function') openItemDetails('${safeName}')" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;">
+                            <div style="flex:1;">
+                                <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
+                                <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${tStock}</div>
+                                <div style="padding-top:6px; border-top:1px dashed #E2E8F0;">${godownBreakdownHtml}</div>
+                            </div>
+                            <div style="display:flex; gap:10px; text-align:center;">
+                                <div style="background:#EFF6FF; padding:8px 12px; border-radius:8px; border:1px solid #BFDBFE; min-width:60px;">
+                                    <div style="font-size:9px; color:var(--accent-color); font-weight:800; text-transform:uppercase;">In Godowns</div>
+                                    <div style="font-size:16px; font-weight:900; color:#1E3A8A;">${inGodown}</div>
+                                </div>
+                                <div style="background:#FFFBEB; padding:8px 12px; border-radius:8px; border:1px solid #FDE68A; min-width:60px;">
+                                    <div style="font-size:9px; color:var(--warning); font-weight:800; text-transform:uppercase;">On Event</div>
+                                    <div style="font-size:16px; font-weight:900; color:#9A3412;">${deployed}</div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                }
+                
+                container.innerHTML += itemsHtml;
+
+                let statGodown = document.getElementById('inv_stat_godown');
+                let statDeployed = document.getElementById('inv_stat_deployed');
+                if (statGodown) statGodown.innerText = totalInGodown;
+                if (statDeployed) statDeployed.innerText = totalDeployed;
+                
+                if (visibleCount === 0) {
+                    container.innerHTML += `<div style='text-align:center; padding:30px; color:#64748B; font-weight:600; font-size:13px;'>No items found in stock.<br><span style="font-size:11px; font-weight:normal;">Add items via Direct Stock or Asset Purchase.</span></div>`;
+                }
+
+            } catch (error) {
+                console.error("Inventory Render Error: ", error);
+                container.innerHTML = `<div style="background:#FEF2F2; color:#991B1B; padding:15px; border-radius:8px; border:1px solid #FCA5A5; font-size:12px; font-weight:bold;">⚠️ Data Error: One of your items has corrupted data. ${error.message}</div>`;
             }
         }
 
@@ -16566,6 +16582,26 @@
                 updateDataAndUI();
                 document.getElementById('stockAuditModal').style.display = 'none';
                 alert(`✅ Audit complete. ${diff} units marked as lost and booked in Expenses.`);
+            }
+        }
+        function markRentalReturned(id) {
+            if(confirm("Mark all items from this rental invoice as safely returned to Godown?")) {
+                let inv = salesDB[id];
+                if(inv) {
+                    inv.rentalStatus = 'Returned';
+                    // Wapas godown mein stock add karo
+                    if(inv.items) {
+                        inv.items.forEach(item => {
+                            let gId = inv.godownId || 'WH_MAIN';
+                            if(itemsDB[item.name]) {
+                                if(!itemsDB[item.name].godowns[gId]) itemsDB[item.name].godowns[gId] = 0;
+                                itemsDB[item.name].godowns[gId] += item.qty;
+                            }
+                        });
+                    }
+                    updateDataAndUI();
+                    alert("Stock returned successfully to Godown!");
+                }
             }
         }
 
