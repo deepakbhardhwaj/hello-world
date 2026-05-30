@@ -44,11 +44,11 @@
         window.auth = firebase.auth();
         window.db = firebase.firestore();
 
-        // 🚀 FIX: Prevent Firebase Polling Conflict
+        // 🚀 TURBO MODE: Enable Fast WebSockets for Instant Sync
         window.db.settings({
-            experimentalForceLongPolling: true,
-            experimentalAutoDetectLongPolling: false, // 👈 Ye error ko khatam karega
-            useFetchStreams: false,
+            experimentalForceLongPolling: false, // 👈 Isko FALSE kiya taaki fast chale
+            experimentalAutoDetectLongPolling: true,
+            useFetchStreams: true, // 👈 Live streaming ON
             merge: true
         });
 
@@ -6046,7 +6046,7 @@
         <div id="inventory-list-container"></div>
     </div>
 
-    <div id="outwardChallanModal" class="modal-overlay" style="z-index: 5500;">
+    <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3>🚚 Material Outward (Challan)</h3>
@@ -6078,7 +6078,7 @@
             </form>
         </div>
     </div>
-    <div id="returnStockModal" class="modal-overlay" style="z-index: 6500;">
+    <div id="returnStockModal" class="modal-overlay" style="z-index: 10500;">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h3 id="return-modal-title">Process Material Return</h3>
@@ -7573,21 +7573,24 @@
         function saveDataLocally() { 
             if (!currentWorkspaceId) return; 
             
-            // Saara data pack karo (Naya Inventory Data bhi add kiya gaya hai 👇)
-            let data = { 
-                leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
-                expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
-                bank: bankDB, bankTx: bankTxDB, loans: loansDB,
-                items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB // 🚀 NAYA ADD KIYA
-            }; 
-            
-            // 1. Local backup 
-            localStorage.setItem('utsav_erp_data_' + currentWorkspaceId, JSON.stringify(data)); 
-            
-            // 2. ☁️ FIREBASE CLOUD PUSH 
-            db.collection("workspace_data").doc(currentWorkspaceId).set(data, { merge: true })
-            .catch(e => console.error("Cloud Save Failed:", e));
+            // 🚀 APP FREEZE FIX: Saving process ko background (async) mein daal diya
+            setTimeout(() => {
+                let data = { 
+                    leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
+                    expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
+                    bank: bankDB, bankTx: bankTxDB, loans: loansDB,
+                    items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB 
+                }; 
+                
+                // 1. Local backup 
+                localStorage.setItem('utsav_erp_data_' + currentWorkspaceId, JSON.stringify(data)); 
+                
+                // 2. ☁️ FIREBASE CLOUD PUSH (Instant Sync)
+                db.collection("workspace_data").doc(currentWorkspaceId).set(data, { merge: true })
+                .catch(e => console.error("Cloud Save Failed:", e));
+            }, 0);
         }
+
         function fetchLeadsFromFirestore() {
             console.log("🔄 Starting Real-time Sync for Leads...");
             
@@ -14090,13 +14093,13 @@
             }
         }
 
-        // FIX 2: Workspace se buttons dabane par background mein tab change na ho
-        function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } closePanel(); tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 400); }
-        function createPurchaseBillFromEvent(leadId) { closePanel(); tempEventIdForPurchase = leadId; setTimeout(() => { openPurchaseBillModal(); }, 400); }
-        function createPOFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; closePanel(); setTimeout(() => { openPurchaseOrderModal(); }, 400); }
-        function createPBFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; closePanel(); setTimeout(() => { openPurchaseBillModal(); }, 400); }
-        function createExpenseFromEvent(leadId) { closePanel(); setTimeout(() => { openExpenseModal(leadId); }, 400); }
-        function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } closePanel(); setTimeout(() => { openPaymentModal(partyId); }, 400); }
+        // 🚀 FAST UI FIX: Removed artificial 400ms delays
+        function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } closePanel(); tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 50); }
+        function createPurchaseBillFromEvent(leadId) { closePanel(); tempEventIdForPurchase = leadId; setTimeout(() => { openPurchaseBillModal(); }, 50); }
+        function createPOFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; closePanel(); setTimeout(() => { openPurchaseOrderModal(); }, 50); }
+        function createPBFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; closePanel(); setTimeout(() => { openPurchaseBillModal(); }, 50); }
+        function createExpenseFromEvent(leadId) { closePanel(); setTimeout(() => { openExpenseModal(leadId); }, 50); }
+        function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } closePanel(); setTimeout(() => { openPaymentModal(partyId); }, 50); }
 
         // FIX 3: Hardware Back Button Control (Mobile App jaisa experience)
         history.pushState({ page: 'start' }, document.title, location.href);
