@@ -1799,7 +1799,7 @@
 </head>
 
 <body>
-    <datalist id="item_master_list"></datalist>
+    <div id="recaptcha-container"></div> <datalist id="item_master_list"></datalist>
 
     <!-- Splash Screen -->
     <div id="splash-screen">
@@ -4377,7 +4377,6 @@
                     line-height: 1.5;
                     box-sizing: border-box;
                 }
-            </style><style>
                 /* 🚀 Settings Hub Premium UI */
                 .settings-grid { display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto; }
                 .set-bento-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); transition: 0.3s; position: relative; overflow: hidden; }
@@ -6131,8 +6130,11 @@
             <p style="font-size:11px; color:var(--text-secondary); margin-top:0;">Use this to add items you already own.</p>
             <form onsubmit="event.preventDefault(); saveDirectStock();">
                 <div class="form-group">
-                    <label class="form-label">Item Name</label>
-                    <input type="text" id="ds_name" class="form-input" list="item_master_list" placeholder="e.g. Fiber Chair" required>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label class="form-label" style="margin:0;">Select Item</label>
+                        <button type="button" class="link-btn" style="color:var(--accent-color); font-weight:bold;" onclick="promptNewInventoryItem()">+ Add New Item</button>
+                    </div>
+                    <select id="ds_name_select" class="form-select" required></select>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -6341,6 +6343,7 @@
                     localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
 
                     manageDeviceSession(mob); // 🔒 Device Lock On
+                    document.getElementById('view_new_user_setup').style.display = 'none';
                     checkPersistentLogin(); // Seedha dashboard!
                     return;
                 }
@@ -6989,87 +6992,71 @@
                 alert("❌ Server Error: Network connection temporary failed. Try again!");
             }
         }
-        // 🚀 1. BULLETPROOF CREATE COMPANY FUNCTION
-        async function processJoinCompany() {
-            let inputCode = document.getElementById('auth_join_code').value.trim().toUpperCase();
-            if (!inputCode) return alert("Please enter a code!");
-
-            try {
-                // Cloud se code search karo
-                let snapshot = await db.collection("companies")
-                                    .where("joinCode", "==", inputCode)
-                                    .get();
-
-                if (snapshot.empty) {
-                    return alert("❌ Invalid Code! Company not found in our database.");
-                }
-
-                let doc = snapshot.docs[0];
-                let compId = doc.id;
-                let compData = doc.data();
-
-                let user = masterUsersDB[loggedInMobile];
-                
-                // Cloud mein staff request add karo
-                await db.collection("companies").doc(compId).update({
-                    staff: firebase.firestore.FieldValue.arrayUnion({
-                        mobile: loggedInMobile,
-                        name: user.name,
-                        status: 'Pending',
-                        role: 'Staff'
-                    })
-                });
-
-                // Local DB sync
-                if (!user.companies.includes(compId)) {
-                    user.companies.push(compId);
-                    localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-                }
-
-                alert(`⏳ Request Sent!\n\nYou have requested to join "${compData.name}". The Owner will approve it soon.`);
-                document.getElementById('auth_join_code').value = "";
-                
-                // Choice screen show karo (Invite flow khatam)
-                openChoiceScreen(user.name);
-
-            } catch (error) {
-                console.error("Join Error:", error);
-                alert("❌ Error connecting to server. Please check your internet.");
-            }
-        }
 
         // 🚀 3. SCREEN PAR COMPANIES KI LIST BANANA
         function renderCompanyList() {
-            let listDiv = document.getElementById('auth_company_list');
-            if(!listDiv) return;
-            
-            listDiv.innerHTML = "";
-            let user = masterUsersDB[loggedInMobile] || { companies: [] };
-            
-            if (user.companies.length === 0) {
-                listDiv.innerHTML = "<p style='text-align:center; color:#64748B;'>No workspaces found.</p>";
-                return;
+                let listDiv = document.getElementById('auth_company_list');
+                if(!listDiv) return;
+                
+                listDiv.innerHTML = "";
+                let user = masterUsersDB[loggedInMobile] || { companies: [] };
+                
+                if (user.companies.length === 0) {
+                    listDiv.innerHTML = "<p style='text-align:center; color:#64748B;'>No workspaces found.</p>";
+                    return;
+                }
+
+                user.companies.forEach(cId => {
+                    let comp = masterCompsDB[cId];
+                    if (comp) {
+                        let isOwner = (comp.ownerMob === loggedInMobile);
+                        let role = isOwner ? "⭐ Owner" : "👤 Staff";
+                        
+                        // 🚀 NAYA: Sirf Owner ko Delete button dikhega
+                        let deleteBtn = isOwner ? `<button onclick="deleteWorkspaceFromList('${comp.id}', event)" style="background:#FEF2F2; color:var(--danger); border:1px solid #FECACA; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; margin-right:10px; box-shadow:var(--shadow-sm);">🗑️ Delete</button>` : '';
+                        
+                        listDiv.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #CBD5E1; border-radius:10px; cursor:pointer; background:#F8FAFC; margin-bottom:10px;" 
+                            onclick="handleWorkspaceClick('${comp.id}')">
+                            <div>
+                                <strong style="color:var(--text-primary); font-size:14px;">${comp.name}</strong><br>
+                                <span style="font-size:11px; color:var(--text-secondary);">${role} | Code: ${comp.joinCode}</span>
+                            </div>
+                            <div style="display:flex; align-items:center;">
+                                ${deleteBtn}
+                                <div style="font-size:20px;">➡️</div>
+                            </div>
+                        </div>`;
+                    }
+                });
             }
 
-            user.companies.forEach(cId => {
-                let comp = masterCompsDB[cId];
-                if (comp) {
-                    // Check ki Owner hai ya Staff
-                    let isOwner = (comp.ownerMob === loggedInMobile);
-                    let role = isOwner ? "⭐ Owner" : "👤 Staff";
-                    
-                    listDiv.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #CBD5E1; border-radius:10px; cursor:pointer; background:#F8FAFC; margin-bottom:10px;" 
-                         onclick="handleWorkspaceClick('${comp.id}')">
-                        <div>
-                            <strong style="color:var(--text-primary); font-size:14px;">${comp.name}</strong><br>
-                            <span style="font-size:11px; color:var(--text-secondary);">${role} | Code: ${comp.joinCode}</span>
-                        </div>
-                        <div style="font-size:20px;">➡️</div>
-                    </div>`;
+            // 🚀 NAYA FUNCTION: Bahar se Workspace delete karne ke liye
+            async function deleteWorkspaceFromList(compId, event) {
+                event.stopPropagation(); // Isse box par click hone se andar nahi jayega
+                let compName = masterCompsDB[compId].name;
+                let code = prompt(`🚨 DANGER ZONE 🚨\nAre you sure you want to permanently delete "${compName}"?\n\nType exactly: DELETE`);
+                
+                if (code === "DELETE") {
+                    try {
+                        await db.collection("companies").doc(compId).delete();
+                        
+                        let user = masterUsersDB[loggedInMobile];
+                        user.companies = user.companies.filter(c => c !== compId);
+                        await db.collection("users").doc(loggedInMobile).update({ companies: user.companies });
+                        
+                        localStorage.removeItem('utsav_erp_data_' + compId);
+                        if(localStorage.getItem('utsav_active_workspace') === compId) {
+                            localStorage.removeItem('utsav_active_workspace');
+                        }
+                        
+                        alert("✅ Workspace deleted successfully.");
+                        window.location.reload();
+                    } catch(e) { 
+                        alert("❌ Error deleting workspace. Check internet."); 
+                    }
                 }
-            });
-        }
+            }
 
         // 🚀 FIX 1: WORKSPACE CLICK LOGIC (LOOP REMOVED)
         async function handleWorkspaceClick(compId) {
@@ -16238,8 +16225,55 @@
             document.getElementById('directStockModal').style.display = 'flex';
         }
 
+        // 🚀 NAYA FUNCTION: Inventory dropdown load karne ke liye
+        function refreshInventorySelect() {
+            let sel = document.getElementById('ds_name_select');
+            if(!sel) return;
+            let currentVal = sel.value;
+            sel.innerHTML = '<option value="">-- Select Item --</option>';
+            Object.keys(itemsDB).sort().forEach(itemName => {
+                sel.innerHTML += `<option value="${itemName}">${itemName}</option>`;
+            });
+            if(currentVal && itemsDB[currentVal]) sel.value = currentVal;
+        }
+
+        // 🚀 NAYA FUNCTION: Naya item database mein add karne ke liye
+        function promptNewInventoryItem() {
+            let newItem = prompt("Enter New Item Name (e.g. Sofa, LED Lights):");
+            if(newItem && newItem.trim() !== "") {
+                newItem = newItem.trim();
+                if(!itemsDB[newItem]) {
+                    // Naya item blank data ke sath initialize kar diya
+                    itemsDB[newItem] = { name: newItem, totalStock: 0, godowns: {} };
+                    saveDataLocally(); // Cloud aur local me save
+                    refreshInventorySelect(); // Dropdown update
+                    document.getElementById('ds_name_select').value = newItem;
+                    alert(`✅ '${newItem}' added to list! Now enter quantity and value to save stock.`);
+                } else {
+                    alert("This item already exists in the list!");
+                    document.getElementById('ds_name_select').value = newItem;
+                }
+            }
+        }
+
+        // 🚀 OVERRIDE: Modal khulte hi dropdown auto-fill hoga
+        let originalOpenDirectStockModal = openDirectStockModal;
+        openDirectStockModal = function() {
+            refreshInventorySelect(); // Dropdown load karo
+            document.getElementById('ds_name_select').value = '';
+            document.getElementById('ds_qty').value = '';
+            document.getElementById('ds_value').value = '';
+            let sel = document.getElementById('ds_godown');
+            sel.innerHTML = '';
+            Object.values(warehousesDB).forEach(w => {
+                sel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+            });
+            document.getElementById('directStockModal').style.display = 'flex';
+        };
+
+        // 🚀 UPDATED SAVE FUNCTION: Ab ye naye select box se data lega
         function saveDirectStock() {
-            let name = document.getElementById('ds_name').value.trim();
+            let name = document.getElementById('ds_name_select').value; // <--- Yahan Dropdown ki ID aayegi
             let qty = parseInt(document.getElementById('ds_qty').value);
             let gId = document.getElementById('ds_godown').value;
             let value = parseFloat(document.getElementById('ds_value').value) || 0; 
@@ -16252,7 +16286,7 @@
             itemsDB[name].totalStock += qty;
             itemsDB[name].godowns[gId] += qty;
 
-            // 🚀 CREATE ASSET RECORD FOR BALANCE SHEET
+            // Balance Sheet ke liye asset create karna
             let assetId = "AST" + Date.now();
             purchaseDB[assetId] = {
                 id: assetId, type: 'Asset', partyId: 'SYS_OPENING', eventId: null, event: `Opening Stock: ${name}`, 
