@@ -15916,29 +15916,7 @@
             document.getElementById('audit_details').style.display = 'none'; document.getElementById('audit_input_group').style.display = 'none'; document.getElementById('stockAuditModal').style.display = 'flex';
         };
         var openStockAuditModal = window.openStockAuditModal;
-
-        let origSwitchReportTab = window.switchReportTab || switchReportTab;
-        window.switchReportTab = function(val) {
-            if(typeof origSwitchReportTab === 'function') origSwitchReportTab(val);
-            if(val === 'inventory') {
-                if(!document.getElementById('rep_godown_group')) {
-                    let html = `<div id="rep_godown_group" style="flex: 1; min-width: 120px;"><label class="form-label" style="color:var(--accent-color);">Select Godown</label><select id="rep_godown_select" class="form-select" onchange="window.generateCurrentReport()"><option value="ALL">All Godowns</option></select></div>`;
-                    let fromGrp = document.getElementById('filter_from_group');
-                    if(fromGrp) fromGrp.insertAdjacentHTML('beforebegin', html);
-                    Object.values(warehousesDB).forEach(w => { document.getElementById('rep_godown_select').innerHTML += `<option value="${w.id}">${w.name}</option>`; });
-                } else { document.getElementById('rep_godown_group').style.display = 'block'; }
-                if(document.getElementById('filter_from_group')) document.getElementById('filter_from_group').style.display = 'none';
-                if(document.getElementById('filter_to_group')) document.getElementById('filter_to_group').style.display = 'none';
-            } else {
-                if(document.getElementById('rep_godown_group')) document.getElementById('rep_godown_group').style.display = 'none';
-                if(document.getElementById('filter_from_group')) document.getElementById('filter_from_group').style.display = 'block';
-                if(document.getElementById('filter_to_group')) document.getElementById('filter_to_group').style.display = 'block';
-            }
-        };
-
-        // Resize Header Icons
-        setTimeout(() => { document.querySelectorAll('#inventory-hub .premium-sticky-header .btn-icon').forEach(icon => { icon.style.width = '28px'; icon.style.height = '28px'; icon.style.fontSize = '13px'; }); }, 1500);
-
+        
         // ==============================================================
     // ==============================================================
         // 🚀 SURGICAL FIX 3: MISSING NAVIGATION & UI FUNCTIONS RECOVERY
