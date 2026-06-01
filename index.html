@@ -6073,14 +6073,14 @@
                 <h3>🚚 Material Outward (Challan)</h3>
                 <button class="modal-close" onclick="document.getElementById('outwardChallanModal').style.display='none';">&times;</button>
             </div>
-            <form id="outwardForm" novalidate>
+            <form id="outwardForm" onsubmit="event.preventDefault(); window.saveOutwardChallan();" novalidate>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" style="color:var(--accent-color);">Target Event</label>
                         <select id="out_event" class="form-select" required></select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="color:var(--purple);">Dispatch From Godown 🏭</label>
+                        <label class="form-label" style="color:var(--purple);">Dispatch From 🏭</label>
                         <select id="out_godown_select" class="form-select" required></select>
                     </div>
                 </div>
@@ -6088,14 +6088,18 @@
                     <div class="form-group"><label class="form-label">Dispatch Date</label><input type="date" id="out_date" class="form-input" required></div>
                     <div class="form-group"><label class="form-label">Vehicle / Transport No.</label><input type="text" id="out_vehicle" class="form-input" placeholder="e.g. GJ-05-XX-1234"></div>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Notes / Remarks</label>
+                    <input type="text" id="out_note" class="form-input" placeholder="Any specific instructions...">
+                </div>
                 <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <label class="form-label" style="margin: 0; color: var(--accent-color);">Items to Dispatch</label>
-                        <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('out')">📦 Select from Godown</button>
+                        <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="if(typeof window.openInventorySelectSheet === 'function') window.openInventorySelectSheet('out')">📦 Select from Godown</button>
                     </div>
                     <div id="out_items_container"></div>
                 </div>
-                <button type="button" class="btn-main" onclick="saveOutwardChallan()">Dispatch Material</button>
+                <button type="submit" class="btn-main">Dispatch Material</button>
             </form>
         </div>
     </div>
@@ -17120,7 +17124,164 @@
             alert(`✅ Stock Successfully Added!\n\nItem: ${name}\nQuantity: ${qty}\nPer Unit Rate: ₹${rate}\n\nTotal Value of ₹${value.toLocaleString('en-IN')} has been added to your Fixed Assets (Balance Sheet).`);
         };
         
+        // ==============================================================
+        // 🚀 PHASE 3: OUTWARD ENGINE, EXPENSE SYNC & QUICK FAB MENU
+        // ==============================================================
 
+        // 1. Inventory Quick Actions (Floating Menu)
+        window.openInvFabMenu = function(e) {
+            if(e) e.stopPropagation();
+            let menu = document.getElementById('fab-menu'); 
+            if(!menu) return;
+
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                menu.innerHTML = `
+                    <button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#10B981; color:white; margin-bottom:8px;" onclick="window.hideNavAndFabs(); document.getElementById('fab-menu').style.display='none'; openOutwardChallanModal();">🚚 Outward Material</button>
+                    <button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#3B82F6; color:white; margin-bottom:8px;" onclick="window.hideNavAndFabs(); document.getElementById('fab-menu').style.display='none'; window.openRentInvoice();">📄 Rent Invoice</button>
+                    <button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#8B5CF6; color:white; margin-bottom:8px;" onclick="window.hideNavAndFabs(); document.getElementById('fab-menu').style.display='none'; window.openDirectStockModal();">➕ Add Stock</button>
+                    <button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#F59E0B; color:black; margin-bottom:8px;" onclick="window.hideNavAndFabs(); document.getElementById('fab-menu').style.display='none'; alert('Audit Stock feature coming in next phase!');">⚖️ Audit Stock</button>
+                `;
+                menu.style.display = 'flex'; 
+                menu.style.flexDirection = 'column';
+                menu.style.alignItems = 'flex-end';
+            } else { 
+                menu.style.display = 'none'; 
+            }
+        };
+
+        // 2. Direct Redirect to Sales Hub -> Rental Invoice
+        window.openRentInvoice = function() {
+            window.openTab('sales-hub', document.getElementById('btn-erp'));
+            setTimeout(() => {
+                if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal();
+                let typeSel = document.getElementById('di_invoice_type');
+                if(typeSel) {
+                    typeSel.value = 'Rental';
+                    typeSel.dispatchEvent(new Event('change'));
+                }
+            }, 300);
+        };
+
+        // 3. Add Item Row for Outward Form (With Rate Field)
+        window.addOutwardItemRow = function(itemName = '') {
+            let container = document.getElementById('out_items_container');
+            let rowId = 'out_item_' + Date.now() + Math.floor(Math.random()*100);
+            let html = `
+            <div class="outward-item-row" id="${rowId}" style="display:flex; gap:8px; align-items:flex-end; margin-bottom:10px; background:white; padding:10px; border-radius:6px; border:1px solid #E2E8F0; position:relative;">
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; box-shadow:var(--shadow-sm);">×</button>
+                <div style="flex:2;">
+                    <label style="font-size:10px; color:var(--text-secondary);">Item Name</label>
+                    <input type="text" class="form-input o-item-name" value="${itemName}" readonly style="background:#F8FAFC; font-weight:bold;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:var(--text-secondary);">Qty</label>
+                    <input type="number" class="form-input o-item-qty" min="1" value="1" required>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:var(--accent-color); font-weight:bold;">Unit Rate(₹)</label>
+                    <input type="number" class="form-input o-item-rate" placeholder="0" required>
+                </div>
+            </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+        };
+
+        // 4. Overriding Item Selector Sheet to route to Outward Row
+        window.openInventorySelectSheet = function(context) {
+            document.getElementById('inventorySelectModal').dataset.context = context;
+            document.getElementById('inv_select_search').value = '';
+            window.filterSelectInventory();
+            document.getElementById('inventorySelectModal').style.display = 'flex';
+        };
+
+        window.filterSelectInventory = function() {
+            let term = document.getElementById('inv_select_search').value.toLowerCase();
+            let grid = document.getElementById('inv_select_grid');
+            grid.innerHTML = '';
+            Object.values(itemsDB).forEach(item => {
+                if(!item.name.toLowerCase().includes(term) && !(item.sku && item.sku.toLowerCase().includes(term))) return;
+                let skuText = item.sku || 'ITM';
+                grid.innerHTML += `
+                <label style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;">
+                    <div>
+                        <strong style="font-size:13px;"><span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 4px; border-radius:4px; margin-right:6px;">${skuText}</span>${item.name}</strong>
+                        <div style="font-size:10px; color:#64748B; margin-top:4px;">Total Purchased Stock: ${item.totalStock || 0}</div>
+                    </div>
+                    <input type="checkbox" class="inv-select-cb" value="${item.name}" style="width:18px; height:18px; accent-color:var(--accent-color);">
+                </label>`;
+            });
+        };
+
+        window.addSelectedItemsToForm = function() {
+            let context = document.getElementById('inventorySelectModal').dataset.context || 'out';
+            let checkboxes = document.querySelectorAll('.inv-select-cb:checked');
+            
+            checkboxes.forEach(cb => {
+                let itemName = cb.value;
+                if(context === 'out') {
+                    window.addOutwardItemRow(itemName);
+                } else if (context === 'di') {
+                    if(typeof addInvoiceItem === 'function') addInvoiceItem();
+                    let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
+                    let lastRow = rows[rows.length - 1];
+                    if(lastRow) lastRow.querySelector('.i-item-name').value = itemName;
+                }
+            });
+            document.getElementById('inventorySelectModal').style.display = 'none';
+        };
+
+        // 5. THE MASTER OUTWARD ENGINE (Calculates & Syncs with Balance Sheet)
+        window.saveOutwardChallan = function() {
+            let evId = document.getElementById('out_event').value;
+            let gId = document.getElementById('out_godown_select').value;
+            let date = document.getElementById('out_date').value;
+            let vehicle = document.getElementById('out_vehicle').value;
+            let note = document.getElementById('out_note') ? document.getElementById('out_note').value : '';
+
+            if(!evId || !gId || !date) return alert("Fill required fields!");
+
+            let items = [];
+            let totalInternalValue = 0;
+
+            document.querySelectorAll('#out_items_container .outward-item-row').forEach(row => {
+                let name = row.querySelector('.o-item-name').value;
+                let qty = parseInt(row.querySelector('.o-item-qty').value) || 0;
+                let rate = parseFloat(row.querySelector('.o-item-rate').value) || 0;
+                
+                if (name && qty > 0) {
+                    items.push({ name, qty, rate, amount: qty * rate });
+                    totalInternalValue += (qty * rate);
+
+                    // Deduct stock from godown safely
+                    if(itemsDB[name] && itemsDB[name].godowns[gId] !== undefined) {
+                        itemsDB[name].godowns[gId] -= qty;
+                    }
+                }
+            });
+
+            if(items.length === 0) return alert("Please add at least one item!");
+
+            let id = "CHL" + Date.now();
+            stockMovementDB[id] = {
+                id, type: 'Outward', eventId: evId, godownId: gId, date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed'
+            };
+
+            // 🚀 INTERNAL EXPENSE LINKING TO EVENT P&L
+            if(totalInternalValue > 0) {
+                let expId = "EXP" + Date.now();
+                let catName = 'Internal Material Cost';
+                if (typeof expenseCats !== 'undefined' && !expenseCats.includes(catName)) { expenseCats.push(catName); }
+                
+                expenseDB[expId] = {
+                    id: expId, type: 'Event', cat: catName, amount: totalInternalValue, paid: totalInternalValue, balanceDue: 0, status: 'Paid', 
+                    date: date, mode: 'SYSTEM_INTERNAL', eventId: evId, partyId: null, notes: `Internal Stock Used (Challan ${id})`, linkedDates: []
+                };
+            }
+
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            document.getElementById('outwardChallanModal').style.display = 'none';
+            alert(`✅ Material Dispatched Successfully!\n\nInternal Cost of ₹${totalInternalValue.toLocaleString('en-IN')} has been automatically recorded as an Expense in the Event Balance Sheet.`);
+        };
+        // ==============================================================
     </script>
 </body>
 
