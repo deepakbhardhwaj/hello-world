@@ -15981,6 +15981,44 @@
 
             document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
         };
+        window.showNavAndFabs = function() {
+            let activeTab = document.querySelector('.active-section');
+            let tabName = activeTab ? activeTab.id : 'home';
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            
+            let isInsideSalesList = (tabName === 'sales-hub' && document.getElementById('sales-list-view') && document.getElementById('sales-list-view').style.display === 'block');
+            let isInsidePurchaseList = (tabName === 'purchase-hub' && document.getElementById('purchase-list-view') && document.getElementById('purchase-list-view').style.display === 'block');
+            let isFullScreenList = isInsideSalesList || isInsidePurchaseList || tabName === 'expense-hub' || tabName === 'party-master' || tabName === 'bank-hub' || tabName === 'inventory-hub';
+
+            if (nav) {
+                if (isFullScreenList) nav.style.setProperty('display', 'none', 'important');
+                else nav.style.setProperty('display', 'flex', 'important');
+            }
+
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) {
+                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
+                    mainFab.style.setProperty('display', 'none', 'important');
+                } else {
+                    mainFab.style.setProperty('display', 'flex', 'important');
+                    // 🚀 FAB Position Change Logic
+                    if(tabName === 'inventory-hub') {
+                        mainFab.style.bottom = '30px'; // Inventory me neeche rahega
+                    } else {
+                        mainFab.style.bottom = '105px'; // ERP Dashboard me Nav ke upar rahega
+                    }
+                }
+            }
+
+            // 🚀 FIX: YE LINES CHHOOT GAYI THI! Ab saare Add buttons wapas aayenge!
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            if (tabName === 'party-master') { let btn = document.querySelector('#party-master .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (tabName === 'expense-hub') { let btn = document.querySelector('#expense-hub .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (tabName === 'inventory-hub') { let btn = document.getElementById('inv_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
+            else if (isInsideSalesList) { let btn = document.getElementById('sales_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (isInsidePurchaseList) { let btn = document.getElementById('purchase_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
+        };
+        var showNavAndFabs = window.showNavAndFabs;
 
         window.openTab = function(tabName, btnElement) {
             let sections = document.getElementsByClassName("section");
