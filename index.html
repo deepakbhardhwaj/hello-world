@@ -16711,6 +16711,390 @@
         }
         var openOutwardChallanModal = window.openOutwardChallanModal;
         // ==============================================================
+        // ==============================================================
+        // 🚀 THE ULTIMATE MASTER SCRIPT (V15 - ALL PRO FEATURES & FIXES)
+        // ==============================================================
+
+        // 1. GLOBAL FAB MENU & POSITIONING ENGINE
+        // (Inventory Hub ko hide list se nikalna)
+        if(window.hideFabTabs && window.hideFabTabs.includes('inventory-hub')) {
+            window.hideFabTabs = window.hideFabTabs.filter(t => t !== 'inventory-hub');
+        }
+
+        window.hideNavAndFabs = function() {
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            if(nav) nav.style.setProperty('display', 'none', 'important');
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            let mainFab = document.getElementById('main-fab-container');
+            if(mainFab) mainFab.style.setProperty('display', 'none', 'important');
+        };
+        var hideNavAndFabs = window.hideNavAndFabs;
+
+        window.showNavAndFabs = function() {
+            let activeTab = document.querySelector('.active-section');
+            let tabName = activeTab ? activeTab.id : 'home';
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            
+            let isInsideSalesList = (tabName === 'sales-hub' && document.getElementById('sales-list-view') && document.getElementById('sales-list-view').style.display === 'block');
+            let isInsidePurchaseList = (tabName === 'purchase-hub' && document.getElementById('purchase-list-view') && document.getElementById('purchase-list-view').style.display === 'block');
+            let isFullScreenList = isInsideSalesList || isInsidePurchaseList || tabName === 'expense-hub' || tabName === 'party-master' || tabName === 'bank-hub' || tabName === 'inventory-hub';
+
+            if (nav) {
+                if (isFullScreenList) nav.style.setProperty('display', 'none', 'important');
+                else nav.style.setProperty('display', 'flex', 'important');
+            }
+
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) {
+                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
+                    mainFab.style.setProperty('display', 'none', 'important');
+                } else {
+                    mainFab.style.setProperty('display', 'flex', 'important');
+                    // 🚀 FAB Position Change Logic
+                    if(tabName === 'inventory-hub') {
+                        mainFab.style.bottom = '30px'; // Inventory me neeche
+                    } else {
+                        mainFab.style.bottom = '100px'; // ERP me upar (Nav ke oopar)
+                    }
+                }
+            }
+
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            if (tabName === 'party-master') { let btn = document.querySelector('#party-master .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (tabName === 'expense-hub') { let btn = document.querySelector('#expense-hub .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (isInsideSalesList) { let btn = document.getElementById('sales_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (isInsidePurchaseList) { let btn = document.getElementById('purchase_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
+        };
+        var showNavAndFabs = window.showNavAndFabs;
+
+        window.openTab = function(tabName, btnElement) {
+            let sections = document.getElementsByClassName("section");
+            for (let i = 0; i < sections.length; i++) sections[i].classList.remove("active-section");
+            let btns = document.querySelectorAll(".nav-btn");
+            for (let i = 0; i < btns.length; i++) btns[i].classList.remove("active-btn");
+
+            let targetSection = document.getElementById(tabName);
+            if (targetSection) targetSection.classList.add("active-section");
+            if (btnElement) btnElement.classList.add("active-btn");
+            window.showNavAndFabs();
+            if (typeof closeAllMenus === 'function') closeAllMenus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        var openTab = window.openTab;
+
+        window.toggleFabMenu = function() {
+            let fab = document.getElementById('main-fab');
+            let menu = document.getElementById('fab-menu');
+            let activeTab = document.querySelector('.active-section');
+            
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                fab.classList.add('menu-open'); menu.style.display = 'flex';
+                if (activeTab && activeTab.id === 'inventory-hub') {
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
+                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openRentInvoice();">📄 Rent Invoice</div>
+                        <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
+                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
+                    `;
+                } else {
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPurchaseBillModal === 'function') openPurchaseBillModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
+                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
+                    `;
+                }
+            } else { menu.style.display = 'none'; fab.classList.remove('menu-open'); }
+        };
+        var toggleFabMenu = window.toggleFabMenu;
+
+        // 2. RENT INVOICE LOGIC (Manual Name Hide & T&C)
+        window.openRentInvoice = function() {
+            window.openTab('sales-hub', document.getElementById('btn-erp'));
+            setTimeout(() => {
+                if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal();
+                let typeSel = document.getElementById('di_invoice_type');
+                if(typeSel) { typeSel.value = 'Rental'; typeSel.dispatchEvent(new Event('change')); }
+            }, 150);
+        };
+        var openRentInvoice = window.openRentInvoice;
+
+        window.toggleInvoiceType = function() {
+            let type = document.getElementById('di_invoice_type');
+            let btnGodown = document.getElementById('btn_fetch_godown');
+            let rentalFields = document.getElementById('di_rental_fields');
+            let eventLinkGroup = document.getElementById('di_event_group');
+            let tncBox = document.getElementById('di_tnc');
+            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]');
+
+            if (type && type.value === 'Rental') {
+                if (btnGodown) btnGodown.style.display = 'block';
+                if (rentalFields) rentalFields.style.display = 'flex';
+                if (eventLinkGroup) eventLinkGroup.style.display = 'none'; 
+                if (manualAddBtn) manualAddBtn.style.display = 'none'; 
+                if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
+                if(typeof loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+            } else {
+                if (btnGodown) btnGodown.style.display = 'none';
+                if (rentalFields) rentalFields.style.display = 'none';
+                if (eventLinkGroup) eventLinkGroup.style.display = 'block'; 
+                if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; 
+                if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
+            }
+        };
+        var toggleInvoiceType = window.toggleInvoiceType;
+
+        // 3. OUTWARD CHALLAN UPGRADES (Multi-Day, Info Rate)
+        window.openOutwardChallanModal = function() {
+            let outForm = document.getElementById('outwardForm'); if(outForm) outForm.reset();
+            document.getElementById('out_date').valueAsDate = new Date();
+            document.getElementById('out_items_container').innerHTML = '';
+            
+            if(!document.getElementById('out_function_group')) {
+                let evSelect = document.getElementById('out_event');
+                evSelect.setAttribute('onchange', 'window.handleOutwardEventChange()');
+                let funcGroupHtml = `<div class="form-group" id="out_function_group" style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-top:10px;"><label class="form-label" style="color:var(--accent-color);">Select Function / Day</label><select id="out_function_select" class="form-select" onchange="window.handleOutwardFunctionChange()"></select></div>`;
+                evSelect.parentElement.insertAdjacentHTML('afterend', funcGroupHtml);
+                
+                let tncHtml = `<div style="font-size:10px; color:var(--text-secondary); background:#F1F5F9; padding:8px; border-radius:6px; margin-bottom:12px; margin-top:12px;"><b>Terms & Conditions:</b><br>1. Materials are dispatched on returnable basis.<br>2. On-site team is responsible for preventing damage or loss.</div>`;
+                document.querySelector('#out_items_container').parentElement.insertAdjacentHTML('afterend', tncHtml);
+            }
+            
+            let evSelect = document.getElementById('out_event');
+            evSelect.innerHTML = '<option value="">-- Select Upcoming Event --</option>';
+            Object.values(leadsDB || {}).forEach(ev => {
+                if (ev.status === 'Won' && ev.eventStatus !== 'Completed' && ev.eventStatus !== 'Cancelled') {
+                    evSelect.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`;
+                }
+            });
+            document.getElementById('out_function_group').style.display = 'none';
+            if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+            document.getElementById('outwardChallanModal').dataset.editId = "";
+            document.getElementById('outwardChallanModal').style.display = 'flex';
+        };
+        var openOutwardChallanModal = window.openOutwardChallanModal;
+
+        window.handleOutwardEventChange = function() {
+            let evId = document.getElementById('out_event').value;
+            let funcGroup = document.getElementById('out_function_group');
+            let funcSelect = document.getElementById('out_function_select');
+            if(!evId) { funcGroup.style.display = 'none'; return; }
+            
+            let lead = leadsDB[evId];
+            if(lead.linkedDates && lead.linkedDates.length > 0) {
+                funcGroup.style.display = 'block';
+                funcSelect.innerHTML = `<option value="">-- Select Event Function --</option>`;
+                lead.linkedDates.forEach(d => { funcSelect.innerHTML += `<option value="${d.date}|${d.title}|${d.venue||lead.venue||''}">${d.title} (${new Date(d.date).toLocaleDateString('en-IN')})</option>`; });
+            } else {
+                funcGroup.style.display = 'none';
+                document.getElementById('out_date').value = lead.date || '';
+                let note = document.getElementById('out_note'); if(note && lead.venue) note.value = `Venue: ${lead.venue}`;
+            }
+        };
+
+        window.handleOutwardFunctionChange = function() {
+            let val = document.getElementById('out_function_select').value;
+            if(val) {
+                let parts = val.split('|'); document.getElementById('out_date').value = parts[0];
+                let note = document.getElementById('out_note'); if(note && parts[2]) note.value = `Venue: ${parts[2]}`;
+            }
+        };
+
+        window.addOutwardItemRow = function(itemName = '') {
+            let totalAmt = 0; let totalQty = 0;
+            Object.values(purchaseDB || {}).forEach(p => { if(p.type === 'Asset') p.items.forEach(i => { if (i.name === itemName) { totalAmt += i.amount; totalQty += i.qty; } }); });
+            let avgRate = totalQty > 0 ? (totalAmt / totalQty) : 0;
+
+            let container = document.getElementById('out_items_container');
+            let rowId = 'out_item_' + Date.now() + Math.floor(Math.random()*100);
+            
+            let html = `
+            <div class="outward-item-row" id="${rowId}" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px; background:white; padding:10px; border-radius:6px; border:1px solid #E2E8F0; position:relative;">
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; box-shadow:var(--shadow-sm);">×</button>
+                <div style="display:flex; gap:8px; align-items:flex-end;">
+                    <div style="flex:2;">
+                        <label style="font-size:10px; color:var(--text-secondary);">Item Name</label>
+                        <input type="text" class="form-input o-item-name" value="${itemName}" readonly style="background:#F8FAFC; font-weight:bold;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:10px; color:var(--text-secondary);">Deploy Qty</label>
+                        <input type="number" class="form-input o-item-qty" min="1" value="1" required>
+                    </div>
+                </div>
+                <div style="font-size:10.5px; color:var(--text-secondary); text-align:right;">Per Unit Rate: <b style="color:var(--accent-color);">₹${Math.round(avgRate).toLocaleString('en-IN')}</b> <span style="font-size:9px;">(Info Only)</span></div>
+                <input type="hidden" class="o-item-rate" value="${avgRate}">
+            </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+        };
+        var addOutwardItemRow = window.addOutwardItemRow;
+
+        window.saveOutwardChallan = function() {
+            let evId = document.getElementById('out_event').value; 
+            let gId = document.getElementById('out_godown_select').value; 
+            let date = document.getElementById('out_date').value; 
+            let vehicle = document.getElementById('out_vehicle').value; 
+            let note = document.getElementById('out_note') ? document.getElementById('out_note').value : '';
+            let funcSelect = document.getElementById('out_function_select');
+            let selectedFunc = funcSelect ? funcSelect.value : '';
+            let funcTitle = selectedFunc ? selectedFunc.split('|')[1] : '';
+
+            if(!evId || !gId || !date) return alert("Fill required fields!");
+            let items = []; let totalInternalValue = 0;
+            let rows = document.querySelectorAll('#out_items_container .outward-item-row');
+            let isEdit = document.getElementById('outwardChallanModal').dataset.editId;
+
+            for(let i=0; i<rows.length; i++) {
+                let name = rows[i].querySelector('.o-item-name').value; 
+                let qty = parseInt(rows[i].querySelector('.o-item-qty').value) || 0; 
+                let rate = parseFloat(rows[i].querySelector('.o-item-rate').value) || 0;
+                if (name && qty > 0) { 
+                    let available = (itemsDB[name] && itemsDB[name].godowns[gId]) ? itemsDB[name].godowns[gId] : 0;
+                    if(!isEdit && qty > available) { alert(`🚨 ALARM!\nTrying to dispatch ${qty} x '${name}', but only ${available} are available.`); return; }
+                    items.push({ name, qty, rate, amount: qty * rate }); totalInternalValue += (qty * rate); 
+                }
+            }
+            if(items.length === 0) return alert("Please add at least one item!");
+            let id = isEdit || "CHL" + Date.now();
+            if(isEdit) {
+                let oldRecord = stockMovementDB[id];
+                if(oldRecord && oldRecord.items) { oldRecord.items.forEach(oldItem => { if(itemsDB[oldItem.name] && itemsDB[oldItem.name].godowns[oldRecord.godownId] !== undefined) itemsDB[oldItem.name].godowns[oldRecord.godownId] += oldItem.qty; }); }
+            }
+            items.forEach(item => { if(itemsDB[item.name] && itemsDB[item.name].godowns[gId] !== undefined) itemsDB[item.name].godowns[gId] -= item.qty; });
+            stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: gId, date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed' };
+
+            if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
+            document.getElementById('outwardChallanModal').style.display = 'none'; 
+            document.getElementById('outwardChallanModal').dataset.editId = "";
+            alert(`✅ Material Dispatched Successfully!`); window.renderInventoryHubList();
+        };
+        var saveOutwardChallan = window.saveOutwardChallan;
+
+        // 4. ATTRACTIVE PREVIEW MODAL
+        window.openLogisticsPreviewModal = function(id, logType) {
+            closeAllMenus();
+            if(logType === 'Rental Invoice') { if(typeof viewDetails === 'function') viewDetails(id, 'sales'); return; } 
+            
+            let record = stockMovementDB[id]; if(!record) return;
+            let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
+            let isReturned = (record.status === 'Returned');
+            
+            if(!document.getElementById('logPreviewModal')) {
+                let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;">
+                    <div class="modal-content" style="max-width: 500px; padding:0; overflow:hidden;">
+                        <div style="background:linear-gradient(135deg, #0F172A, #1E293B); padding:20px; color:white; display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="margin:0; font-size:16px;">📄 Challan Preview</h3>
+                            <button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;">&times;</button>
+                        </div>
+                        <div id="logPreviewBody" style="padding:20px; font-size:13px; line-height:1.6; max-height: 60vh; overflow-y: auto;"></div>
+                        <div id="logPreviewActions" style="display:flex; gap:10px; padding:15px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;"></div>
+                    </div>
+                </div>`;
+                document.body.insertAdjacentHTML('beforeend', mHtml);
+            }
+            
+            let statusBadge = isReturned 
+                ? `<span style="background:#DCFCE7; color:#166534; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #BBF7D0;">✅ RECEIVED</span>` 
+                : `<span style="background:#FFFBEB; color:#D97706; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`;
+
+            let bodyHtml = `
+                <div style="background:white; border:1px solid #E2E8F0; border-radius:8px; padding:12px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="color:#64748B;">Challan ID:</span> <span style="font-family:monospace; color:var(--accent-color); font-weight:900;">${record.id}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="color:#64748B;">Event:</span> <span style="text-align:right; font-weight:700;">${leadsDB[record.eventId] ? leadsDB[record.eventId].func : 'N/A'} ${record.functionTitle ? `<br><span style="font-size:11px; color:var(--purple);">(${record.functionTitle})</span>` : ''}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="color:#64748B;">Date:</span> <span style="font-weight:600;">${new Date(record.date).toLocaleDateString('en-IN')}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:#64748B;">Status:</span> ${statusBadge}
+                    </div>
+                </div>
+                
+                <h4 style="margin: 0 0 10px 0; color:var(--purple); font-size:12px; text-transform:uppercase;">📦 Dispatched Items</h4>
+                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px;">`;
+            
+            record.items.forEach(item => { 
+                bodyHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #CBD5E1; padding-bottom:8px; margin-bottom:8px;">
+                    <span style="font-weight:700; color:#0F172A;">${item.name}</span> 
+                    <b style="color:var(--accent-color); background:#EFF6FF; padding:2px 8px; border-radius:12px; font-size:11px;">x ${item.qty}</b>
+                </div>`; 
+            });
+            bodyHtml += `</div>`;
+            
+            document.getElementById('logPreviewBody').innerHTML = bodyHtml;
+            
+            let actionsHtml = `<button class="btn-main" style="flex:1; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print</button>
+                <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>`;
+            if(!isReturned) actionsHtml += `<button class="btn-main" style="flex:1; background:var(--success);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.openReturnStockModal('${id}', '${logType}')">📥 Inward</button>`;
+            
+            document.getElementById('logPreviewActions').innerHTML = actionsHtml;
+            document.getElementById('logPreviewModal').style.display = 'flex';
+        };
+        var previewLogistics = window.openLogisticsPreviewModal;
+
+        // 5. RESTORING ALL OTHER MISSING ERRORS
+        window.openReturnStockModal = function(id, logType) {
+            closeAllMenus(); let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if (!record) return alert("Record not found!");
+            document.getElementById('return_inv_id').value = id; let tInp = document.getElementById('return_log_type'); if(!tInp) { tInp = document.createElement('input'); tInp.type = 'hidden'; tInp.id = 'return_log_type'; document.getElementById('returnStockModal').appendChild(tInp); } tInp.value = logType;
+            document.getElementById('return_penalty_amt').value = 0; document.getElementById('return_penalty_note').value = ""; document.getElementById('return_asset_loss_value').value = 0; document.getElementById('return_loss_group').style.display = 'none';
+            let tbody = document.getElementById('return_items_body'); tbody.innerHTML = "";
+            if (record.items) { record.items.forEach((item) => { let qty = parseInt(item.qty) || 0; tbody.innerHTML += `<tr style="border-bottom: 1px solid #E2E8F0;"><td style="padding:10px;"><strong style="color:var(--text-primary); font-size:13px;">${item.name}</strong><input type="hidden" class="ret-item-name" value="${item.name}"></td><td style="padding:10px; text-align:center; font-weight:900; font-size:15px; color:var(--text-secondary);" class="ret-item-sent">${qty}</td><td style="padding:10px;"><input type="number" class="form-input ret-item-safe" value="${qty}" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--success); border-color:#BBF7D0; background:#F0FDF4;"></td><td style="padding:10px;"><input type="number" class="form-input ret-item-lost" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--danger); border-color:#FECACA; background:#FEF2F2;"></td><td style="padding:10px;"><input type="number" class="form-input ret-item-repair" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--warning); border-color:#FDE68A; background:#FFFBEB;"></td></tr>`; }); }
+            document.getElementById('returnStockModal').style.display = 'flex';
+        };
+        var openReturnStockModal = window.openReturnStockModal;
+
+        window.openDirectStockModal = function() {
+            if(typeof window.refreshInventorySelect === 'function') window.refreshInventorySelect();
+            let sel = document.getElementById('ds_name_select');
+            if (sel && sel.innerHTML === "") { sel.innerHTML = '<option value="">-- Select Item --</option>'; Object.values(itemsDB).forEach(item => { let skuStr = item.sku ? `[${item.sku}] ` : ""; sel.innerHTML += `<option value="${item.name}">${skuStr}${item.name}</option>`; }); }
+            if(document.getElementById('ds_qty')) document.getElementById('ds_qty').value = ''; 
+            if(document.getElementById('ds_rate')) document.getElementById('ds_rate').value = ''; 
+            let gSel = document.getElementById('ds_godown');
+            if (gSel) { gSel.innerHTML = ''; Object.values(warehousesDB).forEach(w => { gSel.innerHTML += `<option value="${w.id}">${w.name}</option>`; }); }
+            if(typeof closeAllMenus === 'function') closeAllMenus(); document.getElementById('directStockModal').style.display = 'flex';
+        };
+        var openDirectStockModal = window.openDirectStockModal;
+
+        window.loadGodownsIntoSelect = function() {
+            let outSelect = document.getElementById('out_godown_select'); let astSelect = document.getElementById('ast_godown_select'); let auditSelect = document.getElementById('audit_godown'); let diSelect = document.getElementById('di_godown_select');
+            let html = '<option value="">-- Select Godown --</option>'; Object.values(warehousesDB || {}).forEach(w => { html += `<option value="${w.id}">${w.name}</option>`; });
+            if(outSelect) outSelect.innerHTML = html; if(astSelect) astSelect.innerHTML = html; if(auditSelect) auditSelect.innerHTML = html; if(diSelect) diSelect.innerHTML = html;
+        };
+        var loadGodownsIntoSelect = window.loadGodownsIntoSelect;
+
+        window.openInventorySelectSheet = function(context) { 
+            document.getElementById('inventorySelectModal').dataset.context = context; 
+            document.getElementById('inv_select_search').value = ''; 
+            window.filterSelectInventory(); 
+            document.getElementById('inventorySelectModal').style.display = 'flex'; 
+        };
+        var openInventorySelectSheet = window.openInventorySelectSheet;
+
+        window.filterSelectInventory = function() {
+            let term = document.getElementById('inv_select_search').value.toLowerCase(); let grid = document.getElementById('inv_select_grid'); grid.innerHTML = '';
+            Object.values(itemsDB).forEach(item => {
+                if(!item.name.toLowerCase().includes(term) && !(item.sku && item.sku.toLowerCase().includes(term))) return;
+                grid.innerHTML += `<label style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;"><div><strong style="font-size:13px;"><span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 4px; border-radius:4px; margin-right:6px;">${item.sku || 'ITM'}</span>${item.name}</strong><div style="font-size:10px; color:#64748B; margin-top:4px;">Total Purchased Stock: ${item.totalStock || 0}</div></div><input type="checkbox" class="inv-select-cb" value="${item.name}" style="width:18px; height:18px; accent-color:var(--accent-color);"></label>`;
+            });
+        };
+        var filterSelectInventory = window.filterSelectInventory;
+
+        window.addSelectedItemsToForm = function() {
+            let context = document.getElementById('inventorySelectModal').dataset.context || 'out';
+            document.querySelectorAll('.inv-select-cb:checked').forEach(cb => {
+                if(context === 'out') window.addOutwardItemRow(cb.value);
+                else if (context === 'di') { if(typeof addInvoiceItem === 'function') addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); if(rows.length > 0) rows[rows.length - 1].querySelector('.i-item-name').value = cb.value; }
+            });
+            document.getElementById('inventorySelectModal').style.display = 'none';
+        };
+        var addSelectedItemsToForm = window.addSelectedItemsToForm;
+
+        // Auto load godowns at start
+        setTimeout(() => { if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect(); }, 1500);
+
+        // ==============================================================
     </SCRIPT>
 </body>
 
