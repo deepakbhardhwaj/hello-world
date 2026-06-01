@@ -16544,8 +16544,9 @@
             else { alert("Popup blocked! Allow popups to print."); }
         }
         // ==============================================================
-        // 🚀 SMART NAVIGATION & TRANSACTION BUTTONS RECOVERY ENGINE
+        // 🚀 THE ULTIMATE NAVIGATION & BUTTON RECOVERY ENGINE (100% FIX)
         // ==============================================================
+        
         window.hideNavAndFabs = function() {
             let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
             if(nav) nav.style.setProperty('display', 'none', 'important');
@@ -16562,23 +16563,39 @@
             let activeTab = document.querySelector('.active-section');
             let tabName = activeTab ? activeTab.id : 'home';
             let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
-            let fullScreenTabs = ['sales-hub', 'purchase-hub', 'expense-hub', 'party-master', 'bank-hub'];
             
-            // 1. Bottom Navigation Bar visibility rules
+            // 🧠 1. SMART DETECTION: Check karo ki user currently kis view mein hai
+            let isInsideSalesList = (tabName === 'sales-hub' && document.getElementById('sales-list-view') && document.getElementById('sales-list-view').style.display === 'block');
+            let isInsidePurchaseList = (tabName === 'purchase-hub' && document.getElementById('purchase-list-view') && document.getElementById('purchase-list-view').style.display === 'block');
+            
+            // Ye wo screens hain jahan bottom nav bar chhupana hai
+            let isFullScreenList = isInsideSalesList || isInsidePurchaseList || tabName === 'expense-hub' || tabName === 'party-master' || tabName === 'bank-hub';
+
+            // 🚦 2. HANDLE BOTTOM NAV BAR
             if (nav) {
-                if (fullScreenTabs.includes(tabName)) {
+                if (isFullScreenList) {
                     nav.style.setProperty('display', 'none', 'important');
                 } else {
                     nav.style.setProperty('display', 'flex', 'important');
                 }
             }
-            
-            // 2. Pehle saare floating buttons ko safely hide karo
+
+            // 🎯 3. HANDLE BIG PLUS BUTTON (FAB)
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) {
+                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
+                    mainFab.style.setProperty('display', 'none', 'important');
+                } else {
+                    mainFab.style.setProperty('display', 'flex', 'important');
+                }
+            }
+
+            // 💊 4. HANDLE PILL BUTTONS (Add Invoice, Add Receipt, etc.)
             document.querySelectorAll('.pill-floating-btn').forEach(btn => {
-                btn.style.setProperty('display', 'none', 'important');
+                btn.style.setProperty('display', 'none', 'important'); // Pehle sab hide karo
             });
-            
-            // 3. AUTO-DETECT VIEW: Sahi list check karke transaction button wapas dikhao
+
+            // Ab sirf wahi dikhao jis list mein user hai
             if (tabName === 'party-master') {
                 let btn = document.querySelector('#party-master .pill-floating-btn');
                 if (btn) btn.style.setProperty('display', 'flex', 'important');
@@ -16587,23 +16604,76 @@
                 let btn = document.querySelector('#expense-hub .pill-floating-btn');
                 if (btn) btn.style.setProperty('display', 'flex', 'important');
             } 
-            else if (tabName === 'sales-hub') {
-                // Agar Sales Hub ki koi andar wali list open hai, tabhi button dikhao
-                let listView = document.getElementById('sales-list-view');
-                if (listView && listView.style.display === 'block') {
-                    let btn = document.getElementById('sales_dynamic_pill');
-                    if (btn) btn.style.setProperty('display', 'flex', 'important');
-                }
+            else if (isInsideSalesList) {
+                let btn = document.getElementById('sales_dynamic_pill');
+                if (btn) btn.style.setProperty('display', 'flex', 'important');
             } 
-            else if (tabName === 'purchase-hub') {
-                // Agar Purchase Hub ki koi andar wali list open hai, tabhi button dikhao
-                let listView = document.getElementById('purchase-list-view');
-                if (listView && listView.style.display === 'block') {
-                    let btn = document.getElementById('purchase_dynamic_pill');
-                    if (btn) btn.style.setProperty('display', 'flex', 'important');
-                }
+            else if (isInsidePurchaseList) {
+                let btn = document.getElementById('purchase_dynamic_pill');
+                if (btn) btn.style.setProperty('display', 'flex', 'important');
             }
         };
+
+        // 🔄 5. MASTER TAB SWITCHER (Har click par engine chalayega)
+        window.openTab = function(tabName, btnElement) {
+            // Permissions Security Lock
+            if (typeof currentPermissions !== 'undefined' && currentPermissions.modules) {
+                let p = currentPermissions.modules;
+                if (tabName === 'crm' && !p.crm) return alert("⛔ ACCESS DENIED!");
+                if (tabName === 'events' && !p.event) return alert("⛔ ACCESS DENIED!");
+                if (tabName === 'sales-hub' && !p.sales) return alert("⛔ ACCESS DENIED!");
+                if (tabName === 'purchase-hub' && !p.purch) return alert("⛔ ACCESS DENIED!");
+                if (tabName === 'expense-hub' && !p.exp) return alert("⛔ ACCESS DENIED!");
+                if (tabName === 'bank-hub' && !p.bank) return alert("⛔ ACCESS DENIED!");
+                if (tabName === 'reports-hub' && !p.rep) return alert("⛔ ACCESS DENIED!");
+            }
+
+            let sections = document.getElementsByClassName("section");
+            for (let i = 0; i < sections.length; i++) sections[i].classList.remove("active-section");
+            
+            let btns = document.querySelectorAll(".nav-btn");
+            for (let i = 0; i < btns.length; i++) btns[i].classList.remove("active-btn");
+
+            let targetSection = document.getElementById(tabName);
+            if (targetSection) targetSection.classList.add("active-section");
+            if (btnElement) btnElement.classList.add("active-btn");
+
+            // 🚀 JAISE HI TAB CHANGE HOGA, SMART UI RECOVERY ENGINE CHALEGA
+            window.showNavAndFabs();
+
+            if (typeof closeAllMenus === 'function') closeAllMenus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (tabName === 'settings-hub' && typeof initSettingsHub === 'function') {
+                setTimeout(() => { initSettingsHub(); }, 100);
+            }
+        };
+
+        // 🛡️ 6. HOOKS TO PREVENT UI LEAKS WHEN OPENING/CLOSING LISTS
+        let origOpenSalesList = window.openSalesListView || openSalesListView;
+        window.openSalesListView = function(tName, title) { 
+            origOpenSalesList(tName, title); 
+            setTimeout(window.showNavAndFabs, 50); 
+        };
+
+        let origCloseSalesList = window.closeSalesListView || closeSalesListView;
+        window.closeSalesListView = function() { 
+            origCloseSalesList(); 
+            setTimeout(window.showNavAndFabs, 50); 
+        };
+
+        let origOpenPurchList = window.openPurchaseListView || openPurchaseListView;
+        window.openPurchaseListView = function(tName, title) { 
+            origOpenPurchList(tName, title); 
+            setTimeout(window.showNavAndFabs, 50); 
+        };
+
+        let origClosePurchList = window.closePurchaseListView || closePurchaseListView;
+        window.closePurchaseListView = function() { 
+            origClosePurchList(); 
+            setTimeout(window.showNavAndFabs, 50); 
+        };
+        // ==============================================================
         // ==========================================
         // 🚀 VERSION 10.0: STOCK AUDIT & VALUATION REPORT ENGINE
         // ==========================================
