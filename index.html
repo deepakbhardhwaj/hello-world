@@ -2956,6 +2956,16 @@
                     <div class="erp-card-title">Reports</div>
                     <div class="erp-card-sub">P&L & Daybook</div>
                 </div>
+                
+                <div id="erp-card-inventory" class="premium-erp-card card-wide" style="background: linear-gradient(135deg, #4F46E5, #312E81);"
+                    onclick="openTab('inventory-hub', document.getElementById('btn-erp'))">
+                    <div class="bg-icon" style="right: 15px; bottom: -20px; font-size: 80px;">📦</div>
+                    <div class="card-text-wrap">
+                        <div class="erp-card-title" style="font-size: 16px;">Inventory & Logistics</div>
+                        <div class="erp-card-sub" style="font-size: 10.5px;">Stock, Outward, Rental & Godowns</div>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </div>
 
             </div>
         </div>
@@ -5940,6 +5950,9 @@
                     <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
                             type="checkbox" id="perm_mod_rep"
                             style="width:16px; height:16px; accent-color:var(--accent-color);"> Reports</label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
+                            type="checkbox" id="perm_mod_inv"
+                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Inventory</label>
                 </div>
 
                 <h4 style="font-size:12px; color:var(--danger); margin: 0 0 10px 0; text-transform:uppercase;">2. Action
@@ -6007,43 +6020,51 @@
     <div id="inventory-hub" class="content section" style="padding-bottom:120px;">
         <div class="premium-sticky-header">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <button onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:none; padding:0; cursor:pointer; color:var(--text-primary); border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <button onclick="openTab('erp', document.getElementById('btn-erp'))"
+                    style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
                 </button>
-                <h2 class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Live Godown</h2>
+                <h2 class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
             </div>
-        </div>
-
-        <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
-            <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
-                <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
-                <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
-            </div>
-            <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
-                <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
-                <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
+                <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="printInventoryList()" title="Print List">🖨️</button>
+                <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="openGodownModal()" title="Manage Godowns">⚙️</button>
             </div>
         </div>
 
         <div class="premium-sticky-filters">
-            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <button class="btn-main" style="flex:1; background:linear-gradient(135deg, #10B981, #047857); border-radius:8px; font-size:11px;" onclick="openOutwardChallanModal()">🚚 Outward</button>
-                <button class="btn-main" style="flex:1; background:var(--purple); border-radius:8px; font-size:11px;" onclick="openGodownModal()">🏭 Godowns</button>
-                <button class="btn-main" style="flex:1; background:#0284C7; border-radius:8px; font-size:11px;" onclick="openDirectStockModal()">➕ Add Stock</button>
+            <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                <div style="flex:1; min-width:100px;">
+                    <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
+                    <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                </div>
+                <div style="flex:1; min-width:100px;">
+                    <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
+                    <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                </div>
+                <div style="display:flex; gap:8px; flex:1; min-width:120px;">
+                    <button onclick="applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
+                    <button onclick="clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                </div>
             </div>
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <button class="btn-main" style="flex:1; background:#0F172A; border-radius:8px; font-size:11px;" onclick="openChallanHistory()">📜 Challan History</button>
-                <button class="btn-main" style="flex:1; background:#F59E0B; color:black; border-radius:8px; font-size:11px;" onclick="openStockAuditModal()">⚖️ Audit Stock</button>
-            </div>
-            
+
+            <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;">
+                </div>
+
             <div class="search-container" style="margin-bottom:0;">
-                <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" class="search-input" id="inv_hub_search" placeholder="Search item in Godown..." oninput="renderInventoryHubList()">
+                <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="search-input" placeholder="Search by ID, Event, Item or Client..." oninput="filterSearch('inventory', this.value)">
             </div>
         </div>
 
         <div id="inventory-list-container"></div>
+        <button id="inv_dynamic_pill" class="pill-floating-btn" style="background: linear-gradient(135deg, #4F46E5, #312E81);" onclick="openInvFabMenu()">⚡ Quick Actions</button>
     </div>
 
     <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
@@ -7278,6 +7299,7 @@
                 document.getElementById('perm_mod_exp').checked = p.modules.exp;
                 document.getElementById('perm_mod_bank').checked = p.modules.bank;
                 document.getElementById('perm_mod_rep').checked = p.modules.rep;
+                document.getElementById('perm_mod_inv').checked = p.modules.inv || false;
                 document.getElementById('perm_act_edit').checked = p.actions.edit;
                 document.getElementById('perm_act_del').checked = p.actions.del;
             } else {
@@ -7294,7 +7316,7 @@
             // Agar Owner hai toh sab allowed
             if (isOwner) {
                 currentPermissions = { 
-                    modules: { crm:true, event:true, sales:true, purch:true, exp:true, bank:true, rep:true }, 
+                    modules: { crm:true, event:true, sales:true, purch:true, exp:true, bank:true, rep:true, inv:true },
                     actions: { add:true, edit:true, del:true } 
                 };
             } else {
@@ -7345,8 +7367,15 @@
             if(btnCrm) btnCrm.style.display = p.crm ? 'flex' : 'none';
             if(btnEvents) btnEvents.style.display = p.event ? 'flex' : 'none';
 
-            let hasAnyErpAccess = (p.sales || p.purch || p.exp || p.bank || p.rep);
+            let hasAnyErpAccess = (p.sales || p.purch || p.exp || p.bank || p.rep || p.inv);
             if(btnErp) btnErp.style.display = hasAnyErpAccess ? 'flex' : 'none';
+            
+            // 🚀 INVENTORY CARD HIDE/SHOW LOGIC
+            let invCard = document.getElementById('erp-card-inventory');
+            if (invCard) {
+                let isInvSettingOn = appSettings.manageInventory || false;
+                invCard.style.display = (p.inv && isInvSettingOn) ? 'flex' : 'none';
+            }
 
             // 🚀 SECURITY: Agar user ne restricted tab pehle se kholi hui hai, toh use forcefully HOME par fenko!
             let activeSection = document.querySelector('.active-section');
@@ -7514,7 +7543,7 @@
                 modules: {
                     crm: document.getElementById('perm_mod_crm').checked, event: document.getElementById('perm_mod_event').checked,
                     sales: document.getElementById('perm_mod_sales').checked, purch: document.getElementById('perm_mod_purch').checked,
-                    exp: document.getElementById('perm_mod_exp').checked, bank: document.getElementById('perm_mod_bank').checked, rep: document.getElementById('perm_mod_rep').checked
+                    exp: document.getElementById('perm_mod_exp').checked, bank: document.getElementById('perm_mod_bank').checked, rep: document.getElementById('perm_mod_rep').checked, inv: document.getElementById('perm_mod_inv').checked
                 },
                 actions: { add: true, edit: document.getElementById('perm_act_edit').checked, del: document.getElementById('perm_act_del').checked }
             };
