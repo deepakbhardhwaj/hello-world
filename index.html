@@ -15916,7 +15916,7 @@
             document.getElementById('audit_details').style.display = 'none'; document.getElementById('audit_input_group').style.display = 'none'; document.getElementById('stockAuditModal').style.display = 'flex';
         };
         var openStockAuditModal = window.openStockAuditModal;
-        
+
         // ==============================================================
     // ==============================================================
         // 🚀 SURGICAL FIX 3: MISSING NAVIGATION & UI FUNCTIONS RECOVERY
@@ -16428,6 +16428,65 @@
         // Header icon initialization hook
         setTimeout(() => { document.querySelectorAll('#inventory-hub .premium-sticky-header .btn-icon').forEach(icon => { icon.style.width = '28px'; icon.style.height = '28px'; icon.style.fontSize = '13px'; }); }, 500);
         // ==============================================================
+        // ==============================================================
+        // 🚀 SURGICAL FIX 6: INVENTORY SELECTION SHEET & ITEM ROWS
+        // ==============================================================
+
+        window.addOutwardItemRow = function(itemName = '') {
+            let totalAmt = 0; let totalQty = 0;
+            Object.values(purchaseDB || {}).forEach(p => { if(p.type === 'Asset') p.items.forEach(i => { if (i.name === itemName) { totalAmt += i.amount; totalQty += i.qty; } }); });
+            let avgRate = totalQty > 0 ? (totalAmt / totalQty) : 0;
+
+            let container = document.getElementById('out_items_container');
+            let rowId = 'out_item_' + Date.now() + Math.floor(Math.random()*100);
+            
+            let html = `
+            <div class="outward-item-row" id="${rowId}" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px; background:white; padding:10px; border-radius:6px; border:1px solid #E2E8F0; position:relative;">
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; box-shadow:var(--shadow-sm);">×</button>
+                <div style="display:flex; gap:8px; align-items:flex-end;">
+                    <div style="flex:2;">
+                        <label style="font-size:10px; color:var(--text-secondary);">Item Name</label>
+                        <input type="text" class="form-input o-item-name" value="${itemName}" readonly style="background:#F8FAFC; font-weight:bold;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:10px; color:var(--text-secondary);">Deploy Qty</label>
+                        <input type="number" class="form-input o-item-qty" min="1" value="1" required>
+                    </div>
+                </div>
+                <div style="font-size:10.5px; color:var(--text-secondary); text-align:right;">Per Unit Rate: <b style="color:var(--accent-color);">₹${Math.round(avgRate).toLocaleString('en-IN')}</b> <span style="font-size:9px;">(Info Only)</span></div>
+                <input type="hidden" class="o-item-rate" value="${avgRate}">
+            </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+        };
+        var addOutwardItemRow = window.addOutwardItemRow;
+
+        window.openInventorySelectSheet = function(context) { 
+            document.getElementById('inventorySelectModal').dataset.context = context; 
+            document.getElementById('inv_select_search').value = ''; 
+            window.filterSelectInventory(); 
+            document.getElementById('inventorySelectModal').style.display = 'flex'; 
+        };
+        var openInventorySelectSheet = window.openInventorySelectSheet;
+
+        window.filterSelectInventory = function() {
+            let term = document.getElementById('inv_select_search').value.toLowerCase(); 
+            let grid = document.getElementById('inv_select_grid'); grid.innerHTML = '';
+            Object.values(itemsDB).forEach(item => {
+                if(!item.name.toLowerCase().includes(term) && !(item.sku && item.sku.toLowerCase().includes(term))) return;
+                grid.innerHTML += `<label style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;"><div><strong style="font-size:13px;"><span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 4px; border-radius:4px; margin-right:6px;">${item.sku || 'ITM'}</span>${item.name}</strong><div style="font-size:10px; color:#64748B; margin-top:4px;">Total Purchased Stock: ${item.totalStock || 0}</div></div><input type="checkbox" class="inv-select-cb" value="${item.name}" style="width:18px; height:18px; accent-color:var(--accent-color);"></label>`;
+            });
+        };
+        var filterSelectInventory = window.filterSelectInventory;
+
+        window.addSelectedItemsToForm = function() {
+            let context = document.getElementById('inventorySelectModal').dataset.context || 'out';
+            document.querySelectorAll('.inv-select-cb:checked').forEach(cb => {
+                if(context === 'out') window.addOutwardItemRow(cb.value);
+                else if (context === 'di') { if(typeof addInvoiceItem === 'function') addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); if(rows.length > 0) rows[rows.length - 1].querySelector('.i-item-name').value = cb.value; }
+            });
+            document.getElementById('inventorySelectModal').style.display = 'none';
+        };
+        var addSelectedItemsToForm = window.addSelectedItemsToForm;
     </SCRIPT>
 </body>
 
