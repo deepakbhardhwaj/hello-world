@@ -3952,14 +3952,27 @@
                 </div>
                 <div class="form-group"><label class="form-label">Select Item</label><select id="audit_item" class="form-select" onchange="window.loadAuditItemDetails()"></select></div>
                 <div class="form-group"><label class="form-label">Select Godown</label><select id="audit_godown" class="form-select" onchange="window.updateExpectedGodownStock()"></select></div>
+                
                 <div id="audit_details" style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px solid #E2E8F0; margin-bottom:15px; font-size:12px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Total System Stock:</span> <b id="audit_sys_total">0</b></div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Out on Rent:</span> <b id="audit_sys_rent">0</b></div>
                     <div style="display:flex; justify-content:space-between; color:var(--accent-color);"><span>Expected in this Godown:</span> <b id="audit_sys_godown">0</b></div>
                 </div>
+                
                 <div id="audit_input_group" style="display:none; flex-direction:column; gap:10px;">
-                    <div class="form-group" style="margin:0;"><label class="form-label" style="color:var(--danger);">Actual Physical Stock Count</label><input type="number" id="audit_actual_qty" class="form-input" min="0" style="font-weight:bold; font-size:16px;"></div>
-                    <button type="button" class="btn-main" style="background:#F59E0B; color:black;" onclick="window.saveStockAudit()">Submit Audit & Match</button>
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="color:var(--danger);">Actual Physical Stock Count</label>
+                        <input type="number" id="audit_actual_qty" class="form-input" min="0" style="font-weight:bold; font-size:16px;" oninput="window.checkAuditDifference()">
+                    </div>
+                    <div id="audit_diff_text" style="font-size:12px; font-weight:bold; margin-top:-5px;"></div>
+                    
+                    <div class="form-group" id="audit_loss_group" style="display:none; margin:0; background:#FEF2F2; padding:10px; border-radius:6px; border:1px dashed #FCA5A5;">
+                        <label class="form-label" style="color:var(--danger); font-size:11px;">Estimated Value of Missing Items (₹)</label>
+                        <span style="font-size:9px; color:#64748B; display:block; margin-bottom:5px;">This will be booked as an Expense (Write-off) to balance P&L.</span>
+                        <input type="number" id="audit_loss_value" class="form-input" value="0">
+                    </div>
+                    
+                    <button type="button" class="btn-main" style="background:#0F172A; color:white;" onclick="window.saveStockAudit()">✅ Confirm & Update Stock</button>
                 </div>
             </div>
         </div>
@@ -16487,6 +16500,217 @@
             document.getElementById('inventorySelectModal').style.display = 'none';
         };
         var addSelectedItemsToForm = window.addSelectedItemsToForm;
+        // ==============================================================
+        // 🚀 SURGICAL FIX 7: ALL BUGS RESOLVED (FAB, AUDIT, PREVIEW)
+        // ==============================================================
+
+        // 1. GLOBAL FAB MENU FIX (Restores Invoice/Receipt buttons & position)
+        window.toggleFabMenu = function() {
+            let fab = document.getElementById('main-fab');
+            let menu = document.getElementById('fab-menu');
+            let activeTab = document.querySelector('.active-section');
+            
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                fab.classList.add('menu-open'); menu.style.display = 'flex';
+                
+                if (activeTab && activeTab.id === 'inventory-hub') {
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
+                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openRentInvoice();">📄 Rent Invoice</div>
+                        <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
+                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
+                    `;
+                } else {
+                    // WAPAS AAGAYE PURANE ERP BUTTONS!
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPurchaseModal === 'function') openPurchaseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
+                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
+                    `;
+                }
+            } else {
+                menu.style.display = 'none'; fab.classList.remove('menu-open');
+            }
+        };
+        var toggleFabMenu = window.toggleFabMenu;
+
+        // Button ko neeche laane ka CSS Fix
+        setTimeout(() => {
+            let fabContainer = document.getElementById('main-fab-container');
+            if(fabContainer) fabContainer.style.bottom = '75px'; 
+        }, 1000);
+
+        // 2. OUTWARD GODOWN DROPDOWN BLANK FIX
+        window.loadGodownsIntoSelect = function() {
+            let outSelect = document.getElementById('out_godown_select');
+            let astSelect = document.getElementById('ast_godown_select');
+            let auditSelect = document.getElementById('audit_godown');
+            let html = '<option value="">-- Select Godown --</option>';
+            Object.values(warehousesDB || {}).forEach(w => { html += `<option value="${w.id}">${w.name}</option>`; });
+            
+            if(outSelect) outSelect.innerHTML = html;
+            if(astSelect) astSelect.innerHTML = html;
+            if(auditSelect) auditSelect.innerHTML = html;
+        };
+        var loadGodownsIntoSelect = window.loadGodownsIntoSelect;
+
+        // 3. RENT INVOICE PREVIEW FIX (Now opens exactly like Outward Challan with INWARD Button)
+        window.openLogisticsPreviewModal = function(id, logType) {
+            closeAllMenus();
+            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
+            let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
+            let isReturned = (logType === 'Rental Invoice') ? (record.rentalStatus === 'Returned') : (record.status === 'Returned');
+            
+            if(!document.getElementById('logPreviewModal')) {
+                let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3>📄 Voucher Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';">&times;</button></div><div id="logPreviewBody" style="font-size:13px; margin-bottom:15px; background:#F8FAFC; padding:15px; border-radius:8px; border:1px solid #E2E8F0; line-height:1.6;"></div><div id="logPreviewActions" style="display:flex; gap:10px;"></div></div></div>`;
+                document.body.insertAdjacentHTML('beforeend', mHtml);
+            }
+            
+            let evText = record.event || (leadsDB[record.eventId] ? leadsDB[record.eventId].func : 'N/A');
+            if(record.functionTitle) evText += ` <span style="font-size:10px; color:#64748B;">(${record.functionTitle})</span>`;
+
+            let bodyHtml = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Voucher ID:</b> <span style="font-family:monospace; color:var(--accent-color); font-weight:bold;">${record.id}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Type:</b> <span style="font-weight:bold; color:var(--purple);">${logType}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Client/Location:</b> <span>${pName}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Event:</b> <span style="text-align:right;">${evText}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Date:</b> <span>${new Date(record.date).toLocaleDateString('en-IN')}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Status:</b> <span style="color:${isReturned ? 'var(--success)' : 'var(--warning)'}; font-weight:bold;">${isReturned ? 'Received' : 'Deployed'}</span></div>
+                <hr style="border:none; border-top:1px dashed #CBD5E1; margin:10px 0;">
+                <b style="color:var(--purple);">Deployed Items:</b><br><div style="margin-top:6px;">`;
+            
+            if(record.items) {
+                record.items.forEach(item => { bodyHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:500;"><span>• ${item.name}</span> <b>x ${item.qty}</b></div>`; });
+            }
+            bodyHtml += `</div>`;
+            
+            document.getElementById('logPreviewBody').innerHTML = bodyHtml;
+            let actionsHtml = `
+                <button class="btn-main" style="flex:1; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print</button>
+                <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>`;
+            
+            // 🚀 INWARD BUTTON AB RENT INVOICE MEIN BHI AAYEGA!
+            if(!isReturned) {
+                actionsHtml += `<button class="btn-main" style="flex:1; background:var(--success);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.openReturnStockModal('${id}', '${logType}')">📥 Inward</button>`;
+            }
+            
+            document.getElementById('logPreviewActions').innerHTML = actionsHtml;
+            document.getElementById('logPreviewModal').style.display = 'flex';
+        };
+        var previewLogistics = window.openLogisticsPreviewModal;
+
+        // 4. PRINT LOGISTICS LIST FIX (Fixes: printLogisticsList is not a function)
+        window.printLogisticsList = function() {
+            let transactions = []; let todayStr = new Date().toISOString().split('T')[0];
+            Object.values(salesDB || {}).forEach(inv => { if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental') transactions.push({...inv, logType: 'Rental Invoice'}); });
+            Object.values(stockMovementDB || {}).forEach(out => { if (out && out.type === 'Outward') transactions.push({...out, logType: 'Outward Challan'}); });
+            transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            let html = `<html><head><title>Logistics Report</title><style>body{font-family:sans-serif; padding:20px; font-size:12px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:8px; text-align:left;} th{background:#f1f5f9;}</style></head><body>`;
+            html += `<h2 style="text-align:center;">Logistics & Deployment Report</h2><table><tr><th>Date</th><th>Voucher ID</th><th>Type</th><th>Client / Destination</th><th>Status</th></tr>`;
+            
+            transactions.forEach(t => {
+                let isReturned = (t.rentalStatus === 'Returned' || t.status === 'Returned'); let isOverdue = (!isReturned && t.returnDate && t.returnDate < todayStr);
+                if (window.invSubFilter === 'On Rent' && (t.logType !== 'Rental Invoice' || isReturned)) return;
+                if (window.invSubFilter === 'On Event' && (t.logType !== 'Outward Challan' || isReturned)) return;
+                if (window.invSubFilter === 'Over Due' && !isOverdue) return;
+                if (window.invSubFilter === 'Received' && !isReturned) return;
+                if (window.invFilterFrom && t.date < window.invFilterFrom) return; if (window.invFilterTo && t.date > window.invFilterTo) return;
+                
+                let pName = (t.partyId && partiesDB[t.partyId]) ? partiesDB[t.partyId].name : 'Internal Event'; 
+                let statusTxt = isReturned ? "Received" : (isOverdue ? "Overdue" : "Deployed");
+                html += `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.id}</td><td>${t.logType}</td><td>${pName}</td><td>${statusTxt}</td></tr>`;
+            });
+            html += `</table><script>setTimeout(()=>window.print(), 500);<\/script></body></html>`;
+            let printWin = window.open('', '_blank'); if(printWin) { printWin.document.write(html); printWin.document.close(); }
+        };
+        var printLogisticsList = window.printLogisticsList;
+
+        // 5. IN-FORM STOCK AUDIT CALCULATOR
+        window.checkAuditDifference = function() {
+            let name = document.getElementById('audit_item').value;
+            let gId = document.getElementById('audit_godown').value;
+            let actualStr = document.getElementById('audit_actual_qty').value;
+            let lossGroup = document.getElementById('audit_loss_group');
+            let diffText = document.getElementById('audit_diff_text');
+            
+            if(!name || !gId || actualStr === "") {
+                lossGroup.style.display = 'none'; diffText.innerHTML = ''; return;
+            }
+            
+            let actual = parseInt(actualStr);
+            let expected = itemsDB[name].godowns[gId] || 0;
+            let diff = expected - actual;
+            
+            if(diff > 0) {
+                lossGroup.style.display = 'block';
+                diffText.innerHTML = `<span style="color:red;">🚨 ${diff} items missing/short!</span>`;
+                
+                // Auto calculate approximate loss value
+                let totalAmt = 0; let totalQty = 0;
+                Object.values(purchaseDB || {}).forEach(p => { if(p.type === 'Asset') p.items.forEach(i => { if (i.name === name) { totalAmt += i.amount; totalQty += i.qty; } }); });
+                let avgRate = totalQty > 0 ? (totalAmt / totalQty) : 0;
+                document.getElementById('audit_loss_value').value = Math.round(diff * avgRate);
+            } else if (diff < 0) {
+                lossGroup.style.display = 'none';
+                diffText.innerHTML = `<span style="color:orange;">⚠️ ${Math.abs(diff)} extra items found? Use Add Stock.</span>`;
+            } else {
+                lossGroup.style.display = 'none';
+                diffText.innerHTML = `<span style="color:green;">✅ Perfect Match!</span>`;
+            }
+        };
+        var checkAuditDifference = window.checkAuditDifference;
+
+        window.saveStockAudit = function() {
+            let name = document.getElementById('audit_item').value; 
+            let gId = document.getElementById('audit_godown').value; 
+            let actual = parseInt(document.getElementById('audit_actual_qty').value);
+            let lossValue = parseFloat(document.getElementById('audit_loss_value').value) || 0;
+            
+            if(!name || !gId || isNaN(actual)) return alert("Please fill all details!"); 
+            let item = itemsDB[name]; let expected = item.godowns[gId] || 0;
+            
+            if(actual === expected) { 
+                alert("Stock matches perfectly!"); document.getElementById('stockAuditModal').style.display = 'none'; return; 
+            }
+            if(actual > expected) { 
+                alert("Physical stock cannot be greater than system via Audit.\nPlease use 'Add Stock' to enter new purchases."); return; 
+            }
+            
+            let diff = expected - actual;
+            item.godowns[gId] = actual; 
+            item.totalStock -= diff; 
+            item.totalLost = (item.totalLost || 0) + diff;
+            
+            if (lossValue > 0) { 
+                let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; 
+                if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } 
+                expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: lossValue, paid: lossValue, balanceDue: 0, status: 'Paid', date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', eventId: null, partyId: null, notes: `Stock Audit Write-off: ${diff} x ${name}`, linkedDates: [] }; 
+            }
+            
+            if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
+            document.getElementById('stockAuditModal').style.display = 'none'; 
+            alert(`✅ Audit complete. ${diff} units marked as lost and Value updated in P&L.`); 
+            window.renderInventoryHubList();
+        };
+        var saveStockAudit = window.saveStockAudit;
+
+        // Ensure Godown Dropdowns are loaded when modals open
+        let origOpenAuditModal = window.openStockAuditModal;
+        window.openStockAuditModal = function() {
+            if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+            origOpenAuditModal();
+        }
+        var openStockAuditModal = window.openStockAuditModal;
+
+        let origOpenOutward = window.openOutwardChallanModal;
+        window.openOutwardChallanModal = function() {
+            if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+            origOpenOutward();
+        }
+        var openOutwardChallanModal = window.openOutwardChallanModal;
+        // ==============================================================
     </SCRIPT>
 </body>
 
