@@ -15940,6 +15940,68 @@
         setTimeout(() => { document.querySelectorAll('#inventory-hub .premium-sticky-header .btn-icon').forEach(icon => { icon.style.width = '28px'; icon.style.height = '28px'; icon.style.fontSize = '13px'; }); }, 1500);
 
         // ==============================================================
+    // ==============================================================
+        // 🚀 SURGICAL FIX 3: MISSING NAVIGATION & UI FUNCTIONS RECOVERY
+        // ==============================================================
+        
+        window.hideNavAndFabs = function() {
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            if(nav) nav.style.setProperty('display', 'none', 'important');
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            let mainFab = document.getElementById('main-fab-container');
+            if(mainFab) mainFab.style.setProperty('display', 'none', 'important');
+        };
+        // Purane functions ko is se link karne ke liye
+        var hideNavAndFabs = window.hideNavAndFabs;
+
+        window.showNavAndFabs = function() {
+            let activeTab = document.querySelector('.active-section');
+            let tabName = activeTab ? activeTab.id : 'home';
+            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
+            
+            let isInsideSalesList = (tabName === 'sales-hub' && document.getElementById('sales-list-view') && document.getElementById('sales-list-view').style.display === 'block');
+            let isInsidePurchaseList = (tabName === 'purchase-hub' && document.getElementById('purchase-list-view') && document.getElementById('purchase-list-view').style.display === 'block');
+            let isFullScreenList = isInsideSalesList || isInsidePurchaseList || tabName === 'expense-hub' || tabName === 'party-master' || tabName === 'bank-hub' || tabName === 'inventory-hub';
+
+            if (nav) {
+                if (isFullScreenList) nav.style.setProperty('display', 'none', 'important');
+                else nav.style.setProperty('display', 'flex', 'important');
+            }
+
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) {
+                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
+                    mainFab.style.setProperty('display', 'none', 'important');
+                } else {
+                    mainFab.style.setProperty('display', 'flex', 'important');
+                }
+            }
+
+            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+            if (tabName === 'party-master') { let btn = document.querySelector('#party-master .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (tabName === 'expense-hub') { let btn = document.querySelector('#expense-hub .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (tabName === 'inventory-hub') { let btn = document.getElementById('inv_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
+            else if (isInsideSalesList) { let btn = document.getElementById('sales_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (isInsidePurchaseList) { let btn = document.getElementById('purchase_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
+        };
+        var showNavAndFabs = window.showNavAndFabs;
+
+        window.openTab = function(tabName, btnElement) {
+            let sections = document.getElementsByClassName("section");
+            for (let i = 0; i < sections.length; i++) sections[i].classList.remove("active-section");
+            let btns = document.querySelectorAll(".nav-btn");
+            for (let i = 0; i < btns.length; i++) btns[i].classList.remove("active-btn");
+
+            let targetSection = document.getElementById(tabName);
+            if (targetSection) targetSection.classList.add("active-section");
+            if (btnElement) btnElement.classList.add("active-btn");
+
+            window.showNavAndFabs();
+            if (typeof closeAllMenus === 'function') closeAllMenus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        var openTab = window.openTab;
+        
     </SCRIPT>
 </body>
 
