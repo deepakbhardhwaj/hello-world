@@ -6163,8 +6163,8 @@
                         <input type="number" id="ds_qty" class="form-input" min="1" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Total Value (₹)</label>
-                        <input type="number" id="ds_value" class="form-input" placeholder="Total Worth" required>
+                        <label class="form-label" style="color:var(--accent-color);">Per Unit Rate (₹)</label>
+                        <input type="number" id="ds_rate" class="form-input" placeholder="e.g. 450" required>
                     </div>
                 </div>
                 <div class="form-group">
@@ -15957,18 +15957,33 @@
             if (!container) return; 
 
             try {
+                // 🚀 SMART CHECK: Purane items jinka SKU nahi bana, unhe automatic assign kar do
+                let needSave = false;
+                if (typeof itemsDB === 'object') {
+                    Object.values(itemsDB).forEach(item => {
+                        if (item && !item.sku && item.name) {
+                            if(typeof window.generateItemCode === 'function') {
+                                item.sku = window.generateItemCode();
+                                needSave = true;
+                            }
+                        }
+                    });
+                }
+                if (needSave && typeof saveDataLocally === 'function') saveDataLocally();
+
                 container.innerHTML = "";
                 let todayStr = new Date().toISOString().split('T')[0];
                 let overdueCount = 0;
                 let overdueHtml = "";
 
-                // 🛡️ Safe Overdue Rentals Check
-                let safeSales = salesDB || {};
+                let safeSales = (typeof salesDB !== 'undefined' && salesDB) ? salesDB : {};
+                let safeParties = (typeof partiesDB !== 'undefined' && partiesDB) ? partiesDB : {};
+
                 Object.values(safeSales).forEach(inv => {
                     if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.rentalStatus !== 'Returned' && inv.returnDate && inv.returnDate < todayStr) {
                         overdueCount++;
-                        let pName = (inv.partyId && partiesDB && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].name : 'Unknown';
-                        let pPhone = (inv.partyId && partiesDB && partiesDB[inv.partyId]) ? partiesDB[inv.partyId].phone : '';
+                        let pName = (inv.partyId && safeParties[inv.partyId]) ? safeParties[inv.partyId].name : 'Unknown';
+                        let pPhone = (inv.partyId && safeParties[inv.partyId]) ? safeParties[inv.partyId].phone : '';
                         let fDate = new Date(inv.returnDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                         
                         overdueHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 14px; border-radius:8px; margin-bottom:8px; border:1px solid #FECACA;">
@@ -15978,7 +15993,7 @@
                             </div>
                             <div style="display:flex; gap:8px;">
                                 <a href="tel:${pPhone}" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold;">📞 Call</a>
-                                <button onclick="window.openReturnStockModal('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(22, 163, 74, 0.3);">✅ Process Return</button>
+                                <button onclick="if(typeof window.openReturnStockModal === 'function') window.openReturnStockModal('${inv.id}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);">✅ Process Return</button>
                             </div>
                         </div>`;
                     }
@@ -15996,10 +16011,11 @@
                 let totalInGodown = 0; let totalDeployed = 0; let visibleCount = 0;
                 let itemsHtml = "";
 
-                // 🛡️ Safe Items Rendering
-                let safeItems = itemsDB || {};
+                let safeItems = (typeof itemsDB !== 'undefined' && itemsDB) ? itemsDB : {};
+                let safeWarehouses = (typeof warehousesDB !== 'undefined' && warehousesDB) ? warehousesDB : {};
+
                 Object.values(safeItems).forEach(item => {
-                    if (!item || typeof item !== 'object' || !item.name) return; // Skip corrupted items
+                    if (!item || typeof item !== 'object' || !item.name) return; 
 
                     let inGodown = 0;
                     let godownBreakdownHtml = '';
@@ -16009,7 +16025,7 @@
                         let stock = parseInt(godownsList[gId]) || 0;
                         inGodown += stock;
                         if(stock > 0) {
-                            let gName = (typeof warehousesDB !== 'undefined' && warehousesDB[gId]) ? warehousesDB[gId].name : gId;
+                            let gName = safeWarehouses[gId] ? safeWarehouses[gId].name : gId;
                             godownBreakdownHtml += `<div style="font-size:10px; color:#64748B; margin-top:2px;">🏭 ${gName}: <b style="color:var(--text-primary);">${stock}</b></div>`;
                         }
                     }
@@ -16019,7 +16035,8 @@
                     totalInGodown += inGodown; 
                     totalDeployed += deployed;
 
-                    if (search && !String(item.name).toLowerCase().includes(search)) return;
+                    let skuText = item.sku || 'ITM-NEW';
+                    if (search && !String(item.name).toLowerCase().includes(search) && !skuText.toLowerCase().includes(search)) return;
                     visibleCount++;
 
                     let safeName = String(item.name).replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -16027,7 +16044,10 @@
                     itemsHtml += `
                     <div onclick="if(typeof openItemDetails === 'function') openItemDetails('${safeName}')" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;">
                         <div style="flex:1;">
-                            <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${item.name}</div>
+                            <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:4px; display:flex; align-items:center;">
+                                <span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px; border:1px solid #C7D2FE; margin-right:8px;">${skuText}</span>
+                                ${item.name}
+                            </div>
                             <div style="font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:6px;">Total Purchased: ${tStock}</div>
                             <div style="padding-top:6px; border-top:1px dashed #E2E8F0;">${godownBreakdownHtml}</div>
                         </div>
@@ -16057,8 +16077,6 @@
 
             } catch (error) {
                 console.error("Inventory Render Error: ", error);
-                let errHtml = `<div style="background:#FEF2F2; color:#991B1B; padding:15px; border-radius:8px; border:1px solid #FCA5A5; font-size:12px; font-weight:bold; margin-top:20px;">⚠️ Internal Error: The system caught a corrupted item. But your app will keep running. (${error.message})</div>`;
-                if(container) container.innerHTML = errHtml;
             }
         }
 
@@ -17009,6 +17027,100 @@
             });
         }, 200);
         
+        // ==============================================================
+        // 🚀 PHASE 2: SMART SKU ENGINE & INVENTORY RATE LOGIC
+        // ==============================================================
+        
+        // 1. Auto-generate Unique Item Code (SKU)
+        window.generateItemCode = function() {
+            let maxNum = 0;
+            Object.values(itemsDB).forEach(item => {
+                if (item.sku && item.sku.startsWith('ITM-')) {
+                    let num = parseInt(item.sku.replace('ITM-', '')) || 0;
+                    if (num > maxNum) maxNum = num;
+                }
+            });
+            return 'ITM-' + String(maxNum + 1).padStart(3, '0');
+        };
+
+        // 2. Add New Item via Direct Stock
+        window.promptNewInventoryItem = function() {
+            let newName = prompt("📦 Enter new Item Name (e.g., Banquet Chair, Haldi Decor Prop):");
+            if(newName && newName.trim() !== "") {
+                newName = newName.trim();
+                if(itemsDB[newName]) {
+                    alert("⚠️ This item already exists in your Inventory!");
+                } else {
+                    let sku = window.generateItemCode();
+                    itemsDB[newName] = { sku: sku, name: newName, totalStock: 0, godowns: {} };
+                    if(typeof updateDataAndUI === 'function') updateDataAndUI();
+                    
+                    let sel = document.getElementById('ds_name_select');
+                    if(sel) {
+                        sel.innerHTML += `<option value="${newName}" selected>[${sku}] ${newName}</option>`;
+                        sel.value = newName;
+                    }
+                }
+            }
+        };
+
+        // 3. Open Add Stock Modal with SKU List
+        window.openDirectStockModal = function() {
+            let sel = document.getElementById('ds_name_select');
+            if (sel) {
+                sel.innerHTML = '<option value="">-- Select Item --</option>';
+                Object.values(itemsDB).forEach(item => {
+                    let skuStr = item.sku ? `[${item.sku}] ` : "";
+                    sel.innerHTML += `<option value="${item.name}">${skuStr}${item.name}</option>`;
+                });
+            }
+            document.getElementById('ds_qty').value = '';
+            document.getElementById('ds_rate').value = ''; // Naya Rate field
+            let gSel = document.getElementById('ds_godown');
+            if (gSel) {
+                gSel.innerHTML = '';
+                Object.values(warehousesDB).forEach(w => {
+                    gSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                });
+            }
+            document.getElementById('directStockModal').style.display = 'flex';
+        };
+
+        // 4. Save Stock & Impact Balance Sheet (Fixed Assets)
+        window.saveDirectStock = function() {
+            let name = document.getElementById('ds_name_select').value;
+            let qty = parseInt(document.getElementById('ds_qty').value);
+            let gId = document.getElementById('ds_godown').value;
+            let rate = parseFloat(document.getElementById('ds_rate').value) || 0; 
+
+            if(!name || !qty || !gId || rate <= 0) return alert("❌ Please fill all fields including Per Unit Rate!");
+
+            let value = qty * rate; // 🚀 Calculate Total Value Automatically
+
+            if (!itemsDB[name]) {
+                itemsDB[name] = { sku: window.generateItemCode(), name: name, totalStock: 0, godowns: {} };
+            } else if (!itemsDB[name].sku) {
+                itemsDB[name].sku = window.generateItemCode(); // Purane items ko bhi code dedo
+            }
+            if (!itemsDB[name].godowns[gId]) itemsDB[name].godowns[gId] = 0;
+
+            itemsDB[name].totalStock += qty;
+            itemsDB[name].godowns[gId] += qty;
+
+            // 🚀 CREATE ASSET RECORD FOR BALANCE SHEET (Direct Impact)
+            let assetId = "AST" + Date.now();
+            purchaseDB[assetId] = {
+                id: assetId, type: 'Asset', partyId: 'SYS_OPENING', eventId: null, event: `Opening Stock: ${name}`, 
+                date: new Date().toISOString().split('T')[0], items: [{name: name, desc: 'Added manually via Direct Stock', unit: 'Pcs', qty: qty, rate: rate, amount: value}], 
+                discount: 0, total: value, gstPercent: 0, taxAmount: 0, finalTotal: value, advance: value, balanceDue: 0, status: 'Paid'
+            };
+
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            document.getElementById('directStockModal').style.display = 'none';
+            alert(`✅ Stock Successfully Added!\n\nItem: ${name}\nQuantity: ${qty}\nPer Unit Rate: ₹${rate}\n\nTotal Value of ₹${value.toLocaleString('en-IN')} has been added to your Fixed Assets (Balance Sheet).`);
+        };
+        
+
     </script>
 </body>
 
