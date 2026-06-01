@@ -3944,6 +3944,25 @@
                 </form>
             </div>
         </div>
+        <div id="stockAuditModal" class="modal-overlay" style="z-index: 10500;">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3>⚖️ Stock Audit</h3>
+                    <button class="modal-close" onclick="document.getElementById('stockAuditModal').style.display='none';">&times;</button>
+                </div>
+                <div class="form-group"><label class="form-label">Select Item</label><select id="audit_item" class="form-select" onchange="window.loadAuditItemDetails()"></select></div>
+                <div class="form-group"><label class="form-label">Select Godown</label><select id="audit_godown" class="form-select" onchange="window.updateExpectedGodownStock()"></select></div>
+                <div id="audit_details" style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px solid #E2E8F0; margin-bottom:15px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Total System Stock:</span> <b id="audit_sys_total">0</b></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Out on Rent:</span> <b id="audit_sys_rent">0</b></div>
+                    <div style="display:flex; justify-content:space-between; color:var(--accent-color);"><span>Expected in this Godown:</span> <b id="audit_sys_godown">0</b></div>
+                </div>
+                <div id="audit_input_group" style="display:none; flex-direction:column; gap:10px;">
+                    <div class="form-group" style="margin:0;"><label class="form-label" style="color:var(--danger);">Actual Physical Stock Count</label><input type="number" id="audit_actual_qty" class="form-input" min="0" style="font-weight:bold; font-size:16px;"></div>
+                    <button type="button" class="btn-main" style="background:#F59E0B; color:black;" onclick="window.saveStockAudit()">Submit Audit & Match</button>
+                </div>
+            </div>
+        </div>
 
         <div id="returnStockModal" class="modal-overlay" style="z-index: 10500;">
             <div class="modal-content" style="max-width: 600px;">
@@ -15696,195 +15715,46 @@
         };
         var toggleFabMenu = window.toggleFabMenu;
 
-        // 🛠️ 2. FIXING INVOICE TYPE TOGGLE ERROR (Rent Invoice Logic)
+        // 3. Invoice Form UI Upgrade (Hide Event, Hide Manual Add, Change T&C)
         window.toggleInvoiceType = function() {
             let type = document.getElementById('di_invoice_type');
             let btnGodown = document.getElementById('btn_fetch_godown');
             let rentalFields = document.getElementById('di_rental_fields');
-            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]'); // Manual Item Button
+            let eventLinkGroup = document.getElementById('di_event_group'); // Event Link Dropdown
+            let tncBox = document.getElementById('di_tnc');
             
-            if (type && btnGodown) {
-                if (type.value === 'Rental') {
-                    btnGodown.style.display = 'block';
-                    if (rentalFields) rentalFields.style.display = 'flex';
-                    if (manualAddBtn) manualAddBtn.style.display = 'none'; // Sirf Fetch Stock dikhega
-                    
-                    let sel = document.getElementById('di_godown_select');
-                    if (sel) { 
-                        sel.innerHTML = ''; 
-                        Object.values(warehousesDB).forEach(w => { sel.innerHTML += `<option value="${w.id}">${w.name}</option>`; }); 
-                    }
-                } else {
-                    btnGodown.style.display = 'none';
-                    if (rentalFields) rentalFields.style.display = 'none';
-                    if (manualAddBtn) manualAddBtn.style.display = 'inline-block';
-                }
+            // Manual Add button dhoondhna
+            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]'); 
+
+            if (type && type.value === 'Rental') {
+                if (btnGodown) btnGodown.style.display = 'block';
+                if (rentalFields) rentalFields.style.display = 'flex';
+                if (eventLinkGroup) eventLinkGroup.style.display = 'none'; // Faltu Link Event hata diya
+                if (manualAddBtn) manualAddBtn.style.display = 'none'; // Manual add hata diya
+                if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
+                
+                let sel = document.getElementById('di_godown_select');
+                if (sel) { sel.innerHTML = ''; Object.values(warehousesDB).forEach(w => { sel.innerHTML += `<option value="${w.id}">${w.name}</option>`; }); }
+            } else {
+                if (btnGodown) btnGodown.style.display = 'none';
+                if (rentalFields) rentalFields.style.display = 'none';
+                if (eventLinkGroup) eventLinkGroup.style.display = 'block'; // Regular invoice me Event dikhega
+                if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; // Manual add wapas aayega
+                if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
             }
         };
         var toggleInvoiceType = window.toggleInvoiceType;
 
+        // 2. Rent Invoice Button Fix
         window.openRentInvoice = function() {
             window.openTab('sales-hub', document.getElementById('btn-erp'));
             setTimeout(() => {
                 if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal();
                 let typeSel = document.getElementById('di_invoice_type');
-                if(typeSel) {
-                    typeSel.value = 'Rental';
-                    typeSel.dispatchEvent(new Event('change'));
-                }
+                if(typeSel) { typeSel.value = 'Rental'; typeSel.dispatchEvent(new Event('change')); }
             }, 150);
         };
         var openRentInvoice = window.openRentInvoice;
-
-        // 🛠️ 3. NEW OUTWARD CHALLAN FORM LOGIC (Events & Functions)
-        window.openOutwardChallanModal = function() {
-            let outForm = document.getElementById('outwardForm');
-            if(outForm) outForm.reset();
-            document.getElementById('out_date').valueAsDate = new Date();
-            document.getElementById('out_items_container').innerHTML = '';
-            
-            // Inject Function & Terms HTML dynamically if not present
-            if(!document.getElementById('out_function_group')) {
-                let evSelect = document.getElementById('out_event');
-                evSelect.setAttribute('onchange', 'window.handleOutwardEventChange()');
-                
-                let funcGroupHtml = `<div class="form-group" id="out_function_group" style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-top:10px;"><label class="form-label" style="color:var(--accent-color);">Select Function / Day</label><select id="out_function_select" class="form-select" onchange="window.handleOutwardFunctionChange()"></select></div>`;
-                evSelect.parentElement.insertAdjacentHTML('afterend', funcGroupHtml);
-                
-                let tncHtml = `<div style="font-size:10px; color:var(--text-secondary); background:#F1F5F9; padding:8px; border-radius:6px; margin-bottom:12px;"><b>Terms & Conditions:</b><br>1. Materials are sent on returnable basis.<br>2. Client is responsible for any physical damage or loss during the event.</div>`;
-                document.querySelector('#out_items_container').parentElement.insertAdjacentHTML('afterend', tncHtml);
-            }
-            
-            let evSelect = document.getElementById('out_event');
-            evSelect.innerHTML = '<option value="">-- Select Upcoming Event --</option>';
-            // Sirf Upcoming/Active Event ayenge
-            Object.values(leadsDB || {}).filter(l => l.status === 'Won' && l.eventStatus !== 'Completed' && l.eventStatus !== 'Cancelled').forEach(ev => { 
-                evSelect.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`; 
-            });
-            
-            document.getElementById('out_function_group').style.display = 'none';
-            if(typeof loadGodownsIntoSelect === 'function') loadGodownsIntoSelect();
-            document.getElementById('outwardChallanModal').dataset.editId = "";
-            document.getElementById('outwardChallanModal').style.display = 'flex';
-        };
-        var openOutwardChallanModal = window.openOutwardChallanModal;
-
-        window.handleOutwardEventChange = function() {
-            let evId = document.getElementById('out_event').value;
-            let funcGroup = document.getElementById('out_function_group');
-            let funcSelect = document.getElementById('out_function_select');
-            
-            if(!evId || !leadsDB[evId]) { funcGroup.style.display = 'none'; return; }
-            
-            let lead = leadsDB[evId];
-            if(lead.linkedDates && lead.linkedDates.length > 0) {
-                funcGroup.style.display = 'block';
-                funcSelect.innerHTML = `<option value="">-- Select Function --</option>`;
-                lead.linkedDates.forEach(d => { funcSelect.innerHTML += `<option value="${d.date}|${d.title}|${d.venue||lead.venue||''}">${d.title} (${new Date(d.date).toLocaleDateString('en-IN')})</option>`; });
-            } else {
-                funcGroup.style.display = 'none';
-                document.getElementById('out_date').value = lead.date || '';
-                if(document.getElementById('out_venue')) document.getElementById('out_venue').value = lead.venue || '';
-            }
-        };
-        window.handleOutwardFunctionChange = function() {
-            let val = document.getElementById('out_function_select').value;
-            if(val) { let parts = val.split('|'); document.getElementById('out_date').value = parts[0]; if(document.getElementById('out_venue')) document.getElementById('out_venue').value = parts[2]; }
-        };
-
-        window.addOutwardItemRow = function(itemName = '') {
-            let container = document.getElementById('out_items_container'); 
-            let rowId = 'out_item_' + Date.now() + Math.floor(Math.random()*100);
-            
-            // Auto fetch Average Purchase Rate for Info
-            let totalAmt = 0; let totalQty = 0;
-            Object.values(purchaseDB || {}).filter(p => p.type === 'Asset').forEach(p => { 
-                p.items.forEach(i => { if (i.name === itemName) { totalAmt += i.amount; totalQty += i.qty; } }); 
-            });
-            let avgRate = totalQty > 0 ? (totalAmt / totalQty) : 0;
-            
-            let html = `
-            <div class="outward-item-row" id="${rowId}" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px; background:white; padding:10px; border-radius:6px; border:1px solid #E2E8F0; position:relative;">
-                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer;">×</button>
-                <div style="display:flex; gap:8px; align-items:flex-end;">
-                    <div style="flex:2;">
-                        <label style="font-size:10px; color:var(--text-secondary);">Item Name</label>
-                        <input type="text" class="form-input o-item-name" value="${itemName}" readonly style="background:#F8FAFC; font-weight:bold;">
-                    </div>
-                    <div style="flex:1;">
-                        <label style="font-size:10px; color:var(--text-secondary);">Qty</label>
-                        <input type="number" class="form-input o-item-qty" min="1" value="1" required>
-                    </div>
-                </div>
-                <div style="font-size:10.5px; color:var(--text-secondary); text-align:right;">Est. Unit Rate: <b style="color:var(--accent-color);">₹${Math.round(avgRate).toLocaleString('en-IN')}</b> <span style="font-size:9px;">(Info Only)</span></div>
-                <input type="hidden" class="o-item-rate" value="${avgRate}">
-            </div>`;
-            container.insertAdjacentHTML('beforeend', html);
-        };
-        var addOutwardItemRow = window.addOutwardItemRow;
-
-        window.saveOutwardChallan = function() {
-            let evId = document.getElementById('out_event').value; 
-            let gId = document.getElementById('out_godown_select').value; 
-            let date = document.getElementById('out_date').value; 
-            let vehicle = document.getElementById('out_vehicle').value; 
-            let note = document.getElementById('out_note') ? document.getElementById('out_note').value : '';
-            
-            let funcSelect = document.getElementById('out_function_select');
-            let selectedFunc = funcSelect ? funcSelect.value : '';
-            let funcTitle = selectedFunc ? selectedFunc.split('|')[1] : '';
-
-            if(!evId || !gId || !date) return alert("Fill required fields!");
-
-            let items = []; let totalInternalValue = 0;
-            let rows = document.querySelectorAll('#out_items_container .outward-item-row');
-            let isEdit = document.getElementById('outwardChallanModal').dataset.editId;
-
-            for(let i=0; i<rows.length; i++) {
-                let name = rows[i].querySelector('.o-item-name').value; 
-                let qty = parseInt(rows[i].querySelector('.o-item-qty').value) || 0; 
-                let rate = parseFloat(rows[i].querySelector('.o-item-rate').value) || 0;
-                
-                if (name && qty > 0) { 
-                    let available = (itemsDB[name] && itemsDB[name].godowns[gId]) ? itemsDB[name].godowns[gId] : 0;
-                    if(!isEdit && qty > available) { 
-                        alert(`🚨 ALARM!\nTrying to dispatch ${qty} x '${name}', but only ${available} are available in Godown.`); return; 
-                    }
-                    items.push({ name, qty, rate, amount: qty * rate }); 
-                    totalInternalValue += (qty * rate); 
-                }
-            }
-            if(items.length === 0) return alert("Please add at least one item!");
-
-            let id = isEdit || "CHL" + Date.now();
-            
-            // If editing, revert old stock first
-            if(isEdit) {
-                let oldRecord = stockMovementDB[id];
-                if(oldRecord && oldRecord.items) {
-                    oldRecord.items.forEach(oldItem => {
-                        if(itemsDB[oldItem.name] && itemsDB[oldItem.name].godowns[oldRecord.godownId] !== undefined) {
-                            itemsDB[oldItem.name].godowns[oldRecord.godownId] += oldItem.qty;
-                        }
-                    });
-                }
-            }
-
-            // Deduct new stock
-            items.forEach(item => { 
-                if(itemsDB[item.name] && itemsDB[item.name].godowns[gId] !== undefined) itemsDB[item.name].godowns[gId] -= item.qty; 
-            });
-
-            // Yahan Balance Sheet me Expense PUSH NAHI kiya gaya hai (As requested)
-            stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: gId, date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed' };
-
-            if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
-            document.getElementById('outwardChallanModal').style.display = 'none'; 
-            document.getElementById('outwardChallanModal').dataset.editId = "";
-            alert(`✅ Material Dispatched Successfully!`); 
-            window.renderInventoryHubList();
-        };
-        var saveOutwardChallan = window.saveOutwardChallan;
 
         // 🛠️ 4. INVENTORY FILTERS & LIST VIEW (NO SCROLL, PREVIEW MODAL)
         window.invFilterFrom = null; window.invFilterTo = null; window.invSubFilter = 'All';
@@ -15963,11 +15833,14 @@
             if(visibleCount === 0) container.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding:30px; font-size:13px; font-weight:600;">No transactions found.</p>`; else container.innerHTML = html;
         };
 
-        // 🛠️ 5. PREVIEW & EDIT MODAL ENGINE
+        // 4. Preview Modal logic (List Click par ab Print ki jagah Preview khulega)
         window.openLogisticsPreviewModal = function(id, logType) {
             closeAllMenus();
-            if(logType === 'Rental Invoice') { window.viewDetails(id, 'sales'); return; } // Existing ERP Invoice preview
-            
+            if(logType === 'Rental Invoice') { 
+                if(typeof viewDetails === 'function') viewDetails(id, 'sales'); // Open ERP's actual Invoice Preview
+                return; 
+            } 
+            // Agar Outward hai, toh Logistics ka Preview
             let record = stockMovementDB[id]; if(!record) return;
             let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
             let isReturned = (record.status === 'Returned');
@@ -15994,18 +15867,24 @@
             document.getElementById('logPreviewActions').innerHTML = actionsHtml;
             document.getElementById('logPreviewModal').style.display = 'flex';
         };
-        var openLogisticsPreviewModal = window.openLogisticsPreviewModal;
+        // Update old HTML calls if any to new modal function
+        var previewLogistics = window.openLogisticsPreviewModal;
 
+        // 5. EDIT RECORD LOGIC (NO MORE COMING SOON)
         window.editLogisticsRecord = function(id, logType) {
+            closeAllMenus();
+            if(document.getElementById('logPreviewModal')) document.getElementById('logPreviewModal').style.display = 'none';
+            
             if(logType === 'Rental Invoice') {
-                if(document.getElementById('logPreviewModal')) document.getElementById('logPreviewModal').style.display = 'none';
-                if(typeof editSalesRecord === 'function') editSalesRecord(id);
+                if(typeof editSalesRecord === 'function') {
+                    editSalesRecord(id);
+                    window.openTab('sales-hub', document.getElementById('btn-erp')); // Redirect to form
+                }
                 return;
             }
             
+            // Edit Outward
             let record = stockMovementDB[id]; if(!record) return;
-            if(document.getElementById('logPreviewModal')) document.getElementById('logPreviewModal').style.display = 'none';
-            
             window.openOutwardChallanModal();
             document.getElementById('outwardChallanModal').dataset.editId = id;
             document.getElementById('out_event').value = record.eventId;
@@ -16013,7 +15892,7 @@
             
             if(record.functionTitle) {
                 let fSel = document.getElementById('out_function_select');
-                for(let i=0; i<fSel.options.length; i++) { if(fSel.options[i].text.includes(record.functionTitle)) { fSel.selectedIndex = i; break; } }
+                if(fSel) { for(let i=0; i<fSel.options.length; i++) { if(fSel.options[i].text.includes(record.functionTitle)) { fSel.selectedIndex = i; break; } } }
             }
             
             document.getElementById('out_godown_select').value = record.godownId || 'WH_MAIN';
@@ -16028,11 +15907,11 @@
                 rows[rows.length - 1].querySelector('.o-item-qty').value = item.qty;
             });
         };
-        var editLogisticsRecord = window.editLogisticsRecord;
 
-        // 🛠️ 6. MISC GLOBALS FIXES (Stock Audit & Godown Reports)
+        // 1. Audit Modal Fix
         window.openStockAuditModal = function() {
-            let sel = document.getElementById('audit_item'); sel.innerHTML = '<option value="">-- Select Item to Audit --</option>'; Object.values(itemsDB).forEach(item => { sel.innerHTML += `<option value="${item.name}">${item.name}</option>`; });
+            let sel = document.getElementById('audit_item'); if(!sel) return;
+            sel.innerHTML = '<option value="">-- Select Item to Audit --</option>'; Object.values(itemsDB).forEach(item => { sel.innerHTML += `<option value="${item.name}">${item.name}</option>`; });
             let gSel = document.getElementById('audit_godown'); gSel.innerHTML = ''; Object.values(warehousesDB).forEach(w => { gSel.innerHTML += `<option value="${w.id}">${w.name}</option>`; });
             document.getElementById('audit_details').style.display = 'none'; document.getElementById('audit_input_group').style.display = 'none'; document.getElementById('stockAuditModal').style.display = 'flex';
         };
