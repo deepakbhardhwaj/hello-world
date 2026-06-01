@@ -16826,12 +16826,27 @@
                 alert(`✅ Audit complete. ${diff} units marked as lost and booked in Expenses.`);
             }
         }
-        // 3. Smart Material Return (Inward/Damage/Lost Engine)
-        window.openReturnStockModal = function(id) {
-            let inv = (typeof salesDB !== 'undefined' && salesDB) ? salesDB[id] : null;
-            if (!inv) return alert("Invoice not found!");
+        // 2. Smart Inward (Return) Engine Upgraded
+        window.openReturnStockModal = function(id, logType) {
+            closeAllMenus();
+            let record = null;
+            if(logType === 'Rental Invoice') record = salesDB[id];
+            else if(logType === 'Outward Challan') record = stockMovementDB[id];
+
+            if (!record) return alert("Record not found!");
 
             document.getElementById('return_inv_id').value = id;
+            
+            // Inject Hidden Field dynamically for type tracking
+            let typeInput = document.getElementById('return_log_type');
+            if(!typeInput) {
+                typeInput = document.createElement('input');
+                typeInput.type = 'hidden';
+                typeInput.id = 'return_log_type';
+                document.getElementById('returnStockModal').appendChild(typeInput);
+            }
+            typeInput.value = logType;
+
             document.getElementById('return_penalty_amt').value = 0;
             document.getElementById('return_penalty_note').value = "";
             document.getElementById('return_asset_loss_value').value = 0;
@@ -16840,8 +16855,8 @@
             let tbody = document.getElementById('return_items_body');
             tbody.innerHTML = "";
 
-            if (inv.items && inv.items.length > 0) {
-                inv.items.forEach((item) => {
+            if (record.items && record.items.length > 0) {
+                record.items.forEach((item) => {
                     let qty = parseInt(item.qty) || 0;
                     tbody.innerHTML += `
                     <tr style="border-bottom: 1px solid #E2E8F0;">
@@ -16861,11 +16876,8 @@
                         </td>
                     </tr>`;
                 });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px;">No items found.</td></tr>`;
             }
 
-            if(typeof closeAllMenus === 'function') closeAllMenus();
             document.getElementById('returnStockModal').style.display = 'flex';
         };
 
@@ -16879,16 +16891,17 @@
         };
 
         window.processSmartReturn = function() {
-            let invId = document.getElementById('return_inv_id').value;
-            let inv = salesDB[invId];
-            if(!inv) return;
+            let id = document.getElementById('return_inv_id').value;
+            let logType = document.getElementById('return_log_type').value;
+            
+            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id];
+            if(!record) return;
             
             let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0;
             let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty";
             let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0;
             let error = false;
             
-            // Validate sent vs returned quantities
             document.querySelectorAll('#return_items_body tr').forEach(row => {
                 let name = row.querySelector('.ret-item-name').value;
                 let sent = parseInt(row.querySelector('.ret-item-sent').innerText);
@@ -16904,7 +16917,7 @@
             
             if(error) return;
             
-            // Step 1: Stock Update
+            // Stock Updation Logic
             document.querySelectorAll('#return_items_body tr').forEach(row => {
                 let name = row.querySelector('.ret-item-name').value;
                 let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0;
@@ -16912,47 +16925,36 @@
                 let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
                 
                 if (itemsDB[name]) {
-                    let returnedQty = safe + repair; // Safe and Repairable goes back to stock
-                    let gId = inv.godownId || 'WH_MAIN';
+                    let returnedQty = safe + repair; 
+                    let gId = record.godownId || 'WH_MAIN';
                     if (!itemsDB[name].godowns[gId]) itemsDB[name].godowns[gId] = 0;
                     itemsDB[name].godowns[gId] += returnedQty;
                     
                     if(lost > 0) {
-                        itemsDB[name].totalStock -= lost; // Permanently remove lost
+                        itemsDB[name].totalStock -= lost;
                         itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; 
                     }
                 }
             });
             
-            // Step 2: Penalty addition to Client's Invoice
-            if (penaltyAmt > 0) {
-                inv.finalTotal += penaltyAmt;
-                inv.balanceDue += penaltyAmt;
-                
-                inv.items.push({ 
-                    name: "Penalty: " + penaltyNote, 
-                    desc: "Damage/Lost materials", 
-                    unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt 
-                });
-                
-                if(partiesDB[inv.partyId]) partiesDB[inv.partyId].balance += penaltyAmt;
-                inv.status = inv.balanceDue > 0 ? (inv.advance > 0 ? 'Partial' : 'Due') : 'Paid';
+            // Penalty & Loss Logic
+            if (penaltyAmt > 0 && logType === 'Rental Invoice') {
+                record.finalTotal += penaltyAmt;
+                record.balanceDue += penaltyAmt;
+                record.items.push({ name: "Penalty: " + penaltyNote, desc: "Damage/Lost materials", unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt });
+                if(partiesDB[record.partyId]) partiesDB[record.partyId].balance += penaltyAmt;
+                record.status = record.balanceDue > 0 ? (record.advance > 0 ? 'Partial' : 'Due') : 'Paid';
             }
             
-            // Step 3: Asset Loss recorded in P&L
             if (assetLossValue > 0) {
                 let expId = "EXP" + Date.now();
                 let cat = "Asset Loss / Write-off";
                 if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); }
-                
-                expenseDB[expId] = {
-                    id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid',
-                    date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', 
-                    eventId: inv.eventId || null, partyId: null, notes: `Write-off for lost items in Invoice ${invId}`, linkedDates: []
-                };
+                expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid', date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', eventId: record.eventId || null, partyId: null, notes: `Write-off for lost items in ${id}`, linkedDates: [] };
             }
             
-            inv.rentalStatus = 'Returned'; 
+            if(logType === 'Rental Invoice') record.rentalStatus = 'Returned'; 
+            else record.status = 'Returned';
             
             if(typeof updateDataAndUI === 'function') updateDataAndUI();
             document.getElementById('returnStockModal').style.display = 'none';
@@ -17285,6 +17287,227 @@
             if(typeof updateDataAndUI === 'function') updateDataAndUI();
             document.getElementById('outwardChallanModal').style.display = 'none';
             alert(`✅ Material Dispatched Successfully!\n\nInternal Cost of ₹${totalInternalValue.toLocaleString('en-IN')} has been automatically recorded as an Expense in the Event Balance Sheet.`);
+        };
+        // ==============================================================
+        // ==============================================================
+        // 🚀 PHASE 4: LOGISTICS TRANSACTION LIST & INWARD ENGINE
+        // ==============================================================
+
+        let invSubFilter = 'All';
+
+        window.setInvSubFilter = function(filter, btn) {
+            invSubFilter = filter;
+            document.querySelectorAll('#inv-sub-filters .sales-tab-btn').forEach(b => {
+                b.classList.remove('active-sales-tab');
+                b.style.background = '#F1F5F9';
+                b.style.color = '#64748B';
+                b.style.borderColor = 'transparent';
+            });
+            btn.classList.add('active-sales-tab');
+            btn.style.background = '#0F172A';
+            btn.style.color = 'white';
+            window.renderInventoryHubList();
+        };
+
+        // 1. Master List Renderer (Items ki jagah ab Transactions dikhenge)
+        window.renderInventoryHubList = function() {
+            let container = document.getElementById('inventory-list-container');
+            if (!container) return; 
+
+            // Initialize Smart Sub-filters
+            let filterContainer = document.getElementById('inv-sub-filters');
+            if (filterContainer && filterContainer.innerHTML.trim() === '') {
+                let filters = ['All', 'Deployed (On Rent/Event)', 'Overdue Items', '✅ Received (Inwarded)'];
+                filterContainer.innerHTML = '';
+                filters.forEach((f, idx) => {
+                    let bg = idx===0 ? '#0F172A' : '#F1F5F9';
+                    let col = idx===0 ? 'white' : '#64748B';
+                    filterContainer.innerHTML += `<button class="sales-tab-btn ${idx===0?'active-sales-tab':''}" style="background:${bg}; color:${col}; padding: 6px 16px; font-size:11.5px; margin-right:6px; border-radius:20px; font-weight:700; border:none; transition:0.2s; cursor:pointer;" onclick="window.setInvSubFilter('${f}', this)">${f}</button>`;
+                });
+            }
+
+            // Fetch Transactions from both SalesDB (Rental) and StockMovementDB (Outward)
+            let transactions = [];
+            let todayStr = new Date().toISOString().split('T')[0];
+
+            Object.values(salesDB || {}).forEach(inv => {
+                if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental') {
+                    transactions.push({...inv, logType: 'Rental Invoice'});
+                }
+            });
+
+            Object.values(stockMovementDB || {}).forEach(out => {
+                if (out && out.type === 'Outward') {
+                    transactions.push({...out, logType: 'Outward Challan'});
+                }
+            });
+
+            // Sort by Date Descending
+            transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            let html = '';
+            let visibleCount = 0;
+            let search = (document.getElementById('inv_hub_search') ? document.getElementById('inv_hub_search').value.toLowerCase() : "");
+
+            transactions.forEach(t => {
+                let isReturned = (t.rentalStatus === 'Returned' || t.status === 'Returned');
+                let isOverdue = (!isReturned && t.returnDate && t.returnDate < todayStr);
+
+                // Apply Filters
+                if (invSubFilter === 'Deployed (On Rent/Event)' && isReturned) return;
+                if (invSubFilter === 'Overdue Items' && !isOverdue) return;
+                if (invSubFilter === '✅ Received (Inwarded)' && !isReturned) return;
+
+                let pName = (t.partyId && partiesDB[t.partyId]) ? partiesDB[t.partyId].name : (t.logType === 'Outward Challan' ? 'Internal Event Use' : 'Unknown');
+                let eventName = t.event || (t.eventId && leadsDB[t.eventId] ? leadsDB[t.eventId].func : "");
+                
+                // Search Logic
+                let searchStr = `${t.id} ${pName} ${eventName}`.toLowerCase();
+                if (search && !searchStr.includes(search)) return;
+
+                visibleCount++;
+
+                let fDate = new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                
+                // Smart Status Stamp Logic
+                let statusBadge = isReturned 
+                    ? `<span style="background:#DCFCE7; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0; text-transform:uppercase; box-shadow:var(--shadow-sm);">✅ RECEIVED</span>` 
+                    : (isOverdue ? `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA; text-transform:uppercase; box-shadow:var(--shadow-sm);">🚨 OVERDUE</span>` 
+                    : `<span style="background:#FFFBEB; color:#D97706; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FDE68A; text-transform:uppercase; box-shadow:var(--shadow-sm);">🚚 DEPLOYED</span>`);
+
+                let inwardBtnHtml = !isReturned ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
+                let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : '#8B5CF6';
+
+                html += `
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 4px solid ${typeColor}; background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow-sm); box-sizing:border-box;">
+                    <div style="flex-grow:1; cursor:pointer;" onclick="window.previewLogistics('${t.id}', '${t.logType}')">
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                            <span style="font-family:monospace; font-size:12px; font-weight:800; color:#475569;">${t.id}</span>
+                            <span style="font-size:10px; font-weight:600; color:#94A3B8;">• ${fDate}</span>
+                            ${statusBadge}
+                        </div>
+                        <div style="font-size:14px; font-weight:900; color:var(--text-primary); margin-bottom:2px;">
+                            ${pName}
+                        </div>
+                        <div style="font-size:11px; color:#64748B; font-weight:700;">
+                            ${eventName} • <span style="color:${typeColor};">${t.logType}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                        <div style="text-align:right;">
+                            <div style="font-size:12px; font-weight:800; color:var(--text-secondary);">Items: ${t.items ? t.items.length : 0}</div>
+                            ${t.totalValue || t.finalTotal ? `<div style="font-size:13px; color:var(--danger); font-weight:900; margin-top:2px;">₹${(t.totalValue || t.finalTotal).toLocaleString('en-IN')}</div>` : ''}
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" style="padding:4px 0 4px 8px; margin:0; background:transparent; border:none; box-shadow:none; font-size:20px; color:var(--text-secondary);" onclick="toggleMenu('log-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-log-${t.id}">
+                                ${inwardBtnHtml}
+                                <div class="dropdown-item" onclick="window.previewLogistics('${t.id}', '${t.logType}')">🖨️ Print / View Details</div>
+                                <div class="dropdown-item text-red" onclick="window.deleteLogisticsRecord('${t.id}', '${t.logType}', event)">🗑️ Delete Record</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            if(visibleCount === 0) {
+                container.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding:30px; font-size:13px; font-weight:600;">No transactions found in this category.</p>`;
+            } else {
+                container.innerHTML = html;
+            }
+        };
+        // 3. Print / View Logistics Summary
+        window.previewLogistics = function(id, logType) {
+            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id];
+            if(!record) return;
+
+            let cName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.company : "UTSAVhq ERP";
+            let fDate = new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
+            let eventName = record.event || (record.eventId && leadsDB[record.eventId] ? leadsDB[record.eventId].func : "General Dispatch");
+            let totalVal = record.totalValue || record.finalTotal || 0;
+
+            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${logType} - ${id}</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #0f172a; margin:0;}
+                .box { border: 1px solid #e2e8f0; padding: 30px; border-radius: 8px; max-width: 800px; margin: auto; position:relative; }
+                .header { text-align: center; border-bottom: 3px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; }
+                .stamp { position: absolute; top: 120px; right: 40px; font-size: 40px; font-weight: 900; color: #166534; border: 5px solid #166534; padding: 10px 20px; border-radius: 10px; transform: rotate(-15deg); opacity: 0.15; text-transform: uppercase; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+                th { background: #f1f5f9; font-weight: 800; padding: 10px; border: 1px solid #cbd5e1; text-align: left;}
+                td { border: 1px solid #cbd5e1; padding: 10px; }
+                @media print { #mobile-print-btn { display:none !important; } .box {border:none; padding:0;} }
+            </style></head><body><div class="box">`;
+
+            if((record.rentalStatus === 'Returned' || record.status === 'Returned')) {
+                html += `<div class="stamp">✅ INWARD RECEIVED</div>`;
+            }
+
+            html += `<div class="header">
+                <h2 style="margin:0; font-size:26px; text-transform:uppercase;">${cName}</h2>
+                <h3 style="margin:5px 0 0 0; color:#2563eb; text-transform:uppercase;">${logType} CHALLAN</h3>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <div>
+                    <div style="color:#64748b; font-size:11px; font-weight:bold; text-transform:uppercase;">Dispatched To / Client</div>
+                    <div style="font-size:16px; font-weight:900;">${pName}</div>
+                    <div style="font-size:13px; font-weight:600; color:#475569; margin-top:4px;">Event: ${eventName}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:16px; font-weight:900; color:#2563eb;">#${record.id}</div>
+                    <div style="font-size:13px; font-weight:600; color:#64748b; margin-top:4px;">Date: ${fDate}</div>
+                    ${record.vehicle ? `<div style="font-size:12px; font-weight:bold; margin-top:4px; color:#d97706;">🚚 Vehicle: ${record.vehicle}</div>` : ''}
+                </div>
+            </div>`;
+
+            html += `<table><tr><th>Item Name</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate (₹)</th><th style="text-align:right;">Total Amount (₹)</th></tr>`;
+            
+            if(record.items) {
+                record.items.forEach(item => {
+                    let rate = item.rate || 0;
+                    let amt = item.amount || (item.qty * rate);
+                    html += `<tr><td><strong>${item.name}</strong></td><td style="text-align:center; font-weight:bold;">${item.qty}</td><td style="text-align:right;">${rate.toLocaleString('en-IN')}</td><td style="text-align:right; font-weight:bold;">${amt.toLocaleString('en-IN')}</td></tr>`;
+                });
+            }
+
+            html += `<tr><td colspan="3" style="text-align:right; font-weight:900; background:#f8fafc;">GRAND TOTAL VALUE:</td><td style="text-align:right; font-weight:900; background:#f8fafc; color:#dc2626;">₹${totalVal.toLocaleString('en-IN')}</td></tr></table>`;
+
+            html += `<div style="margin-top:30px; border-top:1px dashed #cbd5e1; padding-top:15px; font-size:11px; color:#64748b; text-align:center;">This is a system generated logistics document.</div>`;
+
+            html += `</div>
+            <div id="mobile-print-btn" style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; width:90%; max-width:350px;">
+                <button onclick="window.print()" style="width:100%; background:#2563EB; color:white; border:none; padding:16px; border-radius:12px; font-weight:900; font-size:16px; box-shadow:0 8px 20px rgba(37,99,235,0.4); cursor:pointer;">🖨️ Save PDF to Share</button>
+            </div>
+            <script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>`;
+
+            let printWin = window.open('', '_blank');
+            if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
+        };
+
+        // 4. Delete Logistics Record
+        window.deleteLogisticsRecord = function(id, logType, e) {
+            e.stopPropagation(); closeAllMenus();
+            if(!confirm(`🚨 WARNING!\nAre you sure you want to delete this ${logType}?\nThe stock will be reversed to your Godown.`)) return;
+
+            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id];
+            
+            // Revert stock
+            if((record.rentalStatus !== 'Returned' && record.status !== 'Returned') && record.items) {
+                record.items.forEach(item => {
+                    if(itemsDB[item.name]) {
+                        let gId = record.godownId || 'WH_MAIN';
+                        if(!itemsDB[item.name].godowns[gId]) itemsDB[item.name].godowns[gId] = 0;
+                        itemsDB[item.name].godowns[gId] += parseInt(item.qty) || 0;
+                    }
+                });
+            }
+
+            if(logType === 'Rental Invoice') delete salesDB[id];
+            else delete stockMovementDB[id];
+
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            alert("Record deleted & stock reverted successfully!");
         };
         // ==============================================================
     </script>
