@@ -3073,13 +3073,9 @@
                         style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Sales Hub</h2>
                 </div>
                 <div id="sh_list_actions" style="display: none; gap: 10px; align-items: center;">
-                    <button class="btn-icon"
-                        style="background:white; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;"
-                        onclick="document.getElementById('sales_filter_bar').style.display = document.getElementById('sales_filter_bar').style.display === 'none' ? 'flex' : 'none'"
-                        title="Date Filter">📅</button>
-                    <button class="btn-icon"
-                        style="background:white; color:var(--accent-color); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;"
-                        onclick="printSalesList()" title="Print List">🖨️</button>
+                    <button class="btn-icon" style="background:var(--accent-color); color:white; border:none; font-size:12px; height:36px; padding:0 15px; border-radius:8px; font-weight:bold; width:auto;" onclick="document.getElementById('sales_dynamic_pill').click()">➕ Create</button>
+                    <button class="btn-icon" style="background:white; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="document.getElementById('sales_filter_bar').style.display = document.getElementById('sales_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
+                    <button class="btn-icon" style="background:white; color:var(--accent-color); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="printSalesList()" title="Print List">🖨️</button>
                 </div>
             </div>
 
@@ -3383,13 +3379,9 @@
                     </h2>
                 </div>
                 <div id="ph_list_actions" style="display: none; gap: 10px; align-items: center;">
-                    <button class="btn-icon"
-                        style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;"
-                        onclick="document.getElementById('purchase_filter_bar').style.display = document.getElementById('purchase_filter_bar').style.display === 'none' ? 'flex' : 'none'"
-                        title="Date Filter">📅</button>
-                    <button class="btn-icon"
-                        style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;"
-                        onclick="printPurchaseList()" title="Print List">🖨️</button>
+                    <button class="btn-icon" style="background:var(--danger); color:white; border:none; font-size:12px; height:36px; padding:0 15px; border-radius:8px; font-weight:bold; width:auto;" onclick="document.getElementById('purchase_dynamic_pill').click()">➕ Create</button>
+                    <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="document.getElementById('purchase_filter_bar').style.display = document.getElementById('purchase_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
+                    <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="printPurchaseList()" title="Print List">🖨️</button>
                 </div>
             </div>
 
@@ -3905,7 +3897,6 @@
             </div>
 
             <div id="inventory-list-container"></div>
-            <button id="inv_dynamic_pill" class="pill-floating-btn" style="background: linear-gradient(135deg, #4F46E5, #312E81);" onclick="window.openInvFabMenu(event)">⚡ Quick Actions</button>
         </div>
 
         <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
@@ -10523,8 +10514,8 @@
             document.getElementById('di_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN'); 
         }
 
-        // 🚀 SMART QUOTE TO INVOICE (CRM SYNC)
-        function saveDirectInvoiceData() { 
+        // 🚀 FIXED: STRICT RENTAL INVOICE GENERATOR WITH STOCK LOCK
+        window.saveDirectInvoiceData = function() { 
             let partyId = document.getElementById('di_party').value; 
             let eventTitle = document.getElementById('di_event').value; 
             let date = document.getElementById('di_date').value; 
@@ -10536,9 +10527,8 @@
             let transportAmt = parseFloat(document.getElementById('di_transport')?.value) || 0;
 
             if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
-            if (invoiceType === 'Rental' && !returnDate) { return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); }
-            if (invoiceType === 'Rental' && !appSettings.manageInventory) {
-                return alert("🚨 Rental Invoices are disabled in App Settings!");
+            if (invoiceType === 'Rental' && !returnDate) { 
+                return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); 
             }
 
             let items = []; 
@@ -10550,20 +10540,24 @@
                 let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
                 if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); 
             }); 
+            
             if (items.length === 0) return alert("Please add at least one valid item!"); 
 
+            // 🚨🚨 STRICT INVENTORY LOCK 🚨🚨
             if (invoiceType === 'Rental' && !editingSalesId) {
                 for (let i = 0; i < items.length; i++) {
                     let item = items[i];
                     let dbItem = itemsDB[item.name];
                     let available = (dbItem && dbItem.godowns[godownId]) ? dbItem.godowns[godownId] : 0;
+                    
                     if (item.qty > available) {
-                        alert(`🚨 OUT OF STOCK ALARM!\n\nYou are trying to rent out ${item.qty} x '${item.name}', but you only have ${available} available in Godown.\nInvoice saving cancelled!`);
-                        return;
+                        alert(`🚨 OUT OF STOCK ALARM!\n\nYou are trying to rent out ${item.qty} x '${item.name}', but you only have ${available} available in the selected Godown.\n\nInvoice saving cancelled!`);
+                        return; // 🛑 YAHIN PAR BILL BANNA RUK JAYEGA!
                     }
                 }
             }
 
+            // Agar sab theek hai, toh Godown se stock DEDUCT (kam) karo
             if (invoiceType === 'Rental' && !editingSalesId) {
                 items.forEach(item => {
                     if (itemsDB[item.name] && itemsDB[item.name].godowns[godownId] !== undefined) {
@@ -10574,9 +10568,11 @@
 
             let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
             baseTotal += (labourAmt + transportAmt);
+
             let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
             let totalAfterDiscount = baseTotal - discount; 
             if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
+            
             let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0; 
             let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
             let finalGrandTotal = totalAfterDiscount + taxAmount; 
@@ -10584,7 +10580,6 @@
             let party = partiesDB[partyId]; 
             let targetEventId = null; let eventCodeStr = null; 
             
-            // 🚀 CRM LEAD STATUS CHANGE LOGIC (QUOTE TO WON)
             if (!editingSalesId) { 
                 if (convertingQuoteId) { 
                     let q = salesDB[convertingQuoteId];
@@ -10622,6 +10617,7 @@
             
             let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; 
             let oldAdvanceAmount = 0; let receiptToUpdate = null; 
+            
             if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { 
                 receiptToUpdate = salesDB[selectedOldAdvanceId]; 
                 oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); 
@@ -10629,6 +10625,7 @@
             
             let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
             let payMode = document.getElementById('di_pay_mode') ? document.getElementById('di_pay_mode').value : "ACC_CASH"; 
+            
             let balanceDue = finalGrandTotal - totalAdvanceApplied; 
             if (balanceDue < 0) balanceDue = 0; 
             
@@ -10663,12 +10660,13 @@
             } 
             
             tempEventIdForInvoice = null; 
-            updateDataAndUI(); // 👈 Ye cloud par update bhej dega
+            updateDataAndUI(); 
             document.getElementById('directInvoiceModal').style.display = 'none'; 
             setSalesTab('Invoice', document.getElementById('st-invoices')); 
             openTab('sales-hub', null); 
-            alert("✅ Invoice Saved! Lead converted to Event Successfully.");
+            alert("✅ Invoice Saved and Inventory Stock Updated!");
         }
+        var saveDirectInvoiceData = window.saveDirectInvoiceData;
 
         function unlinkInvoice(id) { if (confirm("🚨 Detach this invoice from its Event Dashboard?\nIt will become a standalone general bill.")) { let record = salesDB[id]; record.eventId = null; let newId = generateDocId('Invoice', null); changeSalesId(id, newId); updateDataAndUI(); document.getElementById('quoteViewModal').style.display = 'none'; viewDetails(newId, 'sales'); } }
         function openAttachEventModal(invId) { targetInvoiceToAttach = invId; let sel = document.getElementById('ae_event_select'); sel.innerHTML = '<option value="">-- Select Event --</option>'; Object.values(leadsDB).filter(l => l.status === 'Won').forEach(ev => { sel.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`; }); document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('attachEventModal').style.display = 'flex'; }
@@ -11100,99 +11098,105 @@
             document.getElementById('ast_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN');
         }
 
-        function saveAssetData() { 
-            let vendorId = document.getElementById('ast_vendor').value; 
-            let date = document.getElementById('ast_date').value; 
-            let refNo = document.getElementById('ast_ref').value; 
-            
-            // 🚀 NAYA: Asset ka type nikalna (Office ya Rental)
-            let assetType = document.getElementById('ast_asset_type') ? document.getElementById('ast_asset_type').value : 'Office';
-
-            if (!vendorId || !date) { alert("Vendor and Date are required!"); return; } 
-            
-            let items = []; 
-            document.querySelectorAll('#ast_items_container .quote-item-row').forEach(row => { 
-                let name = row.querySelector('.i-item-name').value; 
-                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
-                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
-                let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; 
-                let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
+        // 🚀 FIXED: ASSET PURCHASE TO GODOWN
+            window.saveAssetData = function() { 
+                let vendorId = document.getElementById('ast_vendor').value; 
+                let date = document.getElementById('ast_date').value; 
+                let refNo = document.getElementById('ast_ref').value; 
+                let assetType = document.getElementById('ast_asset_type') ? document.getElementById('ast_asset_type').value : 'Office';
                 
-                if (name) {
-                    items.push({ name, desc, unit, qty, rate, amount: qty * rate }); 
+                // Yahan Godown ID capture ki
+                let godownId = document.getElementById('ast_godown_select') ? document.getElementById('ast_godown_select').value : 'WH_MAIN';
 
-                    // 🚀 AUTOMATIC STOCK UPDATE FOR RENTAL PROPS
-                    if (assetType === 'Rental' && !editingPurchaseId) {
-                        if (!itemsDB[name]) {
-                            itemsDB[name] = { name: name, totalStock: 0, godowns: { 'WH_MAIN': 0 } };
+                if (!vendorId || !date) { alert("Vendor and Date are required!"); return; } 
+                
+                let items = []; 
+                document.querySelectorAll('#ast_items_container .quote-item-row').forEach(row => { 
+                    let name = row.querySelector('.i-item-name').value.trim(); 
+                    let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
+                    let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
+                    let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; 
+                    let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
+                    
+                    if (name && qty > 0) {
+                        items.push({ name, desc, unit, qty, rate, amount: qty * rate }); 
+
+                        // 🚀 AUTOMATIC GODOWN STOCK UPDATE FOR RENTAL PROPS
+                        if (assetType === 'Rental' && !editingPurchaseId) {
+                            if (!itemsDB[name]) {
+                                itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
+                            }
+                            if (itemsDB[name].godowns[godownId] === undefined) {
+                                itemsDB[name].godowns[godownId] = 0;
+                            }
+                            itemsDB[name].totalStock += qty;
+                            itemsDB[name].godowns[godownId] += qty;
                         }
-                        itemsDB[name].totalStock += qty;
-                        itemsDB[name].godowns['WH_MAIN'] += qty;
                     }
-                }
-            }); 
-            
-            if (items.length === 0) return alert("Add at least one asset/item!"); 
-            
-            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
-            let discount = parseFloat(document.getElementById('ast_discount').value) || 0; 
-            let totalAfterDiscount = baseTotal - discount; 
-            if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
-            let gstPercent = parseFloat(document.getElementById('ast_gst').value) || 0; 
-            let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
-            let finalGrandTotal = totalAfterDiscount + taxAmount; 
-            let party = partiesDB[vendorId]; 
-            
-            if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; } 
-            
-            let manuallyEnteredAdvance = parseFloat(document.getElementById('ast_advance').value) || 0; 
-            if (manuallyEnteredAdvance > finalGrandTotal && !editingPurchaseId) manuallyEnteredAdvance = finalGrandTotal; 
-            
-            let selectedOldAdvanceId = document.getElementById('ast_use_advance') ? document.getElementById('ast_use_advance').value : "0"; 
-            let oldAdvanceAmount = 0; 
-            let paymentOutToUpdate = null; 
-            if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { 
-                paymentOutToUpdate = purchaseDB[selectedOldAdvanceId]; 
-                oldAdvanceAmount = Math.min(paymentOutToUpdate.availableAmount, finalGrandTotal); 
-            } 
-            
-            let totalAdvanceApplied = editingPurchaseId ? purchaseDB[editingPurchaseId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
-            let payMode = document.getElementById('ast_pay_mode').value; 
-            let balanceDue = finalGrandTotal - totalAdvanceApplied; 
-            if (balanceDue < 0) balanceDue = 0; 
-            
-            let id = editingPurchaseId ? editingPurchaseId : generateDocId('Asset'); 
-            let status = 'Due'; 
-            if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
-            else if (totalAdvanceApplied > 0) status = 'Partial'; 
-            
-            let mainEventStr = items[0].name + (items.length > 1 ? ` +${items.length - 1} more` : ''); 
-            
-            purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status }; 
-            party.balance -= finalGrandTotal; 
-            
-            if (!editingPurchaseId) { 
-                if (paymentOutToUpdate) { 
-                    paymentOutToUpdate.usedAmount += oldAdvanceAmount; 
-                    paymentOutToUpdate.availableAmount -= oldAdvanceAmount; 
-                    if (!paymentOutToUpdate.linkedInvoices) paymentOutToUpdate.linkedInvoices = []; 
-                    paymentOutToUpdate.linkedInvoices.push(id); 
+                }); 
+                
+                if (items.length === 0) return alert("Add at least one valid asset/item!"); 
+                
+                let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
+                let discount = parseFloat(document.getElementById('ast_discount').value) || 0; 
+                let totalAfterDiscount = baseTotal - discount; 
+                if (totalAfterDiscount < 0) totalAfterDiscount = 0; 
+                let gstPercent = parseFloat(document.getElementById('ast_gst').value) || 0; 
+                let taxAmount = (totalAfterDiscount * gstPercent) / 100; 
+                let finalGrandTotal = totalAfterDiscount + taxAmount; 
+                let party = partiesDB[vendorId]; 
+                
+                if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; } 
+                
+                let manuallyEnteredAdvance = parseFloat(document.getElementById('ast_advance').value) || 0; 
+                if (manuallyEnteredAdvance > finalGrandTotal && !editingPurchaseId) manuallyEnteredAdvance = finalGrandTotal; 
+                
+                let selectedOldAdvanceId = document.getElementById('ast_use_advance') ? document.getElementById('ast_use_advance').value : "0"; 
+                let oldAdvanceAmount = 0; 
+                let paymentOutToUpdate = null; 
+                if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { 
+                    paymentOutToUpdate = purchaseDB[selectedOldAdvanceId]; 
+                    oldAdvanceAmount = Math.min(paymentOutToUpdate.availableAmount, finalGrandTotal); 
                 } 
-                if (manuallyEnteredAdvance > 0) { 
-                    party.balance += manuallyEnteredAdvance; 
-                    let payId = generateDocId('PaymentOut'); 
-                    purchaseDB[payId] = { id: payId, type: 'PaymentOut', partyId: vendorId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date, ref: `Advance for Asset ${id}`, linkedInvoices: [id] }; 
-                    logBankTransaction(payMode, manuallyEnteredAdvance, 'OUT', `Asset Payment: ${mainEventStr}`, payId, date); 
+                
+                let totalAdvanceApplied = editingPurchaseId ? purchaseDB[editingPurchaseId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
+                let payMode = document.getElementById('ast_pay_mode').value; 
+                let balanceDue = finalGrandTotal - totalAdvanceApplied; 
+                if (balanceDue < 0) balanceDue = 0; 
+                
+                let id = editingPurchaseId ? editingPurchaseId : generateDocId('Asset'); 
+                let status = 'Due'; 
+                if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
+                else if (totalAdvanceApplied > 0) status = 'Partial'; 
+                
+                let mainEventStr = items[0].name + (items.length > 1 ? ` +${items.length - 1} more` : ''); 
+                
+                purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status }; 
+                party.balance -= finalGrandTotal; 
+                
+                if (!editingPurchaseId) { 
+                    if (paymentOutToUpdate) { 
+                        paymentOutToUpdate.usedAmount += oldAdvanceAmount; 
+                        paymentOutToUpdate.availableAmount -= oldAdvanceAmount; 
+                        if (!paymentOutToUpdate.linkedInvoices) paymentOutToUpdate.linkedInvoices = []; 
+                        paymentOutToUpdate.linkedInvoices.push(id); 
+                    } 
+                    if (manuallyEnteredAdvance > 0) { 
+                        party.balance += manuallyEnteredAdvance; 
+                        let payId = generateDocId('PaymentOut'); 
+                        purchaseDB[payId] = { id: payId, type: 'PaymentOut', partyId: vendorId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date, ref: `Advance for Asset ${id}`, linkedInvoices: [id] }; 
+                        if(typeof logBankTransaction === 'function') logBankTransaction(payMode, manuallyEnteredAdvance, 'OUT', `Asset Payment: ${mainEventStr}`, payId, date); 
+                    } 
                 } 
-            } 
-            
-            editingPurchaseId = null; 
-            updateDataAndUI(); 
-            document.getElementById('assetModal').style.display = 'none'; 
-            setPurchaseTab('Asset', document.getElementById('pt-assets')); 
-            openTab('purchase-hub', null); 
-            alert("Fixed Asset(s) Saved & Inventory Updated!"); 
-        }
+                
+                editingPurchaseId = null; 
+                updateDataAndUI(); 
+                document.getElementById('assetModal').style.display = 'none'; 
+                setPurchaseTab('Asset', document.getElementById('pt-assets')); 
+                openTab('purchase-hub', null); 
+                alert("✅ Fixed Asset Saved & Inventory Stock Updated!"); 
+            }
+            var saveAssetData = window.saveAssetData;
 
         function savePBData() {
             let partyId = document.getElementById('pb_vendor').value; let date = document.getElementById('pb_date').value; let evId = document.getElementById('pb_event_link').value; let refNo = document.getElementById('pb_ref').value;
@@ -15733,27 +15737,33 @@
             let type = document.getElementById('di_invoice_type');
             let btnGodown = document.getElementById('btn_fetch_godown');
             let rentalFields = document.getElementById('di_rental_fields');
-            let eventLinkGroup = document.getElementById('di_event_group'); // Event Link Dropdown
+            let eventLinkGroup = document.getElementById('di_event_group');
             let tncBox = document.getElementById('di_tnc');
-            
-            // Manual Add button dhoondhna
-            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]'); 
+            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]');
+            let itemsContainer = document.getElementById('inv_items_container');
 
             if (type && type.value === 'Rental') {
                 if (btnGodown) btnGodown.style.display = 'block';
                 if (rentalFields) rentalFields.style.display = 'flex';
-                if (eventLinkGroup) eventLinkGroup.style.display = 'none'; // Faltu Link Event hata diya
-                if (manualAddBtn) manualAddBtn.style.display = 'none'; // Manual add hata diya
+                if (eventLinkGroup) eventLinkGroup.style.display = 'none'; 
+                if (manualAddBtn) manualAddBtn.style.display = 'none'; // Manual add button hide
                 if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
                 
-                let sel = document.getElementById('di_godown_select');
-                if (sel) { sel.innerHTML = ''; Object.values(warehousesDB).forEach(w => { sel.innerHTML += `<option value="${w.id}">${w.name}</option>`; }); }
+                // 🚀 RENTAL SELECT KARTE HI MANUAL ENTRY BOX CLEAR HO JAYEGA
+                if (itemsContainer) itemsContainer.innerHTML = '';
+                
+                if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
             } else {
                 if (btnGodown) btnGodown.style.display = 'none';
                 if (rentalFields) rentalFields.style.display = 'none';
-                if (eventLinkGroup) eventLinkGroup.style.display = 'block'; // Regular invoice me Event dikhega
-                if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; // Manual add wapas aayega
+                if (eventLinkGroup) eventLinkGroup.style.display = 'block'; 
+                if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; 
                 if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
+
+                // 🚀 EVENT SELECT KARNE PAR WAPAS 1 EMPTY ROW AA JAYEGI
+                if (itemsContainer && itemsContainer.innerHTML.trim() === '') {
+                    if(typeof addInvoiceItem === 'function') addInvoiceItem();
+                }
             }
         };
         var toggleInvoiceType = window.toggleInvoiceType;
@@ -16099,17 +16109,22 @@
         // --------------------------------------------------------------
         // 3. OUTWARD CHALLAN ENGINE (Upcoming Events & Multiple Days)
         // --------------------------------------------------------------
+        // 🚀 FIXED: Godown Dropdown Missing Issue
         window.loadGodownsIntoSelect = function() {
             let outSelect = document.getElementById('out_godown_select');
             let astSelect = document.getElementById('ast_godown_select');
             let auditSelect = document.getElementById('audit_godown');
             let diSelect = document.getElementById('di_godown_select');
+            let dsSelect = document.getElementById('ds_godown'); // 👈 Direct Stock wala missing tha, add kar diya
+
             let html = '<option value="">-- Select Godown --</option>';
             Object.values(warehousesDB || {}).forEach(w => { html += `<option value="${w.id}">${w.name}</option>`; });
+            
             if(outSelect) outSelect.innerHTML = html;
             if(astSelect) astSelect.innerHTML = html;
             if(auditSelect) auditSelect.innerHTML = html;
             if(diSelect) diSelect.innerHTML = html;
+            if(dsSelect) dsSelect.innerHTML = html;
         };
 
         window.openOutwardChallanModal = function() {
@@ -16166,6 +16181,7 @@
             }
         };
 
+        // 🚀 FIXED: Outward Challan me Rate Dikhana
         window.addOutwardItemRow = function(itemName = '') {
             let totalAmt = 0; let totalQty = 0;
             Object.values(purchaseDB || {}).forEach(p => { if(p.type === 'Asset') p.items.forEach(i => { if (i.name === itemName) { totalAmt += i.amount; totalQty += i.qty; } }); });
@@ -16186,9 +16202,11 @@
                         <label style="font-size:10px; color:var(--text-secondary);">Deploy Qty</label>
                         <input type="number" class="form-input o-item-qty" min="1" value="1" required>
                     </div>
+                    <div style="flex:1;">
+                        <label style="font-size:10px; color:var(--accent-color);">Rent/Rate(₹)</label>
+                        <input type="number" class="form-input o-item-rate" value="${Math.round(avgRate)}" required>
+                    </div>
                 </div>
-                <div style="font-size:10.5px; color:var(--text-secondary); text-align:right;">Per Unit Rate: <b style="color:var(--accent-color);">₹${Math.round(avgRate).toLocaleString('en-IN')}</b> <span style="font-size:9px;">(Info Only)</span></div>
-                <input type="hidden" class="o-item-rate" value="${avgRate}">
             </div>`;
             container.insertAdjacentHTML('beforeend', html);
         };
@@ -16215,22 +16233,49 @@
                 if (name && qty > 0) { 
                     let available = (itemsDB[name] && itemsDB[name].godowns[gId]) ? itemsDB[name].godowns[gId] : 0;
                     if(!isEdit && qty > available) { alert(`🚨 ALARM!\nTrying to dispatch ${qty} x '${name}', but only ${available} are available.`); return; }
-                    items.push({ name, qty, rate, amount: qty * rate }); totalInternalValue += (qty * rate); 
+                    items.push({ name, qty, rate, amount: qty * rate }); 
+                    totalInternalValue += (qty * rate); 
                 }
             }
             if(items.length === 0) return alert("Please add at least one item!");
             let id = isEdit || "CHL" + Date.now();
+            
             if(isEdit) {
                 let oldRecord = stockMovementDB[id];
                 if(oldRecord && oldRecord.items) { oldRecord.items.forEach(oldItem => { if(itemsDB[oldItem.name] && itemsDB[oldItem.name].godowns[oldRecord.godownId] !== undefined) itemsDB[oldItem.name].godowns[oldRecord.godownId] += oldItem.qty; }); }
             }
+            
             items.forEach(item => { if(itemsDB[item.name] && itemsDB[item.name].godowns[gId] !== undefined) itemsDB[item.name].godowns[gId] -= item.qty; });
             stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: gId, date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed' };
+
+            // 🚀 NEW: AUTO EXPENSE CREATION FOR ASSET UTILIZATION
+            if (totalInternalValue > 0 && !isEdit) {
+                let expId = "EXP" + Date.now() + Math.floor(Math.random()*100);
+                let cat = "Asset Utilization (Rent)";
+                if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); }
+
+                expenseDB[expId] = {
+                    id: expId,
+                    type: 'Event', 
+                    cat: cat,
+                    amount: totalInternalValue,
+                    paid: totalInternalValue, // No actual cash is paid, it's just adjusted
+                    balanceDue: 0,
+                    status: 'Paid',
+                    date: date,
+                    mode: 'SYSTEM_ADJUST', // Hidden system account logic
+                    eventId: evId,
+                    partyId: null,
+                    notes: `Internal Asset Usage (Challan: ${id})`,
+                    linkedDates: []
+                };
+            }
 
             if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
             document.getElementById('outwardChallanModal').style.display = 'none'; 
             document.getElementById('outwardChallanModal').dataset.editId = "";
-            alert(`✅ Material Dispatched Successfully!`); window.renderInventoryHubList();
+            alert(`✅ Material Dispatched! Asset utilization cost ₹${totalInternalValue.toLocaleString('en-IN')} auto-adjusted in Event P&L.`); 
+            window.renderInventoryHubList();
         };
 
         // --------------------------------------------------------------
@@ -16509,6 +16554,32 @@
         setTimeout(() => { document.querySelectorAll('#inventory-hub .premium-sticky-header .btn-icon').forEach(icon => { icon.style.width = '28px'; icon.style.height = '28px'; icon.style.fontSize = '13px'; }); }, 500);
 
         // ==============================================================
+        // 🚀 FIXED: DIRECT OPENING STOCK ADDITION 
+        window.saveDirectStock = function() {
+            let selectEl = document.getElementById('ds_name_select');
+            let name = selectEl ? selectEl.value : "";
+            let qty = parseInt(document.getElementById('ds_qty').value);
+            let rate = parseFloat(document.getElementById('ds_rate').value) || 0;
+            let gId = document.getElementById('ds_godown').value;
+
+            if(!name || isNaN(qty) || !gId) return alert("Please select Item, Quantity, and Godown!");
+
+            // Database mein check aur add
+            if (!itemsDB[name]) {
+                itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
+            }
+            if (!itemsDB[name].godowns[gId]) {
+                itemsDB[name].godowns[gId] = 0;
+            }
+
+            itemsDB[name].totalStock += qty;
+            itemsDB[name].godowns[gId] += qty;
+
+            updateDataAndUI();
+            document.getElementById('directStockModal').style.display = 'none';
+            alert(`✅ ${qty} x '${name}' added to your Godown successfully!`);
+            if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
+        };
     </SCRIPT>
 </body>
 
