@@ -7651,21 +7651,6 @@
                 console.error("❌ Sync Error:", error);
             });
         }
-
-        // 🚀 SMART FIX: Debounce Engine for Super-Fast Search
-        let searchDebounceTimer;
-        function filterSearch(type, term) {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
-                searchTerms[type] = term.toLowerCase();
-                if (type === 'crm') if (typeof renderLeadsList === 'function') renderLeadsList();
-                if (type === 'events') if (typeof renderEventsDashboard === 'function') renderEventsDashboard();
-                if (type === 'party') if (typeof renderPartiesList === 'function') renderPartiesList();
-                if (type === 'sales') if (typeof renderSalesList === 'function') renderSalesList();
-                if (type === 'purchase') if (typeof renderPurchaseList === 'function') renderPurchaseList();
-                if (type === 'expense') if (typeof renderExpenseList === 'function') renderExpenseList();
-            }, 450); // 👈 300ms se 450ms kar diya taaki Netlify par typing ke waqt page freeze na ho
-        }
         function updateDynamicPayModes() { let options = ''; Object.values(bankDB).forEach(b => { options += `<option value="${b.id}">${b.name}</option>`; }); document.querySelectorAll('.dynamic-pay-mode').forEach(sel => { let currentVal = sel.value; sel.innerHTML = options; if (currentVal && bankDB[currentVal]) sel.value = currentVal; }); }
         function logBankTransaction(accountId, amount, type, desc, refId, date) { let id = generateDocId('BankTx'); bankTxDB[id] = { id, accountId, amount, type, desc, refId, date }; if (type === 'IN') bankDB[accountId].balance += amount; else if (type === 'OUT') bankDB[accountId].balance -= amount; }
 
