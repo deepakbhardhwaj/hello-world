@@ -16467,6 +16467,7 @@
             let eventLinkGroup = document.getElementById('di_event_group');
             let tncBox = document.getElementById('di_tnc');
             let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]');
+            let itemsContainer = document.getElementById('inv_items_container');
 
             if (type && type.value === 'Rental') {
                 if (btnGodown) btnGodown.style.display = 'block';
@@ -16474,6 +16475,10 @@
                 if (eventLinkGroup) eventLinkGroup.style.display = 'none'; 
                 if (manualAddBtn) manualAddBtn.style.display = 'none'; 
                 if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
+                
+                // 🚀 FIX: Rent Invoice khulte hi empty row clear ho jayegi!
+                if (itemsContainer) itemsContainer.innerHTML = '';
+                
                 if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
             } else {
                 if (btnGodown) btnGodown.style.display = 'none';
@@ -16481,6 +16486,11 @@
                 if (eventLinkGroup) eventLinkGroup.style.display = 'block'; 
                 if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; 
                 if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
+                
+                // 🚀 Wapas normal invoice pe jaane par ek empty row de do
+                if (itemsContainer && itemsContainer.innerHTML.trim() === '') {
+                    if(typeof addInvoiceItem === 'function') addInvoiceItem();
+                }
             }
         };
 
@@ -17120,49 +17130,25 @@
         window.renderTasksDashboard =
 
         // ==========================================
-        // 🚀 INVENTORY ITEM LEDGER (TALLY STYLE)
+        // 🚀 INVENTORY ITEM LEDGER (TALLY STYLE - PREMIUM UI FIX)
         // ==========================================
         window.openItemLedger = function(itemName) {
             let item = itemsDB[itemName];
-            if(!item) return alert("Item not found!");
+            if(!item) return; // 🚀 Mute popup on fail
 
-            document.getElementById('il_item_name').innerText = itemName;
-            document.getElementById('il_total_purchased').innerText = item.totalStock || 0;
-            
             let inGodown = 0;
             for(let g in item.godowns) { inGodown += (item.godowns[g] || 0); }
-            document.getElementById('il_in_godown').innerText = inGodown;
-            
             let onRent = (item.totalStock || 0) - inGodown;
-            document.getElementById('il_on_rent').innerText = onRent;
-            document.getElementById('il_total_lost').innerText = item.totalLost || 0;
-
-            let tbody = document.getElementById('il_table_body');
-            tbody.innerHTML = "";
 
             let records = [];
+            records.push({ date: "2000-01-01", ref: "OPENING", party: "System Base Stock", out: 0, in: item.totalStock + (item.totalLost || 0), lost: 0, isOpening: true });
 
-            // 1. Direct Stock / Base Purchase 
-            records.push({
-                date: "2000-01-01", // Base starting date
-                ref: "OPENING",
-                party: "System Base Stock",
-                out: 0,
-                in: item.totalStock + (item.totalLost || 0), 
-                lost: 0,
-                isOpening: true
-            });
-
-            // 2. Scan Rental Invoices & Returns
             Object.values(salesDB).forEach(inv => {
                 if(inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.items) {
                     let matchedItem = inv.items.find(i => i.name === itemName);
                     if(matchedItem) {
                         let pName = partiesDB[inv.partyId] ? partiesDB[inv.partyId].name : 'Unknown';
-                        // Deployment (OUT)
                         records.push({ date: inv.date, ref: inv.id, party: pName, out: matchedItem.qty, in: 0, lost: 0 });
-                        
-                        // Return (IN & LOST)
                         if(inv.rentalStatus === 'Returned' && inv.returnLog) {
                             let rLog = inv.returnLog.find(r => r.name === itemName);
                             if(rLog) {
@@ -17173,14 +17159,12 @@
                 }
             });
 
-            // 3. Scan Outward Challans & Returns
             Object.values(stockMovementDB).forEach(out => {
                 if(out.items) {
                     let matchedItem = out.items.find(i => i.name === itemName);
                     if(matchedItem) {
                         let dest = leadsDB[out.eventId] ? leadsDB[out.eventId].func : 'Internal Event';
                         records.push({ date: out.date, ref: out.id, party: dest, out: matchedItem.qty, in: 0, lost: 0 });
-
                         if(out.status === 'Returned' && out.returnLog) {
                             let rLog = out.returnLog.find(r => r.name === itemName);
                             if(rLog) {
@@ -17191,20 +17175,19 @@
                 }
             });
 
-            // Sort by Date
             records.sort((a, b) => new Date(a.date) - new Date(b.date));
-
+            
+            let tbodyHtml = "";
             let runningBalance = 0;
 
             records.forEach(r => {
                 runningBalance = runningBalance - r.out + r.in - r.lost;
-                
                 let outHtml = r.out > 0 ? `<span style="color:var(--warning); font-weight:800;">${r.out}</span>` : "-";
                 let inHtml = r.in > 0 ? `<span style="color:var(--success); font-weight:800;">${r.in}</span>` : "-";
                 let lostHtml = r.lost > 0 ? `<span style="color:var(--danger); font-weight:800;">${r.lost}</span>` : "-";
                 let dStr = r.isOpening ? "Opening" : new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
 
-                tbody.innerHTML += `
+                tbodyHtml += `
                 <tr style="border-bottom:1px solid #E2E8F0; background:white;">
                     <td style="padding:10px;">${dStr}</td>
                     <td style="padding:10px; font-family:monospace; color:var(--accent-color); font-weight:bold;">${r.ref}</td>
@@ -17215,6 +17198,67 @@
                     <td style="padding:10px; text-align:center; font-weight:900; color:var(--text-primary); background:#F8FAFC;">${runningBalance}</td>
                 </tr>`;
             });
+
+            // 🚀 DYNAMIC INJECTION: Overrides old HTML to make it slim, white text and responsive
+            let modalContent = document.querySelector('#itemLedgerModal .modal-content');
+            modalContent.innerHTML = `
+                <div class="modal-header" style="background: linear-gradient(135deg, #0F172A, #334155); color:white; padding: 15px 20px; border-radius: 12px 12px 0 0; margin:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+                        <div>
+                            <h3 id="il_item_name" style="margin:0 0 4px 0; font-size:18px; font-weight:900; color:white;">${itemName}</h3>
+                            <div style="font-size:11px; color:#CBD5E1; font-weight:600;">Stock Movement & Logistics Ledger</div>
+                        </div>
+                        <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    </div>
+                </div>
+                
+                <div style="padding: 15px; background: #F8FAFC; flex: 1; overflow-y: auto;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 15px;">
+                        <div style="background:white; padding:12px; border-radius:8px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                            <div style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700;">Total Purchased</div>
+                            <div style="font-size:16px; font-weight:900; margin-top:2px; color:var(--text-primary);">${item.totalStock || 0}</div>
+                        </div>
+                        <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px; border-radius:8px; box-shadow:var(--shadow-sm);">
+                            <div style="font-size:10px; color:#059669; text-transform:uppercase; font-weight:700;">In Godowns</div>
+                            <div style="font-size:16px; font-weight:900; color:#166534; margin-top:2px;">${inGodown}</div>
+                        </div>
+                        <div style="background:#FFFBEB; border:1px solid #FDE68A; padding:12px; border-radius:8px; box-shadow:var(--shadow-sm);">
+                            <div style="font-size:10px; color:#D97706; text-transform:uppercase; font-weight:700;">On Rent / Event</div>
+                            <div style="font-size:16px; font-weight:900; color:#B45309; margin-top:2px;">${onRent}</div>
+                        </div>
+                        <div style="background:#FEF2F2; border:1px solid #FECACA; padding:12px; border-radius:8px; box-shadow:var(--shadow-sm);">
+                            <div style="font-size:10px; color:#DC2626; text-transform:uppercase; font-weight:700;">Total Lost</div>
+                            <div style="font-size:16px; font-weight:900; color:#991B1B; margin-top:2px;">${item.totalLost || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:white; border-radius:8px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm); padding:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0; font-size:13px; color:var(--text-primary); font-weight:800; text-transform:uppercase;">Transaction History</h4>
+                            <button onclick="window.printItemLedger()" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">🖨️ Print</button>
+                        </div>
+                        
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; border:1px solid #E2E8F0;">
+                                <thead>
+                                    <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                        <th style="padding:10px; color:var(--text-secondary);">Date</th>
+                                        <th style="padding:10px; color:var(--text-secondary);">Ref No.</th>
+                                        <th style="padding:10px; color:var(--text-secondary);">Destination</th>
+                                        <th style="padding:10px; text-align:center; color:var(--text-secondary);">OUT</th>
+                                        <th style="padding:10px; text-align:center; color:var(--text-secondary);">IN</th>
+                                        <th style="padding:10px; text-align:center; color:var(--danger);">Lost</th>
+                                        <th style="padding:10px; text-align:center; color:var(--accent-color);">Live Bal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="il_table_body">
+                                    ${tbodyHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
 
             document.getElementById('itemLedgerModal').style.display = 'flex';
         };
