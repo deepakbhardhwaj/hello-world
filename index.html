@@ -6837,20 +6837,6 @@
             }
         } // 👈 YAHAN YE BRACKET MISSING THA!
 
-        function toggleFabMenu() {
-            let menu = document.getElementById('fab-menu'); let fab = document.getElementById('main-fab');
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                let activeTab = document.querySelector('.active-section').id; let menuHtml = '';
-                if (activeTab === 'crm') { menuHtml += `<button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#10B981; color:white;" onclick="toggleFabMenu(); openLeadModal();">🎯 Add Lead</button>`; }
-                else if (activeTab === 'erp') { menuHtml += `<button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--success); color:white;" onclick="toggleFabMenu(); openDirectInvoiceModal();">📄 Create Sales Invoice</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#D97706; color:white;" onclick="toggleFabMenu(); openPurchaseBillModal();">📦 Create Purchase Bill</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--purple); color:white;" onclick="toggleFabMenu(); openExpenseModal();">💸 Add Daily Expense</button>`; }
-                else if (activeTab === 'tasks') { menuHtml += `<button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15);" onclick="toggleFabMenu(); openQuickTaskModal()">📝 New Task</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--warning); color:#000;" onclick="toggleFabMenu(); openQuickMeetingModal()">🤝 Schedule Meeting</button>`; }
-                else if (activeTab === 'sales-hub') { menuHtml += `<button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--accent-color); color:white;" onclick="toggleFabMenu(); openQuotationModal();">📝 Quotation</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--success); color:white;" onclick="toggleFabMenu(); openDirectInvoiceModal();">📄 Create Invoice</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--warning); color:#000;" onclick="toggleFabMenu(); openPaymentModal();">💰 Receive Payment</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:#10B981; color:white;" onclick="toggleFabMenu(); openOtherIncomeModal()">✨ Other Income</button>`; }
-                else if (activeTab === 'purchase-hub') { menuHtml += `<button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--warning); color:#000;" onclick="toggleFabMenu(); openPurchaseOrderModal();">📝 Purchase Order</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--danger); color:white;" onclick="toggleFabMenu(); openPurchaseBillModal();">📦 Vendor Bill</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--success); color:white;" onclick="toggleFabMenu(); openPaymentOutModal();">💸 Make Payment</button><button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--purple); color:white;" onclick="toggleFabMenu(); openAssetModal();">🏢 Add Asset</button>`; }
-                else if (activeTab === 'expense-hub') { menuHtml += `<button class="btn-main" style="width:auto; padding:12px 24px; border-radius:100px; box-shadow:0 4px 10px rgba(0,0,0,0.15); background:var(--purple); color:white;" onclick="toggleFabMenu(); openExpenseModal();">💸 Add Daily Expense</button>`; }
-                menu.innerHTML = menuHtml; menu.style.display = 'flex'; fab.classList.add('menu-open');
-            } else { menu.style.display = 'none'; fab.classList.remove('menu-open'); }
-        }
-
         // ==========================================
         // 🚀 SMART MULTI-TENANT AUTH SYSTEM (MOBILE NO BASED)
         // ==========================================
@@ -15817,46 +15803,6 @@
         // 🚀 THE ULTIMATE MASTER SCRIPT (V12: ALL ERRORS FIXED + NEW UI)
         // ==============================================================
 
-        // 🛠️ 1. FLOATING ACTION BUTTON (FAB) FIX
-        if(window.hideFabTabs && window.hideFabTabs.includes('inventory-hub')) {
-            window.hideFabTabs = window.hideFabTabs.filter(t => t !== 'inventory-hub');
-        }
-
-        window.toggleFabMenu = function() {
-            let fab = document.getElementById('main-fab');
-            let menu = document.getElementById('fab-menu');
-            let activeTab = document.querySelector('.active-section');
-            
-            // 🚀 BACKUP CHECK: Bottom navigation button ka status track karne ke liye
-            let isTasksTabActive = (activeTab && activeTab.id === 'tasks') || 
-                                   (document.getElementById('btn-tasks') && document.getElementById('btn-tasks').classList.contains('active-btn'));
-
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                fab.classList.add('menu-open'); menu.style.display = 'flex';
-                if (activeTab && activeTab.id === 'inventory-hub') {
-                    menu.innerHTML = `
-                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
-                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openRentInvoice();">📄 Rent Invoice</div>
-                        <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
-                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
-                    `;
-                } else if (isTasksTabActive) { // 🚀 FIXED: Ab dono me se ek bhi condition true hui toh strictly Task Menu hi khulega
-                    menu.innerHTML = `
-                        <div class="fab-menu-item" onclick="if(typeof openQuickTaskModal === 'function') openQuickTaskModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📝 New Task</div>
-                        <div class="fab-menu-item" onclick="if(typeof openQuickMeetingModal === 'function') openQuickMeetingModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🤝 Schedule Meeting</div>
-                    `;
-                } else {
-                    menu.innerHTML = `
-                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
-                        <div class="fab-menu-item" onclick="if(typeof openPurchaseBillModal === 'function') openPurchaseBillModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
-                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
-                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
-                    `;
-                }
-            } else { menu.style.display = 'none'; fab.classList.remove('menu-open'); }
-        };
-        var toggleFabMenu = window.toggleFabMenu;
-
         // 3. Invoice Form UI Upgrade (Hide Event, Hide Manual Add, Change T&C)
         window.toggleInvoiceType = function() {
             let type = document.getElementById('di_invoice_type');
@@ -16168,31 +16114,6 @@
             window.showNavAndFabs();
             if (typeof closeAllMenus === 'function') closeAllMenus();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.toggleFabMenu = function() {
-            let fab = document.getElementById('main-fab');
-            let menu = document.getElementById('fab-menu');
-            let activeTab = document.querySelector('.active-section');
-            
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                fab.classList.add('menu-open'); menu.style.display = 'flex';
-                if (activeTab && activeTab.id === 'inventory-hub') {
-                    menu.innerHTML = `
-                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
-                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openRentInvoice();">📄 Rent Invoice</div>
-                        <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
-                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
-                    `;
-                } else {
-                    menu.innerHTML = `
-                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
-                        <div class="fab-menu-item" onclick="if(typeof openPurchaseBillModal === 'function') openPurchaseBillModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
-                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
-                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
-                    `;
-                }
-            } else { menu.style.display = 'none'; fab.classList.remove('menu-open'); }
         };
 
         // --------------------------------------------------------------
@@ -17018,6 +16939,7 @@
             } 
             container.innerHTML = finalHtml;
         };
+
         // ==========================================
         // 🚀 INVENTORY ITEM LEDGER (TALLY STYLE)
         // ==========================================
@@ -17145,6 +17067,56 @@
             html += `<script>setTimeout(()=>window.print(), 500);<\/script></body></html>`;
             if(printWin) { printWin.document.write(html); printWin.document.close(); }
         };
+        // ==========================================
+        // 🚀 MASTER FAB ACTION BUTTON (FINAL & CLEAN)
+        // ==========================================
+        window.toggleFabMenu = function() {
+            let fab = document.getElementById('main-fab');
+            let menu = document.getElementById('fab-menu');
+            let activeTab = document.querySelector('.active-section');
+            
+            // 🚀 EXTRA SAFETY: Check from Bottom Nav too
+            let isTasksTabActive = (activeTab && activeTab.id === 'tasks') || 
+                                   (document.getElementById('btn-tasks') && document.getElementById('btn-tasks').classList.contains('active-btn'));
+
+            let isCrmTabActive = (activeTab && activeTab.id === 'crm') || 
+                                 (document.getElementById('btn-crm') && document.getElementById('btn-crm').classList.contains('active-btn'));
+
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                fab.classList.add('menu-open'); 
+                menu.style.display = 'flex';
+                
+                if (activeTab && activeTab.id === 'inventory-hub') {
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
+                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openRentInvoice();">📄 Rent Invoice</div>
+                        <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
+                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
+                    `;
+                } else if (isTasksTabActive) { // 🚀 STRICTLY FOR TASKS
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" onclick="if(typeof openQuickTaskModal === 'function') openQuickTaskModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📝 New Task</div>
+                        <div class="fab-menu-item" onclick="if(typeof openQuickMeetingModal === 'function') openQuickMeetingModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🤝 Schedule Meeting</div>
+                    `;
+                } else if (isCrmTabActive) { // 🚀 STRICTLY FOR CRM
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); if(typeof openLeadModal === 'function') openLeadModal();">🎯 Add Lead</div>
+                    `;
+                } else {
+                    // Default ERP Menu
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPurchaseBillModal === 'function') openPurchaseBillModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
+                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
+                    `;
+                }
+            } else { 
+                menu.style.display = 'none'; 
+                fab.classList.remove('menu-open'); 
+            }
+        };
+        var toggleFabMenu = window.toggleFabMenu;
     </SCRIPT>
 </body>
 
