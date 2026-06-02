@@ -3846,55 +3846,90 @@
         <div id="inventory-hub" class="content section" style="padding-bottom:120px;">
             <div class="premium-sticky-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <button onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
+                    <button id="ih_header_back" onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
                         <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                     </button>
-                    <h2 class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
+                    <h2 id="ih_header_title" class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
-                    <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printLogisticsList()" title="Print List">🖨️</button>
-                    <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex';" title="Manage Godowns">⚙️</button>
+                <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;">
+                    <!-- Actions will be injected here by JS -->
                 </div>
             </div>
 
-            <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
-                <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
-                    <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
-                    <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
+            <!-- 🚀 2 DASHBOARD BOXES (SALES HUB STYLE) -->
+            <div id="inv-dashboard-cards" style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px;">
+                <div class="premium-erp-card card-wide" style="background: linear-gradient(135deg, #06B6D4, #164E63);" onclick="window.openInvView('movement', 'Stock Movement')">
+                    <div class="bg-icon" style="right: 15px; bottom: -20px; font-size: 80px;">🚚</div>
+                    <div class="card-text-wrap">
+                        <div class="erp-card-title" style="font-size: 16px;">Stock Movement</div>
+                        <div class="erp-card-sub" style="font-size: 10.5px;">Outward Challans, Rental Invoices & Returns</div>
+                    </div>
+                    <div class="action-arrow">→</div>
                 </div>
-                <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
-                    <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
-                    <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
-                </div>
-            </div>
-
-            <div class="premium-sticky-filters">
-                <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
-                    <div style="flex:1; min-width:100px;">
-                        <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
-                        <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                
+                <div class="premium-erp-card card-wide" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openInvView('master', 'Stock Master')">
+                    <div class="bg-icon" style="right: 15px; bottom: -20px; font-size: 80px;">📋</div>
+                    <div class="card-text-wrap">
+                        <div class="erp-card-title" style="font-size: 16px;">Stock Master (Details)</div>
+                        <div class="erp-card-sub" style="font-size: 10.5px;">Items Ledger, Rent Pricing & Godown Live Status</div>
                     </div>
-                    <div style="flex:1; min-width:100px;">
-                        <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
-                        <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;">
-                    </div>
-                    <div style="display:flex; gap:8px; flex:1; min-width:120px;">
-                        <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
-                        <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
-                    </div>
-                </div>
-
-                <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;">
-                    </div>
-
-                <div class="search-container" style="margin-bottom:0;">
-                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+                    <div class="action-arrow">→</div>
                 </div>
             </div>
 
-            <div id="inventory-list-container"></div>
+            <!-- 🚀 VIEW 1: STOCK MOVEMENT (OLD INVENTORY LIST) -->
+            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease;">
+                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
+                    <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
+                        <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
+                        <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
+                    </div>
+                    <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
+                        <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
+                        <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
+                    </div>
+                </div>
+
+                <div class="premium-sticky-filters" style="top: 110px;">
+                    <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
+                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                        </div>
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
+                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                        </div>
+                        <div style="display:flex; gap:8px; flex:1; min-width:120px;">
+                            <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
+                            <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                        </div>
+                    </div>
+
+                    <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
+
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+                    </div>
+                </div>
+
+                <div id="inventory-list-container"></div>
+                <button id="inv_dynamic_pill" class="pill-floating-btn" style="background: linear-gradient(135deg, #06B6D4, #164E63);" onclick="window.openOutwardChallanModal()">🚚 Outward Material</button>
+            </div>
+
+            <!-- 🚀 VIEW 2: STOCK MASTER (NEW ITEM LEDGER CENTER) -->
+            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease;">
+                <div class="premium-sticky-filters" style="top: 110px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
+                    </div>
+                </div>
+                
+                <div id="item-master-list-container"></div>
+                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
+            </div>
         </div>
 
         <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
@@ -6258,6 +6293,34 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+        <!-- 🚀 NAYA: ADD / EDIT ITEM MASTER MODAL -->
+        <div id="itemMasterModal" class="modal-overlay" style="z-index: 11000;">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h3 id="im-modal-title">Add New Stock Item</h3>
+                    <button class="modal-close" onclick="document.getElementById('itemMasterModal').style.display='none';">&times;</button>
+                </div>
+                <form id="itemMasterForm" onsubmit="event.preventDefault(); window.saveItemMaster();">
+                    <input type="hidden" id="im_old_name">
+                    <div class="form-group">
+                        <label class="form-label">Item / Prop Name</label>
+                        <input type="text" id="im_name" class="form-input" placeholder="e.g. VIP Sofa Chair" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">SKU / Code (Optional)</label>
+                            <input type="text" id="im_sku" class="form-input" placeholder="e.g. FUR-001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="color:var(--accent-color);">Default Rent Rate (₹)</label>
+                            <input type="number" id="im_rent" class="form-input" placeholder="e.g. 500">
+                        </div>
+                    </div>
+                    <p style="font-size:10px; color:var(--text-secondary); margin-top:0;">*Note: Ye rent price Rental Invoice banate waqt automatically aa jayega, par aap usko wahan change bhi kar sakte hain.</p>
+                    <button type="submit" class="btn-main" style="background:var(--purple); margin-top:10px;">💾 Save Item Master</button>
+                </form>
             </div>
         </div>
 
@@ -17300,6 +17363,169 @@
                 menu.style.display = 'none'; 
                 fab.classList.remove('menu-open'); 
             }
+        };
+        // ==========================================
+        // 🚀 MEGA UPDATE: INVENTORY HUB NAVIGATION & MASTER LIST LOGIC
+        // ==========================================
+        
+        // 1. Navigation Between Boxes
+        window.openInvView = function(view, title) {
+            document.getElementById('ih_header_title').innerText = title;
+            document.getElementById('ih_header_back').onclick = window.closeInvView;
+            
+            document.getElementById('inv-dashboard-cards').style.display = 'none';
+            
+            if (view === 'movement') {
+                document.getElementById('inv-movement-view').style.display = 'block';
+                document.getElementById('inv-master-view').style.display = 'none';
+                
+                // Set Header Buttons for Movement
+                document.getElementById('ih_list_actions').innerHTML = `
+                    <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
+                    <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printLogisticsList()" title="Print List">🖨️</button>
+                `;
+                document.getElementById('ih_list_actions').style.display = 'flex';
+                window.renderInventoryHubList();
+            } else if (view === 'master') {
+                document.getElementById('inv-movement-view').style.display = 'none';
+                document.getElementById('inv-master-view').style.display = 'block';
+                
+                // Set Header Buttons for Master (Godown Settings)
+                document.getElementById('ih_list_actions').innerHTML = `
+                    <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex';" title="Manage Godowns">🏭</button>
+                `;
+                document.getElementById('ih_list_actions').style.display = 'flex';
+                window.renderItemMasterList();
+            }
+
+            // Hide Main Navigation Tabs
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.display = 'none';
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.display = 'none';
+        };
+
+        // 2. Back Button Logic
+        window.closeInvView = function() {
+            document.getElementById('ih_header_title').innerText = "Logistics & Rentals";
+            document.getElementById('ih_header_back').onclick = function () { openTab('erp', document.getElementById('btn-erp')); };
+            document.getElementById('ih_list_actions').style.display = 'none';
+            
+            document.getElementById('inv-dashboard-cards').style.display = 'grid';
+            document.getElementById('inv-movement-view').style.display = 'none';
+            document.getElementById('inv-master-view').style.display = 'none';
+            
+            // Restore Navigation
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.display = 'flex';
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.display = 'flex';
+        };
+
+        // 3. Render Beautiful Master List
+        window.renderItemMasterList = function() {
+            let container = document.getElementById('item-master-list-container');
+            let term = document.getElementById('inv_master_search').value.toLowerCase();
+            container.innerHTML = "";
+            
+            let sortedItems = Object.values(itemsDB).sort((a,b) => a.name.localeCompare(b.name));
+            let visibleCount = 0;
+
+            sortedItems.forEach(item => {
+                if (term && !item.name.toLowerCase().includes(term) && !(item.sku && item.sku.toLowerCase().includes(term))) return;
+                visibleCount++;
+
+                let inGodown = 0;
+                let godownSplitHtml = "";
+                for(let g in item.godowns) { 
+                    let gQty = item.godowns[g] || 0;
+                    inGodown += gQty; 
+                    if(gQty > 0) {
+                        let gName = warehousesDB[g] ? warehousesDB[g].name : 'Unknown';
+                        godownSplitHtml += `<div style="display:inline-block; font-size:10px; background:#F1F5F9; color:#475569; padding:4px 8px; border-radius:6px; margin:4px 4px 0 0; border:1px solid #E2E8F0;">🏭 ${gName}: <b style="color:#0F172A;">${gQty}</b></div>`;
+                    }
+                }
+                let deployed = (item.totalStock || 0) - inGodown;
+                let rentText = item.rentPrice ? `₹${item.rentPrice}/unit` : `Not Set`;
+                let skuTag = item.sku ? `<span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px; margin-right:6px; border:1px solid #C7D2FE;">${item.sku}</span>` : '';
+
+                container.innerHTML += `
+                <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; padding:15px; margin-bottom:12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#A78BFA'" onmouseout="this.style.borderColor='#E2E8F0'" onclick="window.openItemLedger('${item.name}')">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:6px; display:flex; align-items:center;">${skuTag}${item.name}</div>
+                            <div style="font-size:11px; font-weight:700; color:var(--accent-color);">Default Rent: ${rentText}</div>
+                        </div>
+                        <button onclick="event.stopPropagation(); window.openItemMasterModal('${item.name}')" style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px; font-size:14px; cursor:pointer;" title="Edit details">✏️</button>
+                    </div>
+                    
+                    <div style="display:flex; gap:8px; margin-top:14px; background:#F8FAFC; padding:10px; border-radius:8px; border:1px solid #F1F5F9;">
+                        <div style="flex:1; text-align:center;">
+                            <div style="font-size:9.5px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">Total Units</div>
+                            <div style="font-size:16px; font-weight:900; color:#0F172A;">${item.totalStock || 0}</div>
+                        </div>
+                        <div style="flex:1; text-align:center; border-left:1px solid #E2E8F0; border-right:1px solid #E2E8F0;">
+                            <div style="font-size:9.5px; font-weight:800; color:var(--success); text-transform:uppercase;">In Godown</div>
+                            <div style="font-size:16px; font-weight:900; color:var(--success);">${inGodown}</div>
+                        </div>
+                        <div style="flex:1; text-align:center;">
+                            <div style="font-size:9.5px; font-weight:800; color:var(--warning); text-transform:uppercase;">On Event</div>
+                            <div style="font-size:16px; font-weight:900; color:var(--warning);">${deployed}</div>
+                        </div>
+                    </div>
+                    ${godownSplitHtml ? `<div style="margin-top:10px;">${godownSplitHtml}</div>` : ''}
+                </div>
+                `;
+            });
+            if(visibleCount === 0) container.innerHTML = `<p style="text-align:center; font-size:13px; font-weight:600; color:var(--text-secondary); padding:20px;">No items found in Master.</p>`;
+        };
+
+        // 4. Item Master Modal Forms
+        window.openItemMasterModal = function(itemName = null) {
+            closeAllMenus();
+            document.getElementById('itemMasterForm').reset();
+            let titleEl = document.getElementById('im-modal-title');
+            
+            if (itemName && itemsDB[itemName]) {
+                titleEl.innerText = "Edit Stock Item";
+                let item = itemsDB[itemName];
+                document.getElementById('im_old_name').value = itemName;
+                document.getElementById('im_name').value = item.name;
+                document.getElementById('im_sku').value = item.sku || "";
+                document.getElementById('im_rent').value = item.rentPrice || "";
+            } else {
+                titleEl.innerText = "Add New Stock Item";
+                document.getElementById('im_old_name').value = "";
+            }
+            document.getElementById('itemMasterModal').style.display = 'flex';
+        };
+
+        window.saveItemMaster = function() {
+            let oldName = document.getElementById('im_old_name').value;
+            let newName = document.getElementById('im_name').value.trim();
+            let sku = document.getElementById('im_sku').value.trim();
+            let rentPrice = parseFloat(document.getElementById('im_rent').value) || 0;
+
+            if (!newName) return alert("Item Name is required!");
+
+            if (oldName && oldName !== newName) {
+                if (itemsDB[newName]) return alert("Item with this name already exists!");
+                // Rename logic
+                itemsDB[newName] = itemsDB[oldName];
+                itemsDB[newName].name = newName;
+                delete itemsDB[oldName];
+            } else if (!itemsDB[newName]) {
+                // New Item Creation
+                itemsDB[newName] = { name: newName, totalStock: 0, totalLost: 0, godowns: {} };
+            }
+
+            itemsDB[newName].sku = sku;
+            itemsDB[newName].rentPrice = rentPrice;
+
+            updateDataAndUI();
+            document.getElementById('itemMasterModal').style.display = 'none';
+            window.renderItemMasterList();
+            alert("✅ Item Details Saved successfully!");
         };
     </SCRIPT>
 </body>
