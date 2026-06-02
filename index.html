@@ -7766,7 +7766,7 @@
             if (!crmContainer) return;
 
             crmContainer.innerHTML = "";
-            if (homeContainer) homeContainer.innerHTML = ""; // 🚀 Fix: Clear previous home leads
+            if (homeContainer) homeContainer.innerHTML = ""; 
 
             let counts = { total: 0, new: 0, active: 0, lost: 0 };
             let fragment = document.createDocumentFragment();
@@ -7787,7 +7787,6 @@
                 if (["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) counts.active++;
                 if (lead.status === "Lost") counts.lost++;
 
-                // 🚀 HOME DASHBOARD ACTIVE LEADS INJECTOR
                 if (homeContainer && (lead.status === "Hot" || lead.status === "Meeting Scheduled")) {
                     homeContainer.innerHTML += `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #F1F5F9; cursor:pointer;" onclick="openTab('crm', document.getElementById('btn-crm')); setTimeout(()=>openPanel('${lead.id}'), 300);">
@@ -7814,7 +7813,15 @@
                     else if (lead.status === "Thinking") badgeClass = "badge-think";
                     else if (lead.status === "Meeting Scheduled" || lead.status === "Meeting Completed") badgeClass = "badge-meet";
                     else if (lead.status === "Lost") badgeClass = "badge-lost";
-                    let assignedTag = lead.assignedTo ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block;">👤 Assigned</span>` : '';
+                    
+                    // 🚀 FIXED: ASSIGNED STAFF NAME TAG
+                    let staffName = "Unassigned";
+                    if (lead.assignedTo && masterUsersDB[lead.assignedTo]) {
+                        staffName = masterUsersDB[lead.assignedTo].name.split(' ')[0]; // Sirf First Name
+                    } else if (lead.assignedTo) {
+                        staffName = lead.assignedTo;
+                    }
+                    let assignedTag = lead.assignedTo ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
 
                     let div = document.createElement('div');
                     div.className = "list-row";
@@ -8613,17 +8620,144 @@
         function deleteTaskItem(id, isGlobal, leadId) { if (!confirm("Delete this task?")) return; if (isGlobal) { delete globalTasksDB[id]; } else { leadsDB[leadId].tasks = leadsDB[leadId].tasks.filter(t => (t.id || t) !== id); } updateDataAndUI(); }
 
         function renderTasksDashboard(filter, btnEl) {
-            if (btnEl) { currentTaskFilter = filter; document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab')); btnEl.classList.add('active-sales-tab'); }
-            let container = document.getElementById('task-dash-container'); container.innerHTML = ""; let allTasks = [];
+            if (btnEl) { 
+                currentTaskFilter = filter; 
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab')); 
+                btnEl.classList.add('active-sales-tab'); 
+            }
+            
+            let container = document.getElementById('task-dash-container'); 
+            container.innerHTML = ""; 
+            let allTasks = [];
+            
             Object.values(globalTasksDB).forEach(t => allTasks.push({ ...t, isGlobal: true }));
-            Object.values(leadsDB).forEach(l => { if (l.tasks) l.tasks.forEach(t => { let tid = t.id || t; allTasks.push({ id: tid, type: 'Event', text: t.text, done: t.done, deadline: t.deadline, leadId: l.id, leadName: l.name, isGlobal: false }); }); });
-            allTasks.sort((a, b) => { let dateA = a.deadline || (a.date ? a.date + "T" + (a.time || "00:00") : "2099"); let dateB = b.deadline || (b.date ? b.date + "T" + (b.time || "00:00") : "2099"); return dateA.localeCompare(dateB); });
-            let filteredTasks = allTasks.filter(t => { if (filter === 'Pending' && t.done) return false; if (filter === 'Completed' && !t.done) return false; if (filter === 'Meetings' && t.type !== 'Meeting') return false; return true; });
-            if (filteredTasks.length === 0) { container.innerHTML = `<p style="padding:15px; font-size:13px; font-weight:500; color:var(--text-secondary); text-align:center;">No tasks found.</p>`; return; }
-            let meetings = filteredTasks.filter(t => t.type === 'Meeting'); let events = filteredTasks.filter(t => t.type === 'Event'); let generals = filteredTasks.filter(t => t.type === 'General'); let finalHtml = "";
-            if (meetings.length > 0) { finalHtml += `<h4 style="margin: 15px 0 12px 0; font-size: 13px; font-weight:800; color: var(--meet-color); text-transform: uppercase; letter-spacing: 0.5px;">🤝 Meetings & Appointments</h4>`; meetings.forEach(t => { let leadName = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : 'Unknown'); let dtStr = t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; finalHtml += `<div class="task-item" style="border-left: 4px solid var(--meet-color); flex-direction: column; align-items: stretch; background: ${t.done ? '#F8FAFC' : '#fff'};"><div style="display:flex; justify-content: space-between; align-items:flex-start;"><div><div style="font-size: 16px; font-weight: 800; color: var(--text-primary); text-decoration: ${t.done ? 'line-through' : 'none'};">${leadName}</div><div style="font-size: 13px; color: var(--danger); font-weight: 700; margin-top:6px;">⏰ ${dtStr} @ ${t.time || 'TBD'}</div></div><div style="display:flex; gap:12px; align-items:center;"><div class="dropdown-container"><button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button><div class="dropdown-menu" id="menu-tsk-${t.id}"><div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div><div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div></div></div><input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')" style="transform: scale(1.3); margin-top:0;"></div></div><div style="font-size: 13px; font-weight:500; color: var(--text-secondary); background: #FFFBEB; padding: 12px; border-radius: 8px; margin-top: 12px; border: 1px solid #FEF3C7; text-decoration: ${t.done ? 'line-through' : 'none'};"><strong>Agenda:</strong> ${t.text}</div></div>`; }); }
-            if (events.length > 0) { finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #0284C7; text-transform: uppercase; letter-spacing: 0.5px;">🎪 Event Specific Tasks</h4>`; events.forEach(t => { let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; finalHtml += `<div class="task-item" style="border-left: 4px solid #0284C7; background: ${t.done ? '#F8FAFC' : '#fff'};"><input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')"><div style="width: 100%;"><div style="font-size:11px; font-weight:800; color:#0284C7; margin-bottom:6px; text-transform: uppercase; letter-spacing:0.5px;">▶ EVENT: ${t.leadName}</div><div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>${timeStr}</div><div class="dropdown-container"><button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button><div class="dropdown-menu" id="menu-tsk-${t.id}"><div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div><div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div></div></div></div>`; }); }
-            if (generals.length > 0) { finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 General Work</h4>`; generals.forEach(t => { let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; finalHtml += `<div class="task-item" style="border-left: 4px solid #94A3B8; background: ${t.done ? '#F8FAFC' : '#fff'};"><input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')"><div><div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>${timeStr}</div><div style="flex:1;"></div><div class="dropdown-container"><button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button><div class="dropdown-menu" id="menu-tsk-${t.id}"><div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div><div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div></div></div></div>`; }); } container.innerHTML = finalHtml;
+            
+            Object.values(leadsDB).forEach(l => { 
+                if (l.tasks) {
+                    l.tasks.forEach(t => { 
+                        let tid = t.id || t; 
+                        allTasks.push({ id: tid, type: 'Event', text: t.text, done: t.done, deadline: t.deadline, assignedTo: t.assignedTo, leadId: l.id, leadName: l.name, isGlobal: false }); 
+                    }); 
+                }
+            });
+            
+            allTasks.sort((a, b) => { 
+                let dateA = a.deadline || (a.date ? a.date + "T" + (a.time || "00:00") : "2099"); 
+                let dateB = b.deadline || (b.date ? b.date + "T" + (b.time || "00:00") : "2099"); 
+                return dateA.localeCompare(dateB); 
+            });
+            
+            let filteredTasks = allTasks.filter(t => { 
+                if (filter === 'Pending' && t.done) return false; 
+                if (filter === 'Completed' && !t.done) return false; 
+                if (filter === 'Meetings' && t.type !== 'Meeting') return false; 
+                return true; 
+            });
+            
+            if (filteredTasks.length === 0) { 
+                container.innerHTML = `<p style="padding:15px; font-size:13px; font-weight:500; color:var(--text-secondary); text-align:center;">No tasks found.</p>`; 
+                return; 
+            }
+            
+            let meetings = filteredTasks.filter(t => t.type === 'Meeting'); 
+            let events = filteredTasks.filter(t => t.type === 'Event'); 
+            let generals = filteredTasks.filter(t => t.type === 'General'); 
+            let finalHtml = "";
+
+            // Helper for Assigned Tag & WA Button
+            let getAssignHtml = (assignedTo, taskId, isGlobal, leadId) => {
+                if (!assignedTo) return '';
+                let sName = masterUsersDB[assignedTo] ? masterUsersDB[assignedTo].name.split(' ')[0] : 'Staff';
+                return `
+                <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+                    <span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; border:1px solid #BFDBFE;">👤 ${sName}</span>
+                    <button onclick="window.sendTaskWhatsApp('${taskId}', ${isGlobal}, '${leadId}')" style="background:#25D366; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 1px 2px rgba(37,211,102,0.3);">💬 Send</button>
+                </div>`;
+            };
+
+            if (meetings.length > 0) { 
+                finalHtml += `<h4 style="margin: 15px 0 12px 0; font-size: 13px; font-weight:800; color: var(--meet-color); text-transform: uppercase; letter-spacing: 0.5px;">🤝 Meetings & Appointments</h4>`; 
+                meetings.forEach(t => { 
+                    let leadName = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : 'Unknown'); 
+                    let dtStr = t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; 
+                    
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid var(--meet-color); flex-direction: column; align-items: stretch; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                            <div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); text-decoration: ${t.done ? 'line-through' : 'none'};">${leadName}</div>
+                                <div style="font-size: 13px; color: var(--danger); font-weight: 700; margin-top:6px;">⏰ ${dtStr} @ ${t.time || 'TBD'}</div>
+                                ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                            </div>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <div class="dropdown-container">
+                                    <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                                    <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                        <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                        <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')" style="transform: scale(1.3); margin-top:0;">
+                            </div>
+                        </div>
+                        <div style="font-size: 13px; font-weight:500; color: var(--text-secondary); background: #FFFBEB; padding: 12px; border-radius: 8px; margin-top: 12px; border: 1px solid #FEF3C7; text-decoration: ${t.done ? 'line-through' : 'none'};">
+                            <strong>Agenda:</strong> ${t.text}
+                        </div>
+                    </div>`; 
+                }); 
+            }
+            
+            if (events.length > 0) { 
+                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #0284C7; text-transform: uppercase; letter-spacing: 0.5px;">🎪 Event Specific Tasks</h4>`; 
+                events.forEach(t => { 
+                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
+                    
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid #0284C7; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
+                        <div style="width: 100%;">
+                            <div style="font-size:11px; font-weight:800; color:#0284C7; margin-bottom:6px; text-transform: uppercase; letter-spacing:0.5px;">▶ EVENT: ${t.leadName}</div>
+                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
+                            ${timeStr}
+                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>`; 
+                }); 
+            }
+            
+            if (generals.length > 0) { 
+                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 General Work</h4>`; 
+                generals.forEach(t => { 
+                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
+                    
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid #94A3B8; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
+                        <div>
+                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
+                            ${timeStr}
+                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                        </div>
+                        <div style="flex:1;"></div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>`; 
+                }); 
+            } 
+            
+            container.innerHTML = finalHtml;
         }
 
         function renderCalendar() {
@@ -12390,6 +12524,10 @@
                 let fixAssets = 0;
                 Object.values(purchaseDB).filter(p => p.type === 'Asset' && p.date <= toD).forEach(p => { fixAssets += p.finalTotal; });
 
+                // 🚀 FIXED: Asset Loss/Write-off Adjustment
+                let assetLoss = 0;
+                Object.values(expenseDB).filter(e => e.mode === 'SYSTEM_LOSS' && e.date <= toD).forEach(e => { assetLoss += e.amount; });
+
                 let debtors = 0; let creditors = 0; let loans = 0; let capital = 0;
                 Object.values(partiesDB).forEach(p => {
                     let bal = p.balance;
@@ -12426,11 +12564,15 @@
 
                 let netProfit = (incSales + otherInc) - totalExpPurch;
 
+                // 🚀 FIXED: Asset Loss is subtracted from Gross Fixed Assets to balance Liabilities
+                let netFixedAssets = fixAssets - assetLoss;
+                if(netFixedAssets < 0) netFixedAssets = 0;
+
                 let totLiab = capital + netProfit + loans + creditors;
-                let totAssets = fixAssets + debtors + cashBank;
+                let totAssets = netFixedAssets + debtors + cashBank;
 
                 html += `<tr style="background:#0F172A; color:white;"><th style="padding:8px; width:50%;">Liabilities</th><th style="padding:8px; text-align:right;">Amount (₹)</th><th style="padding:8px; width:50%; border-left:2px solid #CBD5E1;">Assets</th><th style="padding:8px; text-align:right;">Amount (₹)</th></tr>`;
-                html += `<tr><td style="padding:8px; font-weight:bold;">Capital Account</td><td style="padding:8px; text-align:right;">${capital.toLocaleString('en-IN')}</td><td style="padding:8px; font-weight:bold; border-left:2px solid #CBD5E1;">Fixed Assets</td><td style="padding:8px; text-align:right;">${fixAssets.toLocaleString('en-IN')}</td></tr>`;
+                html += `<tr><td style="padding:8px; font-weight:bold;">Capital Account</td><td style="padding:8px; text-align:right;">${capital.toLocaleString('en-IN')}</td><td style="padding:8px; font-weight:bold; border-left:2px solid #CBD5E1;">Fixed Assets (Net)</td><td style="padding:8px; text-align:right;">${netFixedAssets.toLocaleString('en-IN')}</td></tr>`;
                 html += `<tr><td style="padding:8px; padding-left:20px;">Add: Net Profit (Adjusted)</td><td style="padding:8px; text-align:right; font-weight:bold; color:${netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">${netProfit.toLocaleString('en-IN')}</td><td style="padding:8px; font-weight:bold; border-left:2px solid #CBD5E1;">Current Assets</td><td style="padding:8px;"></td></tr>`;
                 html += `<tr><td style="padding:8px; font-weight:bold;">Loans (Liability)</td><td style="padding:8px; text-align:right;">${loans.toLocaleString('en-IN')}</td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1;">Sundry Debtors (Receivables)</td><td style="padding:8px; text-align:right;">${debtors.toLocaleString('en-IN')}</td></tr>`;
                 html += `<tr><td style="padding:8px; font-weight:bold;">Current Liabilities</td><td style="padding:8px;"></td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1;">Cash & Bank Balances</td><td style="padding:8px; text-align:right;">${cashBank.toLocaleString('en-IN')}</td></tr>`;
@@ -15704,10 +15846,7 @@
             let activeTab = document.querySelector('.active-section');
             
             if (menu.style.display === 'none' || menu.style.display === '') {
-                fab.classList.add('menu-open');
-                menu.style.display = 'flex';
-                
-                // Inventory Hub ke liye naye action buttons
+                fab.classList.add('menu-open'); menu.style.display = 'flex';
                 if (activeTab && activeTab.id === 'inventory-hub') {
                     menu.innerHTML = `
                         <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
@@ -15715,18 +15854,20 @@
                         <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
                         <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
                     `;
-                } else {
-                    // Default ERP buttons
+                } else if (activeTab && activeTab.id === 'tasks') {
                     menu.innerHTML = `
-                        <div class="fab-menu-item" onclick="openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice</div>
-                        <div class="fab-menu-item" onclick="openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
-                        <div class="fab-menu-item" onclick="openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
+                        <div class="fab-menu-item" onclick="if(typeof openQuickTaskModal === 'function') openQuickTaskModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📝 New Task</div>
+                        <div class="fab-menu-item" onclick="if(typeof openQuickMeetingModal === 'function') openQuickMeetingModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🤝 Schedule Meeting</div>
+                    `;
+                } else {
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPurchaseBillModal === 'function') openPurchaseBillModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
+                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
                     `;
                 }
-            } else {
-                menu.style.display = 'none';
-                fab.classList.remove('menu-open');
-            }
+            } else { menu.style.display = 'none'; fab.classList.remove('menu-open'); }
         };
         var toggleFabMenu = window.toggleFabMenu;
 
@@ -16209,6 +16350,7 @@
             container.insertAdjacentHTML('beforeend', html);
         };
 
+        // 🚀 FIXED: Outward Challan (No Fake Expenses in Financial Books)
         window.saveOutwardChallan = function() {
             let evId = document.getElementById('out_event').value; 
             let gId = document.getElementById('out_godown_select').value; 
@@ -16246,33 +16388,13 @@
             items.forEach(item => { if(itemsDB[item.name] && itemsDB[item.name].godowns[gId] !== undefined) itemsDB[item.name].godowns[gId] -= item.qty; });
             stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: gId, date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed' };
 
-            // 🚀 NEW: AUTO EXPENSE CREATION FOR ASSET UTILIZATION
-            if (totalInternalValue > 0 && !isEdit) {
-                let expId = "EXP" + Date.now() + Math.floor(Math.random()*100);
-                let cat = "Asset Utilization (Rent)";
-                if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); }
-
-                expenseDB[expId] = {
-                    id: expId,
-                    type: 'Event', 
-                    cat: cat,
-                    amount: totalInternalValue,
-                    paid: totalInternalValue, // No actual cash is paid, it's just adjusted
-                    balanceDue: 0,
-                    status: 'Paid',
-                    date: date,
-                    mode: 'SYSTEM_ADJUST', // Hidden system account logic
-                    eventId: evId,
-                    partyId: null,
-                    notes: `Internal Asset Usage (Challan: ${id})`,
-                    linkedDates: []
-                };
-            }
+            // 🚀 ALARM REMOVED: Auto-Expense generation removed to protect Balance Sheet Tally.
+            // Cost is only stored inside the challan for memo purposes.
 
             if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
             document.getElementById('outwardChallanModal').style.display = 'none'; 
             document.getElementById('outwardChallanModal').dataset.editId = "";
-            alert(`✅ Material Dispatched! Asset utilization cost ₹${totalInternalValue.toLocaleString('en-IN')} auto-adjusted in Event P&L.`); 
+            alert(`✅ Material Dispatched!\n(Value: ₹${totalInternalValue.toLocaleString('en-IN')})`); 
             window.renderInventoryHubList();
         };
 
@@ -16708,6 +16830,33 @@
             if (navBar) navBar.style.display = 'flex';
             let mainFab = document.getElementById('main-fab-container');
             if (mainFab) mainFab.style.display = 'flex';
+        };
+        // ==========================================
+        // 🚀 TASK WHATSAPP SENDER ENGINE
+        // ==========================================
+        window.sendTaskWhatsApp = function(taskId, isGlobal, leadId) {
+            let task = isGlobal ? globalTasksDB[taskId] : leadsDB[leadId].tasks.find(t => (t.id || t) === taskId);
+            if (!task) return;
+
+            if (!task.assignedTo || !masterUsersDB[task.assignedTo]) {
+                return alert("⚠️ This task is not assigned to any specific staff member.");
+            }
+
+            let staffName = masterUsersDB[task.assignedTo].name;
+            let staffPhone = task.assignedTo;
+            
+            let leadNameStr = "";
+            if (task.type === 'Event' || task.type === 'Meeting') {
+                let lName = task.leadName || (leadsDB[task.leadId] ? leadsDB[task.leadId].name : "");
+                if(lName) leadNameStr = `\n👤 *Client/Event:* ${lName}`;
+            }
+
+            let deadlineStr = task.deadline ? `\n⏰ *Deadline:* ${new Date(task.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : "";
+            let dateStr = task.date ? `\n📅 *Date:* ${task.date} @ ${task.time || 'TBD'}` : "";
+
+            let waMsg = `Hello ${staffName},\n\nYou have a new task assigned:\n\n📝 *Task:* ${task.text}${leadNameStr}${deadlineStr}${dateStr}\n\nPlease update the system once completed.`;
+
+            window.open('https://wa.me/91' + staffPhone + '?text=' + encodeURIComponent(waMsg), '_blank');
         };
     </SCRIPT>
 </body>
