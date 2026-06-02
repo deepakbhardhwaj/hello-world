@@ -16827,7 +16827,6 @@
         window.processSmartReturn = function() {
             let id = document.getElementById('return_inv_id').value; let logType = document.getElementById('return_log_type').value; let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
             let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0; let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty"; let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0; let error = false;
-            let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0; let error = false;
             let retDate = document.getElementById('return_date') ? document.getElementById('return_date').value : new Date().toISOString().split('T')[0];
             document.querySelectorAll('#return_items_body tr').forEach(row => { let sent = parseInt(row.querySelector('.ret-item-sent').innerText); let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0; if((safe + lost + repair) !== sent) { alert(`Quantities must equal Sent(${sent}).`); error = true; } });
             if(error) return;
