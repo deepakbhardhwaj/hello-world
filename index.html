@@ -3977,6 +3977,7 @@
                     <h3>⚖️ Stock Audit</h3>
                     <button class="modal-close" onclick="document.getElementById('stockAuditModal').style.display='none';">&times;</button>
                 </div>
+                <div class="form-group"><label class="form-label">Date of Audit</label><input type="date" id="audit_date" class="form-input" required></div>
                 <div class="form-group"><label class="form-label">Select Item</label><select id="audit_item" class="form-select" onchange="window.loadAuditItemDetails()"></select></div>
                 <div class="form-group"><label class="form-label">Select Godown</label><select id="audit_godown" class="form-select" onchange="window.updateExpectedGodownStock()"></select></div>
                 
@@ -4073,6 +4074,10 @@
                             <label class="form-label" style="color:var(--accent-color);">Per Unit Rate (₹)</label>
                             <input type="number" id="ds_rate" class="form-input" placeholder="e.g. 450" required>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date of Entry</label>
+                        <input type="date" id="ds_date" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Select Godown 🏭</label>
@@ -7606,9 +7611,25 @@
         let unsubscribeCompany = null; // 👈 Naya listener Staff ke liye
 
         function loadLocalData() {
-            leadsDB = {}; partiesDB = {}; salesDB = {}; purchaseDB = {}; expenseDB = {}; 
-            globalTasksDB = {}; bankDB = {}; bankTxDB = {}; loansDB = {}; 
-            
+            // 🚀 SMART FIX: Load instantly from Local Storage before Cloud Sync
+            let localBackup = JSON.parse(localStorage.getItem('utsav_erp_data_' + currentWorkspaceId)) || {};
+            leadsDB = localBackup.leads || {}; 
+            partiesDB = localBackup.parties || {}; 
+            salesDB = localBackup.sales || {}; 
+            purchaseDB = localBackup.purchase || {}; 
+            expenseDB = localBackup.expense || {}; 
+            globalTasksDB = localBackup.globalTasks || {}; 
+            bankDB = localBackup.bank || {}; 
+            bankTxDB = localBackup.bankTx || {}; 
+            loansDB = localBackup.loans || {}; 
+            if (localBackup.expenseCats) expenseCats = localBackup.expenseCats;
+            itemsDB = localBackup.items || {};
+            warehousesDB = localBackup.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
+            stockMovementDB = localBackup.stockMovements || {};
+
+            if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
+            if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
+
             if (!currentWorkspaceId) return;
 
             if (unsubscribeWorkspace) unsubscribeWorkspace();
@@ -16422,15 +16443,11 @@
             // 2. Main Menu (+) Button Handle
             let mainFab = document.getElementById('main-fab-container');
             if (mainFab) {
-                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
+                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList || tabName === 'inventory-hub') {
                     mainFab.style.setProperty('display', 'none', 'important');
                 } else {
                     mainFab.style.setProperty('display', 'flex', 'important');
-                    if(tabName === 'inventory-hub') {
-                        mainFab.style.bottom = '30px'; 
-                    } else {
-                        mainFab.style.bottom = '105px'; 
-                    }
+                    mainFab.style.bottom = '105px'; 
                 }
             }
 
@@ -16858,6 +16875,7 @@
         // --------------------------------------------------------------
         window.openStockAuditModal = function() {
             window.loadGodownsIntoSelect();
+            if(document.getElementById('audit_date')) document.getElementById('audit_date').valueAsDate = new Date();
             let sel = document.getElementById('audit_item'); if(!sel) return;
             sel.innerHTML = '<option value="">-- Select Item to Audit --</option>'; Object.values(itemsDB).forEach(item => { sel.innerHTML += `<option value="${item.name}">${item.name}</option>`; });
             document.getElementById('audit_details').style.display = 'none'; document.getElementById('audit_input_group').style.display = 'none'; document.getElementById('stockAuditModal').style.display = 'flex';
@@ -16893,9 +16911,10 @@
             if(actual === expected) { alert("Stock matches perfectly!"); document.getElementById('stockAuditModal').style.display = 'none'; return; }
             if(actual > expected) { alert("Physical stock cannot be greater than system via Audit."); return; }
             let diff = expected - actual;
+            let auditDate = document.getElementById('audit_date') ? document.getElementById('audit_date').value : new Date().toISOString().split('T')[0];
             if(confirm(`System expects ${expected}. You found ${actual}.\n\nAre you sure you want to mark ${diff} items as Lost/Written-off?`)) {
                 item.godowns[gId] = actual; item.totalStock -= diff; item.totalLost = (item.totalLost || 0) + diff;
-                if (lossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: lossValue, paid: lossValue, balanceDue: 0, status: 'Paid', date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', eventId: null, partyId: null, notes: `Stock Audit Write-off: ${diff} x ${name}`, linkedDates: [] }; }
+                if (lossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: lossValue, paid: lossValue, balanceDue: 0, status: 'Paid', date: auditDate, mode: 'SYSTEM_LOSS', eventId: null, partyId: null, notes: `Stock Audit Write-off: ${diff} x ${name}`, linkedDates: [] }; }
                 if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('stockAuditModal').style.display = 'none'; alert(`✅ Audit complete. ${diff} units marked as lost.`); window.renderInventoryHubList();
             }
         };
@@ -16907,6 +16926,7 @@
             window.refreshInventorySelect(); window.loadGodownsIntoSelect();
             if(document.getElementById('ds_qty')) document.getElementById('ds_qty').value = ''; 
             if(document.getElementById('ds_rate')) document.getElementById('ds_rate').value = ''; 
+            if(document.getElementById('ds_date')) document.getElementById('ds_date').valueAsDate = new Date();
             if(typeof closeAllMenus === 'function') closeAllMenus(); document.getElementById('directStockModal').style.display = 'flex';
         };
 
