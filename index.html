@@ -4173,7 +4173,7 @@
                 <div class="fab-menu-item" onclick="openExpenseModal()">💸 Add Expense</div>
                 <div class="fab-menu-item" onclick="openPartyModal()">👥 Add Party</div>
             </div>
-            <button id="main-fab" onclick="toggleFabMenu()">+</button>
+            <button id="main-fab" onclick="openMasterFab()">+</button>
         </div>
         <!-- System Modals -->
         <div id="quickTaskModal" class="modal-overlay" style="z-index: 5500;">
@@ -17117,6 +17117,55 @@
             }
         };
         var toggleFabMenu = window.toggleFabMenu;
+        // ==========================================
+        // 🚀 BYPASS TRICK: NAYA MASTER FAB FUNCTION
+        // ==========================================
+        window.openMasterFab = function() {
+            let fab = document.getElementById('main-fab');
+            let menu = document.getElementById('fab-menu');
+            let activeTab = document.querySelector('.active-section');
+            
+            // 🚀 CHECK KAREGA KI TASKS TAB OPEN HAI YA NAHI
+            let isTasksTabActive = (activeTab && activeTab.id === 'tasks') || 
+                                   (document.getElementById('btn-tasks') && document.getElementById('btn-tasks').classList.contains('active-btn'));
+
+            let isCrmTabActive = (activeTab && activeTab.id === 'crm') || 
+                                 (document.getElementById('btn-crm') && document.getElementById('btn-crm').classList.contains('active-btn'));
+
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                fab.classList.add('menu-open'); 
+                menu.style.display = 'flex';
+                
+                if (activeTab && activeTab.id === 'inventory-hub') {
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openOutwardChallanModal();">🚚 Outward Material</div>
+                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openRentInvoice();">📄 Rent Invoice</div>
+                        <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
+                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
+                    `;
+                } else if (isTasksTabActive) { // 🚀 SIRF TASKS TAB KE LIYE
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--accent-color);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); if(typeof openQuickTaskModal === 'function') openQuickTaskModal();">📝 New Task</div>
+                        <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); if(typeof openQuickMeetingModal === 'function') openQuickMeetingModal();">🤝 Schedule Meeting</div>
+                    `;
+                } else if (isCrmTabActive) { // 🚀 SIRF CRM TAB KE LIYE
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" style="color:var(--success);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); if(typeof openLeadModal === 'function') openLeadModal();">🎯 Add Lead</div>
+                    `;
+                } else {
+                    // BAAKI ERP TABS KE LIYE DEFAULT
+                    menu.innerHTML = `
+                        <div class="fab-menu-item" onclick="if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📄 Add Invoice / Quote</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPurchaseBillModal === 'function') openPurchaseBillModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🛒 Add Purchase Bill</div>
+                        <div class="fab-menu-item" onclick="if(typeof openExpenseModal === 'function') openExpenseModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">💸 Add Expense</div>
+                        <div class="fab-menu-item" onclick="if(typeof openPartyModal === 'function') openPartyModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">👥 Add Party</div>
+                    `;
+                }
+            } else { 
+                menu.style.display = 'none'; 
+                fab.classList.remove('menu-open'); 
+            }
+        };
     </SCRIPT>
 </body>
 
