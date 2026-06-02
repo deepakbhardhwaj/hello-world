@@ -6206,6 +6206,60 @@
                 <div id="challan_list_container" style="flex: 1; overflow-y: auto; padding: 16px; background: white;"></div>
             </div>
         </div>
+        <div id="itemLedgerModal" class="modal-overlay" style="z-index: 10500;">
+            <div class="modal-content" style="max-width: 700px; padding:0; overflow:hidden; background:#F8FAFC;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0F172A, #334155); color:white; padding: 20px; border-radius: 12px 12px 0 0; margin:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+                        <div>
+                            <h3 id="il_item_name" style="margin:0 0 5px 0; font-size:20px; font-weight:900;">Item Name</h3>
+                            <div style="font-size:11px; color:#94A3B8; font-weight:600;">Stock Movement & Logistics Ledger</div>
+                        </div>
+                        <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; font-size:18px; cursor:pointer;">&times;</button>
+                    </div>
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <div style="background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; flex:1;">
+                            <div style="font-size:10px; color:#CBD5E1; text-transform:uppercase; font-weight:700;">Total Purchased</div>
+                            <div id="il_total_purchased" style="font-size:16px; font-weight:900; margin-top:2px;">0</div>
+                        </div>
+                        <div style="background:rgba(16, 185, 129, 0.2); border:1px solid rgba(16,185,129,0.3); padding:10px; border-radius:8px; flex:1;">
+                            <div style="font-size:10px; color:#A7F3D0; text-transform:uppercase; font-weight:700;">In Godowns</div>
+                            <div id="il_in_godown" style="font-size:16px; font-weight:900; color:#34D399; margin-top:2px;">0</div>
+                        </div>
+                        <div style="background:rgba(245, 158, 11, 0.2); border:1px solid rgba(245,158,11,0.3); padding:10px; border-radius:8px; flex:1;">
+                            <div style="font-size:10px; color:#FDE68A; text-transform:uppercase; font-weight:700;">On Rent / Event</div>
+                            <div id="il_on_rent" style="font-size:16px; font-weight:900; color:#FBBF24; margin-top:2px;">0</div>
+                        </div>
+                        <div style="background:rgba(239, 68, 68, 0.2); border:1px solid rgba(239,68,68,0.3); padding:10px; border-radius:8px; flex:1;">
+                            <div style="font-size:10px; color:#FECACA; text-transform:uppercase; font-weight:700;">Total Lost</div>
+                            <div id="il_total_lost" style="font-size:16px; font-weight:900; color:#F87171; margin-top:2px;">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="padding:15px; background:white;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; font-size:13px; color:var(--text-primary); font-weight:800; text-transform:uppercase;">Transaction History</h4>
+                        <button onclick="window.printItemLedger()" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">🖨️ Print Ledger</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; border:1px solid #E2E8F0;">
+                            <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                <th style="padding:10px; color:var(--text-secondary);">Date</th>
+                                <th style="padding:10px; color:var(--text-secondary);">Ref No.</th>
+                                <th style="padding:10px; color:var(--text-secondary);">Client / Destination</th>
+                                <th style="padding:10px; text-align:center; color:var(--text-secondary);">OUT (Gaya)</th>
+                                <th style="padding:10px; text-align:center; color:var(--text-secondary);">IN (Aaya)</th>
+                                <th style="padding:10px; text-align:center; color:var(--danger);">Lost</th>
+                                <th style="padding:10px; text-align:center; color:var(--accent-color);">Live Balance</th>
+                            </tr>
+                            <tbody id="il_table_body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div> <div class="nav-bar" id="master-nav-bar" style="z-index: 9000;">
         <button id="btn-crm" class="nav-btn" onclick="openTab('crm', this)">
@@ -16790,183 +16844,307 @@
 
             window.open('https://wa.me/91' + staffPhone + '?text=' + encodeURIComponent(waMsg), '_blank');
         };
-        // 🚀 FIXED: REAL-TIME SEARCH ENGINE
-        // Encapsulate task dashboard state and methods in a module to avoid global variables
-        window.TaskDashboard = {
-            currentTaskFilter: 'Pending',
-            searchDebounceTimer: null,
-            applySearchFilter: function(type, term) {
-                clearTimeout(this.searchDebounceTimer);
-                // Debounce delay set to 300ms for responsive search experience
-                this.searchDebounceTimer = setTimeout(() => {
-                    searchTerms[type] = term.toLowerCase();
-                    if (type === 'crm' && typeof renderLeadsList === 'function') renderLeadsList();
-                    if (type === 'events' && typeof renderEventsDashboard === 'function') renderEventsDashboard();
-                    if (type === 'party' && typeof renderPartiesList === 'function') renderPartiesList();
-                    if (type === 'sales' && typeof renderSalesList === 'function') renderSalesList();
-                    if (type === 'purchase' && typeof renderPurchaseList === 'function') renderPurchaseList();
-                    if (type === 'expense' && typeof renderExpenseList === 'function') renderExpenseList();
-                    if (type === 'tasks' && typeof this.renderTasksDashboard === 'function') this.renderTasksDashboard(this.currentTaskFilter);
-                }, 300);
-            },
-            renderTasksDashboard: function(filter, btnEl) {
-                if (btnEl) { 
-                    TaskDashboard.currentTaskFilter = filter; 
-                    document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab')); 
-                    btnEl.classList.add('active-sales-tab'); 
-                } else {
-                    filter = TaskDashboard.currentTaskFilter;
-                }
-                
-                let container = document.getElementById('task-dash-container'); 
-                container.innerHTML = ""; 
-                let allTasks = [];
-                
-                Object.values(globalTasksDB).forEach(t => allTasks.push({ ...t, isGlobal: true }));
-                Object.values(leadsDB).forEach(l => { 
-                    if (l.tasks) {
-                        l.tasks.forEach(t => { 
-                            allTasks.push({ id: t.id || t, type: 'Event', text: t.text, done: t.done, deadline: t.deadline, assignedTo: t.assignedTo, leadId: l.id, leadName: l.name, isGlobal: false }); 
-                        }); 
-                    }
-                });
-                
-                allTasks.sort((a, b) => { 
-                    let dateA = a.deadline || (a.date ? a.date + "T" + (a.time || "00:00") : "2099"); 
-                    let dateB = b.deadline || (b.date ? b.date + "T" + (b.time || "00:00") : "2099"); 
-                    return dateA.localeCompare(dateB); 
-                });
-                
-                let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
-                let searchTerm = (searchTerms.tasks || "").toLowerCase();
-                
-                let filteredTasks = allTasks.filter(t => { 
-                    let assignedNum = t.assignedTo ? String(t.assignedTo).trim() : "";
-                    if (!isOwner && assignedNum !== String(loggedInMobile).trim()) {
-                        return false;
-                    }
+        // ==========================================
+        // 🚀 FIXED: REAL-TIME SEARCH ENGINE & TASKS DASHBOARD
+        // ==========================================
+        window.currentTaskFilter = 'Pending';
+        let searchDebounceTimer;
 
-                    if (filter === 'Pending' && t.done) return false; 
-                    if (filter === 'Completed' && !t.done) return false; 
-                    if (filter === 'Meetings' && t.type !== 'Meeting') return false; 
-                    
-                    if (searchTerm !== "") {
-                        let sName = (assignedNum && masterUsersDB[assignedNum]) ? masterUsersDB[assignedNum].name.toLowerCase() : "";
-                        let tText = (t.text || "").toLowerCase();
-                        let lName = (t.leadName || "").toLowerCase();
-                        
-                        if (!tText.includes(searchTerm) && !sName.includes(searchTerm) && !lName.includes(searchTerm)) {
-                            return false;
-                        }
-                    }
-                    return true; 
-                });
-                
-                if (filteredTasks.length === 0) { 
-                    container.innerHTML = `<p style="padding:15px; font-size:13px; font-weight:500; color:var(--text-secondary); text-align:center;">No tasks found.</p>`; 
-                    return; 
-                }
-                
-                let meetings = filteredTasks.filter(t => t.type === 'Meeting'); 
-                let events = filteredTasks.filter(t => t.type === 'Event'); 
-                let generals = filteredTasks.filter(t => t.type === 'General'); 
-                let finalHtml = "";
-
-                let getAssignHtml = (assignedTo, taskId, isGlobal, leadId) => {
-                    if (!assignedTo) return '';
-                    let staffKey = String(assignedTo).trim();
-                    let sName = (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) ? masterUsersDB[staffKey].name.split(' ')[0] : 'Staff';
-                    return `
-                    <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
-                        <span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; border:1px solid #BFDBFE;">👤 ${sName}</span>
-                        <button onclick="window.sendTaskWhatsApp('${taskId}', ${isGlobal}, '${leadId}')" style="background:#25D366; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 1px 2px rgba(37,211,102,0.3);">💬 Send</button>
-                    </div>`;
-                };
-
-                if (meetings.length > 0) { 
-                    finalHtml += `<h4 style="margin: 15px 0 12px 0; font-size: 13px; font-weight:800; color: var(--meet-color); text-transform: uppercase; letter-spacing: 0.5px;">🤝 Meetings & Appointments</h4>`; 
-                    meetings.forEach(t => { 
-                        let leadName = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : 'Unknown'); 
-                        let dtStr = t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; 
-                        finalHtml += `
-                        <div class="task-item" style="border-left: 4px solid var(--meet-color); flex-direction: column; align-items: stretch; background: ${t.done ? '#F8FAFC' : '#fff'};">
-                            <div style="display:flex; justify-content: space-between; align-items:flex-start;">
-                                <div>
-                                    <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); text-decoration: ${t.done ? 'line-through' : 'none'};">${leadName}</div>
-                                    <div style="font-size: 13px; color: var(--danger); font-weight: 700; margin-top:6px;">⏰ ${dtStr} @ ${t.time || 'TBD'}</div>
-                                    ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
-                                </div>
-                                <div style="display:flex; gap:12px; align-items:center;">
-                                    <div class="dropdown-container">
-                                        <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
-                                        <div class="dropdown-menu" id="menu-tsk-${t.id}">
-                                            <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
-                                            <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')" style="transform: scale(1.3); margin-top:0;">
-                                </div>
-                            </div>
-                            <div style="font-size: 13px; font-weight:500; color: var(--text-secondary); background: #FFFBEB; padding: 12px; border-radius: 8px; margin-top: 12px; border: 1px solid #FEF3C7; text-decoration: ${t.done ? 'line-through' : 'none'};">
-                                <strong>Agenda:</strong> ${t.text}
-                            </div>
-                        </div>`; 
-                    }); 
-                }
-                
-                if (events.length > 0) { 
-                    finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #0284C7; text-transform: uppercase; letter-spacing: 0.5px;">🎪 Event Specific Tasks</h4>`; 
-                    events.forEach(t => { 
-                        let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
-                        finalHtml += `
-                        <div class="task-item" style="border-left: 4px solid #0284C7; background: ${t.done ? '#F8FAFC' : '#fff'};">
-                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
-                            <div style="width: 100%;">
-                                <div style="font-size:11px; font-weight:800; color:#0284C7; margin-bottom:6px; text-transform: uppercase; letter-spacing:0.5px;">▶ EVENT: ${t.leadName}</div>
-                                <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
-                                ${timeStr}
-                                ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
-                            </div>
-                            <div class="dropdown-container">
-                                <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
-                                <div class="dropdown-menu" id="menu-tsk-${t.id}">
-                                    <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
-                                    <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
-                                </div>
-                            </div>
-                        </div>`; 
-                    }); 
-                }
-                
-                if (generals.length > 0) { 
-                    finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 General Tasks</h4>`; 
-                    generals.forEach(t => { 
-                        let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
-                        finalHtml += `
-                        <div class="task-item" style="border-left: 4px solid #94A3B8; background: ${t.done ? '#F8FAFC' : '#fff'};">
-                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
-                            <div style="width: 100%;">
-                                <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
-                                ${timeStr}
-                                ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
-                            </div>
-                            <div class="dropdown-container">
-                                <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
-                                <div class="dropdown-menu" id="menu-tsk-${t.id}">
-                                    <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
-                                    <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
-                                </div>
-                            </div>
-                        </div>`; 
-                    }); 
-                } 
-                container.innerHTML = finalHtml;
-            }
+        window.filterSearch = function(type, term) {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                searchTerms[type] = term.toLowerCase();
+                if (type === 'crm' && typeof renderLeadsList === 'function') renderLeadsList();
+                if (type === 'events' && typeof renderEventsDashboard === 'function') renderEventsDashboard();
+                if (type === 'party' && typeof renderPartiesList === 'function') renderPartiesList();
+                if (type === 'sales' && typeof renderSalesList === 'function') renderSalesList();
+                if (type === 'purchase' && typeof renderPurchaseList === 'function') renderPurchaseList();
+                if (type === 'expense' && typeof renderExpenseList === 'function') renderExpenseList();
+                if (type === 'tasks' && typeof window.renderTasksDashboard === 'function') window.renderTasksDashboard(window.currentTaskFilter);
+            }, 300);
         };
 
-        // For backward compatibility, assign to old global names
-        window.filterSearch = window.TaskDashboard.filterSearch;
-        window.renderTasksDashboard = window.TaskDashboard.renderTasksDashboard;
+        window.renderTasksDashboard = function(filter, btnEl) {
+            if (btnEl) { 
+                window.currentTaskFilter = filter; 
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab')); 
+                btnEl.classList.add('active-sales-tab'); 
+            } else {
+                filter = window.currentTaskFilter;
+            }
+            
+            let container = document.getElementById('task-dash-container'); 
+            container.innerHTML = ""; 
+            let allTasks = [];
+            
+            Object.values(globalTasksDB).forEach(t => allTasks.push({ ...t, isGlobal: true }));
+            Object.values(leadsDB).forEach(l => { 
+                if (l.tasks) {
+                    l.tasks.forEach(t => { 
+                        allTasks.push({ id: t.id || t, type: 'Event', text: t.text, done: t.done, deadline: t.deadline, assignedTo: t.assignedTo, leadId: l.id, leadName: l.name, isGlobal: false }); 
+                    }); 
+                }
+            });
+            
+            allTasks.sort((a, b) => { 
+                let dateA = a.deadline || (a.date ? a.date + "T" + (a.time || "00:00") : "2099"); 
+                let dateB = b.deadline || (b.date ? b.date + "T" + (b.time || "00:00") : "2099"); 
+                return dateA.localeCompare(dateB); 
+            });
+            
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+            let searchTerm = (searchTerms.tasks || "").toLowerCase();
+            
+            let filteredTasks = allTasks.filter(t => { 
+                let assignedNum = t.assignedTo ? String(t.assignedTo).trim() : "";
+                // 🔒 PRIVACY LOCK: Sirf Owner ya Assigned user ko dikhega
+                if (!isOwner && assignedNum !== String(loggedInMobile).trim()) {
+                    return false;
+                }
+
+                if (filter === 'Pending' && t.done) return false; 
+                if (filter === 'Completed' && !t.done) return false; 
+                if (filter === 'Meetings' && t.type !== 'Meeting') return false; 
+                
+                if (searchTerm !== "") {
+                    let sName = (assignedNum && masterUsersDB[assignedNum]) ? masterUsersDB[assignedNum].name.toLowerCase() : "";
+                    let tText = (t.text || "").toLowerCase();
+                    let lName = (t.leadName || "").toLowerCase();
+                    
+                    if (!tText.includes(searchTerm) && !sName.includes(searchTerm) && !lName.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                return true; 
+            });
+            
+            if (filteredTasks.length === 0) { 
+                container.innerHTML = `<p style="padding:15px; font-size:13px; font-weight:500; color:var(--text-secondary); text-align:center;">No tasks found.</p>`; 
+                return; 
+            }
+            
+            let meetings = filteredTasks.filter(t => t.type === 'Meeting'); 
+            let events = filteredTasks.filter(t => t.type === 'Event'); 
+            let generals = filteredTasks.filter(t => t.type === 'General'); 
+            let finalHtml = "";
+
+            let getAssignHtml = (assignedTo, taskId, isGlobal, leadId) => {
+                if (!assignedTo) return '';
+                let staffKey = String(assignedTo).trim();
+                let sName = (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) ? masterUsersDB[staffKey].name.split(' ')[0] : 'Staff';
+                return `
+                <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+                    <span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; border:1px solid #BFDBFE;">👤 ${sName}</span>
+                    <button onclick="window.sendTaskWhatsApp('${taskId}', ${isGlobal}, '${leadId}')" style="background:#25D366; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 1px 2px rgba(37,211,102,0.3);">💬 Send</button>
+                </div>`;
+            };
+
+            if (meetings.length > 0) { 
+                finalHtml += `<h4 style="margin: 15px 0 12px 0; font-size: 13px; font-weight:800; color: var(--meet-color); text-transform: uppercase; letter-spacing: 0.5px;">🤝 Meetings & Appointments</h4>`; 
+                meetings.forEach(t => { 
+                    let leadName = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : 'Unknown'); 
+                    let dtStr = t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; 
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid var(--meet-color); flex-direction: column; align-items: stretch; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                            <div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); text-decoration: ${t.done ? 'line-through' : 'none'};">${leadName}</div>
+                                <div style="font-size: 13px; color: var(--danger); font-weight: 700; margin-top:6px;">⏰ ${dtStr} @ ${t.time || 'TBD'}</div>
+                                ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                            </div>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <div class="dropdown-container">
+                                    <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                                    <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                        <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                        <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')" style="transform: scale(1.3); margin-top:0;">
+                            </div>
+                        </div>
+                        <div style="font-size: 13px; font-weight:500; color: var(--text-secondary); background: #FFFBEB; padding: 12px; border-radius: 8px; margin-top: 12px; border: 1px solid #FEF3C7; text-decoration: ${t.done ? 'line-through' : 'none'};">
+                            <strong>Agenda:</strong> ${t.text}
+                        </div>
+                    </div>`; 
+                }); 
+            }
+            
+            if (events.length > 0) { 
+                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #0284C7; text-transform: uppercase; letter-spacing: 0.5px;">🎪 Event Specific Tasks</h4>`; 
+                events.forEach(t => { 
+                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid #0284C7; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
+                        <div style="width: 100%;">
+                            <div style="font-size:11px; font-weight:800; color:#0284C7; margin-bottom:6px; text-transform: uppercase; letter-spacing:0.5px;">▶ EVENT: ${t.leadName}</div>
+                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
+                            ${timeStr}
+                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>`; 
+                }); 
+            }
+            
+            if (generals.length > 0) { 
+                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 General Tasks</h4>`; 
+                generals.forEach(t => { 
+                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid #94A3B8; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
+                        <div style="width: 100%;">
+                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
+                            ${timeStr}
+                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>`; 
+                }); 
+            } 
+            container.innerHTML = finalHtml;
+        };
+        // ==========================================
+        // 🚀 INVENTORY ITEM LEDGER (TALLY STYLE)
+        // ==========================================
+        window.openItemLedger = function(itemName) {
+            let item = itemsDB[itemName];
+            if(!item) return alert("Item not found!");
+
+            document.getElementById('il_item_name').innerText = itemName;
+            document.getElementById('il_total_purchased').innerText = item.totalStock || 0;
+            
+            let inGodown = 0;
+            for(let g in item.godowns) { inGodown += (item.godowns[g] || 0); }
+            document.getElementById('il_in_godown').innerText = inGodown;
+            
+            let onRent = (item.totalStock || 0) - inGodown;
+            document.getElementById('il_on_rent').innerText = onRent;
+            document.getElementById('il_total_lost').innerText = item.totalLost || 0;
+
+            let tbody = document.getElementById('il_table_body');
+            tbody.innerHTML = "";
+
+            let records = [];
+
+            // 1. Direct Stock / Base Purchase 
+            records.push({
+                date: "2000-01-01", // Base starting date
+                ref: "OPENING",
+                party: "System Base Stock",
+                out: 0,
+                in: item.totalStock + (item.totalLost || 0), 
+                lost: 0,
+                isOpening: true
+            });
+
+            // 2. Scan Rental Invoices & Returns
+            Object.values(salesDB).forEach(inv => {
+                if(inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.items) {
+                    let matchedItem = inv.items.find(i => i.name === itemName);
+                    if(matchedItem) {
+                        let pName = partiesDB[inv.partyId] ? partiesDB[inv.partyId].name : 'Unknown';
+                        // Deployment (OUT)
+                        records.push({ date: inv.date, ref: inv.id, party: pName, out: matchedItem.qty, in: 0, lost: 0 });
+                        
+                        // Return (IN & LOST)
+                        if(inv.rentalStatus === 'Returned' && inv.returnLog) {
+                            let rLog = inv.returnLog.find(r => r.name === itemName);
+                            if(rLog) {
+                                records.push({ date: rLog.date, ref: "RTN-"+inv.id, party: pName, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost });
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3. Scan Outward Challans & Returns
+            Object.values(stockMovementDB).forEach(out => {
+                if(out.items) {
+                    let matchedItem = out.items.find(i => i.name === itemName);
+                    if(matchedItem) {
+                        let dest = leadsDB[out.eventId] ? leadsDB[out.eventId].func : 'Internal Event';
+                        records.push({ date: out.date, ref: out.id, party: dest, out: matchedItem.qty, in: 0, lost: 0 });
+
+                        if(out.status === 'Returned' && out.returnLog) {
+                            let rLog = out.returnLog.find(r => r.name === itemName);
+                            if(rLog) {
+                                records.push({ date: rLog.date, ref: "RTN-"+out.id, party: dest, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost });
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Sort by Date
+            records.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let runningBalance = 0;
+
+            records.forEach(r => {
+                runningBalance = runningBalance - r.out + r.in - r.lost;
+                
+                let outHtml = r.out > 0 ? `<span style="color:var(--warning); font-weight:800;">${r.out}</span>` : "-";
+                let inHtml = r.in > 0 ? `<span style="color:var(--success); font-weight:800;">${r.in}</span>` : "-";
+                let lostHtml = r.lost > 0 ? `<span style="color:var(--danger); font-weight:800;">${r.lost}</span>` : "-";
+                let dStr = r.isOpening ? "Opening" : new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
+
+                tbody.innerHTML += `
+                <tr style="border-bottom:1px solid #E2E8F0; background:white;">
+                    <td style="padding:10px;">${dStr}</td>
+                    <td style="padding:10px; font-family:monospace; color:var(--accent-color); font-weight:bold;">${r.ref}</td>
+                    <td style="padding:10px;">${r.party}</td>
+                    <td style="padding:10px; text-align:center;">${outHtml}</td>
+                    <td style="padding:10px; text-align:center;">${inHtml}</td>
+                    <td style="padding:10px; text-align:center;">${lostHtml}</td>
+                    <td style="padding:10px; text-align:center; font-weight:900; color:var(--text-primary); background:#F8FAFC;">${runningBalance}</td>
+                </tr>`;
+            });
+
+            document.getElementById('itemLedgerModal').style.display = 'flex';
+        };
+
+        // Update Inventory Click Logic
+        let originalRenderInv = window.renderInventoryHubList;
+        window.renderInventoryHubList = function() {
+            if(typeof originalRenderInv === 'function') originalRenderInv();
+            
+            // Wrap items with clickable ledger link
+            setTimeout(() => {
+                document.querySelectorAll('#inventory-list-container > div').forEach(row => {
+                    let itemNameEl = row.querySelector('div[style*="font-size:14px; font-weight:900;"]');
+                    if(itemNameEl) {
+                        let itemName = itemNameEl.innerText;
+                        row.style.cursor = 'pointer';
+                        row.setAttribute('onclick', `window.openItemLedger('${itemName}')`);
+                    }
+                });
+            }, 100);
+        };
+
+        window.printItemLedger = function() {
+            let printWin = window.open('', '_blank');
+            let html = `<html><head><title>Item Ledger</title><style>body{font-family:sans-serif; padding:20px;} table{width:100%; border-collapse:collapse; font-size:12px; margin-top:20px;} th,td{border:1px solid #ddd; padding:8px; text-align:center;} th{background:#f4f4f5;} .left{text-align:left;}</style></head><body>`;
+            html += `<h2 style="text-align:center; margin-bottom:5px;">STOCK LEDGER</h2>`;
+            html += `<h3 style="text-align:center; color:#2563EB; margin-top:0;">Item: ${document.getElementById('il_item_name').innerText}</h3>`;
+            html += `<table>` + document.querySelector('#itemLedgerModal table').innerHTML + `</table>`;
+            html += `<script>setTimeout(()=>window.print(), 500);<\/script></body></html>`;
+            if(printWin) { printWin.document.write(html); printWin.document.close(); }
+        };
     </SCRIPT>
 </body>
 
