@@ -16229,7 +16229,10 @@
 
             let transactions = []; let todayStr = new Date().toISOString().split('T')[0];
             Object.values(salesDB || {}).forEach(inv => { if (inv && inv.type === 'Invoice' && inv.invoiceType === 'Rental') transactions.push({...inv, logType: 'Rental Invoice'}); });
-            Object.values(stockMovementDB || {}).forEach(out => { if (out && out.type === 'Outward') transactions.push({...out, logType: 'Outward Challan'}); });
+            Object.values(stockMovementDB || {}).forEach(out => { 
+                if (out && out.type === 'Outward') transactions.push({...out, logType: 'Outward Challan'}); 
+                if (out && out.type === 'Transfer') transactions.push({...out, logType: 'Stock Transfer'}); 
+            });
             transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
 
             let html = ''; let visibleCount = 0; let search = document.getElementById('inv_hub_search') ? document.getElementById('inv_hub_search').value.toLowerCase() : "";
@@ -16250,13 +16253,24 @@
                 
                 let pName = (t.partyId && partiesDB[t.partyId]) ? partiesDB[t.partyId].name : (t.logType === 'Outward Challan' ? 'Internal Event Use' : 'Unknown');
                 let eventName = t.event || (t.eventId && leadsDB[t.eventId] ? leadsDB[t.eventId].func : "");
+                
+                if (t.logType === 'Stock Transfer') {
+                    let fName = warehousesDB[t.fromGodown] ? warehousesDB[t.fromGodown].name : 'Unknown';
+                    let tName = warehousesDB[t.toGodown] ? warehousesDB[t.toGodown].name : 'Unknown';
+                    pName = `${fName} ➡️ ${tName}`;
+                    eventName = "Internal Stock Transfer";
+                }
+
                 if (search && !(`${t.id} ${pName} ${eventName}`.toLowerCase().includes(search))) return;
 
                 visibleCount++; let fDate = new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                let statusBadge = isReturned ? `<span style="background:#DCFCE7; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">✅ RECEIVED</span>` : (isOverdue ? `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">🚨 OVERDUE</span>` : `<span style="background:#FFFBEB; color:#D97706; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`);
                 
-                let inwardBtnHtml = !isReturned ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
-                let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : '#8B5CF6';
+                let statusBadge = isReturned ? `<span style="background:#DCFCE7; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">✅ RECEIVED</span>` : (isOverdue ? `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">🚨 OVERDUE</span>` : `<span style="background:#FFFBEB; color:#D97706; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`);
+                if(t.logType === 'Stock Transfer') statusBadge = `<span style="background:#F0FDF4; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">🔄 TRANSFERRED</span>`;
+
+                let inwardBtnHtml = (!isReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
+                let editBtnHtml = t.logType !== 'Stock Transfer' ? `<div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>` : '';
+                let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : (t.logType === 'Stock Transfer' ? '#10B981' : '#8B5CF6');
 
                 // ROW CLICK opens PREVIEW MODAL
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 4px solid ${typeColor}; background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow-sm); box-sizing:border-box;">
@@ -16271,7 +16285,7 @@
                             <div class="dropdown-menu" id="menu-log-${t.id}">
                                 ${inwardBtnHtml}
                                 <div class="dropdown-item" onclick="window.printLogisticsDoc('${t.id}', '${t.logType}')">🖨️ Print Document</div>
-                                <div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>
+                                ${editBtnHtml}
                                 <div class="dropdown-item text-red" onclick="window.deleteLogisticsRecord('${t.id}', '${t.logType}', event)">🗑️ Delete Record</div>
                             </div>
                         </div>
@@ -17172,12 +17186,19 @@
                 if(out.items) {
                     let matchedItem = out.items.find(i => i.name === itemName);
                     if(matchedItem) {
-                        let dest = leadsDB[out.eventId] ? leadsDB[out.eventId].func : 'Internal Event';
-                        records.push({ date: out.date, ref: out.id, party: dest, out: matchedItem.qty, in: 0, lost: 0 });
-                        if(out.status === 'Returned' && out.returnLog) {
-                            let rLog = out.returnLog.find(r => r.name === itemName);
-                            if(rLog) {
-                                records.push({ date: rLog.date, ref: "RTN-"+out.id, party: dest, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost });
+                        if (out.type === 'Transfer') {
+                            let fName = warehousesDB[out.fromGodown] ? warehousesDB[out.fromGodown].name : 'Unknown';
+                            let tName = warehousesDB[out.toGodown] ? warehousesDB[out.toGodown].name : 'Unknown';
+                            // 🚀 Balance same rakhne ke liye OUT aur IN dono ek sath
+                            records.push({ date: out.date, ref: out.id, party: `Transfer: ${fName} ➡️ ${tName}`, out: matchedItem.qty, in: matchedItem.qty, lost: 0 });
+                        } else {
+                            let dest = leadsDB[out.eventId] ? leadsDB[out.eventId].func : 'Internal Event';
+                            records.push({ date: out.date, ref: out.id, party: dest, out: matchedItem.qty, in: 0, lost: 0 });
+                            if(out.status === 'Returned' && out.returnLog) {
+                                let rLog = out.returnLog.find(r => r.name === itemName);
+                                if(rLog) {
+                                    records.push({ date: rLog.date, ref: "RTN-"+out.id, party: dest, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost });
+                                }
                             }
                         }
                     }
@@ -17964,10 +17985,19 @@
             if(item.godowns[tId] === undefined) item.godowns[tId] = 0;
             item.godowns[tId] += qty;
             
+            // 🚀 CREATE TRANSFER VOUCHER
+            let trfId = "TRF" + Date.now();
+            let dateStr = new Date().toISOString().split('T')[0];
+            stockMovementDB[trfId] = { 
+                id: trfId, type: 'Transfer', fromGodown: fId, toGodown: tId, date: dateStr, 
+                items: [{ name: name, qty: qty }], status: 'Transferred', logType: 'Stock Transfer'
+            };
+
             if(typeof updateDataAndUI === 'function') updateDataAndUI();
             document.getElementById('stockTransferModal').style.display = 'none';
-            alert(`✅ ${qty} units of ${name} transferred successfully!`);
+            alert(`✅ ${qty} units of ${name} transferred successfully!\nTransfer Voucher ${trfId} generated.`);
             window.renderItemMasterList();
+            if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
         };
 
         // 3. PRINT STOCK MASTER
@@ -18050,6 +18080,80 @@
             } else { 
                 if(typeof origGenerateReport === 'function') origGenerateReport(); 
             }
+        };
+        // 🚀 TRANSFER PREVIEW & PRINT LOGIC
+        let oldOpenLogisticsPreviewModal = window.openLogisticsPreviewModal;
+        window.openLogisticsPreviewModal = function(id, logType) {
+            if (logType !== 'Stock Transfer') return oldOpenLogisticsPreviewModal(id, logType);
+            
+            closeAllMenus();
+            let record = stockMovementDB[id]; if(!record) return;
+            
+            if(!document.getElementById('logPreviewModal')) {
+                let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3>📄 Challan Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';">&times;</button></div><div id="logPreviewBody" style="font-size:13px; margin-bottom:15px; background:#F8FAFC; padding:15px; border-radius:8px; border:1px solid #E2E8F0; line-height:1.6;"></div><div id="logPreviewActions" style="display:flex; gap:10px;"></div></div></div>`;
+                document.body.insertAdjacentHTML('beforeend', mHtml);
+            }
+
+            let fName = warehousesDB[record.fromGodown] ? warehousesDB[record.fromGodown].name : 'Unknown';
+            let tName = warehousesDB[record.toGodown] ? warehousesDB[record.toGodown].name : 'Unknown';
+            
+            let bodyHtml = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Transfer ID:</b> <span style="font-family:monospace; color:var(--success); font-weight:bold;">${record.id}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>From:</b> <span style="text-align:right; color:var(--danger); font-weight:bold;">${fName} 📤</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>To:</b> <span style="text-align:right; color:var(--success); font-weight:bold;">${tName} 📥</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Date:</b> <span>${new Date(record.date).toLocaleDateString('en-IN')}</span></div>
+                <hr style="border:none; border-top:1px dashed #CBD5E1; margin:10px 0;">
+                <b style="color:var(--success);">Transferred Items:</b><br><div style="margin-top:6px;">`;
+            
+            record.items.forEach(item => { bodyHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:500;"><span>• ${item.name}</span> <b>x ${item.qty}</b></div>`; });
+            bodyHtml += `</div>`;
+
+            document.getElementById('logPreviewBody').innerHTML = bodyHtml;
+            document.getElementById('logPreviewActions').innerHTML = `<button class="btn-main" style="background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print Transfer Slip</button>`;
+            document.getElementById('logPreviewModal').style.display = 'flex';
+        };
+
+        let oldPrintLogisticsDoc = window.printLogisticsDoc;
+        window.printLogisticsDoc = function(id, logType) {
+            if (logType !== 'Stock Transfer') return oldPrintLogisticsDoc(id, logType);
+            
+            let record = stockMovementDB[id]; if(!record) return;
+            let cName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.company : "UTSAVhq ERP"; 
+            let fName = warehousesDB[record.fromGodown] ? warehousesDB[record.fromGodown].name : 'Unknown';
+            let tName = warehousesDB[record.toGodown] ? warehousesDB[record.toGodown].name : 'Unknown';
+            
+            let html = `<html><head><title>Transfer Slip - ${id}</title><style>body { font-family: sans-serif; padding: 25px; color: #0f172a; margin:0;} .box { border: 1px solid #e2e8f0; padding: 30px; border-radius: 8px; max-width: 800px; margin: auto; position:relative; } .header { text-align: center; border-bottom: 3px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; } .stamp { position: absolute; top: 120px; right: 40px; font-size: 40px; font-weight: 900; color: #166534; border: 5px solid #166534; padding: 10px 20px; border-radius: 10px; transform: rotate(-15deg); opacity: 0.15; } table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; } th { background: #f1f5f9; font-weight: 800; padding: 10px; border: 1px solid #cbd5e1; text-align: left;} td { border: 1px solid #cbd5e1; padding: 10px; } @media print { #mobile-print-btn { display:none !important; } .box {border:none; padding:0;} }</style></head><body><div class="box">`;
+            
+            html += `<div class="stamp">🔄 TRANSFERRED</div>`;
+            html += `<div class="header"><h2 style="margin:0; font-size:26px;">${cName}</h2><h3 style="margin:5px 0 0 0; color:#10B981;">STOCK TRANSFER SLIP</h3></div><div style="display:flex; justify-content:space-between; margin-bottom:20px;"><div><div style="color:#64748b; font-size:11px; font-weight:bold;">From Godown (Out):</div><div style="font-size:16px; font-weight:900; color:#dc2626;">${fName}</div><div style="color:#64748b; font-size:11px; font-weight:bold; margin-top:10px;">To Godown (In):</div><div style="font-size:16px; font-weight:900; color:#166534;">${tName}</div></div><div style="text-align:right;"><div style="font-size:16px; font-weight:900; color:#10B981;">#${record.id}</div><div style="font-size:13px; font-weight:600; color:#64748b; margin-top:4px;">Date: ${new Date(record.date).toLocaleDateString('en-IN')}</div></div></div><table><tr><th>Item Name</th><th style="text-align:center;">Quantity Transferred</th></tr>`;
+            if(record.items) { record.items.forEach(item => { html += `<tr><td><strong>${item.name}</strong></td><td style="text-align:center; font-weight:bold; font-size:16px;">${item.qty}</td></tr>`; }); }
+            html += `</table></div><script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>`;
+            
+            let printWin = window.open('', '_blank'); if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
+        };
+
+        let oldDeleteLogisticsRecord = window.deleteLogisticsRecord;
+        window.deleteLogisticsRecord = function(id, logType, e) {
+            if (logType === 'Stock Transfer') {
+                if(e) { e.stopPropagation(); closeAllMenus(); }
+                if(!confirm(`🚨 WARNING!\nAre you sure you want to delete this Transfer Entry?\nThe stock will be reversed to the original Godowns.`)) return;
+                let record = stockMovementDB[id];
+                if(record && record.items) {
+                    record.items.forEach(item => {
+                        if(itemsDB[item.name]) {
+                            if(itemsDB[item.name].godowns[record.fromGodown] !== undefined) itemsDB[item.name].godowns[record.fromGodown] += parseInt(item.qty);
+                            if(itemsDB[item.name].godowns[record.toGodown] !== undefined) itemsDB[item.name].godowns[record.toGodown] -= parseInt(item.qty);
+                        }
+                    });
+                }
+                delete stockMovementDB[id];
+                if(typeof updateDataAndUI === 'function') updateDataAndUI();
+                if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
+                if(typeof renderItemMasterList === 'function') renderItemMasterList();
+                alert("Transfer deleted & stock reverted successfully!");
+                return;
+            }
+            oldDeleteLogisticsRecord(id, logType, e);
         };
     </SCRIPT>
 </body>
