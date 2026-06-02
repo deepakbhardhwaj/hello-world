@@ -4012,7 +4012,7 @@
                 </div>
                 <input type="hidden" id="return_inv_id">
                 <input type="hidden" id="return_log_type">
-                
+                <div class="form-group"><label class="form-label" style="color:var(--accent-color);">Date of Inward (Return)</label><input type="date" id="return_date" class="form-input" required></div>
                 <div style="background:#F8FAFC; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #E2E8F0; overflow-x: auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:12px;" id="return_items_table">
                         <thead>
@@ -16272,9 +16272,10 @@
                 let editBtnHtml = t.logType !== 'Stock Transfer' ? `<div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>` : '';
                 let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : (t.logType === 'Stock Transfer' ? '#10B981' : '#8B5CF6');
 
-                // ROW CLICK opens PREVIEW MODAL
+                let clickAction = t.logType === 'Rental Invoice' ? `if(typeof viewDetails === 'function') viewDetails('${t.id}', 'sales')` : `window.openLogisticsPreviewModal('${t.id}', '${t.logType}')`;
+
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 4px solid ${typeColor}; background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow-sm); box-sizing:border-box;">
-                    <div style="flex-grow:1; cursor:pointer;" onclick="window.openLogisticsPreviewModal('${t.id}', '${t.logType}')">
+                    <div style="flex-grow:1; cursor:pointer;" onclick="${clickAction}">
                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;"><span style="font-family:monospace; font-size:12px; font-weight:800; color:#475569;">${t.id}</span><span style="font-size:10px; font-weight:600; color:#94A3B8;">• ${fDate}</span>${statusBadge}</div>
                         <div style="font-size:14px; font-weight:900; color:var(--text-primary); margin-bottom:2px;">${pName}</div>
                         <div style="font-size:11px; color:#64748B; font-weight:700;">${eventName} • <span style="color:${typeColor};">${t.logType}</span></div>
@@ -16318,13 +16319,16 @@
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Status:</b> <span style="color:${isReturned ? 'var(--success)' : 'var(--warning)'}; font-weight:bold;">${isReturned ? 'Received' : 'Deployed'}</span></div>
                 <hr style="border:none; border-top:1px dashed #CBD5E1; margin:10px 0;">
                 <b style="color:var(--purple);">Dispatched Items:</b><br><div style="margin-top:6px;">`;
-            record.items.forEach(item => { bodyHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:500;"><span>• ${item.name}</span> <b>x ${item.qty}</b></div>`; });
+            record.items.forEach(item => { 
+                let rateHtml = item.rate > 0 ? `<br><span style="font-size:10px; color:var(--text-secondary);">Rent: ₹${item.rate}/unit</span>` : '';
+                bodyHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:500;"><span>• ${item.name}${rateHtml}</span> <b style="color:var(--accent-color);">x ${item.qty}</b></div>`; 
+            });
             bodyHtml += `</div>`;
             
             document.getElementById('logPreviewBody').innerHTML = bodyHtml;
             let actionsHtml = `<button class="btn-main" style="flex:1; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print</button>
-                <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>`;
-            if(!isReturned) actionsHtml += `<button class="btn-main" style="flex:1; background:var(--success);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.openReturnStockModal('${id}', '${logType}')">📥 Inward</button>`;
+                <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>
+                <button class="btn-main" style="flex:1; background:var(--danger);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.deleteLogisticsRecord('${id}', '${logType}', event)">🗑️ Delete</button>`;
             
             document.getElementById('logPreviewActions').innerHTML = actionsHtml;
             document.getElementById('logPreviewModal').style.display = 'flex';
@@ -16744,7 +16748,7 @@
             
             let html = `<html><head><title>${logType} - ${id}</title><style>body { font-family: sans-serif; padding: 25px; color: #0f172a; margin:0;} .box { border: 1px solid #e2e8f0; padding: 30px; border-radius: 8px; max-width: 800px; margin: auto; position:relative; } .header { text-align: center; border-bottom: 3px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; } .stamp { position: absolute; top: 120px; right: 40px; font-size: 40px; font-weight: 900; color: #166534; border: 5px solid #166534; padding: 10px 20px; border-radius: 10px; transform: rotate(-15deg); opacity: 0.15; } table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; } th { background: #f1f5f9; font-weight: 800; padding: 10px; border: 1px solid #cbd5e1; text-align: left;} td { border: 1px solid #cbd5e1; padding: 10px; } @media print { #mobile-print-btn { display:none !important; } .box {border:none; padding:0;} }</style></head><body><div class="box">`;
             if((record.rentalStatus === 'Returned' || record.status === 'Returned')) { html += `<div class="stamp">✅ INWARD RECEIVED</div>`; }
-            html += `<div class="header"><h2 style="margin:0; font-size:26px;">${cName}</h2><h3 style="margin:5px 0 0 0; color:#2563eb;">${logType.toUpperCase()}</h3></div><div style="display:flex; justify-content:space-between; margin-bottom:20px;"><div><div style="color:#64748b; font-size:11px; font-weight:bold;">Dispatched To / Client</div><div style="font-size:16px; font-weight:900;">${pName}</div><div style="font-size:13px; font-weight:600; color:#475569; margin-top:4px;">Event: ${eventName}</div></div><div style="text-align:right;"><div style="font-size:16px; font-weight:900; color:#2563eb;">#${record.id}</div><div style="font-size:13px; font-weight:600; color:#64748b; margin-top:4px;">Date: ${fDate}</div>${record.vehicle ? `<div style="font-size:12px; font-weight:bold; margin-top:4px; color:#d97706;">🚚 Vehicle: ${record.vehicle}</div>` : ''}</div></div><table><tr><th>Item Name</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate (₹)</th><th style="text-align:right;">Total Amount (₹)</th></tr>`;
+            html += `<div class="header"><h2 style="margin:0; font-size:26px;">${cName}</h2><h3 style="margin:5px 0 0 0; color:#2563eb;">${logType.toUpperCase()}</h3></div><div style="display:flex; justify-content:space-between; margin-bottom:20px;"><div><div style="color:#64748b; font-size:11px; font-weight:bold;">Dispatched To / Client</div><div style="font-size:16px; font-weight:900;">${pName}</div><div style="font-size:13px; font-weight:600; color:#475569; margin-top:4px;">Event: ${eventName}</div></div><div style="text-align:right;"><div style="font-size:16px; font-weight:900; color:#2563eb;">#${record.id}</div><div style="font-size:13px; font-weight:600; color:#64748b; margin-top:4px;">Date: ${fDate}</div>${record.vehicle ? `<div style="font-size:12px; font-weight:bold; margin-top:4px; color:#d97706;">🚚 Vehicle: ${record.vehicle}</div>` : ''}</div></div><table><tr><th>Item Name</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rent/Rate (₹)</th><th style="text-align:right;">Total Amount (₹)</th></tr>`;
             if(record.items) { record.items.forEach(item => { let rate = item.rate || 0; let amt = item.amount || (item.qty * rate); html += `<tr><td><strong>${item.name}</strong></td><td style="text-align:center; font-weight:bold;">${item.qty}</td><td style="text-align:right;">${rate.toLocaleString('en-IN')}</td><td style="text-align:right; font-weight:bold;">${amt.toLocaleString('en-IN')}</td></tr>`; }); }
             html += `<tr><td colspan="3" style="text-align:right; font-weight:900; background:#f8fafc;">GRAND TOTAL VALUE:</td><td style="text-align:right; font-weight:900; background:#f8fafc; color:#dc2626;">₹${totalVal.toLocaleString('en-IN')}</td></tr></table></div><div id="mobile-print-btn" style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%); display:flex; width:90%; max-width:350px;"><button onclick="window.print()" style="width:100%; background:#2563EB; color:white; border:none; padding:16px; border-radius:12px; font-weight:900; font-size:16px; box-shadow:0 8px 20px rgba(37,99,235,0.4); cursor:pointer;">🖨️ Print PDF</button></div><script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>`;
             let printWin = window.open('', '_blank'); if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
@@ -16807,6 +16811,7 @@
             tInp.value = logType;
             
             document.getElementById('return_penalty_amt').value = 0; document.getElementById('return_penalty_note').value = ""; document.getElementById('return_asset_loss_value').value = 0; document.getElementById('return_loss_group').style.display = 'none';
+            if(document.getElementById('return_date')) document.getElementById('return_date').valueAsDate = new Date();
             let tbody = document.getElementById('return_items_body'); tbody.innerHTML = "";
             if (record.items) { 
                 record.items.forEach((item) => { 
@@ -16822,11 +16827,15 @@
         window.processSmartReturn = function() {
             let id = document.getElementById('return_inv_id').value; let logType = document.getElementById('return_log_type').value; let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
             let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0; let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty"; let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0; let error = false;
+            let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0; let error = false;
+            let retDate = document.getElementById('return_date') ? document.getElementById('return_date').value : new Date().toISOString().split('T')[0];
             document.querySelectorAll('#return_items_body tr').forEach(row => { let sent = parseInt(row.querySelector('.ret-item-sent').innerText); let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0; if((safe + lost + repair) !== sent) { alert(`Quantities must equal Sent(${sent}).`); error = true; } });
             if(error) return;
             
+            record.returnLog = [];
             document.querySelectorAll('#return_items_body tr').forEach(row => {
                 let name = row.querySelector('.ret-item-name').value; let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+                record.returnLog.push({ name: name, safe: safe, repair: repair, lost: lost, date: retDate });
                 if (itemsDB[name]) { let gId = record.godownId || 'WH_MAIN'; if (!itemsDB[name].godowns[gId]) itemsDB[name].godowns[gId] = 0; itemsDB[name].godowns[gId] += (safe + repair); if(lost > 0) { itemsDB[name].totalStock -= lost; itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; } }
             });
             
@@ -17935,9 +17944,9 @@
                             <div class="form-group"><label class="form-label">From Godown</label><select id="stf_from" class="form-select" required onchange="window.updateTransferMax()"></select></div>
                             <div class="form-group"><label class="form-label">To Godown</label><select id="stf_to" class="form-select" required></select></div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Quantity to Transfer</label>
-                            <input type="number" id="stf_qty" class="form-input" min="1" placeholder="Max: 0" required>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Quantity</label><input type="number" id="stf_qty" class="form-input" min="1" placeholder="Max: 0" required></div>
+                            <div class="form-group"><label class="form-label">Date</label><input type="date" id="stf_date" class="form-input" required></div>
                         </div>
                         <button type="submit" class="btn-main" style="background:#0F172A; margin-top:10px;">Transfer Stock</button>
                     </form>
@@ -17949,6 +17958,7 @@
             let sel = document.getElementById('stf_item'); sel.innerHTML = '<option value="">-- Select Item --</option>';
             Object.values(itemsDB).sort((a,b)=>a.name.localeCompare(b.name)).forEach(item => { sel.innerHTML += `<option value="${item.name}">${item.name}</option>`; });
             document.getElementById('stf_from').innerHTML = ''; document.getElementById('stf_to').innerHTML = ''; document.getElementById('stf_qty').value = '';
+            if(document.getElementById('stf_date')) document.getElementById('stf_date').valueAsDate = new Date();
             document.getElementById('stockTransferModal').style.display = 'flex';
         };
 
@@ -17975,7 +17985,8 @@
         window.saveStockTransfer = function() {
             let name = document.getElementById('stf_item').value; let fId = document.getElementById('stf_from').value; let tId = document.getElementById('stf_to').value;
             let qty = parseInt(document.getElementById('stf_qty').value);
-            if(!name || !fId || !tId || !qty) return alert("Fill all fields!");
+            let tDate = document.getElementById('stf_date') ? document.getElementById('stf_date').value : new Date().toISOString().split('T')[0];
+            if(!name || !fId || !tId || !qty || !tDate) return alert("Fill all fields!");
             if(fId === tId) return alert("Source and Destination Godown cannot be same!");
             
             let item = itemsDB[name];
@@ -17985,12 +17996,12 @@
             if(item.godowns[tId] === undefined) item.godowns[tId] = 0;
             item.godowns[tId] += qty;
             
-            // 🚀 CREATE TRANSFER VOUCHER
-            let trfId = "TRF" + Date.now();
-            let dateStr = new Date().toISOString().split('T')[0];
+            let counter = 1; let trfId = "TRF-1";
+            while(stockMovementDB[trfId]) { counter++; trfId = "TRF-" + counter; }
+            
             stockMovementDB[trfId] = { 
-                id: trfId, type: 'Transfer', fromGodown: fId, toGodown: tId, date: dateStr, 
-                items: [{ name: name, qty: qty }], status: 'Transferred', logType: 'Stock Transfer'
+                id: trfId, type: 'Transfer', fromGodown: fId, toGodown: tId, date: tDate, 
+                items: [{ name: name, qty: qty }], status: 'Transferred', logType: 'Stock Transfer' 
             };
 
             if(typeof updateDataAndUI === 'function') updateDataAndUI();
