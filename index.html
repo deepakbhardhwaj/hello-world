@@ -7813,10 +7813,10 @@
                 if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
                 if (currentFilter === 'Lost' && lead.status !== 'Lost') show = false;
 
-                // 🚀 SMART FIX: String conversion for Mobile Number matching
+                // 👉 PEHLA CODE: Search Box Logic (Yahan lagega)
                 let searchTerm = (searchTerms.crm || "").toLowerCase();
                 if (searchTerm !== "") {
-                    let staffKey = lead.assignedTo ? String(lead.assignedTo) : "";
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
                     let staffNameForSearch = (staffKey && masterUsersDB[staffKey]) ? masterUsersDB[staffKey].name.toLowerCase() : "";
                     let leadNameForSearch = (lead.name || "").toLowerCase();
                     let catForSearch = (lead.cat || "").toLowerCase();
@@ -7830,6 +7830,7 @@
                     }
                 }
 
+                // Agar lead show karni hai, toh uske andar ka UI yahan banega
                 if (show) {
                     let badgeClass = "badge-new";
                     if (lead.status === "Hot") badgeClass = "badge-hot";
@@ -7837,9 +7838,9 @@
                     else if (lead.status === "Meeting Scheduled" || lead.status === "Meeting Completed") badgeClass = "badge-meet";
                     else if (lead.status === "Lost") badgeClass = "badge-lost";
 
-                    // 🚀 FIXED: Staff Name instead of Mobile
+                    // 👉 DUSRA CODE: UI Name Tag Logic (Yahan lagega)
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
                     let staffName = "Unassigned";
-                    let staffKey = lead.assignedTo ? String(lead.assignedTo) : "";
                     if (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
                         staffName = masterUsersDB[staffKey].name.split(' ')[0]; // Sirf First Name
                     } else if (staffKey) {
@@ -7848,6 +7849,7 @@
                     let assignedTag = staffKey ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
 
                     let div = document.createElement('div');
+            // ...iske aage aapka div.innerHTML wala purana code waise hi rahega...
                     div.className = "list-row";
                     div.id = `row-${lead.id}`;
                     div.innerHTML = `
@@ -8310,11 +8312,17 @@
         function addEventTask() { 
             let input = document.getElementById('ws_new_task'); 
             let deadlineInput = document.getElementById('ws_task_deadline'); 
-            let assigneeInput = document.getElementById('ws_task_assignee'); // 🚀 Naya Dropdown input
+            let assigneeInput = document.getElementById('ws_task_assignee'); 
             
             let text = input.value; 
             let deadline = deadlineInput.value; 
             let assignedTo = assigneeInput ? assigneeInput.value : "";
+            
+            // 🔒 AUTO-ASSIGN TO SELF IF NOT OWNER AND LEFT BLANK
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+            if (!assignedTo && !isOwner) {
+                assignedTo = loggedInMobile;
+            }
             
             if (!text || !activeWorkspaceEventId) return; 
             
@@ -8323,7 +8331,7 @@
                 text: text, 
                 done: false, 
                 deadline: deadline,
-                assignedTo: assignedTo // 🚀 Yahan save ho raha hai
+                assignedTo: assignedTo // 🚀 Yahan proper user save hoga
             }); 
             
             input.value = ""; 
@@ -8657,7 +8665,34 @@
             document.getElementById('quickTaskModal').style.display = 'flex'; 
         }
         function toggleTaskLeadSelect() { let type = document.getElementById('qt_type').value; document.getElementById('qt_lead_group').style.display = type === 'Event' ? 'block' : 'none'; if (type === 'Event') loadEventsIntoSelect('qt_lead', ""); }
-        function saveQuickTask() { let type = document.getElementById('qt_type').value; let text = document.getElementById('qt_text').value; let deadline = document.getElementById('qt_deadline').value; let assignedTo = document.getElementById('qt_assign_to').value; if (!text) return alert("Task description required!"); let tId = "TSK" + Date.now(); if (type === 'Event') { let lId = document.getElementById('qt_lead').value; if (!lId) return alert("Select an Event!"); leadsDB[lId].tasks.push({ id: tId, text: text, done: false, deadline: deadline, assignedTo: assignedTo }); } else { globalTasksDB[tId] = { id: tId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: new Date().toISOString().split('T')[0] }; } updateDataAndUI(); document.getElementById('quickTaskModal').style.display = 'none'; alert("Task Added!"); }
+        window.saveQuickTask = function() { 
+            let type = document.getElementById('qt_type').value; 
+            let text = document.getElementById('qt_text').value; 
+            let deadline = document.getElementById('qt_deadline').value; 
+            let assignedTo = document.getElementById('qt_assign_to').value; 
+
+            // 🔒 AUTO-ASSIGN TO SELF IF NOT OWNER AND LEFT BLANK
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+            if (!assignedTo && !isOwner) {
+                assignedTo = loggedInMobile;
+            }
+
+            if (!text) return alert("Task description required!"); 
+            
+            let tId = "TSK" + Date.now(); 
+            
+            if (type === 'Event') { 
+                let lId = document.getElementById('qt_lead').value; 
+                if (!lId) return alert("Select an Event!"); 
+                leadsDB[lId].tasks.push({ id: tId, text: text, done: false, deadline: deadline, assignedTo: assignedTo }); 
+            } else { 
+                globalTasksDB[tId] = { id: tId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: new Date().toISOString().split('T')[0] }; 
+            } 
+            
+            updateDataAndUI(); 
+            document.getElementById('quickTaskModal').style.display = 'none'; 
+            alert("Task Added!"); 
+        };
 
         function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); document.getElementById('quickMeetingModal').style.display = 'flex'; }
         function saveQuickMeeting() { let personName = document.getElementById('qm_person_name').value; let date = document.getElementById('qm_date').value; let time = document.getElementById('qm_time').value; let agenda = document.getElementById('qm_agenda').value; if (!personName || !date || !time) return alert("Name, Date, and Time required!"); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!"); }
@@ -8667,162 +8702,6 @@
         function toggleTaskStatus(taskId, isGlobal, leadId) { if (isGlobal) { let t = globalTasksDB[taskId]; t.done = !t.done; if (t.done && t.type === 'Meeting' && t.leadId && leadsDB[t.leadId] && leadsDB[t.leadId].status !== 'Won' && leadsDB[t.leadId].status !== 'Lost') { leadsDB[t.leadId].status = "Meeting Completed"; leadsDB[t.leadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting completed from Tasks Hub." }); } } else { let task = leadsDB[leadId].tasks.find(x => (x.id || x) === taskId); if (task) task.done = !task.done; } updateDataAndUI(); }
         function editTaskItem(id, isGlobal, leadId) { let task = isGlobal ? globalTasksDB[id] : leadsDB[leadId].tasks.find(t => (t.id || t) === id); if (task) { let newText = prompt("Edit Task:", task.text); if (newText && newText.trim() !== "") { task.text = newText; updateDataAndUI(); } } }
         function deleteTaskItem(id, isGlobal, leadId) { if (!confirm("Delete this task?")) return; if (isGlobal) { delete globalTasksDB[id]; } else { leadsDB[leadId].tasks = leadsDB[leadId].tasks.filter(t => (t.id || t) !== id); } updateDataAndUI(); }
-
-        function renderTasksDashboard(filter, btnEl) {
-            if (btnEl) { 
-                currentTaskFilter = filter; 
-                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab')); 
-                btnEl.classList.add('active-sales-tab'); 
-            }
-            
-            let container = document.getElementById('task-dash-container'); 
-            container.innerHTML = ""; 
-            let allTasks = [];
-            
-            Object.values(globalTasksDB).forEach(t => allTasks.push({ ...t, isGlobal: true }));
-            
-            Object.values(leadsDB).forEach(l => { 
-                if (l.tasks) {
-                    l.tasks.forEach(t => { 
-                        let tid = t.id || t; 
-                        allTasks.push({ id: tid, type: 'Event', text: t.text, done: t.done, deadline: t.deadline, assignedTo: t.assignedTo, leadId: l.id, leadName: l.name, isGlobal: false }); 
-                    }); 
-                }
-            });
-            
-            allTasks.sort((a, b) => { 
-                let dateA = a.deadline || (a.date ? a.date + "T" + (a.time || "00:00") : "2099"); 
-                let dateB = b.deadline || (b.date ? b.date + "T" + (b.time || "00:00") : "2099"); 
-                return dateA.localeCompare(dateB); 
-            });
-            
-            // 🚀 SMART FIX: Tasks Search Logic with String Key
-            let searchTerm = (searchTerms.tasks || "").toLowerCase();
-            
-            let filteredTasks = allTasks.filter(t => { 
-                if (filter === 'Pending' && t.done) return false; 
-                if (filter === 'Completed' && !t.done) return false; 
-                if (filter === 'Meetings' && t.type !== 'Meeting') return false; 
-                
-                if (searchTerm !== "") {
-                    let staffKey = t.assignedTo ? String(t.assignedTo) : "";
-                    let sName = (staffKey && masterUsersDB[staffKey]) ? masterUsersDB[staffKey].name.toLowerCase() : "";
-                    let tText = (t.text || "").toLowerCase();
-                    let lName = (t.leadName || "").toLowerCase();
-                    
-                    if (!tText.includes(searchTerm) && !sName.includes(searchTerm) && !lName.includes(searchTerm)) {
-                        return false;
-                    }
-                }
-                return true; 
-            });
-            
-            if (filteredTasks.length === 0) { 
-                container.innerHTML = `<p style="padding:15px; font-size:13px; font-weight:500; color:var(--text-secondary); text-align:center;">No tasks found.</p>`; 
-                return; 
-            }
-            
-            let meetings = filteredTasks.filter(t => t.type === 'Meeting'); 
-            let events = filteredTasks.filter(t => t.type === 'Event'); 
-            let generals = filteredTasks.filter(t => t.type === 'General'); 
-            let finalHtml = "";
-
-            // 🚀 FIXED: Task List mein Staff ka Name dikhega number nahi
-            let getAssignHtml = (assignedTo, taskId, isGlobal, leadId) => {
-                if (!assignedTo) return '';
-                let staffKey = String(assignedTo);
-                let sName = (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) ? masterUsersDB[staffKey].name.split(' ')[0] : 'Staff';
-                return `
-                <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
-                    <span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; border:1px solid #BFDBFE;">👤 ${sName}</span>
-                    <button onclick="window.sendTaskWhatsApp('${taskId}', ${isGlobal}, '${leadId}')" style="background:#25D366; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 1px 2px rgba(37,211,102,0.3);">💬 Send</button>
-                </div>`;
-            };
-
-            if (meetings.length > 0) { 
-                finalHtml += `<h4 style="margin: 15px 0 12px 0; font-size: 13px; font-weight:800; color: var(--meet-color); text-transform: uppercase; letter-spacing: 0.5px;">🤝 Meetings & Appointments</h4>`; 
-                meetings.forEach(t => { 
-                    let leadName = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : 'Unknown'); 
-                    let dtStr = t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; 
-                    
-                    finalHtml += `
-                    <div class="task-item" style="border-left: 4px solid var(--meet-color); flex-direction: column; align-items: stretch; background: ${t.done ? '#F8FAFC' : '#fff'};">
-                        <div style="display:flex; justify-content: space-between; align-items:flex-start;">
-                            <div>
-                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); text-decoration: ${t.done ? 'line-through' : 'none'};">${leadName}</div>
-                                <div style="font-size: 13px; color: var(--danger); font-weight: 700; margin-top:6px;">⏰ ${dtStr} @ ${t.time || 'TBD'}</div>
-                                ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
-                            </div>
-                            <div style="display:flex; gap:12px; align-items:center;">
-                                <div class="dropdown-container">
-                                    <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
-                                    <div class="dropdown-menu" id="menu-tsk-${t.id}">
-                                        <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
-                                        <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
-                                    </div>
-                                </div>
-                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')" style="transform: scale(1.3); margin-top:0;">
-                            </div>
-                        </div>
-                        <div style="font-size: 13px; font-weight:500; color: var(--text-secondary); background: #FFFBEB; padding: 12px; border-radius: 8px; margin-top: 12px; border: 1px solid #FEF3C7; text-decoration: ${t.done ? 'line-through' : 'none'};">
-                            <strong>Agenda:</strong> ${t.text}
-                        </div>
-                    </div>`; 
-                }); 
-            }
-            
-            if (events.length > 0) { 
-                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #0284C7; text-transform: uppercase; letter-spacing: 0.5px;">🎪 Event Specific Tasks</h4>`; 
-                events.forEach(t => { 
-                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
-                    
-                    finalHtml += `
-                    <div class="task-item" style="border-left: 4px solid #0284C7; background: ${t.done ? '#F8FAFC' : '#fff'};">
-                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
-                        <div style="width: 100%;">
-                            <div style="font-size:11px; font-weight:800; color:#0284C7; margin-bottom:6px; text-transform: uppercase; letter-spacing:0.5px;">▶ EVENT: ${t.leadName}</div>
-                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
-                            ${timeStr}
-                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
-                        </div>
-                        <div class="dropdown-container">
-                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
-                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
-                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
-                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
-                            </div>
-                        </div>
-                    </div>`; 
-                }); 
-            }
-            
-            if (generals.length > 0) { 
-                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 General Work</h4>`; 
-                generals.forEach(t => { 
-                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
-                    
-                    finalHtml += `
-                    <div class="task-item" style="border-left: 4px solid #94A3B8; background: ${t.done ? '#F8FAFC' : '#fff'};">
-                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
-                        <div>
-                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
-                            ${timeStr}
-                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
-                        </div>
-                        <div style="flex:1;"></div>
-                        <div class="dropdown-container">
-                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
-                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
-                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
-                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
-                            </div>
-                        </div>
-                    </div>`; 
-                }); 
-            } 
-            
-            container.innerHTML = finalHtml;
-        }
 
         function renderCalendar() {
             let year = currentCalDate.getFullYear(); let month = currentCalDate.getMonth(); let firstDay = new Date(year, month, 1).getDay(); let daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -15909,6 +15788,10 @@
             let menu = document.getElementById('fab-menu');
             let activeTab = document.querySelector('.active-section');
             
+            // 🚀 BACKUP CHECK: Bottom navigation button ka status track karne ke liye
+            let isTasksTabActive = (activeTab && activeTab.id === 'tasks') || 
+                                   (document.getElementById('btn-tasks') && document.getElementById('btn-tasks').classList.contains('active-btn'));
+
             if (menu.style.display === 'none' || menu.style.display === '') {
                 fab.classList.add('menu-open'); menu.style.display = 'flex';
                 if (activeTab && activeTab.id === 'inventory-hub') {
@@ -15918,7 +15801,7 @@
                         <div class="fab-menu-item" style="color:var(--purple);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openDirectStockModal();">➕ Add Stock</div>
                         <div class="fab-menu-item" style="color:var(--warning);" onclick="document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open'); window.openStockAuditModal();">⚖️ Audit Stock</div>
                     `;
-                } else if (activeTab && activeTab.id === 'tasks') {
+                } else if (isTasksTabActive) { // 🚀 FIXED: Ab dono me se ek bhi condition true hui toh strictly Task Menu hi khulega
                     menu.innerHTML = `
                         <div class="fab-menu-item" onclick="if(typeof openQuickTaskModal === 'function') openQuickTaskModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">📝 New Task</div>
                         <div class="fab-menu-item" onclick="if(typeof openQuickMeetingModal === 'function') openQuickMeetingModal(); document.getElementById('fab-menu').style.display='none'; document.getElementById('main-fab').classList.remove('menu-open');">🤝 Schedule Meeting</div>
@@ -16921,6 +16804,178 @@
             let waMsg = `Hello ${staffName},\n\nYou have a new task assigned:\n\n📝 *Task:* ${task.text}${leadNameStr}${deadlineStr}${dateStr}\n\nPlease update the system once completed.`;
 
             window.open('https://wa.me/91' + staffPhone + '?text=' + encodeURIComponent(waMsg), '_blank');
+        };
+        // 🚀 FIXED: REAL-TIME SEARCH ENGINE
+        window.currentTaskFilter = 'Pending'; // Global state for task filter
+
+        let searchDebounceTimer;
+        window.filterSearch = function(type, term) {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                searchTerms[type] = term.toLowerCase();
+                if (type === 'crm' && typeof renderLeadsList === 'function') renderLeadsList();
+                if (type === 'events' && typeof renderEventsDashboard === 'function') renderEventsDashboard();
+                if (type === 'party' && typeof renderPartiesList === 'function') renderPartiesList();
+                if (type === 'sales' && typeof renderSalesList === 'function') renderSalesList();
+                if (type === 'purchase' && typeof renderPurchaseList === 'function') renderPurchaseList();
+                if (type === 'expense' && typeof renderExpenseList === 'function') renderExpenseList();
+                if (type === 'tasks' && typeof renderTasksDashboard === 'function') renderTasksDashboard(window.currentTaskFilter);
+            }, 300); // 👈 300ms for instant search feel
+        };
+        // 🚀 FIXED: TASK DASHBOARD (Privacy, Instant Search & Separated Categories)
+        window.renderTasksDashboard = function(filter, btnEl) {
+            if (btnEl) { 
+                window.currentTaskFilter = filter; 
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab')); 
+                btnEl.classList.add('active-sales-tab'); 
+            } else {
+                filter = window.currentTaskFilter;
+            }
+            
+            let container = document.getElementById('task-dash-container'); 
+            container.innerHTML = ""; 
+            let allTasks = [];
+            
+            Object.values(globalTasksDB).forEach(t => allTasks.push({ ...t, isGlobal: true }));
+            Object.values(leadsDB).forEach(l => { 
+                if (l.tasks) {
+                    l.tasks.forEach(t => { 
+                        allTasks.push({ id: t.id || t, type: 'Event', text: t.text, done: t.done, deadline: t.deadline, assignedTo: t.assignedTo, leadId: l.id, leadName: l.name, isGlobal: false }); 
+                    }); 
+                }
+            });
+            
+            allTasks.sort((a, b) => { 
+                let dateA = a.deadline || (a.date ? a.date + "T" + (a.time || "00:00") : "2099"); 
+                let dateB = b.deadline || (b.date ? b.date + "T" + (b.time || "00:00") : "2099"); 
+                return dateA.localeCompare(dateB); 
+            });
+            
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+            let searchTerm = (searchTerms.tasks || "").toLowerCase();
+            
+            let filteredTasks = allTasks.filter(t => { 
+                // 🔒 PRIVACY LOCK: Sirf Owner ya Assigned user ko dikhega
+                let assignedNum = t.assignedTo ? String(t.assignedTo).trim() : "";
+                if (!isOwner && assignedNum !== String(loggedInMobile).trim()) {
+                    return false;
+                }
+
+                if (filter === 'Pending' && t.done) return false; 
+                if (filter === 'Completed' && !t.done) return false; 
+                if (filter === 'Meetings' && t.type !== 'Meeting') return false; 
+                
+                if (searchTerm !== "") {
+                    let sName = (assignedNum && masterUsersDB[assignedNum]) ? masterUsersDB[assignedNum].name.toLowerCase() : "";
+                    let tText = (t.text || "").toLowerCase();
+                    let lName = (t.leadName || "").toLowerCase();
+                    
+                    if (!tText.includes(searchTerm) && !sName.includes(searchTerm) && !lName.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                return true; 
+            });
+            
+            if (filteredTasks.length === 0) { 
+                container.innerHTML = `<p style="padding:15px; font-size:13px; font-weight:500; color:var(--text-secondary); text-align:center;">No tasks found.</p>`; 
+                return; 
+            }
+            
+            let meetings = filteredTasks.filter(t => t.type === 'Meeting'); 
+            let events = filteredTasks.filter(t => t.type === 'Event'); 
+            let generals = filteredTasks.filter(t => t.type === 'General'); 
+            let finalHtml = "";
+
+            let getAssignHtml = (assignedTo, taskId, isGlobal, leadId) => {
+                if (!assignedTo) return '';
+                let staffKey = String(assignedTo).trim();
+                let sName = (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) ? masterUsersDB[staffKey].name.split(' ')[0] : 'Staff';
+                return `
+                <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+                    <span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; border:1px solid #BFDBFE;">👤 ${sName}</span>
+                    <button onclick="window.sendTaskWhatsApp('${taskId}', ${isGlobal}, '${leadId}')" style="background:#25D366; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 1px 2px rgba(37,211,102,0.3);">💬 Send</button>
+                </div>`;
+            };
+
+            if (meetings.length > 0) { 
+                finalHtml += `<h4 style="margin: 15px 0 12px 0; font-size: 13px; font-weight:800; color: var(--meet-color); text-transform: uppercase; letter-spacing: 0.5px;">🤝 Meetings & Appointments</h4>`; 
+                meetings.forEach(t => { 
+                    let leadName = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : 'Unknown'); 
+                    let dtStr = t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; 
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid var(--meet-color); flex-direction: column; align-items: stretch; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                            <div>
+                                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); text-decoration: ${t.done ? 'line-through' : 'none'};">${leadName}</div>
+                                <div style="font-size: 13px; color: var(--danger); font-weight: 700; margin-top:6px;">⏰ ${dtStr} @ ${t.time || 'TBD'}</div>
+                                ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                            </div>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <div class="dropdown-container">
+                                    <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                                    <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                        <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                        <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                                    </div>
+                                </div>
+                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')" style="transform: scale(1.3); margin-top:0;">
+                            </div>
+                        </div>
+                        <div style="font-size: 13px; font-weight:500; color: var(--text-secondary); background: #FFFBEB; padding: 12px; border-radius: 8px; margin-top: 12px; border: 1px solid #FEF3C7; text-decoration: ${t.done ? 'line-through' : 'none'};">
+                            <strong>Agenda:</strong> ${t.text}
+                        </div>
+                    </div>`; 
+                }); 
+            }
+            
+            if (events.length > 0) { 
+                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #0284C7; text-transform: uppercase; letter-spacing: 0.5px;">🎪 Event Specific Tasks</h4>`; 
+                events.forEach(t => { 
+                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid #0284C7; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
+                        <div style="width: 100%;">
+                            <div style="font-size:11px; font-weight:800; color:#0284C7; margin-bottom:6px; text-transform: uppercase; letter-spacing:0.5px;">▶ EVENT: ${t.leadName}</div>
+                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
+                            ${timeStr}
+                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>`; 
+                }); 
+            }
+            
+            if (generals.length > 0) { 
+                finalHtml += `<h4 style="margin: 24px 0 12px 0; font-size: 13px; font-weight:800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 General Tasks</h4>`; 
+                generals.forEach(t => { 
+                    let timeStr = t.deadline ? `<span style="font-size:11px; font-weight:700; color:var(--danger); display:block; margin-top:6px;">⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ""; 
+                    finalHtml += `
+                    <div class="task-item" style="border-left: 4px solid #94A3B8; background: ${t.done ? '#F8FAFC' : '#fff'};">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', ${t.isGlobal}, '${t.leadId}')">
+                        <div style="width: 100%;">
+                            <div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>
+                            ${timeStr}
+                            ${getAssignHtml(t.assignedTo, t.id, t.isGlobal, t.leadId)}
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-icon" onclick="toggleMenu('tsk-${t.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-tsk-${t.id}">
+                                <div class="dropdown-item" onclick="editTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">✏️ Edit</div>
+                                <div class="dropdown-item text-red" onclick="deleteTaskItem('${t.id}', ${t.isGlobal}, '${t.leadId}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>`; 
+                }); 
+            } 
+            container.innerHTML = finalHtml;
         };
     </SCRIPT>
 </body>
