@@ -7805,7 +7805,22 @@
                 if (currentFilter === 'New' && lead.status !== 'New') show = false;
                 if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
                 if (currentFilter === 'Lost' && lead.status !== 'Lost') show = false;
-                if (!lead.name.toLowerCase().includes(searchTerms.crm)) show = false;
+
+                // 🚀 SMART FIX: Puraana search ab Staff ka naam bhi dhoondhega
+                let searchTerm = (searchTerms.crm || "").toLowerCase();
+                if (searchTerm !== "") {
+                    let staffNameForSearch = (lead.assignedTo && masterUsersDB[lead.assignedTo]) ? masterUsersDB[lead.assignedTo].name.toLowerCase() : "";
+                    let leadNameForSearch = (lead.name || "").toLowerCase();
+                    let catForSearch = (lead.cat || "").toLowerCase();
+                    let phoneForSearch = String(lead.phone || "").toLowerCase();
+
+                    if (!leadNameForSearch.includes(searchTerm) && 
+                        !staffNameForSearch.includes(searchTerm) && 
+                        !catForSearch.includes(searchTerm) &&
+                        !phoneForSearch.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
 
                 if (show) {
                     let badgeClass = "badge-new";
@@ -8210,9 +8225,9 @@
                     </div>
                 </div>
                 <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4><div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">✅ Event Tasks</h4><div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);"><div id="ws_tasks_list"></div><div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"><input type="text" id="ws_new_task" class="form-input" style="padding:10px 12px; font-size:13px;" placeholder="New task..."><div style="display:flex; gap:8px;"><input type="datetime-local" id="ws_task_deadline" class="form-input" style="padding:10px 12px; font-size:13px; flex:1;"><button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:0 20px; cursor:pointer; font-weight:700;">Add</button></div></div></div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">✅ Event Tasks</h4><div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);"><div id="ws_tasks_list"></div><div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"><input type="text" id="ws_new_task" class="form-input" style="padding:10px 12px; font-size:13px;" placeholder="What needs to be done?"><div style="display:flex; gap:8px;"><select id="ws_task_assignee" class="form-select" style="flex:1; padding:8px 10px; font-size:12px;">${getStaffOptions("")}</select><input type="datetime-local" id="ws_task_deadline" class="form-input" style="padding:8px 10px; font-size:12px; flex:1;"></div><button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button></div></div>
                 <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Reference Media</h4><div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);"><label class="upload-btn" style="padding:12px;">+ Upload Photos<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label><div class="thumb-grid" id="p_thumbnails"></div></div>
-            `;
+                `;
 
             let wsFooterHtml = `<button class="btn-main" style="background:var(${ev.eventStatus === 'Completed' ? '--text-secondary' : '--success'}); display:flex; justify-content:center; align-items:center; gap:8px;" onclick="openFeedbackModal('${ev.id}')">${ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback'}</button>`;
 
@@ -8283,7 +8298,32 @@
             closePanel(); 
         }
         function renderEventTasks(ev) { let tCont = document.getElementById('ws_tasks_list'); tCont.innerHTML = ""; if (!ev.tasks) ev.tasks = []; if (ev.tasks.length === 0) { tCont.innerHTML = "<p style='font-size:12px; font-weight:500; color:#94A3B8; margin:0;'>No tasks pending.</p>"; } ev.tasks.forEach((t, idx) => { let dlHtml = ""; if (t.deadline) { let dt = new Date(t.deadline); let formattedDl = dt.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); let start = dt.toISOString().replace(/-|:|\.\d\d\d/g, ""); let endDt = new Date(dt.getTime() + 60 * 60 * 1000); let end = endDt.toISOString().replace(/-|:|\.\d\d\d/g, ""); let calLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.text)}&dates=${start}/${end}`; dlHtml = `<div style="font-size:10px; font-weight:700; color:var(--danger); margin-top:6px; display:flex; align-items:center; gap:5px;">⏰ Due: ${formattedDl} <a href="${calLink}" target="_blank" style="color:var(--accent-color); text-decoration:none;">📅 Cal</a></div>`; } tCont.innerHTML += `<div class="task-item" style="align-items:flex-start;"><input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleEventTask(${idx})" style="margin-top:2px;"><div style="flex:1;"><div class="task-text ${t.done ? 'task-done' : ''}">${t.text}</div>${dlHtml}</div><button onclick="deleteEventTask(${idx})" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px;">&times;</button></div>`; }); }
-        function addEventTask() { let input = document.getElementById('ws_new_task'); let deadlineInput = document.getElementById('ws_task_deadline'); let text = input.value; let deadline = deadlineInput.value; if (!text || !activeWorkspaceEventId) return; leadsDB[activeWorkspaceEventId].tasks.push({ id: "TSK" + Date.now(), text: text, done: false, deadline: deadline }); input.value = ""; deadlineInput.value = ""; saveDataLocally(); renderEventTasks(leadsDB[activeWorkspaceEventId]); }
+        function addEventTask() { 
+            let input = document.getElementById('ws_new_task'); 
+            let deadlineInput = document.getElementById('ws_task_deadline'); 
+            let assigneeInput = document.getElementById('ws_task_assignee'); // 🚀 Naya Dropdown input
+            
+            let text = input.value; 
+            let deadline = deadlineInput.value; 
+            let assignedTo = assigneeInput ? assigneeInput.value : "";
+            
+            if (!text || !activeWorkspaceEventId) return; 
+            
+            leadsDB[activeWorkspaceEventId].tasks.push({ 
+                id: "TSK" + Date.now(), 
+                text: text, 
+                done: false, 
+                deadline: deadline,
+                assignedTo: assignedTo // 🚀 Yahan save ho raha hai
+            }); 
+            
+            input.value = ""; 
+            deadlineInput.value = ""; 
+            if(assigneeInput) assigneeInput.value = ""; 
+            
+            saveDataLocally(); 
+            renderEventTasks(leadsDB[activeWorkspaceEventId]); 
+        }
         function toggleEventTask(idx) { leadsDB[activeWorkspaceEventId].tasks[idx].done = !leadsDB[activeWorkspaceEventId].tasks[idx].done; saveDataLocally(); renderEventTasks(leadsDB[activeWorkspaceEventId]); }
         function deleteEventTask(idx) { leadsDB[activeWorkspaceEventId].tasks.splice(idx, 1); saveDataLocally(); renderEventTasks(leadsDB[activeWorkspaceEventId]); }
 
