@@ -17527,6 +17527,278 @@
             window.renderItemMasterList();
             alert("✅ Item Details Saved successfully!");
         };
+        // ==============================================================
+        // 🚀 MASTER SURGICAL FIX: UI OVERHAUL & INVENTORY AUTO-SYNC
+        // ==============================================================
+
+        // 🎨 1. CSS FIXES FOR DUAL BUTTONS & MODAL SCROLLING
+        let smartCSS = document.createElement('style');
+        smartCSS.innerHTML = `
+            /* Dual Floating Buttons Container */
+            .dual-fab-container {
+                position: fixed;
+                bottom: 25px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 10px;
+                z-index: 5000;
+                width: 90%;
+                max-width: 380px;
+            }
+            .dual-fab-btn {
+                flex: 1;
+                padding: 12px 10px;
+                border-radius: 30px;
+                color: white;
+                font-size: 13px;
+                font-weight: 900;
+                border: none;
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                white-space: nowrap;
+                transition: transform 0.2s;
+            }
+            .dual-fab-btn:active {
+                transform: scale(0.95);
+            }
+            
+            /* Item Ledger Modal UI Fix (Capture_4.PNG Fix) */
+            #itemLedgerModal .modal-header {
+                padding: 15px !important;
+            }
+            #itemLedgerModal h3#il_item_name {
+                font-size: 16px !important;
+                line-height: 1.2 !important;
+                margin-bottom: 2px !important;
+            }
+            #itemLedgerModal .modal-header > div:nth-child(2) {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 8px !important;
+                margin-top: 12px !important;
+            }
+            #itemLedgerModal .modal-header > div:nth-child(2) > div {
+                padding: 8px !important;
+            }
+            #itemLedgerModal .modal-header > div:nth-child(2) > div > div:first-child {
+                font-size: 9px !important;
+            }
+            #itemLedgerModal .modal-header > div:nth-child(2) > div > div:last-child {
+                font-size: 14px !important;
+            }
+            #itemLedgerModal > .modal-content {
+                display: flex;
+                flex-direction: column;
+                max-height: 85vh;
+            }
+            #itemLedgerModal > .modal-content > div:nth-child(2) {
+                flex: 1;
+                overflow-y: auto !important;
+            }
+        `;
+        document.head.appendChild(smartCSS);
+
+        // 🚀 2. CREATE DUAL BUTTONS DYNAMICALLY IN DOM
+        if (!document.getElementById('inv_dual_fabs')) {
+            let dualFabs = document.createElement('div');
+            dualFabs.id = 'inv_dual_fabs';
+            dualFabs.className = 'dual-fab-container';
+            dualFabs.style.display = 'none';
+            dualFabs.innerHTML = `
+                <button id="inv_btn_1" class="dual-fab-btn"></button>
+                <button id="inv_btn_2" class="dual-fab-btn"></button>
+            `;
+            document.body.appendChild(dualFabs);
+        }
+
+        // Hide the old single pill
+        if(document.getElementById('inv_dynamic_pill')) {
+            document.getElementById('inv_dynamic_pill').style.display = 'none';
+        }
+
+        // 🚀 3. UPDATE INVENTORY NAVIGATION TO USE DUAL BUTTONS
+        let oldOpenInvView = window.openInvView;
+        window.openInvView = function(view, title) {
+            oldOpenInvView(view, title); // Run old setup
+            
+            // Hide single pill again just in case
+            if(document.getElementById('inv_dynamic_pill')) document.getElementById('inv_dynamic_pill').style.setProperty('display', 'none', 'important');
+            
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            if (dualFabs) {
+                dualFabs.style.display = 'flex';
+                let btn1 = document.getElementById('inv_btn_1');
+                let btn2 = document.getElementById('inv_btn_2');
+
+                if (view === 'movement') {
+                    btn1.innerHTML = '🚚 Outward';
+                    btn1.onclick = window.openOutwardChallanModal;
+                    btn1.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
+                    
+                    btn2.innerHTML = '📄 Rent Invoice';
+                    btn2.onclick = window.openRentInvoice;
+                    btn2.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
+                } else if (view === 'master') {
+                    btn1.innerHTML = '➕ Add Stock';
+                    btn1.onclick = window.openDirectStockModal;
+                    btn1.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
+                    
+                    btn2.innerHTML = '⚖️ Audit Stock';
+                    btn2.onclick = window.openStockAuditModal;
+                    btn2.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
+                }
+            }
+        };
+
+        let oldCloseInvView = window.closeInvView;
+        window.closeInvView = function() {
+            oldCloseInvView();
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            if (dualFabs) dualFabs.style.display = 'none';
+        };
+
+        // 🚀 4. FIX CHALLAN ID GENERATOR (CHL-1 Instead of Long Timestamp)
+        let originalGenerateDocId = window.generateDocId;
+        window.generateDocId = function(type, eventCode = null) {
+            if (type === 'Challan') {
+                let counter = 1; let idToCheck = "";
+                while (true) {
+                    idToCheck = eventCode ? `${eventCode}/CHL-${counter}` : `CHL-${counter}`;
+                    if (!stockMovementDB[idToCheck]) break;
+                    counter++;
+                }
+                return idToCheck;
+            }
+            return originalGenerateDocId(type, eventCode);
+        };
+
+        // 🚀 5. STOCK AUTO-ADJUST (EDIT/DELETE SYNC)
+
+        // A. Fix Outward Challan Short ID & Stock Sync
+        let oldSaveOutwardChallan = window.saveOutwardChallan;
+        window.saveOutwardChallan = function() {
+            let isEdit = document.getElementById('outwardChallanModal').dataset.editId;
+            // Overriding ID logic to use short CHL-1 IDs before calling actual save
+            if(!isEdit) {
+                // We create a dummy record to reserve the short ID, old code will overwrite it
+                let evId = document.getElementById('out_event').value;
+                let lead = leadsDB[evId];
+                let evCodeStr = lead ? createEventCode(lead.name, lead.func, lead.date) : null;
+                let newId = window.generateDocId('Challan', evCodeStr);
+                document.getElementById('outwardChallanModal').dataset.editId = newId; // Trick it to use this ID
+            }
+            oldSaveOutwardChallan(); 
+        };
+
+        // B. Master Delete Engine For Sales (Reverts Stock for Rental Invoices automatically)
+        const originalDeleteSalesRecord2 = window.deleteSalesRecord;
+        window.deleteSalesRecord = function(id, skipConfirm = false) {
+            let record = salesDB[id];
+            if (!record) return;
+
+            if (!skipConfirm && !confirm('🚨 WARNING!\n\nAre you sure you want to permanently delete this record?\nThe Party ledger balance and INVENTORY (if rental) will be automatically reversed.')) return;
+
+            // ♻️ AUTO-ADJUST INVENTORY ON DELETE
+            if (record.type === 'Invoice' && record.invoiceType === 'Rental' && record.rentalStatus !== 'Returned') {
+                if (record.items) {
+                    record.items.forEach(item => {
+                        if (itemsDB[item.name] && itemsDB[item.name].godowns[record.godownId] !== undefined) {
+                            itemsDB[item.name].godowns[record.godownId] += (parseInt(item.qty) || 0);
+                        }
+                    });
+                }
+            }
+
+            // Normal deletion logic
+            let party = partiesDB[record.partyId];
+            if (record.type === 'Invoice') {
+                party.balance -= record.finalTotal;
+                Object.values(salesDB).forEach(r => {
+                    if (r.type === 'Receipt' && r.linkedInvoices && r.linkedInvoices.includes(id)) {
+                        r.linkedInvoices = r.linkedInvoices.filter(invId => invId !== id);
+                        let amountToRefund = record.advance;
+                        if (amountToRefund > 0 && r.usedAmount > 0) {
+                            let refund = Math.min(amountToRefund, r.usedAmount);
+                            r.usedAmount -= refund; r.availableAmount += refund; record.advance -= refund;
+                        }
+                    }
+                });
+            } else if (record.type === 'Receipt') {
+                party.balance += record.amount;
+                Object.values(salesDB).forEach(inv => {
+                    if (inv.type === 'Invoice' && record.linkedInvoices && record.linkedInvoices.includes(inv.id)) {
+                        inv.advance -= record.usedAmount; inv.balanceDue += record.usedAmount;
+                        if (inv.balanceDue >= inv.finalTotal) inv.status = 'Due'; else if (inv.advance > 0) inv.status = 'Partial';
+                    }
+                });
+                if (record.mode !== 'Cash') { let bankId = record.mode; if (bankDB[bankId]) { bankDB[bankId].balance -= record.amount; let tx = Object.values(bankTxDB).find(t => t.refId === id); if (tx) delete bankTxDB[tx.id]; } }
+            }
+            let pName = partiesDB[record.partyId] ? partiesDB[record.partyId].name : "General";
+            sendToTrash('Sales', id, record, `${record.type} - ₹${record.finalTotal || record.amount} (${pName})`);
+            delete salesDB[id];
+            updateDataAndUI();
+            if(!skipConfirm) {
+                alert('Record deleted and stock reverted successfully.');
+                let viewModal = document.getElementById('quoteViewModal');
+                if(viewModal) viewModal.style.display = 'none';
+            }
+        };
+
+        // C. Update Logistics Delete to use unified system
+        window.deleteLogisticsRecord = function(id, logType, e) {
+            if(e) { e.stopPropagation(); closeAllMenus(); }
+            if(!confirm(`🚨 WARNING!\nAre you sure you want to delete this ${logType}?\nThe stock will be reversed to your Godown.`)) return;
+
+            if (logType === 'Rental Invoice') {
+                window.deleteSalesRecord(id, true); // Direct call bypassing secondary confirm
+                alert("Rental Invoice deleted & stock reverted successfully!");
+                if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
+                return;
+            }
+
+            let record = stockMovementDB[id];
+            if(record && record.status !== 'Returned' && record.items) {
+                record.items.forEach(item => {
+                    if(itemsDB[item.name]) {
+                        let gId = record.godownId || 'WH_MAIN';
+                        if(itemsDB[item.name].godowns[gId] !== undefined) {
+                            itemsDB[item.name].godowns[gId] += parseInt(item.qty) || 0;
+                        }
+                    }
+                });
+            }
+            delete stockMovementDB[id];
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
+            alert("Challan deleted & stock reverted successfully!");
+        };
+
+        // D. Fix Stock Sync When Editing Rental Invoice
+        let oldSaveDirectInvoiceData = window.saveDirectInvoiceData;
+        window.saveDirectInvoiceData = function() {
+            let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
+            let godownId = document.getElementById('di_godown_select') ? document.getElementById('di_godown_select').value : 'WH_MAIN';
+            
+            // Revert old stock temporary if editing
+            if (invoiceType === 'Rental' && editingSalesId) {
+                let oldRecord = salesDB[editingSalesId];
+                if (oldRecord && oldRecord.invoiceType === 'Rental' && oldRecord.rentalStatus !== 'Returned' && oldRecord.items) {
+                    oldRecord.items.forEach(oldItem => {
+                        if (itemsDB[oldItem.name] && itemsDB[oldItem.name].godowns[oldRecord.godownId] !== undefined) {
+                            itemsDB[oldItem.name].godowns[oldRecord.godownId] += (parseInt(oldItem.qty) || 0);
+                        }
+                    });
+                }
+            }
+            
+            // Run the original save logic which deducts the newly submitted items
+            oldSaveDirectInvoiceData();
+        };
     </SCRIPT>
 </body>
 
