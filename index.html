@@ -4086,8 +4086,15 @@
         </div>
 
         <!-- 11. Command Center / Tasks -->
+        <!-- 11. Command Center / Tasks -->
         <div id="tasks" class="content section">
             <h2 class="section-title">Command Center</h2>
+            
+            <div class="search-container" style="margin-bottom: 15px;">
+                <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="search-input" style="border-radius:10px; padding: 10px 14px 10px 34px; font-size:12.5px; background:#F1F5F9; border:1px solid transparent;" placeholder="Search tasks, client or staff name..." oninput="filterSearch('tasks', this.value)">
+            </div>
+
             <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 6px;">
                 <button class="sales-tab-btn active-sales-tab" id="task-filter-Pending"
                     onclick="renderTasksDashboard('Pending', this)">Pending</button>
@@ -7806,10 +7813,11 @@
                 if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
                 if (currentFilter === 'Lost' && lead.status !== 'Lost') show = false;
 
-                // 🚀 SMART FIX: Puraana search ab Staff ka naam bhi dhoondhega
+                // 🚀 SMART FIX: String conversion for Mobile Number matching
                 let searchTerm = (searchTerms.crm || "").toLowerCase();
                 if (searchTerm !== "") {
-                    let staffNameForSearch = (lead.assignedTo && masterUsersDB[lead.assignedTo]) ? masterUsersDB[lead.assignedTo].name.toLowerCase() : "";
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo) : "";
+                    let staffNameForSearch = (staffKey && masterUsersDB[staffKey]) ? masterUsersDB[staffKey].name.toLowerCase() : "";
                     let leadNameForSearch = (lead.name || "").toLowerCase();
                     let catForSearch = (lead.cat || "").toLowerCase();
                     let phoneForSearch = String(lead.phone || "").toLowerCase();
@@ -7828,15 +7836,16 @@
                     else if (lead.status === "Thinking") badgeClass = "badge-think";
                     else if (lead.status === "Meeting Scheduled" || lead.status === "Meeting Completed") badgeClass = "badge-meet";
                     else if (lead.status === "Lost") badgeClass = "badge-lost";
-                    
-                    // 🚀 FIXED: ASSIGNED STAFF NAME TAG
+
+                    // 🚀 FIXED: Staff Name instead of Mobile
                     let staffName = "Unassigned";
-                    if (lead.assignedTo && masterUsersDB[lead.assignedTo]) {
-                        staffName = masterUsersDB[lead.assignedTo].name.split(' ')[0]; // Sirf First Name
-                    } else if (lead.assignedTo) {
-                        staffName = lead.assignedTo;
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo) : "";
+                    if (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
+                        staffName = masterUsersDB[staffKey].name.split(' ')[0]; // Sirf First Name
+                    } else if (staffKey) {
+                        staffName = staffKey;
                     }
-                    let assignedTag = lead.assignedTo ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
+                    let assignedTag = staffKey ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
 
                     let div = document.createElement('div');
                     div.className = "list-row";
@@ -8687,10 +8696,24 @@
                 return dateA.localeCompare(dateB); 
             });
             
+            // 🚀 SMART FIX: Tasks Search Logic with String Key
+            let searchTerm = (searchTerms.tasks || "").toLowerCase();
+            
             let filteredTasks = allTasks.filter(t => { 
                 if (filter === 'Pending' && t.done) return false; 
                 if (filter === 'Completed' && !t.done) return false; 
                 if (filter === 'Meetings' && t.type !== 'Meeting') return false; 
+                
+                if (searchTerm !== "") {
+                    let staffKey = t.assignedTo ? String(t.assignedTo) : "";
+                    let sName = (staffKey && masterUsersDB[staffKey]) ? masterUsersDB[staffKey].name.toLowerCase() : "";
+                    let tText = (t.text || "").toLowerCase();
+                    let lName = (t.leadName || "").toLowerCase();
+                    
+                    if (!tText.includes(searchTerm) && !sName.includes(searchTerm) && !lName.includes(searchTerm)) {
+                        return false;
+                    }
+                }
                 return true; 
             });
             
@@ -8704,10 +8727,11 @@
             let generals = filteredTasks.filter(t => t.type === 'General'); 
             let finalHtml = "";
 
-            // Helper for Assigned Tag & WA Button
+            // 🚀 FIXED: Task List mein Staff ka Name dikhega number nahi
             let getAssignHtml = (assignedTo, taskId, isGlobal, leadId) => {
                 if (!assignedTo) return '';
-                let sName = masterUsersDB[assignedTo] ? masterUsersDB[assignedTo].name.split(' ')[0] : 'Staff';
+                let staffKey = String(assignedTo);
+                let sName = (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) ? masterUsersDB[staffKey].name.split(' ')[0] : 'Staff';
                 return `
                 <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
                     <span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; border:1px solid #BFDBFE;">👤 ${sName}</span>
