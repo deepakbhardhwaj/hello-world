@@ -6740,7 +6740,7 @@
             let invPref = appSettings.invPrefix || 'INV';
             let qtPref = appSettings.qtPrefix || 'EST';
 
-            let basePrefix = type === 'Quotation' ? qtPref : (type === 'Invoice' ? invPref : (type === 'Receipt' ? 'REC' : (type === 'PO' ? 'PO' : (type === 'PB' ? 'PB' : (type === 'Asset' ? 'AST' : (type === 'BankTx' ? 'TXN' : (type === 'Challan' ? 'CHL' : 'PAY'))))))));
+            let basePrefix = type === 'Quotation' ? qtPref : (type === 'Invoice' ? invPref : (type === 'Receipt' ? 'REC' : (type === 'PO' ? 'PO' : (type === 'PB' ? 'PB' : (type === 'Asset' ? 'AST' : (type === 'BankTx' ? 'TXN' : (type === 'Challan' ? 'CHL' : 'PAY')))))));
 
             let counter = 1; let idToCheck = "";
             while (true) {
