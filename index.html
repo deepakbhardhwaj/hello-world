@@ -3915,7 +3915,10 @@
                 </div>
 
                 <div id="inventory-list-container"></div>
-                <button id="inv_dynamic_pill" class="pill-floating-btn" style="background: linear-gradient(135deg, #06B6D4, #164E63);" onclick="window.openOutwardChallanModal()">🚚 Outward Material</button>
+                <div id="inv_movement_fabs" style="position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 5000; width: 90%; max-width: 380px; display: none;">
+                    <button class="btn-main" style="flex: 1; border-radius: 30px; font-size:13px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); background: linear-gradient(135deg, #06B6D4, #164E63);" onclick="window.openOutwardChallanModal()">🚚 Outward</button>
+                    <button class="btn-main" style="flex: 1; border-radius: 30px; font-size:13px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); background: linear-gradient(135deg, #3B82F6, #1E3A8A);" onclick="window.openRentInvoice()">📄 Rent Invoice</button>
+                </div>
             </div>
 
             <!-- 🚀 VIEW 2: STOCK MASTER (NEW ITEM LEDGER CENTER) -->
@@ -6737,12 +6740,12 @@
             let invPref = appSettings.invPrefix || 'INV';
             let qtPref = appSettings.qtPrefix || 'EST';
 
-            let basePrefix = type === 'Quotation' ? qtPref : (type === 'Invoice' ? invPref : (type === 'Receipt' ? 'REC' : (type === 'PO' ? 'PO' : (type === 'PB' ? 'PB' : (type === 'Asset' ? 'AST' : (type === 'BankTx' ? 'TXN' : 'PAY'))))));
+            let basePrefix = type === 'Quotation' ? qtPref : (type === 'Invoice' ? invPref : (type === 'Receipt' ? 'REC' : (type === 'PO' ? 'PO' : (type === 'PB' ? 'PB' : (type === 'Asset' ? 'AST' : (type === 'BankTx' ? 'TXN' : (type === 'Challan' ? 'CHL' : 'PAY'))))))));
 
             let counter = 1; let idToCheck = "";
             while (true) {
                 idToCheck = ((type === 'Invoice' || type === 'PB') && eventCode) ? `${eventCode}/${basePrefix}-${counter}` : `${basePrefix}-${counter}`;
-                if (!salesDB[idToCheck] && !purchaseDB[idToCheck] && !bankTxDB[idToCheck]) break;
+                if (!salesDB[idToCheck] && !purchaseDB[idToCheck] && !bankTxDB[idToCheck] && !stockMovementDB[idToCheck]) break;
                 counter++;
             }
             return idToCheck;
@@ -16382,6 +16385,7 @@
             if(mainFab) mainFab.style.setProperty('display', 'none', 'important');
         };
 
+        // 🚀 MASTER CLEANED NAV & FAB ENGINE
         window.showNavAndFabs = function() {
             let activeTab = document.querySelector('.active-section');
             let tabName = activeTab ? activeTab.id : 'home';
@@ -16391,64 +16395,41 @@
             let isInsidePurchaseList = (tabName === 'purchase-hub' && document.getElementById('purchase-list-view') && document.getElementById('purchase-list-view').style.display === 'block');
             let isFullScreenList = isInsideSalesList || isInsidePurchaseList || tabName === 'expense-hub' || tabName === 'party-master' || tabName === 'bank-hub' || tabName === 'inventory-hub';
 
+            // 1. Bottom Nav Bar Handle
             if (nav) {
                 if (isFullScreenList) nav.style.setProperty('display', 'none', 'important');
                 else nav.style.setProperty('display', 'flex', 'important');
             }
 
+            // 2. Main Menu (+) Button Handle
             let mainFab = document.getElementById('main-fab-container');
             if (mainFab) {
                 if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
                     mainFab.style.setProperty('display', 'none', 'important');
                 } else {
                     mainFab.style.setProperty('display', 'flex', 'important');
-                    // 🚀 FAB Position Change Logic
                     if(tabName === 'inventory-hub') {
-                        mainFab.style.bottom = '30px'; // Inventory me neeche rahega
+                        mainFab.style.bottom = '30px'; 
                     } else {
-                        mainFab.style.bottom = '105px'; // ERP Dashboard me Nav ke upar rahega
+                        mainFab.style.bottom = '105px'; 
                     }
                 }
             }
 
-            document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
-        };
-        window.showNavAndFabs = function() {
-            let activeTab = document.querySelector('.active-section');
-            let tabName = activeTab ? activeTab.id : 'home';
-            let nav = document.getElementById('master-nav-bar') || document.querySelector('.nav-bar');
-            
-            let isInsideSalesList = (tabName === 'sales-hub' && document.getElementById('sales-list-view') && document.getElementById('sales-list-view').style.display === 'block');
-            let isInsidePurchaseList = (tabName === 'purchase-hub' && document.getElementById('purchase-list-view') && document.getElementById('purchase-list-view').style.display === 'block');
-            let isFullScreenList = isInsideSalesList || isInsidePurchaseList || tabName === 'expense-hub' || tabName === 'party-master' || tabName === 'bank-hub' || tabName === 'inventory-hub';
-
-            if (nav) {
-                if (isFullScreenList) nav.style.setProperty('display', 'none', 'important');
-                else nav.style.setProperty('display', 'flex', 'important');
-            }
-
-            let mainFab = document.getElementById('main-fab-container');
-            if (mainFab) {
-                if ((window.hideFabTabs && window.hideFabTabs.includes(tabName)) || isInsideSalesList || isInsidePurchaseList) {
-                    mainFab.style.setProperty('display', 'none', 'important');
-                } else {
-                    mainFab.style.setProperty('display', 'flex', 'important');
-                    // 🚀 FAB Position Change Logic
-                    if(tabName === 'inventory-hub') {
-                        mainFab.style.bottom = '30px'; // Inventory me neeche rahega
-                    } else {
-                        mainFab.style.bottom = '105px'; // ERP Dashboard me Nav ke upar rahega
-                    }
-                }
-            }
-
-            // 🚀 FIX: YE LINES CHHOOT GAYI THI! Ab saare Add buttons wapas aayenge!
+            // 3. Pill Floating Buttons (Add Invoice, Add Party, etc.) Handle
             document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
             if (tabName === 'party-master') { let btn = document.querySelector('#party-master .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
             else if (tabName === 'expense-hub') { let btn = document.querySelector('#expense-hub .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
-            else if (tabName === 'inventory-hub') { let btn = document.getElementById('inv_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
             else if (isInsideSalesList) { let btn = document.getElementById('sales_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
             else if (isInsidePurchaseList) { let btn = document.getElementById('purchase_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
+
+            // 4. 🚀 DUAL BUTTON LEAK FIX (Sirf Inventory views mein dikhega)
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            if (dualFabs) {
+                if (tabName !== 'inventory-hub' || (document.getElementById('inv-dashboard-cards') && document.getElementById('inv-dashboard-cards').style.display !== 'none')) {
+                    dualFabs.style.setProperty('display', 'none', 'important');
+                }
+            }
         };
         var showNavAndFabs = window.showNavAndFabs;
 
@@ -16636,7 +16617,7 @@
                 }
             }
             if(items.length === 0) return alert("Please add at least one item!");
-            let id = isEdit || "CHL" + Date.now();
+            let id = isEdit || generateDocId('Challan');
             
             if(isEdit) {
                 let oldRecord = stockMovementDB[id];
@@ -17238,24 +17219,6 @@
             document.getElementById('itemLedgerModal').style.display = 'flex';
         };
 
-        // Update Inventory Click Logic
-        let originalRenderInv = window.renderInventoryHubList;
-        window.renderInventoryHubList = function() {
-            if(typeof originalRenderInv === 'function') originalRenderInv();
-            
-            // Wrap items with clickable ledger link
-            setTimeout(() => {
-                document.querySelectorAll('#inventory-list-container > div').forEach(row => {
-                    let itemNameEl = row.querySelector('div[style*="font-size:14px; font-weight:900;"]');
-                    if(itemNameEl) {
-                        let itemName = itemNameEl.innerText;
-                        row.style.cursor = 'pointer';
-                        row.setAttribute('onclick', `window.openItemLedger('${itemName}')`);
-                    }
-                });
-            }, 100);
-        };
-
         window.printItemLedger = function() {
             let printWin = window.open('', '_blank');
             let html = `<html><head><title>Item Ledger</title><style>body{font-family:sans-serif; padding:20px;} table{width:100%; border-collapse:collapse; font-size:12px; margin-top:20px;} th,td{border:1px solid #ddd; padding:8px; text-align:center;} th{background:#f4f4f5;} .left{text-align:left;}</style></head><body>`;
@@ -17368,37 +17331,46 @@
         // 🚀 MEGA UPDATE: INVENTORY HUB NAVIGATION & MASTER LIST LOGIC
         // ==========================================
         
-        // 1. Navigation Between Boxes
         window.openInvView = function(view, title) {
             document.getElementById('ih_header_title').innerText = title;
             document.getElementById('ih_header_back').onclick = window.closeInvView;
-            
             document.getElementById('inv-dashboard-cards').style.display = 'none';
-            
+
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            let btn1 = document.getElementById('inv_btn_1');
+            let btn2 = document.getElementById('inv_btn_2');
+
             if (view === 'movement') {
                 document.getElementById('inv-movement-view').style.display = 'block';
                 document.getElementById('inv-master-view').style.display = 'none';
                 
-                // Set Header Buttons for Movement
+                if(dualFabs) {
+                    dualFabs.style.display = 'flex';
+                    btn1.innerHTML = '🚚 Outward'; btn1.onclick = window.openOutwardChallanModal; btn1.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
+                    btn2.innerHTML = '📄 Rent Invoice'; btn2.onclick = window.openRentInvoice; btn2.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
+                }
+                
                 document.getElementById('ih_list_actions').innerHTML = `
                     <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
                     <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printLogisticsList()" title="Print List">🖨️</button>
                 `;
-                document.getElementById('ih_list_actions').style.display = 'flex';
                 window.renderInventoryHubList();
             } else if (view === 'master') {
                 document.getElementById('inv-movement-view').style.display = 'none';
                 document.getElementById('inv-master-view').style.display = 'block';
-                
-                // Set Header Buttons for Master (Godown Settings)
+
+                if(dualFabs) {
+                    dualFabs.style.display = 'flex';
+                    btn1.innerHTML = '➕ Add Stock'; btn1.onclick = window.openDirectStockModal; btn1.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
+                    btn2.innerHTML = '⚖️ Audit Stock'; btn2.onclick = window.openStockAuditModal; btn2.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
+                }
+
                 document.getElementById('ih_list_actions').innerHTML = `
                     <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex';" title="Manage Godowns">🏭</button>
                 `;
-                document.getElementById('ih_list_actions').style.display = 'flex';
                 window.renderItemMasterList();
             }
-
-            // Hide Main Navigation Tabs
+            document.getElementById('ih_list_actions').style.display = 'flex';
             let navBar = document.querySelector('.nav-bar');
             if (navBar) navBar.style.display = 'none';
             let mainFab = document.getElementById('main-fab-container');
@@ -17412,6 +17384,7 @@
             document.getElementById('ih_list_actions').style.display = 'none';
             
             document.getElementById('inv-dashboard-cards').style.display = 'grid';
+            if(document.getElementById('inv_movement_fabs')) document.getElementById('inv_movement_fabs').style.display = 'none';
             document.getElementById('inv-movement-view').style.display = 'none';
             document.getElementById('inv-master-view').style.display = 'none';
             
