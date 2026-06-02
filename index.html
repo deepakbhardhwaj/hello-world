@@ -16918,7 +16918,24 @@
                 if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('stockAuditModal').style.display = 'none'; alert(`✅ Audit complete. ${diff} units marked as lost.`); window.renderInventoryHubList();
             }
         };
-
+        window.promptNewInventoryItem = function() {
+            let newItem = prompt("📦 Enter New Item / Prop Name:");
+            if (newItem && newItem.trim() !== "") {
+                newItem = newItem.trim();
+                if (!itemsDB[newItem]) {
+                    // Naya item Master DB mein create kar diya
+                    itemsDB[newItem] = { name: newItem, totalStock: 0, totalLost: 0, godowns: {} };
+                    if (typeof updateDataAndUI === 'function') updateDataAndUI();
+                    if (typeof window.refreshInventorySelect === 'function') window.refreshInventorySelect();
+                    
+                    // Naye item ko dropdown me auto-select kar diya
+                    document.getElementById('ds_name_select').value = newItem;
+                } else {
+                    alert("⚠️ This item already exists in your Master List!");
+                    document.getElementById('ds_name_select').value = newItem;
+                }
+            }
+        };
         // --------------------------------------------------------------
         // 7. DIRECT STOCK & INVENTORY SELECTION SHEET
         // --------------------------------------------------------------
@@ -17169,7 +17186,21 @@
             }, 300);
         };
 
-        window.renderTasksDashboard =
+        window.renderTasksDashboard = function(filter, btn) {
+            window.currentTaskFilter = filter;
+            if (btn) {
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => {
+                    b.classList.remove('active-sales-tab');
+                    b.style.background = '#F1F5F9';
+                    b.style.color = '#64748B';
+                });
+                btn.classList.add('active-sales-tab');
+                btn.style.background = '#0F172A';
+                btn.style.color = 'white';
+            }
+            let container = document.getElementById('task-dash-container');
+            if (container) container.innerHTML = "<p style='text-align:center; padding:20px; color:#64748B;'>No tasks currently pending.</p>";
+        };
 
         // ==========================================
         // 🚀 INVENTORY ITEM LEDGER (TALLY STYLE - PREMIUM UI FIX)
@@ -17258,19 +17289,27 @@
             });
 
             // 🚀 DYNAMIC INJECTION: Ab Green box me Godown Split bhi dikhega
-            let modalContent = document.querySelector('#itemLedgerModal .modal-content');
-            modalContent.innerHTML = `
-                <div class="modal-header" style="background: linear-gradient(135deg, #0F172A, #334155); color:white; padding: 15px 20px; border-radius: 12px 12px 0 0; margin:0;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
-                        <div>
-                            <h3 id="il_item_name" style="margin:0 0 4px 0; font-size:18px; font-weight:900; color:white;">${itemName}</h3>
-                            <div style="font-size:11px; color:#CBD5E1; font-weight:600;">Stock Movement & Logistics Ledger</div>
-                        </div>
-                        <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
-                    </div>
-                </div>
-                
-                <div style="padding: 15px; background: #F8FAFC; flex: 1; overflow-y: auto;">
+            let modalContent = document.querySelector('#itemLedgerModal .modal-content');
+            
+            // 🚀 100% SCROLL FIX: Forcefully padding 0 kar rahe hain taaki table neeche se na kate
+            modalContent.style.padding = '0';
+            modalContent.style.overflow = 'hidden';
+            modalContent.style.display = 'flex';
+            modalContent.style.flexDirection = 'column';
+            modalContent.style.maxHeight = '90vh';
+
+            modalContent.innerHTML = `
+                <div class="modal-header" style="background: linear-gradient(135deg, #0F172A, #334155); color:white; padding: 15px 20px; border-radius: 12px 12px 0 0; margin:0; flex-shrink:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+                        <div>
+                            <h3 id="il_item_name" style="margin:0 0 4px 0; font-size:18px; font-weight:900; color:white;">${itemName}</h3>
+                            <div style="font-size:11px; color:#CBD5E1; font-weight:600;">Stock Movement & Logistics Ledger</div>
+                        </div>
+                        <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    </div>
+                </div>
+                
+                <div style="padding: 15px; background: #F8FAFC; flex: 1; overflow-y: auto; padding-bottom: 50px;">
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 15px;">
                         <div style="background:white; padding:12px; border-radius:8px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
                             <div style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700;">Total Purchased</div>
