@@ -17137,7 +17137,16 @@
             if(!item) return; // 🚀 Mute popup on fail
 
             let inGodown = 0;
-            for(let g in item.godowns) { inGodown += (item.godowns[g] || 0); }
+            let godownSplitHtml = ""; // 🚀 NAYA: Godown ke naam save karne ke liye
+            for(let g in item.godowns) { 
+                let gQty = item.godowns[g] || 0;
+                inGodown += gQty; 
+                if(gQty > 0) {
+                    let gName = warehousesDB[g] ? warehousesDB[g].name : 'Unknown';
+                    // Godown ka detail ban raha hai
+                    godownSplitHtml += `<div style="display:flex; justify-content:space-between; font-size:10px; margin-top:4px; padding-top:4px; border-top:1px dashed #BBF7D0;"><span style="color:#059669; font-weight:700;">${gName}</span><strong style="color:#166534;">${gQty}</strong></div>`;
+                }
+            }
             let onRent = (item.totalStock || 0) - inGodown;
 
             let records = [];
@@ -17199,7 +17208,7 @@
                 </tr>`;
             });
 
-            // 🚀 DYNAMIC INJECTION: Overrides old HTML to make it slim, white text and responsive
+            // 🚀 DYNAMIC INJECTION: Ab Green box me Godown Split bhi dikhega
             let modalContent = document.querySelector('#itemLedgerModal .modal-content');
             modalContent.innerHTML = `
                 <div class="modal-header" style="background: linear-gradient(135deg, #0F172A, #334155); color:white; padding: 15px 20px; border-radius: 12px 12px 0 0; margin:0;">
@@ -17221,7 +17230,7 @@
                         <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px; border-radius:8px; box-shadow:var(--shadow-sm);">
                             <div style="font-size:10px; color:#059669; text-transform:uppercase; font-weight:700;">In Godowns</div>
                             <div style="font-size:16px; font-weight:900; color:#166534; margin-top:2px;">${inGodown}</div>
-                        </div>
+                            ${godownSplitHtml} </div>
                         <div style="background:#FFFBEB; border:1px solid #FDE68A; padding:12px; border-radius:8px; box-shadow:var(--shadow-sm);">
                             <div style="font-size:10px; color:#D97706; text-transform:uppercase; font-weight:700;">On Rent / Event</div>
                             <div style="font-size:16px; font-weight:900; color:#B45309; margin-top:2px;">${onRent}</div>
@@ -17409,8 +17418,11 @@
                     btn2.innerHTML = '⚖️ Audit Stock'; btn2.onclick = window.openStockAuditModal; btn2.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
                 }
 
+                // Set Header Buttons for Master (Godown Settings, Transfer, Print)
                 document.getElementById('ih_list_actions').innerHTML = `
-                    <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex';" title="Manage Godowns">🏭</button>
+                    <button class="btn-icon" style="background:#FEF3C7; color:#D97706; border:1px solid #FDE68A; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.openStockTransferModal()" title="Stock Transfer">🔄</button>
+                    <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.printStockMaster()" title="Print Stock">🖨️</button>
+                    <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex'; window.renderGodownList();" title="Manage Godowns">🏭</button>
                 `;
                 window.renderItemMasterList();
             }
@@ -17459,42 +17471,42 @@
                     inGodown += gQty; 
                     if(gQty > 0) {
                         let gName = warehousesDB[g] ? warehousesDB[g].name : 'Unknown';
-                        godownSplitHtml += `<div style="display:inline-block; font-size:10px; background:#F1F5F9; color:#475569; padding:4px 8px; border-radius:6px; margin:4px 4px 0 0; border:1px solid #E2E8F0;">🏭 ${gName}: <b style="color:#0F172A;">${gQty}</b></div>`;
+                        godownSplitHtml += `<div style="display:inline-block; font-size:9px; background:#F1F5F9; color:#475569; padding:2px 6px; border-radius:4px; margin:2px 4px 0 0; border:1px solid #E2E8F0;">${gName}: <b style="color:#0F172A;">${gQty}</b></div>`;
                     }
                 }
                 let deployed = (item.totalStock || 0) - inGodown;
                 let rentText = item.rentPrice ? `₹${item.rentPrice}/unit` : `Not Set`;
-                let skuTag = item.sku ? `<span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px; margin-right:6px; border:1px solid #C7D2FE;">${item.sku}</span>` : '';
+                let skuTag = item.sku ? `<span style="font-size:9px; background:#EEF2FF; color:#4F46E5; padding:2px 4px; border-radius:4px; margin-right:6px; border:1px solid #C7D2FE;">${item.sku}</span>` : '';
 
                 container.innerHTML += `
-                <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; padding:15px; margin-bottom:12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#A78BFA'" onmouseout="this.style.borderColor='#E2E8F0'" onclick="window.openItemLedger('${item.name}')">
+                <div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:var(--shadow-sm); cursor:pointer; transition:0.2s;" onmouseover="this.style.borderColor='#A78BFA'" onmouseout="this.style.borderColor='#E2E8F0'" onclick="window.openItemLedger('${item.name}')">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div>
-                            <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:6px; display:flex; align-items:center;">${skuTag}${item.name}</div>
-                            <div style="font-size:11px; font-weight:700; color:var(--accent-color);">Default Rent: ${rentText}</div>
+                            <div style="font-size:13px; font-weight:900; color:var(--text-primary); margin-bottom:2px; display:flex; align-items:center;">${skuTag}${item.name}</div>
+                            <div style="font-size:10px; font-weight:600; color:var(--accent-color);">Default Rent: ${rentText}</div>
                         </div>
-                        <button onclick="event.stopPropagation(); window.openItemMasterModal('${item.name}')" style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px; font-size:14px; cursor:pointer;" title="Edit details">✏️</button>
+                        <button onclick="event.stopPropagation(); window.openItemMasterModal('${item.name}')" style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:4px; padding:4px 6px; font-size:12px; cursor:pointer;" title="Edit details">✏️</button>
                     </div>
                     
-                    <div style="display:flex; gap:8px; margin-top:14px; background:#F8FAFC; padding:10px; border-radius:8px; border:1px solid #F1F5F9;">
+                    <div style="display:flex; gap:6px; margin-top:8px; background:#F8FAFC; padding:6px; border-radius:6px; border:1px solid #F1F5F9;">
                         <div style="flex:1; text-align:center;">
-                            <div style="font-size:9.5px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">Total Units</div>
-                            <div style="font-size:16px; font-weight:900; color:#0F172A;">${item.totalStock || 0}</div>
+                            <div style="font-size:8.5px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">Purchased</div>
+                            <div style="font-size:13px; font-weight:900; color:#0F172A;">${item.totalStock || 0}</div>
                         </div>
                         <div style="flex:1; text-align:center; border-left:1px solid #E2E8F0; border-right:1px solid #E2E8F0;">
-                            <div style="font-size:9.5px; font-weight:800; color:var(--success); text-transform:uppercase;">In Godown</div>
-                            <div style="font-size:16px; font-weight:900; color:var(--success);">${inGodown}</div>
+                            <div style="font-size:8.5px; font-weight:800; color:var(--success); text-transform:uppercase;">Godowns</div>
+                            <div style="font-size:13px; font-weight:900; color:var(--success);">${inGodown}</div>
                         </div>
                         <div style="flex:1; text-align:center;">
-                            <div style="font-size:9.5px; font-weight:800; color:var(--warning); text-transform:uppercase;">On Event</div>
-                            <div style="font-size:16px; font-weight:900; color:var(--warning);">${deployed}</div>
+                            <div style="font-size:8.5px; font-weight:800; color:var(--warning); text-transform:uppercase;">On Rent</div>
+                            <div style="font-size:13px; font-weight:900; color:var(--warning);">${deployed}</div>
                         </div>
                     </div>
-                    ${godownSplitHtml ? `<div style="margin-top:10px;">${godownSplitHtml}</div>` : ''}
+                    ${godownSplitHtml ? `<div style="margin-top:4px;">${godownSplitHtml}</div>` : ''}
                 </div>
                 `;
             });
-            if(visibleCount === 0) container.innerHTML = `<p style="text-align:center; font-size:13px; font-weight:600; color:var(--text-secondary); padding:20px;">No items found in Master.</p>`;
+            if(visibleCount === 0) container.innerHTML = `<p style="text-align:center; font-size:12px; font-weight:600; color:var(--text-secondary); padding:10px;">No items found.</p>`;
         };
 
         // 4. Item Master Modal Forms
@@ -17815,6 +17827,229 @@
             
             // Run the original save logic which deducts the newly submitted items
             oldSaveDirectInvoiceData();
+        };
+        // ==============================================================
+        // 🚀 GODOWN MANAGER, STOCK TRANSFER, PRINT & INVENTORY REPORT
+        // ==============================================================
+
+        // 1. GODOWN MANAGEMENT (EDIT/DELETE)
+        window.renderGodownList = function() {
+            let cont = document.getElementById('godown_list_container');
+            if(!cont) return;
+            cont.innerHTML = "";
+            Object.values(warehousesDB).forEach(w => {
+                let btnHtml = !w.isDefault ? `<button type="button" onclick="window.deleteGodown('${w.id}')" style="background:none; border:none; cursor:pointer; color:var(--danger); font-size:14px;">🗑️</button>` : '';
+                cont.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border:1px solid #E2E8F0; padding:8px 10px; border-radius:6px; margin-bottom:6px;">
+                    <div>
+                        <strong style="font-size:13px; color:var(--text-primary);">${w.name} ${w.isDefault ? '<span style="color:var(--warning); font-size:10px;">⭐ Main</span>' : ''}</strong><br>
+                        <span style="font-size:10px; color:var(--text-secondary);">${w.address || 'No Address'}</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" onclick="window.editGodown('${w.id}')" style="background:none; border:none; cursor:pointer; color:var(--accent-color); font-size:14px;">✏️</button>
+                        ${btnHtml}
+                    </div>
+                </div>`;
+            });
+            let form = document.getElementById('godownForm');
+            if(form) { form.reset(); form.dataset.editId = ""; document.querySelector('#godownForm button').innerText = "+ Create Godown"; }
+        };
+
+        window.saveGodown = function() {
+            let name = document.getElementById('gdn_name').value.trim();
+            let add = document.getElementById('gdn_address').value.trim();
+            if(!name) return alert("Godown name is required!");
+            let form = document.getElementById('godownForm');
+            let editId = form.dataset.editId;
+            
+            if (editId && warehousesDB[editId]) {
+                warehousesDB[editId].name = name;
+                warehousesDB[editId].address = add;
+            } else {
+                let id = "WH_" + Date.now();
+                warehousesDB[id] = { id: id, name: name, address: add, isDefault: false };
+            }
+            
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            form.reset();
+            form.dataset.editId = "";
+            document.querySelector('#godownForm button').innerText = "+ Create Godown";
+            window.renderGodownList();
+            if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+        };
+
+        window.editGodown = function(id) {
+            let w = warehousesDB[id];
+            if(!w) return;
+            document.getElementById('gdn_name').value = w.name;
+            document.getElementById('gdn_address').value = w.address || "";
+            let form = document.getElementById('godownForm');
+            form.dataset.editId = id;
+            document.querySelector('#godownForm button').innerText = "💾 Update Godown";
+        };
+
+        window.deleteGodown = function(id) {
+            if(warehousesDB[id].isDefault) return alert("Cannot delete main godown!");
+            let hasStock = false;
+            Object.values(itemsDB).forEach(item => { if(item.godowns && item.godowns[id] > 0) hasStock = true; });
+            if(hasStock) return alert("Cannot delete! There are items present in this godown. Transfer them first.");
+            
+            if(confirm("Are you sure you want to delete this godown?")) {
+                delete warehousesDB[id];
+                if(typeof updateDataAndUI === 'function') updateDataAndUI();
+                window.renderGodownList();
+                if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+            }
+        };
+
+        // 2. INJECT STOCK TRANSFER MODAL HTML IF MISSING
+        if (!document.getElementById('stockTransferModal')) {
+            document.body.insertAdjacentHTML('beforeend', `
+            <div id="stockTransferModal" class="modal-overlay" style="z-index: 10600; display:none;">
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header"><h3>🔄 Stock Transfer</h3><button class="modal-close" onclick="document.getElementById('stockTransferModal').style.display='none';">&times;</button></div>
+                    <form onsubmit="event.preventDefault(); window.saveStockTransfer();">
+                        <div class="form-group"><label class="form-label">Select Item</label><select id="stf_item" class="form-select" required onchange="window.loadTransferGodowns()"></select></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">From Godown</label><select id="stf_from" class="form-select" required onchange="window.updateTransferMax()"></select></div>
+                            <div class="form-group"><label class="form-label">To Godown</label><select id="stf_to" class="form-select" required></select></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity to Transfer</label>
+                            <input type="number" id="stf_qty" class="form-input" min="1" placeholder="Max: 0" required>
+                        </div>
+                        <button type="submit" class="btn-main" style="background:#0F172A; margin-top:10px;">Transfer Stock</button>
+                    </form>
+                </div>
+            </div>`);
+        }
+
+        window.openStockTransferModal = function() {
+            let sel = document.getElementById('stf_item'); sel.innerHTML = '<option value="">-- Select Item --</option>';
+            Object.values(itemsDB).sort((a,b)=>a.name.localeCompare(b.name)).forEach(item => { sel.innerHTML += `<option value="${item.name}">${item.name}</option>`; });
+            document.getElementById('stf_from').innerHTML = ''; document.getElementById('stf_to').innerHTML = ''; document.getElementById('stf_qty').value = '';
+            document.getElementById('stockTransferModal').style.display = 'flex';
+        };
+
+        window.loadTransferGodowns = function() {
+            let name = document.getElementById('stf_item').value;
+            let fromSel = document.getElementById('stf_from'); let toSel = document.getElementById('stf_to');
+            fromSel.innerHTML = '<option value="">-- From --</option>'; toSel.innerHTML = '<option value="">-- To --</option>';
+            if(!name || !itemsDB[name]) return;
+            let item = itemsDB[name];
+            Object.values(warehousesDB).forEach(w => {
+                toSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                if(item.godowns[w.id] > 0) {
+                    fromSel.innerHTML += `<option value="${w.id}">${w.name} (Qty: ${item.godowns[w.id]})</option>`;
+                }
+            });
+        };
+
+        window.updateTransferMax = function() {
+            let name = document.getElementById('stf_item').value; let fId = document.getElementById('stf_from').value;
+            let maxQty = (name && fId && itemsDB[name] && itemsDB[name].godowns[fId]) ? itemsDB[name].godowns[fId] : 0;
+            let qtyInp = document.getElementById('stf_qty'); qtyInp.max = maxQty; qtyInp.placeholder = "Max: " + maxQty;
+        };
+
+        window.saveStockTransfer = function() {
+            let name = document.getElementById('stf_item').value; let fId = document.getElementById('stf_from').value; let tId = document.getElementById('stf_to').value;
+            let qty = parseInt(document.getElementById('stf_qty').value);
+            if(!name || !fId || !tId || !qty) return alert("Fill all fields!");
+            if(fId === tId) return alert("Source and Destination Godown cannot be same!");
+            
+            let item = itemsDB[name];
+            if(qty > item.godowns[fId]) return alert("Not enough stock in source godown!");
+            
+            item.godowns[fId] -= qty;
+            if(item.godowns[tId] === undefined) item.godowns[tId] = 0;
+            item.godowns[tId] += qty;
+            
+            if(typeof updateDataAndUI === 'function') updateDataAndUI();
+            document.getElementById('stockTransferModal').style.display = 'none';
+            alert(`✅ ${qty} units of ${name} transferred successfully!`);
+            window.renderItemMasterList();
+        };
+
+        // 3. PRINT STOCK MASTER
+        window.printStockMaster = function() {
+            let cName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.company : "UTSAVhq ERP";
+            let html = `<html><head><title>Stock Master Report</title><style>body{font-family:sans-serif; padding:20px; font-size:11px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #cbd5e1; padding:8px; text-align:center;} th{background:#f1f5f9; color:#0f172a;} .left{text-align:left;}</style></head><body>`;
+            html += `<h2 style="text-align:center; margin-bottom:5px;">${cName}</h2><h3 style="text-align:center; color:#64748b; margin-top:0;">Complete Stock Master</h3>`;
+            
+            let whHeaders = ""; let gIds = Object.keys(warehousesDB);
+            gIds.forEach(id => whHeaders += `<th>${warehousesDB[id].name}</th>`);
+            
+            html += `<table><tr><th class="left">Item Name</th><th>SKU</th><th>Purchased</th><th>On Rent</th><th>Lost</th>${whHeaders}</tr>`;
+            
+            Object.values(itemsDB).sort((a,b)=>a.name.localeCompare(b.name)).forEach(item => {
+                let inGodown = 0; for (let g in item.godowns) { inGodown += (parseInt(item.godowns[g]) || 0); }
+                let onRent = (item.totalStock || 0) - inGodown;
+                let whCols = "";
+                gIds.forEach(id => { let q = item.godowns[id] || 0; whCols += `<td style="color:#059669; font-weight:bold;">${q}</td>`; });
+                html += `<tr><td class="left"><b>${item.name}</b></td><td>${item.sku||'-'}</td><td>${item.totalStock||0}</td><td style="color:#d97706;">${onRent}</td><td style="color:#dc2626;">${item.totalLost||0}</td>${whCols}</tr>`;
+            });
+            html += `</table><script>setTimeout(()=>window.print(), 500);<\/script></body></html>`;
+            
+            let printWin = window.open('', '_blank'); if(printWin) { printWin.document.write(html); printWin.document.close(); }
+        };
+
+        // 4. OVERRIDE REPORTS TAB (Godown Filter)
+        let origSwitchReportTab = window.switchReportTab;
+        window.switchReportTab = function(type) {
+            if(typeof origSwitchReportTab === 'function') origSwitchReportTab(type); 
+            
+            if(type === 'inventory') {
+                if(!document.getElementById('rep_godown_group')) {
+                    let html = `<div id="rep_godown_group" style="flex: 1; min-width: 120px;"><label class="form-label" style="color:var(--accent-color);">Select Godown</label><select id="rep_godown_select" class="form-select" onchange="window.generateCurrentReport()"><option value="ALL">All Godowns</option></select></div>`;
+                    let fromGrp = document.getElementById('filter_from_group'); if(fromGrp) fromGrp.insertAdjacentHTML('beforebegin', html);
+                    Object.values(warehousesDB).forEach(w => { document.getElementById('rep_godown_select').innerHTML += `<option value="${w.id}">${w.name}</option>`; });
+                } else { document.getElementById('rep_godown_group').style.display = 'block'; }
+                if(document.getElementById('filter_from_group')) document.getElementById('filter_from_group').style.display = 'none';
+                if(document.getElementById('filter_to_group')) document.getElementById('filter_to_group').style.display = 'none';
+                
+                // Set default action for fetch button
+                document.querySelector('#rep-filter-bar .btn-main').setAttribute('onclick', 'window.generateCurrentReport()');
+                
+            } else {
+                if(document.getElementById('rep_godown_group')) document.getElementById('rep_godown_group').style.display = 'none';
+                if(document.getElementById('filter_from_group')) document.getElementById('filter_from_group').style.display = 'block';
+                if(document.getElementById('filter_to_group')) document.getElementById('filter_to_group').style.display = 'block';
+                document.querySelector('#rep-filter-bar .btn-main').setAttribute('onclick', 'generateCurrentReport()');
+            }
+        };
+
+        let origGenerateReport = window.generateCurrentReport;
+        window.generateCurrentReport = function() {
+            if (currentReportType === 'inventory') {
+                let tCont = document.getElementById('report-table-container'); tCont.innerHTML = ""; 
+                let gId = document.getElementById('rep_godown_select') ? document.getElementById('rep_godown_select').value : 'ALL';
+                let gName = gId === 'ALL' ? 'All Godowns' : (warehousesDB[gId] ? warehousesDB[gId].name : 'Unknown Godown');
+                document.getElementById('report_doc_title').innerText = `Stock Valuation Report: ${gName}`;
+                
+                let html = `<table id="export_table" style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;"><tr style="background: #0F172A; color:white;"><th style="padding:10px;">Item Name</th><th style="padding:10px; text-align:center;">Total Purchased</th><th style="padding:10px; text-align:center;">Lost</th><th style="padding:10px; text-align:center;">In Godown</th><th style="padding:10px; text-align:center;">On Rent</th><th style="padding:10px; text-align:right;">Approx Value (₹)</th></tr>`;
+                let grandStockVal = 0; let grandLostVal = 0;
+                
+                Object.values(itemsDB).sort((a,b) => a.name.localeCompare(b.name)).forEach(item => {
+                    let totalAmt = 0; let totalQty = 0;
+                    Object.values(purchaseDB).filter(p => p.type === 'Asset').forEach(p => { p.items.forEach(i => { if (i.name === item.name) { totalAmt += i.amount; totalQty += i.qty; } }); });
+                    let avgRate = totalQty > 0 ? (totalAmt / totalQty) : 0; let inGodown = gId === 'ALL' ? 0 : (item.godowns[gId] || 0);
+                    if(gId === 'ALL') { for(let g in item.godowns) { inGodown += (item.godowns[g] || 0); } }
+                    
+                    let deployed = gId === 'ALL' ? ((item.totalStock || 0) - inGodown) : 'N/A'; 
+                    let lost = gId === 'ALL' ? (item.totalLost || 0) : 'N/A'; 
+                    let purchased = gId === 'ALL' ? ((item.totalStock || 0) + (item.totalLost || 0)) : 'N/A'; 
+                    let stockVal = inGodown * avgRate; let lostVal = gId === 'ALL' ? (lost * avgRate) : 0; 
+                    grandStockVal += stockVal; grandLostVal += lostVal;
+                    
+                    if(gId !== 'ALL' && inGodown === 0) return;
+                    html += `<tr style="border-bottom: 1px solid #E2E8F0;"><td style="padding:10px; font-weight:bold; color:var(--accent-color);">${item.name} <br><span style="font-size:9px; color:#64748B;">Est. Rate: ₹${Math.round(avgRate).toLocaleString('en-IN')}/unit</span></td><td style="padding:10px; text-align:center;">${purchased}</td><td style="padding:10px; text-align:center; color:var(--danger); font-weight:bold;">${lost}</td><td style="padding:10px; text-align:center; color:var(--success); font-weight:bold;">${inGodown}</td><td style="padding:10px; text-align:center; color:var(--warning); font-weight:bold;">${deployed}</td><td style="padding:10px; text-align:right; font-weight:bold;">₹${Math.round(stockVal).toLocaleString('en-IN')}</td></tr>`;
+                });
+                html += `<tr style="background: #ECFDF5; font-weight:bold; font-size:14px;"><td colspan="5" style="padding:10px; text-align:right;">TOTAL STOCK VALUE (IN GODOWN):</td><td style="padding:10px; text-align:right; color:var(--success);">₹${Math.round(grandStockVal).toLocaleString('en-IN')}</td></tr>`;
+                if(gId === 'ALL') { html += `<tr style="background: #FEF2F2; font-weight:bold; font-size:13px;"><td colspan="5" style="padding:10px; text-align:right; color:var(--danger);">TOTAL LOST VALUE:</td><td style="padding:10px; text-align:right; color:var(--danger);">₹${Math.round(grandLostVal).toLocaleString('en-IN')}</td></tr>`; }
+                html += `</table>`; tCont.innerHTML = html;
+            } else { 
+                if(typeof origGenerateReport === 'function') origGenerateReport(); 
+            }
         };
     </SCRIPT>
 </body>
