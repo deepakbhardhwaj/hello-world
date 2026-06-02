@@ -3073,7 +3073,6 @@
                         style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Sales Hub</h2>
                 </div>
                 <div id="sh_list_actions" style="display: none; gap: 10px; align-items: center;">
-                    <button class="btn-icon" style="background:var(--accent-color); color:white; border:none; font-size:12px; height:36px; padding:0 15px; border-radius:8px; font-weight:bold; width:auto;" onclick="document.getElementById('sales_dynamic_pill').click()">➕ Create</button>
                     <button class="btn-icon" style="background:white; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="document.getElementById('sales_filter_bar').style.display = document.getElementById('sales_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
                     <button class="btn-icon" style="background:white; color:var(--accent-color); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="printSalesList()" title="Print List">🖨️</button>
                 </div>
@@ -3379,7 +3378,6 @@
                     </h2>
                 </div>
                 <div id="ph_list_actions" style="display: none; gap: 10px; align-items: center;">
-                    <button class="btn-icon" style="background:var(--danger); color:white; border:none; font-size:12px; height:36px; padding:0 15px; border-radius:8px; font-weight:bold; width:auto;" onclick="document.getElementById('purchase_dynamic_pill').click()">➕ Create</button>
                     <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="document.getElementById('purchase_filter_bar').style.display = document.getElementById('purchase_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
                     <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:50%; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;" onclick="printPurchaseList()" title="Print List">🖨️</button>
                 </div>
@@ -16579,6 +16577,137 @@
             document.getElementById('directStockModal').style.display = 'none';
             alert(`✅ ${qty} x '${name}' added to your Godown successfully!`);
             if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
+        };
+        // 🚀 1. SALES HUB FLOATING BUTTON FIX
+        window.openSalesListView = function(tabName, title) {
+            currentSalesTab = tabName;
+            salesSubFilter = 'All';
+
+            document.getElementById('sh_header_title').innerText = title;
+            document.getElementById('sh_header_back').onclick = window.closeSalesListView;
+
+            document.getElementById('sh_list_actions').style.display = 'flex';
+            document.getElementById('sales-dashboard-cards').style.display = 'none';
+            document.getElementById('sales-menu-view').style.display = 'none';
+            document.getElementById('sales-list-view').style.display = 'block';
+
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.display = 'none';
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.display = 'none';
+
+            let pillBtn = document.getElementById('sales_dynamic_pill');
+            if (pillBtn) {
+                if (tabName === 'Invoice') {
+                    pillBtn.innerHTML = '➕ Create Invoice';
+                    pillBtn.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
+                    pillBtn.onclick = function () { openDirectInvoiceModal(); };
+                } else if (tabName === 'Quotation') {
+                    pillBtn.innerHTML = '➕ Create Quote';
+                    pillBtn.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
+                    pillBtn.onclick = function () { openQuotationModal(); };
+                } else if (tabName === 'Receipt') {
+                    pillBtn.innerHTML = '➕ Add Receipt';
+                    pillBtn.style.background = 'linear-gradient(135deg, #10B981, #064E3B)';
+                    pillBtn.onclick = function () { openPaymentModal(); };
+                } else if (tabName === 'OtherIncome') {
+                    pillBtn.innerHTML = '➕ Add Income';
+                    pillBtn.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
+                    pillBtn.onclick = function () { openOtherIncomeModal(); };
+                }
+                // 🚀 Yeh line Floating button ko wapas layegi
+                pillBtn.style.setProperty('display', 'flex', 'important');
+            }
+
+            if(typeof renderSalesSubFilters === 'function') renderSalesSubFilters();
+            if(typeof renderSalesList === 'function') renderSalesList();
+        };
+
+        window.closeSalesListView = function() {
+            document.getElementById('sh_header_title').innerText = "Sales Hub";
+            document.getElementById('sh_header_back').onclick = function () { openTab('erp', document.getElementById('btn-erp')); };
+
+            document.getElementById('sh_list_actions').style.display = 'none';
+            document.getElementById('sales_filter_bar').style.display = 'none';
+
+            document.getElementById('sales-dashboard-cards').style.display = 'grid';
+            document.getElementById('sales-menu-view').style.display = 'block';
+            document.getElementById('sales-list-view').style.display = 'none';
+
+            // 🚀 Back aane par Floating button chupa do
+            let pillBtn = document.getElementById('sales_dynamic_pill');
+            if (pillBtn) pillBtn.style.setProperty('display', 'none', 'important');
+
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.display = 'flex';
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.display = 'flex';
+        };
+
+        // 🚀 2. PURCHASE HUB FLOATING BUTTON FIX
+        window.openPurchaseListView = function(tabName, title) {
+            currentPurchaseTab = tabName;
+            purchaseSubFilter = 'All';
+
+            document.getElementById('ph_header_title').innerText = title;
+            document.getElementById('ph_header_back').onclick = window.closePurchaseListView;
+
+            document.getElementById('ph_list_actions').style.display = 'flex';
+            document.getElementById('purchase-dashboard-cards').style.display = 'none';
+            document.getElementById('purchase-menu-view').style.display = 'none';
+            document.getElementById('purchase-list-view').style.display = 'block';
+
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.display = 'none';
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.display = 'none';
+
+            let pillBtn = document.getElementById('purchase_dynamic_pill');
+            if (pillBtn) {
+                if (tabName === 'PB') {
+                    pillBtn.innerHTML = '➕ Vendor Bill';
+                    pillBtn.style.background = 'linear-gradient(135deg, #EF4444, #7F1D1D)';
+                    pillBtn.onclick = function () { openPurchaseBillModal(); };
+                } else if (tabName === 'PO') {
+                    pillBtn.innerHTML = '➕ Purchase Order';
+                    pillBtn.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
+                    pillBtn.onclick = function () { openPurchaseOrderModal(); };
+                } else if (tabName === 'PaymentOut') {
+                    pillBtn.innerHTML = '➕ Make Payment';
+                    pillBtn.style.background = 'linear-gradient(135deg, #64748B, #0F172A)';
+                    pillBtn.onclick = function () { openPaymentOutModal(); };
+                } else if (tabName === 'Asset') {
+                    pillBtn.innerHTML = '➕ Add Asset';
+                    pillBtn.style.background = 'linear-gradient(135deg, #EC4899, #831843)';
+                    pillBtn.onclick = function () { openAssetModal(); };
+                }
+                // 🚀 Yeh line Floating button ko wapas layegi
+                pillBtn.style.setProperty('display', 'flex', 'important');
+            }
+
+            if(typeof renderPurchaseSubFilters === 'function') renderPurchaseSubFilters();
+            if(typeof renderPurchaseList === 'function') renderPurchaseList();
+        };
+
+        window.closePurchaseListView = function() {
+            document.getElementById('ph_header_title').innerText = "Purchase & Assets";
+            document.getElementById('ph_header_back').onclick = function () { openTab('erp', document.getElementById('btn-erp')); };
+
+            document.getElementById('ph_list_actions').style.display = 'none';
+            document.getElementById('purchase_filter_bar').style.display = 'none';
+
+            document.getElementById('purchase-dashboard-cards').style.display = 'grid';
+            document.getElementById('purchase-menu-view').style.display = 'block';
+            document.getElementById('purchase-list-view').style.display = 'none';
+
+            // 🚀 Back aane par Floating button chupa do
+            let pillBtn = document.getElementById('purchase_dynamic_pill');
+            if (pillBtn) pillBtn.style.setProperty('display', 'none', 'important');
+
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.display = 'flex';
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.display = 'flex';
         };
     </SCRIPT>
 </body>
