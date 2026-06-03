@@ -17342,20 +17342,22 @@
             }
         };
         // --------------------------------------------------------------
-        // 7. DIRECT STOCK & INVENTORY SELECTION SHEET
+        // 7. DIRECT STOCK & INVENTORY SELECTION SHEET [LIVE STOCK UPGRADE]
         // --------------------------------------------------------------
         window.openDirectStockModal = function() {
-            window.refreshInventorySelect(); window.loadGodownsIntoSelect();
+            if(typeof window.refreshInventorySelect === 'function') window.refreshInventorySelect(); 
+            if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
             if(document.getElementById('ds_qty')) document.getElementById('ds_qty').value = ''; 
             if(document.getElementById('ds_rate')) document.getElementById('ds_rate').value = ''; 
             if(document.getElementById('ds_date')) document.getElementById('ds_date').valueAsDate = new Date();
-            if(typeof closeAllMenus === 'function') closeAllMenus(); document.getElementById('directStockModal').style.display = 'flex';
+            if(typeof closeAllMenus === 'function') closeAllMenus(); 
+            document.getElementById('directStockModal').style.display = 'flex';
         };
 
         window.refreshInventorySelect = function() {
             let sel = document.getElementById('ds_name_select'); if(!sel) return;
             let currentVal = sel.value; sel.innerHTML = '<option value="">-- Select Item --</option>';
-            Object.values(itemsDB).forEach(item => { let skuStr = item.sku ? `[${item.sku}] ` : ""; sel.innerHTML += `<option value="${item.name}">${skuStr}${item.name}</option>`; });
+            Object.values(itemsDB || {}).forEach(item => { let skuStr = item.sku ? `[${item.sku}] ` : ""; sel.innerHTML += `<option value="${item.name}">${skuStr}${item.name}</option>`; });
             if(currentVal && itemsDB[currentVal]) sel.value = currentVal;
         };
 
@@ -17367,20 +17369,101 @@
         };
 
         window.filterSelectInventory = function() {
-            let term = document.getElementById('inv_select_search').value.toLowerCase(); let grid = document.getElementById('inv_select_grid'); grid.innerHTML = '';
-            Object.values(itemsDB).forEach(item => {
+            let term = document.getElementById('inv_select_search').value.toLowerCase(); 
+            let grid = document.getElementById('inv_select_grid'); grid.innerHTML = '';
+            
+            Object.values(itemsDB || {}).forEach(item => {
                 if(!item.name.toLowerCase().includes(term) && !(item.sku && item.sku.toLowerCase().includes(term))) return;
-                grid.innerHTML += `<label style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid #E2E8F0; border-radius:8px; cursor:pointer;"><div><strong style="font-size:13px;"><span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 4px; border-radius:4px; margin-right:6px;">${item.sku || 'ITM'}</span>${item.name}</strong><div style="font-size:10px; color:#64748B; margin-top:4px;">Total Purchased Stock: ${item.totalStock || 0}</div></div><input type="checkbox" class="inv-select-cb" value="${item.name}" style="width:18px; height:18px; accent-color:var(--accent-color);"></label>`;
+                
+                let liveStock = 0;
+                let stockDetails = "";
+                
+                // 🪄 LIVE CALCULATOR: Godown data scanning loop
+                if (item.godowns) {
+                    for (let g in item.godowns) {
+                        let qty = parseInt(item.godowns[g]) || 0;
+                        if (qty > 0) {
+                            liveStock += qty;
+                            let gName = warehousesDB[g] ? warehousesDB[g].name : g;
+                            stockDetails += `<span style="background:#EFF6FF; color:#1E40AF; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:4px; border:1px solid #BFDBFE; display:inline-block; margin-top:4px; font-weight:700;">📍 ${gName}: ${qty}</span>`;
+                        }
+                    }
+                }
+                
+                let stockColor = liveStock > 0 ? '#10B981' : '#EF4444';
+                let stockText = liveStock > 0 ? `${liveStock} Available` : 'Out of Stock';
+                let disableAttr = liveStock === 0 ? 'disabled' : '';
+                
+                grid.innerHTML += `
+                <label style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid #E2E8F0; border-radius:8px; cursor:${liveStock > 0 ? 'pointer' : 'not-allowed'}; opacity: ${liveStock > 0 ? '1' : '0.6'}; margin-bottom:8px; width:100%; box-sizing:border-box;">
+                    <div style="flex:1; padding-right:10px; text-align:left;">
+                        <strong style="font-size:14px; color:var(--text-primary);"><span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 4px; border-radius:4px; margin-right:6px; font-weight:800;">${item.sku || 'ITM'}</span>${item.name}</strong>
+                        <div style="font-size:11px; font-weight:900; color:${stockColor}; margin-top:4px;">📦 Live Stock: ${stockText}</div>
+                        <div style="display:block; margin-top:2px;">${stockDetails || '<span style="font-size:10px; color:#EF4444; font-weight:bold;">No available stock</span>'}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                        <input type="number" class="form-input inv-sel-qty" value="1" min="1" max="${liveStock}" style="width:55px; height:32px; padding:2px; text-align:center; font-weight:900; font-size:13px; color:var(--text-primary); border-color:#CBD5E1; ${liveStock === 0 ? 'display:none;' : ''}" ${disableAttr} onclick="event.stopPropagation();">
+                        <input type="checkbox" class="inv-select-cb" value="${item.name}" style="width:20px; height:20px; accent-color:var(--accent-color);" ${disableAttr}>
+                    </div>
+                </label>`;
             });
         };
 
         window.addSelectedItemsToForm = function() {
             let context = document.getElementById('inventorySelectModal').dataset.context || 'out';
-            document.querySelectorAll('.inv-select-cb:checked').forEach(cb => {
-                if(context === 'out') window.addOutwardItemRow(cb.value);
-                else if (context === 'di') { if(typeof addInvoiceItem === 'function') addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); if(rows.length > 0) rows[rows.length - 1].querySelector('.i-item-name').value = cb.value; }
+            let checkboxes = document.querySelectorAll('.inv-select-cb:checked');
+            if (checkboxes.length === 0) return alert("Please select at least one item!");
+            
+            let stockError = false;
+
+            checkboxes.forEach(cb => {
+                let name = cb.value;
+                let labelContainer = cb.closest('label');
+                let qtyInput = labelContainer.querySelector('.inv-sel-qty');
+                let qty = parseInt(qtyInput.value) || 1;
+                let maxStock = parseInt(qtyInput.getAttribute('max')) || 0;
+
+                if (qty > maxStock && context !== 'inward') {
+                    alert(`🚨 ERROR: You selected ${qty} x '${name}', but only ${maxStock} are available in stock!`);
+                    stockError = true;
+                    return;
+                }
+
+                let itemDef = itemsDB[name];
+                let rate = itemDef ? (itemDef.rent || 0) : 0;
+
+                if(context === 'out') {
+                    if (typeof window.addOutwardItemRow === 'function') {
+                        window.addOutwardItemRow(name);
+                        let rows = document.querySelectorAll('#out_items_container .quote-item-row, #out_items_container tr');
+                        let lastRow = rows[rows.length - 1];
+                        if (lastRow) {
+                            let qField = lastRow.querySelector('.out-item-qty, input[type="number"]');
+                            if (qField) qField.value = qty;
+                        }
+                    }
+                } else if (context === 'di') {
+                    if (typeof addInvoiceItem === 'function') {
+                        addInvoiceItem();
+                        let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
+                        if(rows.length > 0) {
+                            let lastRow = rows[rows.length - 1];
+                            if(lastRow.querySelector('.i-item-name')) lastRow.querySelector('.i-item-name').value = name;
+                            if(lastRow.querySelector('.i-item-qty')) lastRow.querySelector('.i-item-qty').value = qty;
+                            if(lastRow.querySelector('.i-item-rate')) lastRow.querySelector('.i-item-rate').value = rate;
+                        }
+                    }
+                }
             });
+            
+            if (stockError) return;
+
+            if (context === 'di' && typeof calculateDirectInvoiceTotal === 'function') {
+                calculateDirectInvoiceTotal();
+            }
             document.getElementById('inventorySelectModal').style.display = 'none';
+            document.querySelectorAll('.inv-sel-qty').forEach(q => q.value = "1");
+            checkboxes.forEach(c => c.checked = false);
         };
 
         // Header icon initialization hook
