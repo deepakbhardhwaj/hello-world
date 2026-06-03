@@ -16386,9 +16386,9 @@
                 }
                 
                 // Hide inward button if fully returned
+               // 🪄 INWARD BUTTON (Sirf ek baar define kiya hai)
                 let inwardBtnHtml = (!isFullyReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
-
-                let inwardBtnHtml = (!isReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
+                
                 let editBtnHtml = t.logType !== 'Stock Transfer' ? `<div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>` : '';
                 let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : (t.logType === 'Stock Transfer' ? '#10B981' : (t.logType === 'Stock Audit' ? '#F59E0B' : '#8B5CF6'));
 
@@ -16398,7 +16398,7 @@
                     statusBadge = `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">⚖️ AUDITED</span>`;
                     inwardBtnHtml = ''; editBtnHtml = ''; 
                 }
-
+                
                 let clickAction = t.logType === 'Rental Invoice' ? `if(typeof viewDetails === 'function') viewDetails('${t.id}', 'sales')` : (t.type === 'Audit' ? '' : `window.openLogisticsPreviewModal('${t.id}', '${t.logType}')`);
 
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 4px solid ${typeColor}; background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow-sm); box-sizing:border-box;">
