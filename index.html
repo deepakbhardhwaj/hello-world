@@ -52,8 +52,8 @@
             merge: true
         });
 
-        // 🛡️ 2nd: OFFLINE ENGINE (Settings ke baad call hoga toh Crash nahi hoga)
-        window.db.enablePersistence({ synchronizeTabs: true })
+        // 🛡️ 2nd: OFFLINE ENGINE (Warning Fix: synchronizeTabs ko false kiya)
+        window.db.enablePersistence({ synchronizeTabs: false })
           .catch(function(err) {
               console.log("Offline mode info: ", err.code);
           });
@@ -4689,7 +4689,7 @@
                         <textarea id="set_tnc" class="form-input" style="height: 100px; resize:vertical;" placeholder="Enter terms that appear on every PDF..."></textarea>
                     </div>
                     
-                    <div class="set-bento-card" id="set_inventory_toggle_card" style="display:none;">
+                    <div class="set-bento-card" id="set_inventory_toggle_card" style="display:block;">
                         <div class="set-badge" style="color: var(--purple); background: #FAF5FF;">📦 Advanced Modules</div>
                         <p style="font-size:11px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Enable Inventory, Godown & Rental Prop Tracking System for this workspace.</p>
                         <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; cursor:pointer;">
@@ -17866,7 +17866,7 @@
             // Normal deletion logic
             let party = partiesDB[record.partyId];
             if (record.type === 'Invoice') {
-                party.balance -= record.finalTotal;
+                if(party) party.balance -= record.finalTotal; // 🚀 SAFEGUARD
                 Object.values(salesDB).forEach(r => {
                     if (r.type === 'Receipt' && r.linkedInvoices && r.linkedInvoices.includes(id)) {
                         r.linkedInvoices = r.linkedInvoices.filter(invId => invId !== id);
@@ -17878,7 +17878,7 @@
                     }
                 });
             } else if (record.type === 'Receipt') {
-                party.balance += record.amount;
+                if(party) party.balance += record.amount; // 🚀 SAFEGUARD
                 Object.values(salesDB).forEach(inv => {
                     if (inv.type === 'Invoice' && record.linkedInvoices && record.linkedInvoices.includes(inv.id)) {
                         inv.advance -= record.usedAmount; inv.balanceDue += record.usedAmount;
@@ -17887,7 +17887,7 @@
                 });
                 if (record.mode !== 'Cash') { let bankId = record.mode; if (bankDB[bankId]) { bankDB[bankId].balance -= record.amount; let tx = Object.values(bankTxDB).find(t => t.refId === id); if (tx) delete bankTxDB[tx.id]; } }
             }
-            let pName = partiesDB[record.partyId] ? partiesDB[record.partyId].name : "General";
+            let pName = party ? party.name : "General";
             sendToTrash('Sales', id, record, `${record.type} - ₹${record.finalTotal || record.amount} (${pName})`);
             delete salesDB[id];
             updateDataAndUI();
