@@ -11164,15 +11164,23 @@
             updateDataAndUI(); 
             document.getElementById('directInvoiceModal').style.display = 'none'; 
             
-            // 🚀 SMART NAVIGATION: Check karo ki user Inventory Hub me hai ya Sales me
-            let currentActiveTab = document.querySelector('.active-section');
-            if (currentActiveTab && currentActiveTab.id === 'inventory-hub') {
-                if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
+            // 🚀 SMART ROUTING FIX: Check where the user currently is and stay there!
+            let activeTab = document.querySelector('.active-section');
+            if (activeTab) {
+                if (activeTab.id === 'inventory-hub') {
+                    if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
+                } else if (activeTab.id === 'events' || activeTab.id === 'crm') {
+                    // Agar Events ya CRM me hai, to Event dashboard update kardo bina tab switch kiye
+                    if (targetEventId) renderWorkspace(targetEventId);
+                } else {
+                    setSalesTab('Invoice', document.getElementById('st-invoices')); 
+                    openTab('sales-hub', null); 
+                }
             } else {
                 setSalesTab('Invoice', document.getElementById('st-invoices')); 
                 openTab('sales-hub', null); 
             }
-            alert("✅ Invoice Saved and Inventory Stock Updated!");
+            alert("✅ Invoice Saved Successfully!");
         }
         var saveDirectInvoiceData = window.saveDirectInvoiceData;
 
@@ -16970,6 +16978,14 @@
             let auditDate = document.getElementById('audit_date') ? document.getElementById('audit_date').value : new Date().toISOString().split('T')[0];
             if(confirm(`System expects ${expected}. You found ${actual}.\n\nAre you sure you want to mark ${diff} items as Lost/Written-off?`)) {
                 item.godowns[gId] = actual; item.totalStock -= diff; item.totalLost = (item.totalLost || 0) + diff;
+                
+                // 🚀 CREATE AUDIT LOG FOR ITEM LEDGER
+                let auditId = "AUD-" + Date.now();
+                stockMovementDB[auditId] = {
+                    id: auditId, type: 'Audit', godownId: gId, date: auditDate,
+                    items: [{ name: name, qty: diff }], status: 'Audited', logType: 'Stock Audit'
+                };
+
                 if (lossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: lossValue, paid: lossValue, balanceDue: 0, status: 'Paid', date: auditDate, mode: 'SYSTEM_LOSS', eventId: null, partyId: null, notes: `Stock Audit Write-off: ${diff} x ${name}`, linkedDates: [] }; }
                 if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('stockAuditModal').style.display = 'none'; alert(`✅ Audit complete. ${diff} units marked as lost.`); window.renderInventoryHubList();
             }
@@ -17305,8 +17321,11 @@
                         if (out.type === 'Transfer') {
                             let fName = warehousesDB[out.fromGodown] ? warehousesDB[out.fromGodown].name : 'Unknown';
                             let tName = warehousesDB[out.toGodown] ? warehousesDB[out.toGodown].name : 'Unknown';
-                            // 🚀 Balance same rakhne ke liye OUT aur IN dono ek sath
                             records.push({ date: out.date, ref: out.id, party: `Transfer: ${fName} ➡️ ${tName}`, out: matchedItem.qty, in: matchedItem.qty, lost: 0 });
+                        } else if (out.type === 'Audit') {
+                            // 🚀 SHOW AUDIT LOSS IN LEDGER
+                            let gName = warehousesDB[out.godownId] ? warehousesDB[out.godownId].name : 'Godown';
+                            records.push({ date: out.date, ref: out.id, party: `Stock Audit (${gName})`, out: 0, in: 0, lost: matchedItem.qty });
                         } else {
                             let dest = leadsDB[out.eventId] ? leadsDB[out.eventId].func : 'Internal Event';
                             records.push({ date: out.date, ref: out.id, party: dest, out: matchedItem.qty, in: 0, lost: 0 });
