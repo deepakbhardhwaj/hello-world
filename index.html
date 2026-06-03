@@ -16970,7 +16970,7 @@
         };
 
         // --------------------------------------------------------------
-        // 5. SMART INWARD (RETURN) ENGINE [MULTI-GODOWN SUPPORT]
+        // 5. CLEAN INWARD ENGINE [GLOBAL GODOWN + PARTIAL PERMISSION]
         // --------------------------------------------------------------
         window.openReturnStockModal = function(id, logType) {
             closeAllMenus(); let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if (!record) return alert("Record not found!");
@@ -16981,14 +16981,38 @@
             
             document.getElementById('return_penalty_amt').value = 0; document.getElementById('return_penalty_note').value = ""; document.getElementById('return_asset_loss_value').value = 0; document.getElementById('return_loss_group').style.display = 'none';
             if(document.getElementById('return_date')) document.getElementById('return_date').valueAsDate = new Date();
+            
+            // 🚀 CLEAN UI: SINGLE GODOWN SELECTOR AT THE TOP
+            let destDiv = document.getElementById('return_dest_godown_div');
+            if(!destDiv) {
+                destDiv = document.createElement('div');
+                destDiv.id = 'return_dest_godown_div';
+                destDiv.style.cssText = "margin-bottom:15px; background:#F8FAFC; padding:12px; border-radius:8px; border:1px solid #CBD5E1;";
+                let table = document.getElementById('return_items_body').closest('table');
+                table.parentNode.insertBefore(destDiv, table);
+            }
+            
+            let defaultGId = record.godownId !== 'AUTO_MULTI' ? record.godownId : 'WH_MAIN';
+            if(record.items && record.items[0] && record.items[0].pickupSplit && record.items[0].pickupSplit.length > 0) {
+                 let maxSplit = record.items[0].pickupSplit.reduce((p, c) => (p.qty > c.qty) ? p : c);
+                 defaultGId = maxSplit.godownId;
+            }
+
+            let selectHtml = `<label style="font-weight:900; color:#0F172A; font-size:13px;">📥 Receive Material Into Godown:</label><br>
+            <select id="return_global_godown" class="form-input" style="margin-top:5px; width:100%; font-weight:bold; color:#2563EB;">`;
+            for(let g in warehousesDB) {
+                let isSel = (g === defaultGId) ? 'selected' : '';
+                selectHtml += `<option value="${g}" ${isSel}>📍 ${warehousesDB[g].name}</option>`;
+            }
+            selectHtml += `</select>`;
+            destDiv.innerHTML = selectHtml;
+
             let tbody = document.getElementById('return_items_body'); tbody.innerHTML = "";
             
-            // 🪄 CALCULATE PENDING: Check kitna maal pehle hi aa chuka hai
+            // 🪄 CALCULATE PENDING FOR PARTIAL RETURN
             let returnedSums = {};
             if(record.returnLog) {
-                record.returnLog.forEach(log => {
-                    returnedSums[log.name] = (returnedSums[log.name] || 0) + log.safe + log.repair + log.lost;
-                });
+                record.returnLog.forEach(log => { returnedSums[log.name] = (returnedSums[log.name] || 0) + log.safe + log.repair + log.lost; });
             }
 
             let itemsAdded = 0;
@@ -16998,46 +17022,25 @@
                     let alreadyReturned = returnedSums[item.name] || 0;
                     let pending = sentQty - alreadyReturned;
 
-                    if(pending <= 0) return; // Jo pura wapas aa gaya, usko mat dikhao
+                    if(pending <= 0) return; // Jo pura wapas aa gaya, use dubara mat dikhao
                     itemsAdded++;
-
-                    let defaultGId = 'WH_MAIN';
-                    if(item.pickupSplit && item.pickupSplit.length > 0) {
-                        let maxSplit = item.pickupSplit.reduce((prev, current) => (prev.qty > current.qty) ? prev : current);
-                        defaultGId = maxSplit.godownId;
-                    } else if (record.godownId && record.godownId !== 'AUTO_MULTI') {
-                        defaultGId = record.godownId;
-                    }
-
-                    let selectHtml = `<select class="form-input ret-item-godown" style="font-size:11px; padding:4px; height:auto; margin-top:6px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:4px; width:100%; max-width:150px; font-weight:600; color:#475569;">`;
-                    for(let g in warehousesDB) {
-                        let isSelected = (g === defaultGId) ? 'selected' : '';
-                        selectHtml += `<option value="${g}" ${isSelected}>📍 ${warehousesDB[g].name}</option>`;
-                    }
-                    selectHtml += `</select>`;
 
                     tbody.innerHTML += `<tr style="border-bottom: 1px solid #E2E8F0;">
                         <td style="padding:10px;">
                             <strong style="color:var(--text-primary); font-size:13px;">${item.name}</strong>
                             <input type="hidden" class="ret-item-name" value="${item.name}">
-                            ${selectHtml}
-                            <div style="margin-top:6px;">
-                                <button type="button" onclick="window.addReturnSplitRow(this)" style="background:#E2E8F0; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer; font-weight:bold;">➕ Split Godown</button>
-                            </div>
                         </td>
                         <td style="padding:10px; text-align:center; font-weight:900; font-size:15px; color:var(--text-secondary);">
-                            <span class="ret-item-sent" data-pending="${pending}">${pending}</span><br>
-                            <span style="font-size:9px; color:#64748B;">(Sent: ${sentQty})</span>
+                            <span class="ret-item-sent" data-pending="${pending}">${pending}</span>
+                            <div style="font-size:10px; color:#64748B;">(Sent: ${sentQty})</div>
                         </td>
-                        <td style="padding:10px;"><input type="number" class="form-input ret-item-safe" value="${pending}" min="0" oninput="if(typeof window.calcReturnLoss === 'function') window.calcReturnLoss()" style="font-weight:bold; color:var(--success); border-color:#BBF7D0; background:#F0FDF4; width:60px;"></td>
-                        <td style="padding:10px;"><input type="number" class="form-input ret-item-lost" value="0" min="0" oninput="if(typeof window.calcReturnLoss === 'function') window.calcReturnLoss()" style="font-weight:bold; color:var(--danger); border-color:#FECACA; background:#FEF2F2; width:60px;"></td>
-                        <td style="padding:10px;"><input type="number" class="form-input ret-item-repair" value="0" min="0" oninput="if(typeof window.calcReturnLoss === 'function') window.calcReturnLoss()" style="font-weight:bold; color:var(--warning); border-color:#FDE68A; background:#FFFBEB; width:60px;"></td>
+                        <td style="padding:10px;"><input type="number" class="form-input ret-item-safe" value="${pending}" min="0" max="${pending}" oninput="if(typeof window.calcReturnLoss === 'function') window.calcReturnLoss()" style="font-weight:bold; color:var(--success); border-color:#BBF7D0; background:#F0FDF4;"></td>
+                        <td style="padding:10px;"><input type="number" class="form-input ret-item-lost" value="0" min="0" max="${pending}" oninput="if(typeof window.calcReturnLoss === 'function') window.calcReturnLoss()" style="font-weight:bold; color:var(--danger); border-color:#FECACA; background:#FEF2F2;"></td>
+                        <td style="padding:10px;"><input type="number" class="form-input ret-item-repair" value="0" min="0" max="${pending}" oninput="if(typeof window.calcReturnLoss === 'function') window.calcReturnLoss()" style="font-weight:bold; color:var(--warning); border-color:#FDE68A; background:#FFFBEB;"></td>
                     </tr>`; 
                 }); 
             }
-            if(itemsAdded === 0) {
-                alert("All items from this document have already been returned!"); return;
-            }
+            if(itemsAdded === 0) { alert("All items from this document have already been returned!"); return; }
             document.getElementById('returnStockModal').style.display = 'flex';
         };
 
@@ -17046,30 +17049,71 @@
             let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0; let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty"; let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0; let error = false;
             let retDate = document.getElementById('return_date') ? document.getElementById('return_date').value : new Date().toISOString().split('T')[0];
             
-            // 1. Check & Validate Total Quantity (Partial/Split)
-            let itemReturns = {}; let pendingMap = {};
+            let destGId = document.getElementById('return_global_godown') ? document.getElementById('return_global_godown').value : 'WH_MAIN';
+
+            // 1. VERIFY PARTIAL RETURN QUANTITY
             document.querySelectorAll('#return_items_body tr').forEach(row => {
-                let name = row.querySelector('.ret-item-name').value;
                 let pending = parseInt(row.querySelector('.ret-item-sent').getAttribute('data-pending')) || 0;
                 let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0;
                 let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0;
                 let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
                 
-                if(!itemReturns[name]) itemReturns[name] = 0;
-                itemReturns[name] += (safe + lost + repair);
-                pendingMap[name] = pending;
-            });
-
-            for(let name in itemReturns) {
-                if(itemReturns[name] > pendingMap[name]) {
-                    alert(`🚨 ERROR: You are trying to return ${itemReturns[name]} x '${name}', but only ${pendingMap[name]} are pending!`);
-                    error = true; break;
+                let rowTotal = safe + lost + repair;
+                if(rowTotal > pending) {
+                    let name = row.querySelector('.ret-item-name').value;
+                    alert(`🚨 ERROR: You are trying to return ${rowTotal} x '${name}', but only ${pending} are pending!`);
+                    error = true; 
                 }
-            }
+            });
             if(error) return;
 
             if(!record.returnLog) record.returnLog = [];
 
+            // 2. PROCESS RETURN & UPDATE GODOWN STOCK
+            document.querySelectorAll('#return_items_body tr').forEach(row => {
+                let name = row.querySelector('.ret-item-name').value; 
+                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; 
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; 
+                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+
+                let rowTotal = safe + lost + repair;
+                if(rowTotal > 0) {
+                    record.returnLog.push({ name: name, safe: safe, repair: repair, lost: lost, date: retDate, returnGodown: destGId });
+                    
+                    if (itemsDB[name]) { 
+                        if (!itemsDB[name].godowns[destGId]) itemsDB[name].godowns[destGId] = 0; 
+                        itemsDB[name].godowns[destGId] += (safe + repair); 
+                        if(lost > 0) { 
+                            itemsDB[name].totalStock -= lost; 
+                            itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; 
+                        } 
+                    }
+                }
+            });
+
+            // 3. UPDATE STATUS (Returned vs Partial Returned)
+            let isFullyReturned = true;
+            let newReturnedSums = {};
+            record.returnLog.forEach(log => { newReturnedSums[log.name] = (newReturnedSums[log.name] || 0) + log.safe + log.repair + log.lost; });
+
+            record.items.forEach(item => {
+                let sentQty = parseInt(item.qty) || 0;
+                let totRet = newReturnedSums[item.name] || 0;
+                if(totRet < sentQty) isFullyReturned = false;
+            });
+
+            if(logType === 'Rental Invoice') { record.rentalStatus = isFullyReturned ? 'Returned' : 'Partial Returned'; } 
+            else { record.status = isFullyReturned ? 'Returned' : 'Partial Returned'; }
+            
+            // Financials Update
+            if (penaltyAmt > 0 && logType === 'Rental Invoice') { record.finalTotal += penaltyAmt; record.balanceDue += penaltyAmt; record.items.push({ name: "Penalty: " + penaltyNote, desc: "Damage/Lost materials", unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt }); if(partiesDB[record.partyId]) partiesDB[record.partyId].balance += penaltyAmt; record.status = record.balanceDue > 0 ? (record.advance > 0 ? 'Partial' : 'Due') : 'Paid'; }
+            if (assetLossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid', date: retDate, mode: 'SYSTEM_LOSS', eventId: record.eventId || null, partyId: null, notes: `Write-off for lost items in ${id}`, linkedDates: [] }; }
+            
+            if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('returnStockModal').style.display = 'none'; 
+            
+            alert(isFullyReturned ? "✅ All Stock Returned Successfully!" : "✅ Partial Return Processed. Remaining items are still pending."); 
+            if(typeof renderInventoryHubList === 'function') window.renderInventoryHubList();
+        };
             // 2. Process Returns (Update Godowns)
             document.querySelectorAll('#return_items_body tr').forEach(row => {
                 let name = row.querySelector('.ret-item-name').value; 
