@@ -10410,7 +10410,17 @@
                     } else if (r.type === 'Invoice') {
                         let stClass = r.status === "Paid" ? "badge-won" : (r.status === "Partial" ? "badge-new" : "badge-hot");
                         badgeHtml = `<span class="status-badge ${stClass}" style="font-size:8.5px; padding:2px 4px;">${r.status}</span>`;
-                        amountDetailsHtml = `<div style="text-align:right;"><div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">₹${r.finalTotal.toLocaleString('en-IN')}</div><div style="font-size:9.5px; font-weight:700;"><span style="color:var(--success);">Pd: ₹${(r.advance || 0).toLocaleString('en-IN')}</span> <span style="color:#CBD5E1; margin:0 2px;">|</span> <span style="color:var(--danger);">Due: ₹${(r.balanceDue || 0).toLocaleString('en-IN')}</span></div></div>`;
+                        
+                        // 🪄 RENTAL STATUS BADGE FOR INVOICE LIST
+                        let invStatusHtml = "";
+                        if(r.invoiceType === 'Rental') {
+                             if(r.rentalStatus === 'Returned') invStatusHtml = `<span style="background:#DCFCE7; color:#166534; padding:2px 4px; border-radius:4px; font-size:8.5px; font-weight:900; margin-left:4px; border:1px solid #BBF7D0;">✅ RET</span>`;
+                             else if(r.rentalStatus === 'Partial Returned') invStatusHtml = `<span style="background:#FEF9C3; color:#A16207; padding:2px 4px; border-radius:4px; font-size:8.5px; font-weight:900; margin-left:4px; border:1px solid #FEF08A;">⏳ PRT</span>`;
+                             else invStatusHtml = `<span style="background:#FFFBEB; color:#D97706; padding:2px 4px; border-radius:4px; font-size:8.5px; font-weight:900; margin-left:4px; border:1px solid #FDE68A;">🚚 DEP</span>`;
+                        }
+                        badgeHtml += invStatusHtml;
+
+                        amountDetailsHtml = `<div style="text-align:right;"><div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">₹${(r.finalTotal || r.total || 0).toLocaleString('en-IN')}</div><div style="font-size:9.5px; font-weight:700;"><span style="color:var(--success);">Pd: ₹${(r.advance || 0).toLocaleString('en-IN')}</span> <span style="color:#CBD5E1; margin:0 2px;">|</span> <span style="color:var(--danger);">Due: ₹${(r.balanceDue || 0).toLocaleString('en-IN')}</span></div></div>`;
                         if (r.status === 'Due' || r.status === 'Partial') { menuOptionsHtml += `<div class="dropdown-item text-green" onclick="quickPaySales('${r.id}')">💰 Receive Payment</div>`; }
                     } else if (r.type === 'Receipt') {
                         let usage = r.availableAmount === 0 ? "Fully Used" : (r.usedAmount > 0 ? "Partially Used" : "Unused");
@@ -16337,8 +16347,10 @@
             transactions.forEach(t => {
                 if (window.invFilterFrom && t.date < window.invFilterFrom) return; if (window.invFilterTo && t.date > window.invFilterTo) return;
                 
-                let isReturned = (t.rentalStatus === 'Returned' || t.status === 'Returned'); 
-                let isOverdue = (!isReturned && t.returnDate && t.returnDate < todayStr);
+                // 🪄 SMART PARTIAL STATUS LOGIC FOR INVENTORY HUB
+                let isFullyReturned = (t.rentalStatus === 'Returned' || t.status === 'Returned'); 
+                let isPartialReturned = (t.rentalStatus === 'Partial Returned' || t.status === 'Partial Returned');
+                let isOverdue = (!isFullyReturned && !isPartialReturned && t.returnDate && t.returnDate < todayStr);
                 
                 if (window.invSubFilter === 'On Rent' && (t.logType !== 'Rental Invoice' || isReturned)) return;
                 if (window.invSubFilter === 'On Event' && (t.logType !== 'Outward Challan' || isReturned)) return;
@@ -16359,8 +16371,22 @@
 
                 visibleCount++; let fDate = new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                 
-                let statusBadge = isReturned ? `<span style="background:#DCFCE7; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">✅ RECEIVED</span>` : (isOverdue ? `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">🚨 OVERDUE</span>` : `<span style="background:#FFFBEB; color:#D97706; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`);
-                if(t.logType === 'Stock Transfer') statusBadge = `<span style="background:#F0FDF4; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">🔄 TRANSFERRED</span>`;
+                // 🪄 SMART BADGE ASSIGNMENT FOR INVENTORY HUB
+                let statusBadge = '';
+                if(t.logType === 'Stock Transfer') {
+                    statusBadge = `<span style="background:#F0FDF4; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">🔄 TRANSFERRED</span>`;
+                } else if(isFullyReturned) {
+                    statusBadge = `<span style="background:#DCFCE7; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">✅ RECEIVED</span>`;
+                } else if(isPartialReturned) {
+                    statusBadge = `<span style="background:#FEF9C3; color:#A16207; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FEF08A;">⏳ PARTIAL</span>`;
+                } else if(isOverdue) {
+                    statusBadge = `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">🚨 OVERDUE</span>`;
+                } else {
+                    statusBadge = `<span style="background:#FFFBEB; color:#D97706; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`;
+                }
+                
+                // Hide inward button if fully returned
+                let inwardBtnHtml = (!isFullyReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
 
                 let inwardBtnHtml = (!isReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
                 let editBtnHtml = t.logType !== 'Stock Transfer' ? `<div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>` : '';
@@ -16790,16 +16816,16 @@
             window.renderInventoryHubList();
         };
         // --------------------------------------------------------------
-        // 🚀 MASTER PREVIEW ENGINE (Outward, Rental & Stock Transfer with Pickup Map)
+        // 🚀 MASTER PREVIEW ENGINE (With Partial Status & Return History)
         // --------------------------------------------------------------
         window.openLogisticsPreviewModal = function(id, logType) {
             closeAllMenus();
 
-            // 1. STOCK TRANSFER PREVIEW
+            // 1. STOCK TRANSFER PREVIEW (Same as before)
             if (logType === 'Stock Transfer') {
                 let record = stockMovementDB[id]; if(!record) return;
                 if(!document.getElementById('logPreviewModal')) {
-                    let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px; padding:0; overflow:hidden;"><div style="background:linear-gradient(135deg, #0F172A, #1E293B); padding:20px; color:white; display:flex; justify-content:space-between; align-items:center;"><h3 style="margin:0; font-size:16px;">📄 Transfer Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;">&times;</button></div><div id="logPreviewBody" style="padding:20px; font-size:13px; line-height:1.6; max-height: 60vh; overflow-y: auto;"></div><div id="logPreviewActions" style="display:flex; gap:10px; padding:15px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;"></div></div></div>`;
+                    let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px; padding:0; overflow:hidden;"><div style="background:linear-gradient(135deg, #0F172A, #1E293B); padding:20px; color:white; display:flex; justify-content:space-between; align-items:center;"><h3 style="margin:0; font-size:16px;">📄 Transfer Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;">&times;</button></div><div id="logPreviewBody" style="padding:20px; font-size:13px; line-height:1.6; max-height: 70vh; overflow-y: auto;"></div><div id="logPreviewActions" style="display:flex; gap:10px; padding:15px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;"></div></div></div>`;
                     document.body.insertAdjacentHTML('beforeend', mHtml);
                 }
                 let fName = warehousesDB[record.fromGodown] ? warehousesDB[record.fromGodown].name : 'Unknown';
@@ -16829,25 +16855,31 @@
             // 2. OUTWARD CHALLAN & RENTAL INVOICE PREVIEW
             let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
             let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
-            let isReturned = (logType === 'Rental Invoice') ? (record.rentalStatus === 'Returned') : (record.status === 'Returned');
+            
+            // 🪄 SMART STATUS LOGIC
+            let currentStatus = (logType === 'Rental Invoice') ? record.rentalStatus : record.status;
+            let isFullyReturned = (currentStatus === 'Returned');
+            let isPartialReturned = (currentStatus === 'Partial Returned');
             
             if(!document.getElementById('logPreviewModal')) {
                 let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;">
                     <div class="modal-content" style="max-width: 500px; padding:0; overflow:hidden;">
                         <div style="background:linear-gradient(135deg, #0F172A, #1E293B); padding:20px; color:white; display:flex; justify-content:space-between; align-items:center;">
-                            <h3 style="margin:0; font-size:16px;">📄 Challan Preview</h3>
+                            <h3 style="margin:0; font-size:16px;">📄 Voucher Preview</h3>
                             <button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;">&times;</button>
                         </div>
-                        <div id="logPreviewBody" style="padding:20px; font-size:13px; line-height:1.6; max-height: 60vh; overflow-y: auto;"></div>
+                        <div id="logPreviewBody" style="padding:20px; font-size:13px; line-height:1.6; max-height: 70vh; overflow-y: auto;"></div>
                         <div id="logPreviewActions" style="display:flex; gap:10px; padding:15px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;"></div>
                     </div>
                 </div>`;
                 document.body.insertAdjacentHTML('beforeend', mHtml);
             }
             
-            let statusBadge = isReturned 
-                ? `<span style="background:#DCFCE7; color:#166534; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #BBF7D0;">✅ RECEIVED</span>` 
-                : `<span style="background:#FFFBEB; color:#D97706; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`;
+            // STATUS BADGE MAKER
+            let statusBadge = '';
+            if(isFullyReturned) statusBadge = `<span style="background:#DCFCE7; color:#166534; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:900; border:1px solid #BBF7D0;">✅ FULLY RETURNED</span>`;
+            else if(isPartialReturned) statusBadge = `<span style="background:#FEF9C3; color:#A16207; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:900; border:1px solid #FEF08A;">⏳ PARTIAL RETURNED</span>`;
+            else statusBadge = `<span style="background:#FFFBEB; color:#D97706; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:900; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`;
 
             let evText = record.event || (leadsDB[record.eventId] ? leadsDB[record.eventId].func : 'N/A');
             if(record.functionTitle) evText += ` <br><span style="font-size:11px; color:var(--purple);">(${record.functionTitle})</span>`;
@@ -16858,45 +16890,85 @@
                         <span style="color:#64748B;">Voucher ID:</span> <span style="font-family:monospace; color:var(--accent-color); font-weight:900;">${record.id}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                        <span style="color:#64748B;">Event:</span> <span style="text-align:right; font-weight:700;">${evText}</span>
+                        <span style="color:#64748B;">Event / Party:</span> <span style="text-align:right; font-weight:700;">${evText}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                         <span style="color:#64748B;">Date:</span> <span style="font-weight:600;">${new Date(record.date).toLocaleDateString('en-IN')}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between;">
-                        <span style="color:#64748B;">Status:</span> ${statusBadge}
+                        <span style="color:#64748B;">Inventory Status:</span> ${statusBadge}
                     </div>
                 </div>
                 
-                <h4 style="margin: 0 0 10px 0; color:var(--purple); font-size:12px; text-transform:uppercase;">📦 Dispatched Items</h4>
+                <h4 style="margin: 0 0 10px 0; color:var(--purple); font-size:12px; text-transform:uppercase;">📦 Items Dispatched & Pending</h4>
                 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px;">`;
             
+            // CALCULATE ALREADY RETURNED TOTALS FOR PENDING VIEW
+            let returnedSums = {};
+            if(record.returnLog) {
+                record.returnLog.forEach(log => { returnedSums[log.name] = (returnedSums[log.name] || 0) + log.safe + log.repair + log.lost; });
+            }
+
             if(record.items) {
                 record.items.forEach(item => { 
-                    // 🪄 MAGIC: Fetch Pickup Split Info for UI Preview
+                    let sentQty = parseInt(item.qty) || 0;
+                    let alreadyRet = returnedSums[item.name] || 0;
+                    let pending = sentQty - alreadyRet;
+                    
                     let pickupText = '';
                     if(item.pickupSplit && item.pickupSplit.length > 0) {
-                        let splits = item.pickupSplit.map(sp => {
-                            let gName = warehousesDB[sp.godownId] ? warehousesDB[sp.godownId].name : 'Godown';
-                            return `${gName}: ${sp.qty}`;
-                        });
+                        let splits = item.pickupSplit.map(sp => { let gName = warehousesDB[sp.godownId] ? warehousesDB[sp.godownId].name : 'Godown'; return `${gName}: ${sp.qty}`; });
                         pickupText = `<br><span style="font-size:10px; color:#64748B; font-weight:bold; background:#F1F5F9; padding:2px 6px; border-radius:4px; margin-top:4px; display:inline-block; border:1px solid #CBD5E1;">📍 Pickup ➔ ${splits.join(' | ')}</span>`;
                     }
 
+                    // PENDING HIGHLIGHTER
+                    let pendingBadge = pending > 0 
+                        ? `<div style="font-size:10px; color:#DC2626; font-weight:900; margin-top:2px;">(Pending: ${pending})</div>` 
+                        : `<div style="font-size:10px; color:#166534; font-weight:900; margin-top:2px;">(All Returned)</div>`;
+
                     bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #CBD5E1; padding-bottom:8px; margin-bottom:8px;">
                         <div style="font-weight:700; color:#0F172A;">${item.name} ${pickupText}</div> 
-                        <b style="color:var(--accent-color); background:#EFF6FF; padding:4px 10px; border-radius:12px; font-size:12px; min-width:35px; text-align:center;">x ${item.qty}</b>
+                        <div style="text-align:right;">
+                            <b style="color:var(--accent-color); background:#EFF6FF; padding:4px 10px; border-radius:12px; font-size:12px; min-width:35px; text-align:center;">Sent: ${item.qty}</b>
+                            ${pendingBadge}
+                        </div>
                     </div>`; 
                 });
             }
             bodyHtml += `</div>`;
             
+            // 🪄 THE MAGIC: RETURN HISTORY LOG
+            if (record.returnLog && record.returnLog.length > 0) {
+                bodyHtml += `<h4 style="margin: 20px 0 10px 0; color:#166534; font-size:12px; text-transform:uppercase;">📥 Return History (Inward Log)</h4>
+                <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:12px;">`;
+                
+                record.returnLog.forEach((log, idx) => {
+                    let gName = warehousesDB[log.returnGodown] ? warehousesDB[log.returnGodown].name : 'Main Godown';
+                    bodyHtml += `<div style="border-bottom:${idx === record.returnLog.length - 1 ? 'none' : '1px dashed #86EFAC'}; padding-bottom:8px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <strong style="color:#14532D; font-size:13px;">${log.name}</strong>
+                            <strong style="color:#166534; font-size:13px;">Total In: ${log.safe + log.lost + log.repair}</strong>
+                        </div>
+                        <div style="font-size:11px; color:#15803D; margin-top:4px;">
+                            <span style="background:#DCFCE7; padding:2px 6px; border-radius:4px;">Safe: ${log.safe}</span>
+                            <span style="background:#FEE2E2; color:#B91C1C; padding:2px 6px; border-radius:4px; margin-left:4px;">Lost: ${log.lost}</span>
+                            <span style="background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px; margin-left:4px;">Repair: ${log.repair}</span>
+                        </div>
+                        <div style="font-size:10px; color:#166534; margin-top:6px; font-weight:bold;">
+                            📅 Date: ${log.date} &nbsp;|&nbsp; 📍 Dropped at: ${gName}
+                        </div>
+                    </div>`;
+                });
+                bodyHtml += `</div>`;
+            }
+
             document.getElementById('logPreviewBody').innerHTML = bodyHtml;
             
             let actionsHtml = `<button class="btn-main" style="flex:1; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print</button>
                 <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>`;
             
-            if(!isReturned) {
+            // Inward button hide if fully returned
+            if(!isFullyReturned) {
                 actionsHtml += `<button class="btn-main" style="flex:1; background:var(--success);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.openReturnStockModal('${id}', '${logType}')">📥 Inward</button>`;
             }
             
