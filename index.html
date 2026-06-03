@@ -44,6 +44,12 @@
         window.auth = firebase.auth();
         window.db = firebase.firestore();
 
+        // 🛡️ OFFLINE ENGINE: Net chala jaye toh bhi app nahi rukega!
+        window.db.enablePersistence()
+          .catch(function(err) {
+              console.warn("Offline mode setup failed, continuing online mode only: ", err.code);
+          });
+
         // 🚀 TURBO MODE: Enable Fast WebSockets for Instant Sync
         window.db.settings({
             experimentalForceLongPolling: false, // 👈 Isko FALSE kiya taaki fast chale
@@ -7338,7 +7344,7 @@
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
 
-                fetchLeadsFromFirestore();
+                // 🚫 GLOBAL FETCH REMOVED: Ab sirf aur sirf secure Workspace Data hi load hoga!
                 updateDataAndUI(true); // 👈 Yahan 'true' lagana zaroori hai taaki data wipe na ho!
 
                 let btnHome = document.getElementById('btn-home');
@@ -7741,9 +7747,17 @@
         function saveDataLocally() { 
             if (!currentWorkspaceId) return; 
             
+            // 🛡️ DATA WIPE PROTECTION: Agar memory khali hai toh Cloud par upload mat karo (Prevents data loss on refresh)
+            if (Object.keys(leadsDB).length === 0 && Object.keys(partiesDB).length === 0 && Object.keys(salesDB).length === 0) {
+                let localMem = JSON.parse(localStorage.getItem('utsav_erp_data_' + currentWorkspaceId));
+                if (localMem && Object.keys(localMem.leads || {}).length > 0) {
+                    console.log("🛡️ Protected Cloud from being wiped by empty local state on refresh!");
+                    return; 
+                }
+            }
+            
             // 🚀 CRITICAL FIX: Removed setTimeout to prevent Data Loss & Race Conditions
-            // Data turant pack karke Firebase ko bhejna zaroori hai, warna cloud purana data wapas bhej dega
-            let dataToSave = { 
+            let dataToSave = {
                 leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
                 expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
                 bank: bankDB, bankTx: bankTxDB, loans: loansDB,
@@ -7863,20 +7877,12 @@
                 eventStatus: 'Upcoming'
             };
 
-            // 🚀 Firestore mein save karne ka logic
-            try {
-                await db.collection("leads").doc(id).set(leadObj);
-
-                // Local memory update
-                leadsDB[id] = leadObj;
-                updateDataAndUI();
-                document.getElementById('leadModal').style.display = 'none';
-                editingLeadId = null;
-                console.log("✅ Lead saved to Cloud!");
-            } catch (e) {
-                console.error("❌ Sync Error:", e);
-                alert("❌ Internet connection error! Could not save the lead.");
-            }
+            // 🚀 SMART FIX: Lead saved securely to current Workspace ONLY!
+            leadsDB[id] = leadObj;
+            updateDataAndUI(); // Ye automatic Cloud Sync handle kar lega
+            document.getElementById('leadModal').style.display = 'none';
+            editingLeadId = null;
+            console.log("✅ Lead securely saved to Workspace!");
         }
 
         function renderLeadsList() {
@@ -8286,13 +8292,12 @@
             if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
         }
 
-        // 🚀 FIREBASE CLOUD DELETE FIX
+        // 🚀 FIREBASE CLOUD DELETE FIX (WORKSPACE SCOPED)
         function actionDelete(id, event) { 
             event.stopPropagation(); event.preventDefault(); closeAllMenus(); 
             if (confirm("Are you sure you want to permanently delete this lead?")) { 
-                db.collection("leads").doc(id).delete().catch(e=>console.log("Cloud delete error:", e));
                 delete leadsDB[id]; 
-                updateDataAndUI(); 
+                updateDataAndUI(); // 👈 Ye cloud par update bhej dega (Workspace vault update)
             } 
         }
 
@@ -11137,8 +11142,15 @@
             tempEventIdForInvoice = null; 
             updateDataAndUI(); 
             document.getElementById('directInvoiceModal').style.display = 'none'; 
-            setSalesTab('Invoice', document.getElementById('st-invoices')); 
-            openTab('sales-hub', null); 
+            
+            // 🚀 SMART NAVIGATION: Check karo ki user Inventory Hub me hai ya Sales me
+            let currentActiveTab = document.querySelector('.active-section');
+            if (currentActiveTab && currentActiveTab.id === 'inventory-hub') {
+                if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
+            } else {
+                setSalesTab('Invoice', document.getElementById('st-invoices')); 
+                openTab('sales-hub', null); 
+            }
             alert("✅ Invoice Saved and Inventory Stock Updated!");
         }
         var saveDirectInvoiceData = window.saveDirectInvoiceData;
@@ -11497,6 +11509,18 @@
             if (advEl) { advEl.removeAttribute('readonly'); advEl.style.background = 'white'; }
             document.getElementById('ast-modal-title').innerText = "Record Asset Purchase";
             document.getElementById('assetForm').reset();
+            
+            // 📦 SMART FIX: Hide Rental Asset option if Inventory is Disabled in Settings
+            let astTypeSel = document.getElementById('ast_asset_type');
+            if (astTypeSel) {
+                let rentalOpt = astTypeSel.querySelector('option[value="Rental"]');
+                if (rentalOpt) {
+                    rentalOpt.style.display = (appSettings && appSettings.manageInventory) ? 'block' : 'none';
+                }
+                if(appSettings && !appSettings.manageInventory) astTypeSel.value = 'Office';
+            }
+            let godownGroup = document.getElementById('ast_godown_group');
+            if (godownGroup && appSettings && !appSettings.manageInventory) godownGroup.style.display = 'none';
             loadPartiesIntoSelect('ast_vendor', preFillPartyId);
             document.getElementById('ast_date').valueAsDate = new Date();
             document.getElementById('ast_items_container').innerHTML = '';
@@ -15097,6 +15121,11 @@
             document.getElementById('set_wa_inv').value = appSettings.waInv || "";
             document.getElementById('set_wa_qt').value = appSettings.waQt || "";
             document.getElementById('set_wa_review').value = appSettings.waReview || "Hello [Client],\n\nWe hope you enjoyed our services at [Event]. Please share your experience by writing a short review for us:\n\n[Link]\n\nYour feedback means the world to us!\n\nBest Regards,\n[Company]";
+            
+            // 🚀 FIX: Load Inventory check state
+            if (document.getElementById('set_manage_inventory')) {
+                document.getElementById('set_manage_inventory').checked = appSettings.manageInventory || false;
+            }
 
             // 🚀 Smart Fix: Set Default Tab visually using Class
             switchSetTab('set-bill', document.getElementById('tab-btn-bill'));
@@ -16083,11 +16112,11 @@
                 document.getElementById('set_wa_review').value = appSettings.waReview || "";
             }
             switchHubTab('hub-bill', document.getElementById('pill-bill'));
-            // 🚀 Only Owner can see Inventory Toggle
-            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+            
+            // 🚀 FIX: Inventory Toggle hamesha visible rahega
             let toggleCard = document.getElementById('set_inventory_toggle_card');
             if (toggleCard) {
-                toggleCard.style.display = isOwner ? 'block' : 'none';
+                toggleCard.style.display = 'block'; // Ye hamesha 'block' (visible) rahega
             }
             if (document.getElementById('set_manage_inventory')) {
                 document.getElementById('set_manage_inventory').checked = appSettings.manageInventory || false;
@@ -16216,12 +16245,13 @@
 
         // 2. Rent Invoice Button Fix
         window.openRentInvoice = function() {
-            window.openTab('sales-hub', document.getElementById('btn-erp'));
-            setTimeout(() => {
-                if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal();
-                let typeSel = document.getElementById('di_invoice_type');
-                if(typeSel) { typeSel.value = 'Rental'; typeSel.dispatchEvent(new Event('change')); }
-            }, 150);
+            // 🚀 SMART NAVIGATION: Ab ye tab change nahi karega, wahi Modal khol dega!
+            if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal();
+            let typeSel = document.getElementById('di_invoice_type');
+            if(typeSel) { 
+                typeSel.value = 'Rental'; 
+                typeSel.dispatchEvent(new Event('change')); 
+            }
         };
         var openRentInvoice = window.openRentInvoice;
 
