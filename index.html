@@ -17114,54 +17114,6 @@
             alert(isFullyReturned ? "✅ All Stock Returned Successfully!" : "✅ Partial Return Processed. Remaining items are still pending."); 
             if(typeof renderInventoryHubList === 'function') window.renderInventoryHubList();
         };
-            // 2. Process Returns (Update Godowns)
-            document.querySelectorAll('#return_items_body tr').forEach(row => {
-                let name = row.querySelector('.ret-item-name').value; 
-                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; 
-                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; 
-                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
-                let destGId = row.querySelector('.ret-item-godown').value; 
-
-                let rowTotal = safe + lost + repair;
-                if(rowTotal > 0) {
-                    record.returnLog.push({ name: name, safe: safe, repair: repair, lost: lost, date: retDate, returnGodown: destGId });
-                    
-                    if (itemsDB[name]) { 
-                        if (!itemsDB[name].godowns[destGId]) itemsDB[name].godowns[destGId] = 0; 
-                        itemsDB[name].godowns[destGId] += (safe + repair); 
-                        if(lost > 0) { 
-                            itemsDB[name].totalStock -= lost; 
-                            itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; 
-                        } 
-                    }
-                }
-            });
-
-            // 3. Check if Fully Returned or Partial
-            let isFullyReturned = true;
-            let newReturnedSums = {};
-            record.returnLog.forEach(log => { newReturnedSums[log.name] = (newReturnedSums[log.name] || 0) + log.safe + log.repair + log.lost; });
-
-            record.items.forEach(item => {
-                let sentQty = parseInt(item.qty) || 0;
-                let totRet = newReturnedSums[item.name] || 0;
-                if(totRet < sentQty) isFullyReturned = false;
-            });
-
-            if(logType === 'Rental Invoice') {
-                record.rentalStatus = isFullyReturned ? 'Returned' : 'Partial Returned';
-            } else {
-                record.status = isFullyReturned ? 'Returned' : 'Partial Returned';
-            }
-            
-            // Financials (Same as before)
-            if (penaltyAmt > 0 && logType === 'Rental Invoice') { record.finalTotal += penaltyAmt; record.balanceDue += penaltyAmt; record.items.push({ name: "Penalty: " + penaltyNote, desc: "Damage/Lost materials", unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt }); if(partiesDB[record.partyId]) partiesDB[record.partyId].balance += penaltyAmt; record.status = record.balanceDue > 0 ? (record.advance > 0 ? 'Partial' : 'Due') : 'Paid'; }
-            if (assetLossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid', date: retDate, mode: 'SYSTEM_LOSS', eventId: record.eventId || null, partyId: null, notes: `Write-off for lost items in ${id}`, linkedDates: [] }; }
-            
-            if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('returnStockModal').style.display = 'none'; 
-            alert(isFullyReturned ? "✅ All Stock Returned Successfully!" : "✅ Partial Return Processed. Remaining items are still pending."); 
-            window.renderInventoryHubList();
-        };
 
         window.calcReturnLoss = function() { let hasLost = false; document.querySelectorAll('#return_items_body tr').forEach(row => { let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; if(lost > 0) hasLost = true; }); document.getElementById('return_loss_group').style.display = hasLost ? 'block' : 'none'; };
 
