@@ -16397,46 +16397,6 @@
             if(visibleCount === 0) container.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding:30px; font-size:13px; font-weight:600;">No transactions found.</p>`; else container.innerHTML = html;
         };
 
-        // 4. Preview Modal logic (List Click par ab Print ki jagah Preview khulega)
-        window.openLogisticsPreviewModal = function(id, logType) {
-            closeAllMenus();
-            if(logType === 'Rental Invoice') { 
-                if(typeof viewDetails === 'function') viewDetails(id, 'sales'); // Open ERP's actual Invoice Preview
-                return; 
-            } 
-            // Agar Outward hai, toh Logistics ka Preview
-            let record = stockMovementDB[id]; if(!record) return;
-            let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
-            let isReturned = (record.status === 'Returned');
-            
-            if(!document.getElementById('logPreviewModal')) {
-                let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3>📄 Challan Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';">&times;</button></div><div id="logPreviewBody" style="font-size:13px; margin-bottom:15px; background:#F8FAFC; padding:15px; border-radius:8px; border:1px solid #E2E8F0; line-height:1.6;"></div><div id="logPreviewActions" style="display:flex; gap:10px;"></div></div></div>`;
-                document.body.insertAdjacentHTML('beforeend', mHtml);
-            }
-            
-            let bodyHtml = `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Challan ID:</b> <span style="font-family:monospace; color:var(--accent-color); font-weight:bold;">${record.id}</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Event:</b> <span style="text-align:right;">${leadsDB[record.eventId] ? leadsDB[record.eventId].func : 'N/A'} ${record.functionTitle ? '<br><span style="font-size:10px; color:#64748B;">('+record.functionTitle+')</span>' : ''}</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Date:</b> <span>${new Date(record.date).toLocaleDateString('en-IN')}</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Status:</b> <span style="color:${isReturned ? 'var(--success)' : 'var(--warning)'}; font-weight:bold;">${isReturned ? 'Received' : 'Deployed'}</span></div>
-                <hr style="border:none; border-top:1px dashed #CBD5E1; margin:10px 0;">
-                <b style="color:var(--purple);">Dispatched Items:</b><br><div style="margin-top:6px;">`;
-            record.items.forEach(item => { 
-                let rateHtml = item.rate > 0 ? `<br><span style="font-size:10px; color:var(--text-secondary);">Rent: ₹${item.rate}/unit</span>` : '';
-                bodyHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:500;"><span>• ${item.name}${rateHtml}</span> <b style="color:var(--accent-color);">x ${item.qty}</b></div>`; 
-            });
-            bodyHtml += `</div>`;
-            
-            document.getElementById('logPreviewBody').innerHTML = bodyHtml;
-            let actionsHtml = `<button class="btn-main" style="flex:1; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print</button>
-                <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>
-                <button class="btn-main" style="flex:1; background:var(--danger);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.deleteLogisticsRecord('${id}', '${logType}', event)">🗑️ Delete</button>`;
-            
-            document.getElementById('logPreviewActions').innerHTML = actionsHtml;
-            document.getElementById('logPreviewModal').style.display = 'flex';
-        };
-        // Update old HTML calls if any to new modal function
-        var previewLogistics = window.openLogisticsPreviewModal;
-
         // 5. EDIT RECORD LOGIC (NO MORE COMING SOON)
         window.editLogisticsRecord = function(id, logType) {
             closeAllMenus();
@@ -16829,12 +16789,44 @@
             alert(`✅ Material Dispatched via Auto-Routing!`); 
             window.renderInventoryHubList();
         };
-
         // --------------------------------------------------------------
-        // 4. ATTRACTIVE PREVIEW & PRINT ENGINE (Now Connects Inward for Rent & Outward)
+        // 🚀 MASTER PREVIEW ENGINE (Outward, Rental & Stock Transfer with Pickup Map)
         // --------------------------------------------------------------
         window.openLogisticsPreviewModal = function(id, logType) {
             closeAllMenus();
+
+            // 1. STOCK TRANSFER PREVIEW
+            if (logType === 'Stock Transfer') {
+                let record = stockMovementDB[id]; if(!record) return;
+                if(!document.getElementById('logPreviewModal')) {
+                    let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px; padding:0; overflow:hidden;"><div style="background:linear-gradient(135deg, #0F172A, #1E293B); padding:20px; color:white; display:flex; justify-content:space-between; align-items:center;"><h3 style="margin:0; font-size:16px;">📄 Transfer Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';" style="background:rgba(255,255,255,0.2); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;">&times;</button></div><div id="logPreviewBody" style="padding:20px; font-size:13px; line-height:1.6; max-height: 60vh; overflow-y: auto;"></div><div id="logPreviewActions" style="display:flex; gap:10px; padding:15px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;"></div></div></div>`;
+                    document.body.insertAdjacentHTML('beforeend', mHtml);
+                }
+                let fName = warehousesDB[record.fromGodown] ? warehousesDB[record.fromGodown].name : 'Unknown';
+                let tName = warehousesDB[record.toGodown] ? warehousesDB[record.toGodown].name : 'Unknown';
+
+                let bodyHtml = `
+                    <div style="background:white; border:1px solid #E2E8F0; border-radius:8px; padding:12px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><b>Transfer ID:</b> <span style="font-family:monospace; color:var(--success); font-weight:bold;">${record.id}</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><b>From:</b> <span style="text-align:right; color:var(--danger); font-weight:bold;">${fName} 📤</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><b>To:</b> <span style="text-align:right; color:var(--success); font-weight:bold;">${tName} 📥</span></div>
+                        <div style="display:flex; justify-content:space-between;"><b>Date:</b> <span>${new Date(record.date).toLocaleDateString('en-IN')}</span></div>
+                    </div>
+                    <h4 style="margin: 0 0 10px 0; color:var(--success); font-size:12px; text-transform:uppercase;">📦 Transferred Items</h4>
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px;">`;
+
+                record.items.forEach(item => {
+                    bodyHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #CBD5E1; padding-bottom:8px; margin-bottom:8px; font-weight:500;"><span>• ${item.name}</span> <b style="color:var(--accent-color); background:#EFF6FF; padding:2px 8px; border-radius:12px;">x ${item.qty}</b></div>`;
+                });
+                bodyHtml += `</div>`;
+
+                document.getElementById('logPreviewBody').innerHTML = bodyHtml;
+                document.getElementById('logPreviewActions').innerHTML = `<button class="btn-main" style="width:100%; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print Transfer Slip</button>`;
+                document.getElementById('logPreviewModal').style.display = 'flex';
+                return;
+            }
+
+            // 2. OUTWARD CHALLAN & RENTAL INVOICE PREVIEW
             let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
             let pName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
             let isReturned = (logType === 'Rental Invoice') ? (record.rentalStatus === 'Returned') : (record.status === 'Returned');
@@ -16881,9 +16873,19 @@
             
             if(record.items) {
                 record.items.forEach(item => { 
-                    bodyHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #CBD5E1; padding-bottom:8px; margin-bottom:8px;">
-                        <span style="font-weight:700; color:#0F172A;">${item.name}</span> 
-                        <b style="color:var(--accent-color); background:#EFF6FF; padding:2px 8px; border-radius:12px; font-size:11px;">x ${item.qty}</b>
+                    // 🪄 MAGIC: Fetch Pickup Split Info for UI Preview
+                    let pickupText = '';
+                    if(item.pickupSplit && item.pickupSplit.length > 0) {
+                        let splits = item.pickupSplit.map(sp => {
+                            let gName = warehousesDB[sp.godownId] ? warehousesDB[sp.godownId].name : 'Godown';
+                            return `${gName}: ${sp.qty}`;
+                        });
+                        pickupText = `<br><span style="font-size:10px; color:#64748B; font-weight:bold; background:#F1F5F9; padding:2px 6px; border-radius:4px; margin-top:4px; display:inline-block; border:1px solid #CBD5E1;">📍 Pickup ➔ ${splits.join(' | ')}</span>`;
+                    }
+
+                    bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #CBD5E1; padding-bottom:8px; margin-bottom:8px;">
+                        <div style="font-weight:700; color:#0F172A;">${item.name} ${pickupText}</div> 
+                        <b style="color:var(--accent-color); background:#EFF6FF; padding:4px 10px; border-radius:12px; font-size:12px; min-width:35px; text-align:center;">x ${item.qty}</b>
                     </div>`; 
                 });
             }
@@ -16894,7 +16896,6 @@
             let actionsHtml = `<button class="btn-main" style="flex:1; background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print</button>
                 <button class="btn-main" style="flex:1; background:#3B82F6;" onclick="window.editLogisticsRecord('${id}', '${logType}')">✏️ Edit</button>`;
             
-            // Inward Button for BOTH Rental Invoice & Outward Challan
             if(!isReturned) {
                 actionsHtml += `<button class="btn-main" style="flex:1; background:var(--success);" onclick="document.getElementById('logPreviewModal').style.display='none'; window.openReturnStockModal('${id}', '${logType}')">📥 Inward</button>`;
             }
@@ -16902,6 +16903,7 @@
             document.getElementById('logPreviewActions').innerHTML = actionsHtml;
             document.getElementById('logPreviewModal').style.display = 'flex';
         };
+        var previewLogistics = window.openLogisticsPreviewModal;
 
         window.printLogisticsDoc = function(id, logType) {
             let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
@@ -16966,7 +16968,7 @@
         };
 
         // --------------------------------------------------------------
-        // 5. SMART INWARD (RETURN) ENGINE
+        // 5. SMART INWARD (RETURN) ENGINE [MULTI-GODOWN SUPPORT]
         // --------------------------------------------------------------
         window.openReturnStockModal = function(id, logType) {
             closeAllMenus(); let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if (!record) return alert("Record not found!");
@@ -16978,10 +16980,38 @@
             document.getElementById('return_penalty_amt').value = 0; document.getElementById('return_penalty_note').value = ""; document.getElementById('return_asset_loss_value').value = 0; document.getElementById('return_loss_group').style.display = 'none';
             if(document.getElementById('return_date')) document.getElementById('return_date').valueAsDate = new Date();
             let tbody = document.getElementById('return_items_body'); tbody.innerHTML = "";
+            
             if (record.items) { 
                 record.items.forEach((item) => { 
                     let qty = parseInt(item.qty) || 0; 
-                    tbody.innerHTML += `<tr style="border-bottom: 1px solid #E2E8F0;"><td style="padding:10px;"><strong style="color:var(--text-primary); font-size:13px;">${item.name}</strong><input type="hidden" class="ret-item-name" value="${item.name}"></td><td style="padding:10px; text-align:center; font-weight:900; font-size:15px; color:var(--text-secondary);" class="ret-item-sent">${qty}</td><td style="padding:10px;"><input type="number" class="form-input ret-item-safe" value="${qty}" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--success); border-color:#BBF7D0; background:#F0FDF4;"></td><td style="padding:10px;"><input type="number" class="form-input ret-item-lost" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--danger); border-color:#FECACA; background:#FEF2F2;"></td><td style="padding:10px;"><input type="number" class="form-input ret-item-repair" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--warning); border-color:#FDE68A; background:#FFFBEB;"></td></tr>`; 
+                    
+                    // 🪄 SMART DEFAULT: Find where the most qty was picked from
+                    let defaultGId = 'WH_MAIN';
+                    if(item.pickupSplit && item.pickupSplit.length > 0) {
+                        let maxSplit = item.pickupSplit.reduce((prev, current) => (prev.qty > current.qty) ? prev : current);
+                        defaultGId = maxSplit.godownId;
+                    } else if (record.godownId && record.godownId !== 'AUTO_MULTI') {
+                        defaultGId = record.godownId;
+                    }
+
+                    // GENERATE GODOWN DROPDOWN
+                    let selectHtml = `<select class="form-input ret-item-godown" style="font-size:11px; padding:4px; height:auto; margin-top:6px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:4px; width:100%; max-width:150px; font-weight:600; color:#475569;">`;
+                    for(let g in warehousesDB) {
+                        let isSelected = (g === defaultGId) ? 'selected' : '';
+                        selectHtml += `<option value="${g}" ${isSelected}>📍 ${warehousesDB[g].name}</option>`;
+                    }
+                    selectHtml += `</select>`;
+
+                    tbody.innerHTML += `<tr style="border-bottom: 1px solid #E2E8F0;">
+                        <td style="padding:10px;">
+                            <strong style="color:var(--text-primary); font-size:13px;">${item.name}</strong>
+                            <input type="hidden" class="ret-item-name" value="${item.name}">
+                            ${selectHtml} </td>
+                        <td style="padding:10px; text-align:center; font-weight:900; font-size:15px; color:var(--text-secondary);" class="ret-item-sent">${qty}</td>
+                        <td style="padding:10px;"><input type="number" class="form-input ret-item-safe" value="${qty}" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--success); border-color:#BBF7D0; background:#F0FDF4;"></td>
+                        <td style="padding:10px;"><input type="number" class="form-input ret-item-lost" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--danger); border-color:#FECACA; background:#FEF2F2;"></td>
+                        <td style="padding:10px;"><input type="number" class="form-input ret-item-repair" value="0" min="0" max="${qty}" oninput="window.calcReturnLoss()" style="font-weight:bold; color:var(--warning); border-color:#FDE68A; background:#FFFBEB;"></td>
+                    </tr>`; 
                 }); 
             }
             document.getElementById('returnStockModal').style.display = 'flex';
@@ -16993,21 +17023,35 @@
             let id = document.getElementById('return_inv_id').value; let logType = document.getElementById('return_log_type').value; let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id]; if(!record) return;
             let penaltyAmt = parseFloat(document.getElementById('return_penalty_amt').value) || 0; let penaltyNote = document.getElementById('return_penalty_note').value || "Damage/Lost Penalty"; let assetLossValue = parseFloat(document.getElementById('return_asset_loss_value').value) || 0; let error = false;
             let retDate = document.getElementById('return_date') ? document.getElementById('return_date').value : new Date().toISOString().split('T')[0];
+            
             document.querySelectorAll('#return_items_body tr').forEach(row => { let sent = parseInt(row.querySelector('.ret-item-sent').innerText); let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0; if((safe + lost + repair) !== sent) { alert(`Quantities must equal Sent(${sent}).`); error = true; } });
             if(error) return;
             
             record.returnLog = [];
             document.querySelectorAll('#return_items_body tr').forEach(row => {
-                let name = row.querySelector('.ret-item-name').value; let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
-                record.returnLog.push({ name: name, safe: safe, repair: repair, lost: lost, date: retDate });
-                if (itemsDB[name]) { let gId = record.godownId || 'WH_MAIN'; if (!itemsDB[name].godowns[gId]) itemsDB[name].godowns[gId] = 0; itemsDB[name].godowns[gId] += (safe + repair); if(lost > 0) { itemsDB[name].totalStock -= lost; itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; } }
+                let name = row.querySelector('.ret-item-name').value; 
+                let safe = parseInt(row.querySelector('.ret-item-safe').value) || 0; 
+                let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; 
+                let repair = parseInt(row.querySelector('.ret-item-repair').value) || 0;
+                let destGId = row.querySelector('.ret-item-godown').value; // 👈 Naye dropdown se Godown ID nikali
+
+                record.returnLog.push({ name: name, safe: safe, repair: repair, lost: lost, date: retDate, returnGodown: destGId });
+                
+                if (itemsDB[name]) { 
+                    if (!itemsDB[name].godowns[destGId]) itemsDB[name].godowns[destGId] = 0; 
+                    itemsDB[name].godowns[destGId] += (safe + repair); // 🪄 Wapas aane wala stock naye godown me PLUS (+) ho gaya
+                    if(lost > 0) { 
+                        itemsDB[name].totalStock -= lost; 
+                        itemsDB[name].totalLost = (itemsDB[name].totalLost || 0) + lost; 
+                    } 
+                }
             });
             
             if (penaltyAmt > 0 && logType === 'Rental Invoice') { record.finalTotal += penaltyAmt; record.balanceDue += penaltyAmt; record.items.push({ name: "Penalty: " + penaltyNote, desc: "Damage/Lost materials", unit: "Lump Sum", qty: 1, rate: penaltyAmt, amount: penaltyAmt }); if(partiesDB[record.partyId]) partiesDB[record.partyId].balance += penaltyAmt; record.status = record.balanceDue > 0 ? (record.advance > 0 ? 'Partial' : 'Due') : 'Paid'; }
             if (assetLossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: assetLossValue, paid: assetLossValue, balanceDue: 0, status: 'Paid', date: new Date().toISOString().split('T')[0], mode: 'SYSTEM_LOSS', eventId: record.eventId || null, partyId: null, notes: `Write-off for lost items in ${id}`, linkedDates: [] }; }
             
             if(logType === 'Rental Invoice') record.rentalStatus = 'Returned'; else record.status = 'Returned';
-            if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('returnStockModal').style.display = 'none'; alert("✅ Stock Return Processed & Books Updated Perfectly!"); window.renderInventoryHubList();
+            if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('returnStockModal').style.display = 'none'; alert("✅ Stock Return Processed to Selected Godown(s) Successfully!"); window.renderInventoryHubList();
         };
 
         window.deleteLogisticsRecord = function(id, logType, e) {
@@ -18349,37 +18393,6 @@
             } else { 
                 if(typeof origGenerateReport === 'function') origGenerateReport(); 
             }
-        };
-        // 🚀 TRANSFER PREVIEW & PRINT LOGIC
-        let oldOpenLogisticsPreviewModal = window.openLogisticsPreviewModal;
-        window.openLogisticsPreviewModal = function(id, logType) {
-            if (logType !== 'Stock Transfer') return oldOpenLogisticsPreviewModal(id, logType);
-            
-            closeAllMenus();
-            let record = stockMovementDB[id]; if(!record) return;
-            
-            if(!document.getElementById('logPreviewModal')) {
-                let mHtml = `<div id="logPreviewModal" class="modal-overlay" style="z-index: 10500;"><div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3>📄 Challan Preview</h3><button class="modal-close" onclick="document.getElementById('logPreviewModal').style.display='none';">&times;</button></div><div id="logPreviewBody" style="font-size:13px; margin-bottom:15px; background:#F8FAFC; padding:15px; border-radius:8px; border:1px solid #E2E8F0; line-height:1.6;"></div><div id="logPreviewActions" style="display:flex; gap:10px;"></div></div></div>`;
-                document.body.insertAdjacentHTML('beforeend', mHtml);
-            }
-
-            let fName = warehousesDB[record.fromGodown] ? warehousesDB[record.fromGodown].name : 'Unknown';
-            let tName = warehousesDB[record.toGodown] ? warehousesDB[record.toGodown].name : 'Unknown';
-            
-            let bodyHtml = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>Transfer ID:</b> <span style="font-family:monospace; color:var(--success); font-weight:bold;">${record.id}</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>From:</b> <span style="text-align:right; color:var(--danger); font-weight:bold;">${fName} 📤</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><b>To:</b> <span style="text-align:right; color:var(--success); font-weight:bold;">${tName} 📥</span></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Date:</b> <span>${new Date(record.date).toLocaleDateString('en-IN')}</span></div>
-                <hr style="border:none; border-top:1px dashed #CBD5E1; margin:10px 0;">
-                <b style="color:var(--success);">Transferred Items:</b><br><div style="margin-top:6px;">`;
-            
-            record.items.forEach(item => { bodyHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:500;"><span>• ${item.name}</span> <b>x ${item.qty}</b></div>`; });
-            bodyHtml += `</div>`;
-
-            document.getElementById('logPreviewBody').innerHTML = bodyHtml;
-            document.getElementById('logPreviewActions').innerHTML = `<button class="btn-main" style="background:#0F172A;" onclick="window.printLogisticsDoc('${id}', '${logType}')">🖨️ Print Transfer Slip</button>`;
-            document.getElementById('logPreviewModal').style.display = 'flex';
         };
 
         let oldPrintLogisticsDoc = window.printLogisticsDoc;
