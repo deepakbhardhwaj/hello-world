@@ -11568,6 +11568,26 @@
             });
             calculatePBTotal();
         }
+        // 🚀 BUG FIX: Show/Hide Godown and Load List for Rental Assets
+        window.toggleAssetGodown = function() {
+            let type = document.getElementById('ast_asset_type').value;
+            let godownGroup = document.getElementById('ast_godown_group');
+            let godownSelect = document.getElementById('ast_godown_select');
+
+            if (type === 'Rental' && appSettings && appSettings.manageInventory) {
+                godownGroup.style.display = 'block';
+                
+                // 🪄 MAGIC: Godowns ki list auto-load karo
+                if (godownSelect && godownSelect.options.length === 0) {
+                    godownSelect.innerHTML = '';
+                    for(let g in warehousesDB) {
+                        godownSelect.innerHTML += `<option value="${g}">📍 ${warehousesDB[g].name}</option>`;
+                    }
+                }
+            } else {
+                if (godownGroup) godownGroup.style.display = 'none';
+            }
+        };
         // ==========================================
         // 🚀 SMART ASSET PURCHASE LOGIC (MULTI-ITEM & EDIT)
         // ==========================================
@@ -11672,8 +11692,9 @@
                 let refNo = document.getElementById('ast_ref').value; 
                 let assetType = document.getElementById('ast_asset_type') ? document.getElementById('ast_asset_type').value : 'Office';
                 
-                // Yahan Godown ID capture ki
-                let godownId = document.getElementById('ast_godown_select') ? document.getElementById('ast_godown_select').value : 'WH_MAIN';
+                // 🚀 BUG FIX: Ensure Godown ID is never empty for Firebase
+                let godownEl = document.getElementById('ast_godown_select');
+                let godownId = (godownEl && godownEl.value && godownEl.value.trim() !== "") ? godownEl.value : 'WH_MAIN';
 
                 if (!vendorId || !date) { alert("Vendor and Date are required!"); return; } 
                 
