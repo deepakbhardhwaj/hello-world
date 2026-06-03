@@ -8635,7 +8635,13 @@
         }
 
         function renderWorkspace(id) {
-            let ev = leadsDB[id]; document.getElementById('p_name').innerText = ev.name; document.getElementById('p_phone').innerText = "+91 " + ev.phone;
+            // 🚀 SMART CRASH FIX: Hamesha ID yaad rakho!
+            currentLeadId = id; 
+            activeWorkspaceEventId = id;
+            let ev = leadsDB[id]; 
+            if (!ev) return; // Safety lock
+
+            document.getElementById('p_name').innerText = ev.name; document.getElementById('p_phone').innerText = "+91 " + ev.phone;
             let formattedDate = ev.dates && ev.dates[0] ? new Date(ev.dates[0].date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
             document.getElementById('p_category').innerText = (ev.func || 'Other').toUpperCase() + " • " + formattedDate;
             let evCode = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date);
@@ -11023,14 +11029,11 @@
             
             let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
             let returnDate = document.getElementById('di_return_date') ? document.getElementById('di_return_date').value : null;
-            let godownId = document.getElementById('di_godown_select') ? document.getElementById('di_godown_select').value : 'WH_MAIN';
             let labourAmt = parseFloat(document.getElementById('di_labour')?.value) || 0;
             let transportAmt = parseFloat(document.getElementById('di_transport')?.value) || 0;
 
             if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
-            if (invoiceType === 'Rental' && !returnDate) { 
-                return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); 
-            }
+            if (invoiceType === 'Rental' && !returnDate) { return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); }
 
             let items = []; 
             document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
@@ -11041,28 +11044,82 @@
                 let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
                 if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); 
             }); 
-            
             if (items.length === 0) return alert("Please add at least one valid item!"); 
 
-            // 🚨🚨 STRICT INVENTORY LOCK 🚨🚨
-            if (invoiceType === 'Rental' && !editingSalesId) {
+            // ♻️ REVERT OLD STOCK IF EDITING RENTAL
+            if (invoiceType === 'Rental' && editingSalesId) {
+                let oldRecord = salesDB[editingSalesId];
+                if (oldRecord && oldRecord.invoiceType === 'Rental' && oldRecord.rentalStatus !== 'Returned' && oldRecord.items) {
+                    oldRecord.items.forEach(oldItem => {
+                        if(oldItem.pickupSplit) {
+                            oldItem.pickupSplit.forEach(sp => {
+                                if(itemsDB[oldItem.name]) itemsDB[oldItem.name].godowns[sp.godownId] += (parseInt(sp.qty) || 0);
+                            });
+                        } else if(oldRecord.godownId && itemsDB[oldItem.name]) {
+                            itemsDB[oldItem.name].godowns[oldRecord.godownId] += (parseInt(oldItem.qty) || 0);
+                        }
+                    });
+                }
+            }
+
+            // 🚨 GLOBAL INVENTORY LOCK & AUTO-ROUTING 🚨
+            let stockError = false;
+            if (invoiceType === 'Rental') {
                 for (let i = 0; i < items.length; i++) {
                     let item = items[i];
                     let dbItem = itemsDB[item.name];
-                    let available = (dbItem && dbItem.godowns[godownId]) ? dbItem.godowns[godownId] : 0;
+                    let totalAvailable = 0;
+                    let godownStocks = {};
+
+                    if (dbItem && dbItem.godowns) {
+                        for (let g in dbItem.godowns) {
+                            totalAvailable += dbItem.godowns[g];
+                            if (dbItem.godowns[g] > 0) godownStocks[g] = dbItem.godowns[g];
+                        }
+                    }
                     
-                    if (item.qty > available) {
-                        alert(`🚨 OUT OF STOCK ALARM!\n\nYou are trying to rent out ${item.qty} x '${item.name}', but you only have ${available} available in the selected Godown.\n\nInvoice saving cancelled!`);
-                        return; // 🛑 YAHIN PAR BILL BANNA RUK JAYEGA!
+                    if (item.qty > totalAvailable) {
+                        alert(`🚨 OUT OF STOCK!\n\nYou are renting out ${item.qty} x '${item.name}', but only have ${totalAvailable} total across all godowns.`);
+                        stockError = true; break;
+                    }
+
+                    // 🪄 THE MAGIC: Auto-Split Logic
+                    let needed = item.qty;
+                    item.pickupSplit = [];
+                    for (let g in godownStocks) {
+                        if (needed <= 0) break;
+                        let take = Math.min(godownStocks[g], needed);
+                        item.pickupSplit.push({ godownId: g, qty: take });
+                        needed -= take;
                     }
                 }
             }
 
-            // Agar sab theek hai, toh Godown se stock DEDUCT (kam) karo
-            if (invoiceType === 'Rental' && !editingSalesId) {
+            if (stockError) {
+                if (invoiceType === 'Rental' && editingSalesId) {
+                    let oldRecord = salesDB[editingSalesId];
+                    if (oldRecord && oldRecord.invoiceType === 'Rental' && oldRecord.rentalStatus !== 'Returned' && oldRecord.items) {
+                        oldRecord.items.forEach(oldItem => {
+                            if(oldItem.pickupSplit) {
+                                oldItem.pickupSplit.forEach(sp => {
+                                    if(itemsDB[oldItem.name]) itemsDB[oldItem.name].godowns[sp.godownId] -= (parseInt(sp.qty) || 0);
+                                });
+                            } else if(oldRecord.godownId && itemsDB[oldItem.name]) {
+                                itemsDB[oldItem.name].godowns[oldRecord.godownId] -= (parseInt(oldItem.qty) || 0);
+                            }
+                        });
+                    }
+                }
+                return;
+            }
+
+            // ✅ DEDUCT NEW STOCK FROM MULTIPLE GODOWNS
+            if (invoiceType === 'Rental') {
                 items.forEach(item => {
-                    if (itemsDB[item.name] && itemsDB[item.name].godowns[godownId] !== undefined) {
-                        itemsDB[item.name].godowns[godownId] -= item.qty; 
+                    if (item.pickupSplit) {
+                        item.pickupSplit.forEach(sp => {
+                            if (itemsDB[item.name]) itemsDB[item.name].godowns[sp.godownId] -= sp.qty;
+                        });
                     }
                 });
             }
@@ -11083,105 +11140,46 @@
             
             if (!editingSalesId) { 
                 if (convertingQuoteId) { 
-                    let q = salesDB[convertingQuoteId];
-                    q.status = 'Invoiced'; 
-                    targetEventId = q.eventId;
-                    
-                    if (!targetEventId) {
-                        let cleanPhone = String(party.phone).trim();
-                        targetEventId = Object.keys(leadsDB).find(lId => String(leadsDB[lId].phone).trim() === cleanPhone && leadsDB[lId].status !== 'Won' && leadsDB[lId].status !== 'Lost');
-                    }
-
-                    if (targetEventId && leadsDB[targetEventId]) {
-                        leadsDB[targetEventId].status = 'Won';
-                        leadsDB[targetEventId].eventStatus = 'Upcoming';
-                        leadsDB[targetEventId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Converted to Invoice. Deal WON!" });
-                    } else {
-                        targetEventId = "EVT" + Date.now();
-                        leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: party.phone, func: eventTitle, date: date, dates: [{ name: "Main Event", date: date, time: "" }], cat: "Other", budget: finalGrandTotal, status: 'Won', eventStatus: 'Upcoming', venue: party.address || "", source: 'Direct', notes: [{ time: new Date().toLocaleString(), text: "Auto-Created Event from Quote Conversion." }], photos: [], tasks: [], expenses: [] }; 
-                    }
-                    eventCodeStr = createEventCode(party.name, eventTitle, date);
-                    convertingQuoteId = null; 
+                    let q = salesDB[convertingQuoteId]; q.status = 'Invoiced'; targetEventId = q.eventId;
+                    if (!targetEventId) { let cleanPhone = String(party.phone).trim(); targetEventId = Object.keys(leadsDB).find(lId => String(leadsDB[lId].phone).trim() === cleanPhone && leadsDB[lId].status !== 'Won' && leadsDB[lId].status !== 'Lost'); }
+                    if (targetEventId && leadsDB[targetEventId]) { leadsDB[targetEventId].status = 'Won'; leadsDB[targetEventId].eventStatus = 'Upcoming'; leadsDB[targetEventId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quote converted to Invoice." }); } else { targetEventId = "EVT" + Date.now(); leadsDB[targetEventId] = { id: targetEventId, name: party.name, phone: party.phone, func: eventTitle, date: date, dates: [{ name: "Event", date: date }], status: 'Won', eventStatus: 'Upcoming', notes: [] }; }
+                    eventCodeStr = createEventCode(party.name, eventTitle, date); convertingQuoteId = null; 
                 } else if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
-                    targetEventId = tempEventIdForInvoice; 
-                    let ev = leadsDB[targetEventId]; 
-                    eventCodeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); 
+                    targetEventId = tempEventIdForInvoice; let ev = leadsDB[targetEventId]; eventCodeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); 
                 } 
-            } else { 
-                targetEventId = salesDB[editingSalesId].eventId; 
-            } 
+            } else { targetEventId = salesDB[editingSalesId].eventId; } 
             
             if (editingSalesId) { party.balance -= salesDB[editingSalesId].finalTotal; } 
-            
             let manuallyEnteredAdvance = parseFloat(document.getElementById('di_advance').value) || 0; 
             if (manuallyEnteredAdvance > finalGrandTotal && !editingSalesId) manuallyEnteredAdvance = finalGrandTotal; 
             
             let selectedOldAdvanceId = document.getElementById('di_use_advance') ? document.getElementById('di_use_advance').value : "0"; 
             let oldAdvanceAmount = 0; let receiptToUpdate = null; 
-            
-            if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { 
-                receiptToUpdate = salesDB[selectedOldAdvanceId]; 
-                oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); 
-            } 
+            if (selectedOldAdvanceId !== "0" && salesDB[selectedOldAdvanceId]) { receiptToUpdate = salesDB[selectedOldAdvanceId]; oldAdvanceAmount = Math.min(receiptToUpdate.availableAmount, finalGrandTotal); } 
             
             let totalAdvanceApplied = editingSalesId ? salesDB[editingSalesId].advance : (manuallyEnteredAdvance + oldAdvanceAmount); 
             let payMode = document.getElementById('di_pay_mode') ? document.getElementById('di_pay_mode').value : "ACC_CASH"; 
-            
-            let balanceDue = finalGrandTotal - totalAdvanceApplied; 
-            if (balanceDue < 0) balanceDue = 0; 
+            let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0; 
             
             let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
-            let status = 'Due'; 
-            if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; 
-            else if (totalAdvanceApplied > 0) status = 'Partial'; 
+            let status = 'Due'; if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; else if (totalAdvanceApplied > 0) status = 'Partial'; 
             
             salesDB[id] = { 
-                id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, 
-                items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, 
-                advance: totalAdvanceApplied, balanceDue, status,
-                invoiceType: invoiceType, returnDate: returnDate, godownId: godownId, rentalStatus: 'Deployed',
-                labour: labourAmt, transport: transportAmt
+                id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status,
+                invoiceType: invoiceType, returnDate: returnDate, godownId: 'AUTO_MULTI', rentalStatus: 'Deployed', labour: labourAmt, transport: transportAmt
             }; 
             
             party.balance += finalGrandTotal; 
-            
             if (!editingSalesId) { 
-                if (receiptToUpdate) { 
-                    receiptToUpdate.usedAmount += oldAdvanceAmount; 
-                    receiptToUpdate.availableAmount -= oldAdvanceAmount; 
-                    if (!receiptToUpdate.linkedInvoices) receiptToUpdate.linkedInvoices = []; 
-                    receiptToUpdate.linkedInvoices.push(id); 
-                } 
-                if (manuallyEnteredAdvance > 0) { 
-                    party.balance -= manuallyEnteredAdvance; 
-                    let recId = generateDocId('Receipt'); 
-                    salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; 
-                    if (typeof logBankTransaction === 'function') logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Receipt: Advance for ${id} (${party.name})`, recId, date); 
-                } 
+                if (receiptToUpdate) { receiptToUpdate.usedAmount += oldAdvanceAmount; receiptToUpdate.availableAmount -= oldAdvanceAmount; if (!receiptToUpdate.linkedInvoices) receiptToUpdate.linkedInvoices = []; receiptToUpdate.linkedInvoices.push(id); } 
+                if (manuallyEnteredAdvance > 0) { party.balance -= manuallyEnteredAdvance; let recId = generateDocId('Receipt'); salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; } 
             } 
             
-            tempEventIdForInvoice = null; 
-            updateDataAndUI(); 
-            document.getElementById('directInvoiceModal').style.display = 'none'; 
-            
-            // 🚀 SMART ROUTING FIX: Check where the user currently is and stay there!
+            tempEventIdForInvoice = null; updateDataAndUI(); document.getElementById('directInvoiceModal').style.display = 'none'; 
             let activeTab = document.querySelector('.active-section');
-            if (activeTab) {
-                if (activeTab.id === 'inventory-hub') {
-                    if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
-                } else if (activeTab.id === 'events' || activeTab.id === 'crm') {
-                    // Agar Events ya CRM me hai, to Event dashboard update kardo bina tab switch kiye
-                    if (targetEventId) renderWorkspace(targetEventId);
-                } else {
-                    setSalesTab('Invoice', document.getElementById('st-invoices')); 
-                    openTab('sales-hub', null); 
-                }
-            } else {
-                setSalesTab('Invoice', document.getElementById('st-invoices')); 
-                openTab('sales-hub', null); 
-            }
-            alert("✅ Invoice Saved Successfully!");
-        }
+            if (activeTab && activeTab.id === 'inventory-hub') { if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList(); } else if (activeTab && (activeTab.id === 'events' || activeTab.id === 'crm')) { if (targetEventId) renderWorkspace(targetEventId); } else { setSalesTab('Invoice', document.getElementById('st-invoices')); openTab('sales-hub', null); }
+            alert("✅ Rental Invoice Saved & Auto-Routed Successfully!");
+        };
         var saveDirectInvoiceData = window.saveDirectInvoiceData;
 
         function unlinkInvoice(id) { if (confirm("🚨 Detach this invoice from its Event Dashboard?\nIt will become a standalone general bill.")) { let record = salesDB[id]; record.eventId = null; let newId = generateDocId('Invoice', null); changeSalesId(id, newId); updateDataAndUI(); document.getElementById('quoteViewModal').style.display = 'none'; viewDetails(newId, 'sales'); } }
@@ -14676,13 +14674,13 @@
             }
         }
 
-        // 🚀 FAST UI FIX: Removed artificial 400ms delays
-        function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } closePanel(); tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 50); }
-        function createPurchaseBillFromEvent(leadId) { closePanel(); tempEventIdForPurchase = leadId; setTimeout(() => { openPurchaseBillModal(); }, 50); }
-        function createPOFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; closePanel(); setTimeout(() => { openPurchaseOrderModal(); }, 50); }
-        function createPBFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; closePanel(); setTimeout(() => { openPurchaseBillModal(); }, 50); }
-        function createExpenseFromEvent(leadId) { closePanel(); setTimeout(() => { openExpenseModal(leadId); }, 50); }
-        function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } closePanel(); setTimeout(() => { openPaymentModal(partyId); }, 50); }
+        // 🚀 FAST UI FIX: Removed closePanel() so Workspace stays open behind the modal!
+        function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 50); }
+        function createPurchaseBillFromEvent(leadId) { tempEventIdForPurchase = leadId; setTimeout(() => { openPurchaseBillModal(); }, 50); }
+        function createPOFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; setTimeout(() => { openPurchaseOrderModal(); }, 50); }
+        function createPBFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; setTimeout(() => { openPurchaseBillModal(); }, 50); }
+        function createExpenseFromEvent(leadId) { setTimeout(() => { openExpenseModal(leadId); }, 50); }
+        function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } setTimeout(() => { openPaymentModal(partyId); }, 50); }
 
         // FIX 3: Hardware Back Button Control (Mobile App jaisa experience)
         history.pushState({ page: 'start' }, document.title, location.href);
@@ -16317,6 +16315,7 @@
             Object.values(stockMovementDB || {}).forEach(out => { 
                 if (out && out.type === 'Outward') transactions.push({...out, logType: 'Outward Challan'}); 
                 if (out && out.type === 'Transfer') transactions.push({...out, logType: 'Stock Transfer'}); 
+                if (out && out.type === 'Audit') transactions.push({...out, logType: 'Stock Audit'}); // 👈 Audit Added
             });
             transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
 
@@ -16355,9 +16354,16 @@
 
                 let inwardBtnHtml = (!isReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
                 let editBtnHtml = t.logType !== 'Stock Transfer' ? `<div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>` : '';
-                let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : (t.logType === 'Stock Transfer' ? '#10B981' : '#8B5CF6');
+                let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : (t.logType === 'Stock Transfer' ? '#10B981' : (t.logType === 'Stock Audit' ? '#F59E0B' : '#8B5CF6'));
 
-                let clickAction = t.logType === 'Rental Invoice' ? `if(typeof viewDetails === 'function') viewDetails('${t.id}', 'sales')` : `window.openLogisticsPreviewModal('${t.id}', '${t.logType}')`;
+                if (t.type === 'Audit') {
+                    pName = `Stock Reconciliation`;
+                    eventName = warehousesDB[t.godownId] ? warehousesDB[t.godownId].name : 'Godown';
+                    statusBadge = `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">⚖️ AUDITED</span>`;
+                    inwardBtnHtml = ''; editBtnHtml = ''; 
+                }
+
+                let clickAction = t.logType === 'Rental Invoice' ? `if(typeof viewDetails === 'function') viewDetails('${t.id}', 'sales')` : (t.type === 'Audit' ? '' : `window.openLogisticsPreviewModal('${t.id}', '${t.logType}')`);
 
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 4px solid ${typeColor}; background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow-sm); box-sizing:border-box;">
                     <div style="flex-grow:1; cursor:pointer;" onclick="${clickAction}">
@@ -16698,10 +16704,8 @@
             container.insertAdjacentHTML('beforeend', html);
         };
 
-        // 🚀 FIXED: Outward Challan (No Fake Expenses in Financial Books)
         window.saveOutwardChallan = function() {
             let evId = document.getElementById('out_event').value; 
-            let gId = document.getElementById('out_godown_select').value; 
             let date = document.getElementById('out_date').value; 
             let vehicle = document.getElementById('out_vehicle').value; 
             let note = document.getElementById('out_note') ? document.getElementById('out_note').value : '';
@@ -16709,40 +16713,110 @@
             let selectedFunc = funcSelect ? funcSelect.value : '';
             let funcTitle = selectedFunc ? selectedFunc.split('|')[1] : '';
 
-            if(!evId || !gId || !date) return alert("Fill required fields!");
+            if(!evId || !date) return alert("Fill required fields!");
             let items = []; let totalInternalValue = 0;
             let rows = document.querySelectorAll('#out_items_container .outward-item-row');
             let isEdit = document.getElementById('outwardChallanModal').dataset.editId;
 
+            let lead = leadsDB[evId];
+            let evCodeStr = lead ? createEventCode(lead.name, lead.func, lead.date) : null;
+            let id = isEdit ? isEdit : window.generateDocId('Challan', evCodeStr);
+
+            // ♻️ REVERT OLD STOCK (Smart Check for older bills too)
+            if(isEdit) {
+                let oldRecord = stockMovementDB[id];
+                if(oldRecord && oldRecord.items) { 
+                    oldRecord.items.forEach(oldItem => { 
+                        if(oldItem.pickupSplit) {
+                            // Naye auto-pilot bills ke liye
+                            oldItem.pickupSplit.forEach(sp => {
+                                if(itemsDB[oldItem.name] && itemsDB[oldItem.name].godowns[sp.godownId] !== undefined) {
+                                    itemsDB[oldItem.name].godowns[sp.godownId] += parseInt(sp.qty);
+                                }
+                            });
+                        } else if(oldRecord.godownId && itemsDB[oldItem.name]) {
+                            // Purane manual bills ke liye
+                            itemsDB[oldItem.name].godowns[oldRecord.godownId] += parseInt(oldItem.qty); 
+                        }
+                    }); 
+                }
+            }
+
+            // 🚨 GLOBAL STOCK CHECK & AUTO-ROUTING ENGINE 🚨
+            let errorFound = false;
             for(let i=0; i<rows.length; i++) {
                 let name = rows[i].querySelector('.o-item-name').value; 
                 let qty = parseInt(rows[i].querySelector('.o-item-qty').value) || 0; 
                 let rate = parseFloat(rows[i].querySelector('.o-item-rate').value) || 0;
+                
                 if (name && qty > 0) { 
-                    let available = (itemsDB[name] && itemsDB[name].godowns[gId]) ? itemsDB[name].godowns[gId] : 0;
-                    if(!isEdit && qty > available) { alert(`🚨 ALARM!\nTrying to dispatch ${qty} x '${name}', but only ${available} are available.`); return; }
-                    items.push({ name, qty, rate, amount: qty * rate }); 
+                    let dbItem = itemsDB[name];
+                    let totalAvailable = 0;
+                    let godownStocks = {};
+                    
+                    if (dbItem && dbItem.godowns) {
+                        for (let g in dbItem.godowns) {
+                            totalAvailable += dbItem.godowns[g];
+                            if (dbItem.godowns[g] > 0) godownStocks[g] = dbItem.godowns[g];
+                        }
+                    }
+                    
+                    if(qty > totalAvailable) { 
+                        alert(`🚨 OUT OF STOCK!\n\nYou need ${qty} x '${name}', but you only have ${totalAvailable} across ALL godowns.\nBill cancelled.`); 
+                        errorFound = true; break; 
+                    }
+                    
+                    // 🪄 THE MAGIC: Auto-Split Logic
+                    let needed = qty;
+                    let pickupSplit = [];
+                    for (let g in godownStocks) {
+                        if (needed <= 0) break;
+                        let take = Math.min(godownStocks[g], needed);
+                        pickupSplit.push({ godownId: g, qty: take });
+                        needed -= take;
+                    }
+
+                    items.push({ name, qty, rate, amount: qty * rate, pickupSplit }); 
                     totalInternalValue += (qty * rate); 
                 }
             }
-            if(items.length === 0) return alert("Please add at least one item!");
-            let id = isEdit || generateDocId('Challan');
-            
-            if(isEdit) {
-                let oldRecord = stockMovementDB[id];
-                if(oldRecord && oldRecord.items) { oldRecord.items.forEach(oldItem => { if(itemsDB[oldItem.name] && itemsDB[oldItem.name].godowns[oldRecord.godownId] !== undefined) itemsDB[oldItem.name].godowns[oldRecord.godownId] += oldItem.qty; }); }
-            }
-            
-            items.forEach(item => { if(itemsDB[item.name] && itemsDB[item.name].godowns[gId] !== undefined) itemsDB[item.name].godowns[gId] -= item.qty; });
-            stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: gId, date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed' };
 
-            // 🚀 ALARM REMOVED: Auto-Expense generation removed to protect Balance Sheet Tally.
-            // Cost is only stored inside the challan for memo purposes.
+            // Abort on error and revert
+            if (errorFound) {
+                if(isEdit) {
+                    let oldRecord = stockMovementDB[id];
+                    if(oldRecord && oldRecord.items) { 
+                        oldRecord.items.forEach(oldItem => { 
+                            if(oldItem.pickupSplit) {
+                                oldItem.pickupSplit.forEach(sp => {
+                                    if(itemsDB[oldItem.name]) itemsDB[oldItem.name].godowns[sp.godownId] -= parseInt(sp.qty);
+                                });
+                            } else if(oldRecord.godownId && itemsDB[oldItem.name]) {
+                                itemsDB[oldItem.name].godowns[oldRecord.godownId] -= parseInt(oldItem.qty); 
+                            }
+                        }); 
+                    }
+                }
+                return;
+            }
+
+            if(items.length === 0) return alert("Please add at least one item!");
+            
+            // ✅ DEDUCT NEW STOCK FROM MULTIPLE GODOWNS
+            items.forEach(item => { 
+                if(item.pickupSplit) {
+                    item.pickupSplit.forEach(sp => {
+                        if(itemsDB[item.name]) itemsDB[item.name].godowns[sp.godownId] -= sp.qty;
+                    });
+                }
+            });
+            
+            stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: 'AUTO_MULTI', date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed', logType: 'Outward Challan' };
 
             if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
             document.getElementById('outwardChallanModal').style.display = 'none'; 
             document.getElementById('outwardChallanModal').dataset.editId = "";
-            alert(`✅ Material Dispatched!\n(Value: ₹${totalInternalValue.toLocaleString('en-IN')})`); 
+            alert(`✅ Material Dispatched via Auto-Routing!`); 
             window.renderInventoryHubList();
         };
 
@@ -16979,15 +17053,23 @@
             if(confirm(`System expects ${expected}. You found ${actual}.\n\nAre you sure you want to mark ${diff} items as Lost/Written-off?`)) {
                 item.godowns[gId] = actual; item.totalStock -= diff; item.totalLost = (item.totalLost || 0) + diff;
                 
-                // 🚀 CREATE AUDIT LOG FOR ITEM LEDGER
-                let auditId = "AUD-" + Date.now();
+                // 🚀 CREATE AUDIT LOG FOR STOCK MOVEMENT & LEDGER
+                let auditId = window.generateDocId ? window.generateDocId('Audit') : "AUD-" + Date.now();
                 stockMovementDB[auditId] = {
                     id: auditId, type: 'Audit', godownId: gId, date: auditDate,
                     items: [{ name: name, qty: diff }], status: 'Audited', logType: 'Stock Audit'
                 };
 
                 if (lossValue > 0) { let expId = "EXP" + Date.now(); let cat = "Asset Loss / Write-off"; if (typeof expenseCats !== 'undefined' && !expenseCats.includes(cat)) { expenseCats.push(cat); } expenseDB[expId] = { id: expId, type: 'General', cat: cat, amount: lossValue, paid: lossValue, balanceDue: 0, status: 'Paid', date: auditDate, mode: 'SYSTEM_LOSS', eventId: null, partyId: null, notes: `Stock Audit Write-off: ${diff} x ${name}`, linkedDates: [] }; }
-                if(typeof updateDataAndUI === 'function') updateDataAndUI(); document.getElementById('stockAuditModal').style.display = 'none'; alert(`✅ Audit complete. ${diff} units marked as lost.`); window.renderInventoryHubList();
+                
+                if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
+                document.getElementById('stockAuditModal').style.display = 'none'; 
+                
+                // 🚀 INSTANT SYNC FIX
+                if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
+                if(typeof window.renderItemMasterList === 'function') window.renderItemMasterList();
+                
+                alert(`✅ Audit complete. Voucher ${auditId} generated. ${diff} units marked as lost.`); 
             }
         };
         window.promptNewInventoryItem = function() {
@@ -17378,7 +17460,7 @@
             modalContent.innerHTML = `
                 <div class="modal-header" style="background: #0F172A; color:white; padding: 20px; border-radius: 12px 12px 0 0; margin:0; position:relative; overflow:hidden;">
                     <div style="position:absolute; top:-20px; right:-20px; font-size:80px; opacity:0.05; transform:rotate(-15deg); pointer-events:none;">📦</div>
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2; width:100%;">
                         <div>
                             <div style="font-size:10px; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:4px;">Item Ledger</div>
                             <h3 id="il_item_name" style="margin:0; font-size:22px; font-weight:900; letter-spacing:-0.5px; color:white;">${itemName}</h3>
@@ -17439,12 +17521,33 @@
         };
 
         window.printItemLedger = function() {
+            let itemName = document.getElementById('il_item_name').innerText;
             let printWin = window.open('', '_blank');
-            let html = `<html><head><title>Item Ledger</title><style>body{font-family:sans-serif; padding:20px;} table{width:100%; border-collapse:collapse; font-size:12px; margin-top:20px;} th,td{border:1px solid #ddd; padding:8px; text-align:center;} th{background:#f4f4f5;} .left{text-align:left;}</style></head><body>`;
-            html += `<h2 style="text-align:center; margin-bottom:5px;">STOCK LEDGER</h2>`;
-            html += `<h3 style="text-align:center; color:#2563EB; margin-top:0;">Item: ${document.getElementById('il_item_name').innerText}</h3>`;
+            let cName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.company : "UTSAVhq ERP";
+            
+            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Item Ledger - ${itemName}</title>
+            <style>
+                body{font-family:'Segoe UI', sans-serif; padding:20px; color:#0f172a;} 
+                table{width:100%; border-collapse:collapse; font-size:12px; margin-top:20px;} 
+                th,td{border:1px solid #cbd5e1; padding:10px; text-align:center;} 
+                th{background:#f1f5f9; text-transform:uppercase; font-size:11px; -webkit-print-color-adjust: exact;} 
+                .left{text-align:left;}
+                .header-box { border: 2px solid #0f172a; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px;}
+                @media print { #mobile-print-btn { display:none !important; } }
+            </style></head><body>`;
+            
+            html += `<div class="header-box">
+                        <h2 style="margin:0 0 5px 0;">${cName}</h2>
+                        <h3 style="margin:0; color:#2563EB; text-transform:uppercase;">STOCK LEDGER REPORT</h3>
+                        <p style="margin:5px 0 0 0; font-weight:bold; font-size:16px;">Item Name: ${itemName}</p>
+                     </div>`;
+            
             html += `<table>` + document.querySelector('#itemLedgerModal table').innerHTML + `</table>`;
-            html += `<script>setTimeout(()=>window.print(), 500);<\/script></body></html>`;
+            
+            html += `<div style="text-align:center; font-size:10px; color:#64748b; margin-top:30px;">System Generated Report</div>`;
+            html += `<div id="mobile-print-btn" style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%); display:flex; width:90%; max-width:350px;"><button onclick="window.print()" style="width:100%; background:#2563EB; color:white; border:none; padding:16px; border-radius:12px; font-weight:900; font-size:16px; box-shadow:0 8px 20px rgba(37,99,235,0.4); cursor:pointer;">🖨️ Print Ledger</button></div>`;
+            html += `<script>setTimeout(()=>window.print(), 800);<\/script></body></html>`;
+            
             if(printWin) { printWin.document.write(html); printWin.document.close(); }
         };
         // ==========================================
@@ -17864,6 +17967,15 @@
                 let counter = 1; let idToCheck = "";
                 while (true) {
                     idToCheck = eventCode ? `${eventCode}/CHL-${counter}` : `CHL-${counter}`;
+                    if (!stockMovementDB[idToCheck]) break;
+                    counter++;
+                }
+                return idToCheck;
+            }
+            if (type === 'Audit') {
+                let counter = 1; let idToCheck = "";
+                while (true) {
+                    idToCheck = `AUD-${counter}`;
                     if (!stockMovementDB[idToCheck]) break;
                     counter++;
                 }
