@@ -44,19 +44,19 @@
         window.auth = firebase.auth();
         window.db = firebase.firestore();
 
-        // 🛡️ OFFLINE ENGINE: Net chala jaye toh bhi app nahi rukega!
-        window.db.enablePersistence()
-          .catch(function(err) {
-              console.warn("Offline mode setup failed, continuing online mode only: ", err.code);
-          });
-
-        // 🚀 TURBO MODE: Enable Fast WebSockets for Instant Sync
+        // 🚀 1st: TURBO MODE SETTINGS (Hamesha Offline Mode se pehle aana chahiye)
         window.db.settings({
-            experimentalForceLongPolling: false, // 👈 Isko FALSE kiya taaki fast chale
+            experimentalForceLongPolling: false, 
             experimentalAutoDetectLongPolling: true,
-            useFetchStreams: true, // 👈 Live streaming ON
+            useFetchStreams: true, 
             merge: true
         });
+
+        // 🛡️ 2nd: OFFLINE ENGINE (Settings ke baad call hoga toh Crash nahi hoga)
+        window.db.enablePersistence({ synchronizeTabs: true })
+          .catch(function(err) {
+              console.log("Offline mode info: ", err.code);
+          });
 
         console.log("✅ Firebase & Database Connected Successfully!");
     </script>
@@ -1141,20 +1141,22 @@
         .side-panel {
             position: fixed;
             top: 0;
-            right: -100%;
+            right: 0; 
+            transform: translateX(100%); /* 🚀 GPU Acceleration: Extremely Fast & Smooth */
             width: 100%;
             max-width: 480px;
             height: 100%;
             background: var(--bg-color);
             z-index: 4000;
             box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
-            transition: right 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Faster snap curve */
             display: flex;
             flex-direction: column;
+            will-change: transform; /* Browser gets ready before you even click */
         }
 
         .side-panel.open {
-            right: 0;
+            transform: translateX(0); /* 🚀 Slides in instantly */
         }
 
         .panel-cover {
@@ -16113,10 +16115,10 @@
             }
             switchHubTab('hub-bill', document.getElementById('pill-bill'));
             
-            // 🚀 FIX: Inventory Toggle hamesha visible rahega
+            // 🚀 FIX: Ab Inventory Checkbox sabko hamesha dikhega (Owner Lock hata diya)
             let toggleCard = document.getElementById('set_inventory_toggle_card');
             if (toggleCard) {
-                toggleCard.style.display = 'block'; // Ye hamesha 'block' (visible) rahega
+                toggleCard.style.display = 'block'; // Forcefully show
             }
             if (document.getElementById('set_manage_inventory')) {
                 document.getElementById('set_manage_inventory').checked = appSettings.manageInventory || false;
