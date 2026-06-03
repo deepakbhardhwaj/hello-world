@@ -6470,6 +6470,7 @@
         }
 
         // 🚀 FIX: NAYE PHONE PAR MOBILE NUMBER DALTE HI PURANA DATA SYNC KARNA
+        // 🚀 FIX: STRICT EMAIL-MOBILE SECURITY BINDING
         async function saveNewUserProfile() {
             let name = document.getElementById('auth_setup_name').value.trim();
             let email = document.getElementById('auth_setup_email').value.trim().toLowerCase();
@@ -6482,7 +6483,19 @@
             try {
                 let userDoc = await db.collection("users").doc(mob).get();
                 if (userDoc.exists) {
-                    // Purana User mil gaya! Uska email update karo aur usko uski company me bhej do!
+                    let existingData = userDoc.data();
+
+                    // 🛡️ THE SECURITY LOCK: Koi random aadmin apna email dalkar aapka number nahi chura sakta!
+                    if (existingData.email && existingData.email !== "" && existingData.email !== email) {
+                        alert(`🚨 SECURITY ALERT!\n\nThis Mobile Number is already registered with another Google Account.\n\nPlease go back and login using the correct Google Account, or use a different mobile number.`);
+                        
+                        // Force Logout so they can't bypass
+                        auth.signOut();
+                        window.location.reload();
+                        return; // ⛔ Yahan code ruk jayega, andar ghusne nahi dega!
+                    }
+
+                    // Purana User mil gaya (aur email match ho gaya ya first time link ho raha hai)! 
                     await db.collection("users").doc(mob).update({ email: email, name: name });
                     
                     loggedInMobile = mob;
@@ -6496,7 +6509,8 @@
                         if(comp.ownerMob === mob || (comp.staff && comp.staff.some(s => s.mobile === mob))) myComps.push(doc.id);
                     });
                     
-                    let userData = userDoc.data();
+                    let userData = existingData;
+                    userData.email = email; // update locally
                     userData.companies = myComps;
                     masterUsersDB[mob] = userData;
                     localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
@@ -6509,7 +6523,7 @@
                 }
             } catch(e) { console.log(e); }
 
-            // Agar sach me Naya User hai
+            // Agar sach me Naya User hai toh fresh entry banegi
             loggedInMobile = mob; 
             let userObj = { name: name, mobile: mob, email: email, dob: "", companies: [] };
             masterUsersDB[mob] = userObj;
@@ -17378,7 +17392,6 @@
                 let liveStock = 0;
                 let stockDetails = "";
                 
-                // 🪄 LIVE CALCULATOR: Godown data scanning loop
                 if (item.godowns) {
                     for (let g in item.godowns) {
                         let qty = parseInt(item.godowns[g]) || 0;
@@ -17394,6 +17407,7 @@
                 let stockText = liveStock > 0 ? `${liveStock} Available` : 'Out of Stock';
                 let disableAttr = liveStock === 0 ? 'disabled' : '';
                 
+                // 🪄 AUTO-CHECK MAGIC: Quantity change karte hi checkbox auto-tick hoga
                 grid.innerHTML += `
                 <label style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid #E2E8F0; border-radius:8px; cursor:${liveStock > 0 ? 'pointer' : 'not-allowed'}; opacity: ${liveStock > 0 ? '1' : '0.6'}; margin-bottom:8px; width:100%; box-sizing:border-box;">
                     <div style="flex:1; padding-right:10px; text-align:left;">
@@ -17402,7 +17416,7 @@
                         <div style="display:block; margin-top:2px;">${stockDetails || '<span style="font-size:10px; color:#EF4444; font-weight:bold;">No available stock</span>'}</div>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                        <input type="number" class="form-input inv-sel-qty" value="1" min="1" max="${liveStock}" style="width:55px; height:32px; padding:2px; text-align:center; font-weight:900; font-size:13px; color:var(--text-primary); border-color:#CBD5E1; ${liveStock === 0 ? 'display:none;' : ''}" ${disableAttr} onclick="event.stopPropagation();">
+                        <input type="number" class="form-input inv-sel-qty" value="1" min="1" max="${liveStock}" style="width:55px; height:32px; padding:2px; text-align:center; font-weight:900; font-size:13px; color:var(--text-primary); border-color:#CBD5E1; ${liveStock === 0 ? 'display:none;' : ''}" ${disableAttr} onclick="event.stopPropagation();" oninput="if(this.value > 0) { this.closest('label').querySelector('.inv-select-cb').checked = true; } else { this.closest('label').querySelector('.inv-select-cb').checked = false; }">
                         <input type="checkbox" class="inv-select-cb" value="${item.name}" style="width:20px; height:20px; accent-color:var(--accent-color);" ${disableAttr}>
                     </div>
                 </label>`;
@@ -17412,7 +17426,8 @@
         window.addSelectedItemsToForm = function() {
             let context = document.getElementById('inventorySelectModal').dataset.context || 'out';
             let checkboxes = document.querySelectorAll('.inv-select-cb:checked');
-            if (checkboxes.length === 0) return alert("Please select at least one item!");
+            
+            if (checkboxes.length === 0) return alert("Please select at least one item or enter quantity!");
             
             let stockError = false;
 
@@ -17439,7 +17454,10 @@
                         let lastRow = rows[rows.length - 1];
                         if (lastRow) {
                             let qField = lastRow.querySelector('.out-item-qty, input[type="number"]');
-                            if (qField) qField.value = qty;
+                            if (qField) {
+                                qField.value = qty;
+                                qField.setAttribute('value', qty);
+                            }
                         }
                     }
                 } else if (context === 'di') {
@@ -17448,9 +17466,16 @@
                         let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
                         if(rows.length > 0) {
                             let lastRow = rows[rows.length - 1];
-                            if(lastRow.querySelector('.i-item-name')) lastRow.querySelector('.i-item-name').value = name;
-                            if(lastRow.querySelector('.i-item-qty')) lastRow.querySelector('.i-item-qty').value = qty;
-                            if(lastRow.querySelector('.i-item-rate')) lastRow.querySelector('.i-item-rate').value = rate;
+                            let nameInp = lastRow.querySelector('.i-item-name');
+                            let qtyInp = lastRow.querySelector('.i-item-qty');
+                            let rateInp = lastRow.querySelector('.i-item-rate');
+                            
+                            if (nameInp) nameInp.value = name;
+                            if (qtyInp) {
+                                qtyInp.value = qty;
+                                qtyInp.setAttribute('value', qty); // Force DOM Lock
+                            }
+                            if (rateInp) rateInp.value = rate;
                         }
                     }
                 }
@@ -17458,9 +17483,13 @@
             
             if (stockError) return;
 
-            if (context === 'di' && typeof calculateDirectInvoiceTotal === 'function') {
-                calculateDirectInvoiceTotal();
-            }
+            // 🪄 MAGIC FIX: Forcefully recalculate totals after inserting items
+            setTimeout(() => {
+                if (context === 'di' && typeof calculateDirectInvoiceTotal === 'function') {
+                    calculateDirectInvoiceTotal();
+                }
+            }, 100);
+            
             document.getElementById('inventorySelectModal').style.display = 'none';
             document.querySelectorAll('.inv-sel-qty').forEach(q => q.value = "1");
             checkboxes.forEach(c => c.checked = false);
