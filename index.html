@@ -6997,7 +6997,7 @@
                         // Check if source is new
                         if(typeof leadSources !== 'undefined' && !leadSources.includes(source)) {
                             leadSources.push(source);
-                            localStorage.setItem('utsav_lead_sources', JSON.stringify(leadSources));
+                            saveDataLocally();
                         }
                         importedCount++;
                     }
@@ -7586,6 +7586,11 @@
             if (currentWorkspaceId && masterCompsDB[currentWorkspaceId]) {
                 Object.assign(masterCompsDB[currentWorkspaceId], profileDB);
                 localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                
+                // ☁️ FIREBASE SYNC: Profile details pushed directly to Company Database
+                try {
+                    db.collection("companies").doc(currentWorkspaceId).update(profileDB);
+                } catch(e) { console.error("Cloud Profile Sync Error", e); }
             }
 
             // App UI update
@@ -7650,6 +7655,12 @@
                     itemsDB = data.items || {};
                     warehousesDB = data.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
                     stockMovementDB = data.stockMovements || {};
+                    
+                    // ☁️ FIREBASE SYNC: Naye 4 variables cloud se load honge
+                    if (data.leadSources) leadSources = data.leadSources;
+                    if (data.itemUnits) itemUnits = data.itemUnits;
+                    if (data.appSettings) appSettings = data.appSettings;
+                    if (data.trashDB) trashDB = data.trashDB;
                 } 
                 if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
                 if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
@@ -7757,7 +7768,13 @@
                 leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB, 
                 expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats, 
                 bank: bankDB, bankTx: bankTxDB, loans: loansDB,
-                items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB 
+                items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB,
+                
+                // ☁️ FIREBASE SYNC: Added previously missing local data!
+                leadSources: leadSources,
+                itemUnits: itemUnits,
+                appSettings: appSettings,
+                trashDB: trashDB
             }; 
             
             // 1. Local backup (Instant Memory Lock)
@@ -10510,7 +10527,7 @@
                 let newUnit = prompt("Enter new unit (e.g. Box, Pair):");
                 if (newUnit && newUnit.trim() !== '') {
                     newUnit = newUnit.trim();
-                    if (!itemUnits.includes(newUnit)) { itemUnits.push(newUnit); localStorage.setItem('utsav_item_units', JSON.stringify(itemUnits)); }
+                    if (!itemUnits.includes(newUnit)) { itemUnits.push(newUnit); saveDataLocally(); }
                     selectEl.innerHTML = getUnitOptions(newUnit);
                 } else { selectEl.innerHTML = getUnitOptions('Pcs'); }
             }
@@ -11186,8 +11203,22 @@
             } 
             
             tempEventIdForInvoice = null; updateDataAndUI(); document.getElementById('directInvoiceModal').style.display = 'none'; 
-            let activeTab = document.querySelector('.active-section');
-            if (activeTab && activeTab.id === 'inventory-hub') { if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList(); } else if (activeTab && (activeTab.id === 'events' || activeTab.id === 'crm')) { if (targetEventId) renderWorkspace(targetEventId); } else { setSalesTab('Invoice', document.getElementById('st-invoices')); openTab('sales-hub', null); }
+            // 🚀 SMART TAB DETECTION (No unwanted redirect to Sales Hub)
+            let invHub = document.getElementById('inventory-hub');
+            let isInvActive = invHub && (invHub.style.display === 'block' || invHub.style.display === 'flex' || invHub.classList.contains('active') || invHub.classList.contains('active-section'));
+
+            if (isInvActive) {
+                // User is in Inventory Hub, stay here and just refresh the list!
+                if(typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList();
+            } else if (document.getElementById('events') && document.getElementById('events').style.display !== 'none') {
+                // User is in CRM/Events, stay there!
+                if (targetEventId && typeof renderWorkspace === 'function') renderWorkspace(targetEventId);
+            } else {
+                // Default fallback
+                if(typeof setSalesTab === 'function') setSalesTab('Invoice', document.getElementById('st-invoices')); 
+                if(typeof openTab === 'function') openTab('sales-hub', null); 
+            }
+            
             alert("✅ Rental Invoice Saved & Auto-Routed Successfully!");
         };
         var saveDirectInvoiceData = window.saveDirectInvoiceData;
@@ -11532,7 +11563,7 @@
             po.items.forEach(item => {
                 addPBItem(); let rows = document.querySelectorAll('#pb_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                 lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
-                if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); localStorage.setItem('utsav_item_units', JSON.stringify(itemUnits)); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
+                if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
                 if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
             });
             calculatePBTotal();
@@ -11814,7 +11845,7 @@
                 record.items.forEach(item => {
                     addQuoteItem(); let rows = document.querySelectorAll('#quote_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                     lastRow.querySelector('.q-item-name').value = item.name; lastRow.querySelector('.q-item-qty').value = item.qty; lastRow.querySelector('.q-item-rate').value = item.rate;
-                    if (lastRow.querySelector('.q-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); localStorage.setItem('utsav_item_units', JSON.stringify(itemUnits)); } lastRow.querySelector('.q-item-unit').innerHTML = getUnitOptions(item.unit); }
+                    if (lastRow.querySelector('.q-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.q-item-unit').innerHTML = getUnitOptions(item.unit); }
                     if (lastRow.querySelector('.q-item-desc')) lastRow.querySelector('.q-item-desc').value = item.desc || "";
                 }); calculateQuoteTotal(); document.getElementById('quotationModal').style.display = 'flex';
             } else if (record.type === 'Invoice') {
@@ -11822,7 +11853,7 @@
                 record.items.forEach(item => {
                     addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                     lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
-                    if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); localStorage.setItem('utsav_item_units', JSON.stringify(itemUnits)); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
+                    if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
                     if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
                 }); calculateDirectInvoiceTotal(); document.getElementById('di_autopilot_badge').style.display = 'none'; document.getElementById('directInvoiceModal').style.display = 'flex';
             } else if (record.type === 'Receipt') {
@@ -11853,7 +11884,7 @@
                         lastRow.querySelector('.q-item-name').value = item.name;
                         lastRow.querySelector('.q-item-qty').value = item.qty;
                         lastRow.querySelector('.q-item-rate').value = item.rate;
-                        if (lastRow.querySelector('.q-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); localStorage.setItem('utsav_item_units', JSON.stringify(itemUnits)); } lastRow.querySelector('.q-item-unit').innerHTML = getUnitOptions(item.unit); }
+                        if (lastRow.querySelector('.q-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.q-item-unit').innerHTML = getUnitOptions(item.unit); }
                         if (lastRow.querySelector('.q-item-desc')) lastRow.querySelector('.q-item-desc').value = item.desc || "";
                     });
                 }
@@ -11882,7 +11913,7 @@
                         if (record.type === 'PB') addPBItem(); else addAssetItem();
                         let rows = document.querySelectorAll('#' + prefix + '_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                         lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
-                        if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); localStorage.setItem('utsav_item_units', JSON.stringify(itemUnits)); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
+                        if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
                         if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
                     });
                 }
@@ -15201,7 +15232,7 @@
                 manageInventory: manageInventory // 🚀 Saved to master configuration
             };
 
-            localStorage.setItem('utsav_app_settings', JSON.stringify(appSettings));
+            saveDataLocally();
             
             // 🚀 SMART FIX: Auto-refresh sidebar tabs instantly without reloading page!
             if(currentWorkspaceId) enforceStaffPermissions(currentWorkspaceId);
@@ -15290,7 +15321,7 @@
         let trashDB = JSON.parse(localStorage.getItem('utsav_trash_db')) || {};
 
         function saveTrash() {
-            localStorage.setItem('utsav_trash_db', JSON.stringify(trashDB));
+            saveDataLocally();
         }
 
         function sendToTrash(moduleName, recordId, recordData, title) {
@@ -15572,7 +15603,7 @@
                 newSrc = newSrc.trim();
                 if (!leadSources.includes(newSrc)) {
                     leadSources.push(newSrc);
-                    localStorage.setItem('utsav_lead_sources', JSON.stringify(leadSources));
+                    saveDataLocally();
                     refreshSourceList();
 
                     let lSelect = document.getElementById('l_source');
@@ -15627,7 +15658,7 @@
                 if (l.source === oldName) l.source = newName;
             });
 
-            localStorage.setItem('utsav_lead_sources', JSON.stringify(leadSources));
+            saveDataLocally();
             updateDataAndUI();
             openManageSourceModal();
             refreshSourceList();
@@ -15645,7 +15676,7 @@
             let idx = leadSources.indexOf(srcName);
             if (idx !== -1) leadSources.splice(idx, 1);
 
-            localStorage.setItem('utsav_lead_sources', JSON.stringify(leadSources));
+            saveDataLocally();
             openManageSourceModal();
             refreshSourceList();
         }
@@ -15690,9 +15721,6 @@
                 editExpense(expId);
             }
         }
-        // ==========================================
-        // 🚀 SMART DIRECT ADVANCE LINKING (FROM PREVIEW)
-        // ==========================================
         // ==========================================
         // 🚀 SMART DIRECT ADVANCE LINKING FOR PURCHASE
         // ==========================================
@@ -16398,7 +16426,7 @@
                     statusBadge = `<span style="background:#FEF2F2; color:#DC2626; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FECACA;">⚖️ AUDITED</span>`;
                     inwardBtnHtml = ''; editBtnHtml = ''; 
                 }
-                
+
                 let clickAction = t.logType === 'Rental Invoice' ? `if(typeof viewDetails === 'function') viewDetails('${t.id}', 'sales')` : (t.type === 'Audit' ? '' : `window.openLogisticsPreviewModal('${t.id}', '${t.logType}')`);
 
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 4px solid ${typeColor}; background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:var(--shadow-sm); box-sizing:border-box;">
