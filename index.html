@@ -15216,6 +15216,16 @@
         // 🚀 MASTER WINDOW ONLOAD (FIXED LOGIN LOOP)
         // ==========================================
         window.onload = function () {
+            // 🚀 UI CLEANUP: Hide Godown Dropdowns since system is on Auto-Pilot
+            let outGodown = document.getElementById('out_godown_select');
+            if (outGodown && outGodown.parentElement) {
+                outGodown.parentElement.style.display = 'none'; // Hides Outward Godown Select
+            }
+            let invGodown = document.getElementById('di_godown_select');
+            if (invGodown && invGodown.parentElement) {
+                invGodown.parentElement.style.display = 'none'; // Hides Rental Invoice Godown Select
+            }
+
             // 🚀 SMART CHECKBOX REFRESH FIX (Sabse pehle DOM ko update karo)
             if (typeof appSettings !== 'undefined' && document.getElementById('set_manage_inventory')) {
                 document.getElementById('set_manage_inventory').checked = appSettings.manageInventory || false;
