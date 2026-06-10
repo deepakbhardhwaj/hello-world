@@ -19122,19 +19122,20 @@
             oldDeleteLogisticsRecord(id, logType, e);
         };
         // ==============================================================
-        // 🚀 INDEPENDENT HUB ENGINE (ORDER BOOK & CALENDAR)
+        // 🚀 THE COMPLETE ORDER BOOK & CALENDAR HUB ENGINE
         // ==============================================================
         window.orderBookDB = JSON.parse(localStorage.getItem('utsav_orderBookDB')) || {};
         window.hubCalMonth = new Date().getMonth();
         window.hubCalYear = new Date().getFullYear();
+        window.editingOrderId = null;
 
-        // Ye function aapko tab call karna hai jab aap Logistics ka main page kholen
+        // 🟢 1. MAIN DASHBOARD RENDERER
         window.renderMainLogisticsHub = function() {
-            renderHubOrderBookList();
-            renderHubCalendarGrid();
+            if(typeof window.renderHubOrderBookList === 'function') window.renderHubOrderBookList();
+            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid();
         };
 
-        // 📋 1. ORDER BOOK LIST RENDERER (Mobile Optimized)
+        // 📋 2. ORDER BOOK LIST (Mobile Optimized)
         window.renderHubOrderBookList = function() {
             let listDiv = document.getElementById('hub_order_book_list');
             if(!listDiv) return;
@@ -19147,10 +19148,9 @@
 
             let html = "";
             orders.forEach(o => {
-                let lead = leadsDB[o.leadId] || { name: 'Unknown', func: 'Event' };
-                // 🛠️ Date Fix (Invalid date hatane ke liye)
+                let lead = (typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: 'Unknown', func: 'Event' };
                 let d = new Date(o.date);
-                let dateStr = isNaN(d) ? 'No Date' : d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+                let dateStr = isNaN(d) ? o.date : d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
                 
                 let itemsHtml = o.items.map(i => `<span style="background:#E2E8F0; color:#334155; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap;">${i.qty} x ${i.name}</span>`).join(" ");
                 let statusBadge = o.status === 'Invoiced' ? '🟢 Invoiced' : (o.status === 'Dispatched' ? '🟠 Dispatched' : '🔵 Reserved');
@@ -19183,11 +19183,11 @@
             listDiv.innerHTML = html;
         };
 
-        // 🗓️ 2. HUB CALENDAR RENDERER
+        // 🗓️ 3. CALENDAR SYSTEM
         window.changeHubCalendar = function(dir) {
-            hubCalMonth += dir;
-            if(hubCalMonth > 11) { hubCalMonth = 0; hubCalYear++; }
-            else if(hubCalMonth < 0) { hubCalMonth = 11; hubCalYear--; }
+            window.hubCalMonth += dir;
+            if(window.hubCalMonth > 11) { window.hubCalMonth = 0; window.hubCalYear++; }
+            else if(window.hubCalMonth < 0) { window.hubCalMonth = 11; window.hubCalYear--; }
             renderHubCalendarGrid();
         };
 
@@ -19197,17 +19197,17 @@
             if(!grid || !title) return;
 
             let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            title.innerText = `${months[hubCalMonth]} ${hubCalYear}`;
+            title.innerText = `${months[window.hubCalMonth]} ${window.hubCalYear}`;
 
-            let firstDay = new Date(hubCalYear, hubCalMonth, 1).getDay();
-            let totalDays = new Date(hubCalYear, hubCalMonth + 1, 0).getDate();
+            let firstDay = new Date(window.hubCalYear, window.hubCalMonth, 1).getDay();
+            let totalDays = new Date(window.hubCalYear, window.hubCalMonth + 1, 0).getDate();
 
             let html = "";
             ['S','M','T','W','T','F','S'].forEach(l => html += `<div style="text-align:center; font-size:10px; font-weight:bold; color:#64748B;">${l}</div>`);
             for(let i=0; i<firstDay; i++) html += `<div></div>`;
 
             for(let day=1; day<=totalDays; day++) {
-                let loopDate = `${hubCalYear}-${String(hubCalMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                let loopDate = `${window.hubCalYear}-${String(window.hubCalMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
                 let matches = Object.values(orderBookDB).filter(o => o.date === loopDate);
                 let dot = matches.length > 0 ? `<div style="width:5px; height:5px; background:var(--danger); border-radius:50%; margin:2px auto 0;"></div>` : '';
                 let bg = (loopDate === new Date().toISOString().split('T')[0]) ? 'background:#DBEAFE; border:1px solid #3B82F6;' : 'background:#F8FAFC; border:1px solid #E2E8F0;';
@@ -19235,7 +19235,7 @@
             
             let html = `<div style="font-size:12px; font-weight:bold; margin-bottom:8px; color:var(--text-primary); border-bottom:1px solid #BFDBFE; padding-bottom:5px;">📅 Status on ${displayDate}</div><div style="display:flex; flex-direction:column; gap:6px;">`;
             for(let name in totalsUsed) {
-                let masterTotal = itemsDB[name] ? (parseInt(itemsDB[name].totalStock) || 0) : 0; 
+                let masterTotal = (typeof itemsDB !== 'undefined' && itemsDB[name]) ? (parseInt(itemsDB[name].totalStock) || 0) : 0; 
                 let booked = totalsUsed[name]; let bal = masterTotal - booked;
                 let color = bal < 0 ? 'color:var(--danger);' : (bal === 0 ? 'color:#D97706;' : 'color:var(--success);');
                 let alert = bal < 0 ? ' 🚨' : '';
@@ -19252,16 +19252,137 @@
             panel.style.display = 'block';
         };
 
-        // Make sure to refresh list when saving!
-        let oldSaveOrder = window.saveOrderBookEntry;
-        window.saveOrderBookEntry = function() {
-            if(oldSaveOrder) oldSaveOrder(); // Call purana logic
-            renderMainLogisticsHub(); // Refresh naya hub
+        // 📝 4. THE MISSING CRUD FUNCTIONS (Add, Edit, Delete, Modal)
+        window.openOrderBookModal = function(id = null) {
+            window.editingOrderId = id;
+            let leadSel = document.getElementById('ob_lead_select');
+            if(leadSel && typeof leadsDB !== 'undefined') {
+                leadSel.innerHTML = `<option value="">-- Select Client / Event --</option>` + 
+                                    Object.values(leadsDB).map(l => `<option value="${l.id}">${l.name} (${l.func || 'Event'})</option>`).join("");
+            }
+            
+            document.getElementById('ob_items_container').innerHTML = "";
+            let form = document.getElementById('orderBookForm');
+            if(form) form.reset();
+
+            if (id && orderBookDB[id]) {
+                let data = orderBookDB[id];
+                if(leadSel) leadSel.value = data.leadId;
+                document.getElementById('ob_date').value = data.date;
+                document.getElementById('ob_notes').value = data.notes || "";
+                data.items.forEach(i => addOrderBookItemRow(i.name, i.qty));
+            } else {
+                addOrderBookItemRow(); 
+            }
+            document.getElementById('orderBookModal').style.display = 'flex';
         };
-        let oldDeleteOrder = window.deleteOrderEntry;
+
+        window.addOrderBookItemRow = function(name = "", qty = 1) {
+            let container = document.getElementById('ob_items_container');
+            if(!container) return;
+            
+            let options = "";
+            if(typeof itemsDB !== 'undefined') {
+                options = Object.values(itemsDB).map(i => `<option value="${i.name}" ${i.name === name ? 'selected' : ''}>${i.name} (Stock: ${i.totalStock || 0})</option>`).join("");
+            }
+
+            let rowId = 'obrow_' + Date.now() + Math.floor(Math.random()*100);
+            container.insertAdjacentHTML('beforeend', `
+                <div id="${rowId}" style="display:flex; gap:10px; margin-bottom:10px; align-items:center;">
+                    <select class="ob-row-name" style="flex:2; padding:9px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px;" required>
+                        <option value="">-- Select Product --</option>${options}
+                    </select>
+                    <input type="number" class="ob-row-qty" value="${qty}" min="1" style="width:80px; padding:8px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; text-align:center;" required>
+                    <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:20px; font-weight:bold; line-height:1;">&times;</button>
+                </div>
+            `);
+        };
+
+        window.saveOrderBookEntry = function() {
+            let leadId = document.getElementById('ob_lead_select').value;
+            let date = document.getElementById('ob_date').value;
+            let notes = document.getElementById('ob_notes').value;
+
+            let items = [];
+            document.querySelectorAll('#ob_items_container > div').forEach(row => {
+                let n = row.querySelector('.ob-row-name').value;
+                let q = parseInt(row.querySelector('.ob-row-qty').value) || 0;
+                if(n && q > 0) items.push({ name: n, qty: q });
+            });
+
+            if(items.length === 0) return alert("Add at least 1 equipment item!");
+
+            let id = window.editingOrderId || ("ORD" + Date.now());
+            orderBookDB[id] = {
+                id: id, leadId: leadId, date: date, items: items, notes: notes, 
+                status: orderBookDB[id] ? orderBookDB[id].status : 'Reserved', timestamp: Date.now()
+            };
+
+            localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
+            document.getElementById('orderBookModal').style.display = 'none';
+            renderMainLogisticsHub(); 
+            alert("Reservation Saved Successfully! 🚀");
+        };
+
         window.deleteOrderEntry = function(id) {
-            if(oldDeleteOrder) oldDeleteOrder(id);
+            if (confirm("Permanently release and delete this equipment reservation?")) {
+                delete orderBookDB[id];
+                localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
+                renderMainLogisticsHub();
+            }
+        };
+
+        // 🔄 5. PIPELINE CONVERTERS
+        window.convertObToOutward = function(id) {
+            orderBookDB[id].status = 'Dispatched';
+            localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
+            if(typeof window.openDirectStockModal === 'function') window.openDirectStockModal('outward');
             renderMainLogisticsHub();
+        };
+
+        window.convertObToInvoice = function(id) {
+            orderBookDB[id].status = 'Invoiced';
+            localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
+            if(typeof window.openTransactionModal === 'function') window.openTransactionModal('sales');
+            renderMainLogisticsHub();
+        };
+
+        // 🖨️ 6. PRINT AND WHATSAPP
+        window.previewOrderDocument = function(id) {
+            let o = orderBookDB[id];
+            let lead = (typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: 'Client' };
+            let rows = o.items.map((i, idx) => `<tr><td style="padding:8px; border-bottom:1px solid #E2E8F0;">${idx+1}</td><td style="padding:8px; border-bottom:1px solid #E2E8F0; font-weight:bold;">${i.name}</td><td style="padding:8px; border-bottom:1px solid #E2E8F0;">${i.qty}</td></tr>`).join("");
+            
+            document.getElementById('order_print_area').innerHTML = `
+                <div style="text-align:center; border-bottom:2px dashed #000; padding-bottom:10px; margin-bottom:15px;">
+                    <h2 style="margin:0;">EQUIPMENT RESERVATION</h2>
+                    <span style="font-size:12px;">Order Ref: ${o.id}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:13px;">
+                    <div><b>Client:</b> ${lead.name}<br><b>Event:</b> ${lead.func || '-'}</div>
+                    <div style="text-align:right;"><b>Date:</b> ${new Date(o.date).toLocaleDateString('en-IN')}<br><b>Status:</b> ${o.status || 'Reserved'}</div>
+                </div>
+                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:13px;">
+                    <tr style="background:#F1F5F9;"><th style="padding:8px;">#</th><th style="padding:8px;">Item Name</th><th style="padding:8px;">Qty</th></tr>
+                    ${rows}
+                </table>
+                <div style="margin-top:15px; font-size:12px;"><b>Notes:</b> ${o.notes || 'None'}</div>`;
+            document.getElementById('orderPreviewModal').style.display = 'flex';
+        };
+
+        window.printOrderDocument = function() {
+            let win = window.open('','','height=600,width=800');
+            win.document.write('<html><body style="font-family:sans-serif; padding:20px;">' + document.getElementById('order_print_area').innerHTML + '</body></html>');
+            win.document.close();
+            setTimeout(() => win.print(), 300);
+        };
+
+        window.whatsappOrder = function(id) {
+            let o = orderBookDB[id];
+            let lead = (typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: 'Client', phone: '' };
+            let itemsText = o.items.map((i, idx) => `  ${idx+1}. ${i.name} -> *${i.qty} Pcs*`).join("%0A");
+            let msg = `*🎪 EQUIPMENT RESERVATION*%0A%0A*Client:* ${lead.name}%0A*Date:* ${new Date(o.date).toLocaleDateString('en-IN')}%0A%0A*Items:*%0A${itemsText}`;
+            window.open(`https://wa.me/91${lead.phone || ''}?text=${msg}`, '_blank');
         };
     </SCRIPT>
 </body>
