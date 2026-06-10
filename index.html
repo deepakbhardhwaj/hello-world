@@ -17761,7 +17761,7 @@
         };
 
         // ==========================================
-        // 🚀 SMART & LIVE TASKS HUB ENGINE
+        // 🚀 SMART & LIVE TASKS HUB ENGINE (WITH WHATSAPP 💬)
         // ==========================================
         window.renderTasksDashboard = function(filter = null, element = null) {
             if (filter) currentTaskFilter = filter;
@@ -17799,6 +17799,12 @@
                 if (isMatch) {
                     let badge = t.type === 'Meeting' ? '<span class="status-badge badge-meet">Meeting</span>' : '<span class="status-badge badge-other">General</span>';
                     let dateInfo = t.date ? `📅 ${t.date} ${t.time || ''}` : '';
+                    
+                    // 🚀 WHATSAPP BUTTON LOGIC
+                    let waPhone = t.assignedTo || "";
+                    let waMsg = encodeURIComponent(`Hello, gentle reminder for task:\n*${t.text}*`);
+                    let waBtn = waPhone ? `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px;" title="WhatsApp Staff">💬</button>` : '';
+
                     container.innerHTML += `
                         <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
                             <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
@@ -17808,7 +17814,8 @@
                                     <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} ${t.leadName ? '• With: ' + t.leadName : ''}</div>
                                 </div>
                             </div>
-                            <div style="display:flex; gap:10px; flex-shrink:0;">
+                            <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
+                                ${waBtn}
                                 <button onclick="editTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
                                 <button onclick="deleteTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
                             </div>
@@ -17839,6 +17846,12 @@
                             let badge = `<span class="status-badge badge-new" style="font-size:9px;">Event: ${lead.func}</span>`;
                             let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : '';
                             let taskIdStr = t.id ? t.id : t;
+                            
+                            // 🚀 WHATSAPP BUTTON LOGIC
+                            let waPhone = t.assignedTo || "";
+                            let waMsg = encodeURIComponent(`Hello, gentle reminder for event task:\n*${t.text}*\nEvent: ${lead.func} (${lead.name})`);
+                            let waBtn = waPhone ? `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px;" title="WhatsApp Staff">💬</button>` : '';
+
                             container.innerHTML += `
                                 <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
                                     <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
@@ -17848,7 +17861,8 @@
                                             <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} • Client: ${lead.name}</div>
                                         </div>
                                     </div>
-                                    <div style="display:flex; gap:10px; flex-shrink:0;">
+                                    <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
+                                        ${waBtn}
                                         <button onclick="editTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
                                         <button onclick="deleteTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
                                     </div>
