@@ -17760,20 +17760,108 @@
             }, 300);
         };
 
-        window.renderTasksDashboard = function(filter, btn) {
-            window.currentTaskFilter = filter;
-            if (btn) {
+        // ==========================================
+        // 🚀 SMART & LIVE TASKS HUB ENGINE
+        // ==========================================
+        window.renderTasksDashboard = function(filter = null, element = null) {
+            if (filter) currentTaskFilter = filter;
+            
+            // UI Tab active high-lighting state controller
+            if (element) {
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab'));
+                element.classList.add('active-sales-tab');
+            } else {
                 document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => {
-                    b.classList.remove('active-sales-tab');
-                    b.style.background = '#F1F5F9';
-                    b.style.color = '#64748B';
+                    if (b.id === 'task-filter-' + currentTaskFilter) b.classList.add('active-sales-tab');
+                    else b.classList.remove('active-sales-tab');
                 });
-                btn.classList.add('active-sales-tab');
-                btn.style.background = '#0F172A';
-                btn.style.color = 'white';
             }
+
             let container = document.getElementById('task-dash-container');
-            if (container) container.innerHTML = "<p style='text-align:center; padding:20px; color:#64748B;'>No tasks currently pending.</p>";
+            if (!container) return;
+            container.innerHTML = "";
+
+            let searchWord = (searchTerms.tasks || "").toLowerCase();
+            let addedCount = 0;
+
+            // 1. Scan General Tasks & Meetings from globalTasksDB
+            Object.values(globalTasksDB || {}).forEach(t => {
+                let isMatch = true;
+                
+                if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
+                if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
+                if (currentTaskFilter === 'Meetings' && t.type !== 'Meeting') isMatch = false;
+
+                let textStr = (t.text || "").toLowerCase();
+                let personStr = (t.leadName || "").toLowerCase();
+                if (searchWord && !textStr.includes(searchWord) && !personStr.includes(searchWord)) isMatch = false;
+
+                if (isMatch) {
+                    let badge = t.type === 'Meeting' ? '<span class="status-badge badge-meet">Meeting</span>' : '<span class="status-badge badge-other">General</span>';
+                    let dateInfo = t.date ? `📅 ${t.date} ${t.time || ''}` : '';
+                    container.innerHTML += `
+                        <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
+                            <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
+                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', true)" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
+                                <div>
+                                    <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${t.text} ${badge}</div>
+                                    <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} ${t.leadName ? '• With: ' + t.leadName : ''}</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:10px; flex-shrink:0;">
+                                <button onclick="editTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
+                                <button onclick="deleteTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
+                            </div>
+                        </div>`;
+                    addedCount++;
+                }
+            });
+
+            // 2. Scan Event Tasks from leadsDB
+            Object.values(leadsDB || {}).forEach(lead => {
+                if (lead.tasks && Array.isArray(lead.tasks)) {
+                    lead.tasks.forEach(t => {
+                        let isMatch = true;
+
+                        if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
+                        if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
+                        if (currentTaskFilter === 'Meetings') isMatch = false; 
+
+                        let textStr = (t.text || "").toLowerCase();
+                        let leadNameStr = (lead.name || "").toLowerCase();
+                        let funcStr = (lead.func || "").toLowerCase();
+                        if (searchWord && !textStr.includes(searchWord) && !leadNameStr.includes(searchWord) && !funcStr.includes(searchWord)) isMatch = false;
+
+                        let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+                        if (!isOwner && lead.assignedTo !== loggedInMobile && t.assignedTo !== loggedInMobile) isMatch = false;
+
+                        if (isMatch) {
+                            let badge = `<span class="status-badge badge-new" style="font-size:9px;">Event: ${lead.func}</span>`;
+                            let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : '';
+                            let taskIdStr = t.id ? t.id : t;
+                            container.innerHTML += `
+                                <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
+                                    <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
+                                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${taskIdStr}', false, '${lead.id}')" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
+                                        <div>
+                                            <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${t.text} ${badge}</div>
+                                            <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} • Client: ${lead.name}</div>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:10px; flex-shrink:0;">
+                                        <button onclick="editTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
+                                        <button onclick="deleteTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
+                                    </div>
+                                </div>`;
+                            addedCount++;
+                        }
+                    });
+                }
+            });
+
+            if (addedCount === 0) {
+                container.innerHTML = `<p style="padding:30px; text-align:center; color:var(--text-secondary); font-weight:600; font-size:13px;">No tasks found in this category.</p>`;
+            }
         };
 
         // ==========================================
