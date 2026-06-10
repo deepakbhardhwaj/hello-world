@@ -385,7 +385,7 @@
             border: none !important;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
             cursor: pointer !important;
-            z-index: 9000 !important;
+            z-index: 3500 !important;
             display: flex !important;
             align-items: center !important;
             gap: 8px !important;
@@ -3896,11 +3896,11 @@
                     <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
                         <div style="flex:1; min-width:100px;">
                             <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
-                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
                         </div>
                         <div style="flex:1; min-width:100px;">
                             <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
-                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;">
+                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
                         </div>
                         <div style="display:flex; gap:8px; flex:1; min-width:120px;">
                             <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
@@ -5840,7 +5840,7 @@
             </div>
         </div>
 
-        <div id="quoteViewModal" class="modal-overlay" style="z-index: 5000;">
+        <div id="quoteViewModal" class="modal-overlay" style="z-index: 10600;">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 id="qv_modal_title">Details</h3>
@@ -7391,6 +7391,8 @@
             
             if (comp.staff && comp.staff.length > 0) {
                 comp.staff.forEach(s => {
+                    if (s.role === 'Owner') return; // 🚀 MAGIC: Owner ko list mein mat dikhao!
+                    
                     if (s.status === 'Pending') {
                         pendingCount++;
                         pendingDiv.innerHTML += `
@@ -9148,6 +9150,8 @@
             
             updateDataAndUI(); 
             document.getElementById('quickTaskModal').style.display = 'none'; 
+            // 🚀 MAGIC: Save hote hi list ko auto-refresh maro!
+            if(typeof renderTasksDashboard === 'function') renderTasksDashboard('All', document.getElementById('task-filter-All'));
             alert("Task Added!"); 
         };
 
@@ -13038,18 +13042,33 @@
                 let netFixedAssets = fixAssets - assetLoss;
                 if(netFixedAssets < 0) netFixedAssets = 0;
 
-                let totLiab = capital + netProfit + loans + creditors;
-                let totAssets = netFixedAssets + debtors + cashBank;
+                // 🚀 CA MAGIC: Calculate Direct Stock Value (Opening Inventory)
+                let closingStockValue = 0;
+                Object.values(stockMovementDB || {}).forEach(sm => {
+                    if ((sm.type === 'DirectStock' || sm.logType === 'Direct Stock') && sm.date <= toD) {
+                        if (sm.items) {
+                            sm.items.forEach(item => {
+                                closingStockValue += (item.qty * (item.rate || 0));
+                            });
+                        }
+                    }
+                });
+
+                // Asset me Stock jodo aur utna hi paisa Capital/Equity me jodo (Double Entry Rule)
+                let finalCapital = capital + closingStockValue; 
+                let finalAssets = netFixedAssets + debtors + cashBank + closingStockValue;
+                
+                let totLiab = finalCapital + netProfit + loans + creditors;
+                let totAssets = finalAssets;
 
                 html += `<tr style="background:#0F172A; color:white;"><th style="padding:8px; width:50%;">Liabilities</th><th style="padding:8px; text-align:right;">Amount (₹)</th><th style="padding:8px; width:50%; border-left:2px solid #CBD5E1;">Assets</th><th style="padding:8px; text-align:right;">Amount (₹)</th></tr>`;
-                html += `<tr><td style="padding:8px; font-weight:bold;">Capital Account</td><td style="padding:8px; text-align:right;">${capital.toLocaleString('en-IN')}</td><td style="padding:8px; font-weight:bold; border-left:2px solid #CBD5E1;">Fixed Assets (Net)</td><td style="padding:8px; text-align:right;">${netFixedAssets.toLocaleString('en-IN')}</td></tr>`;
+                html += `<tr><td style="padding:8px; font-weight:bold;">Capital Account (Inc. Stock)</td><td style="padding:8px; text-align:right;">${finalCapital.toLocaleString('en-IN')}</td><td style="padding:8px; font-weight:bold; border-left:2px solid #CBD5E1;">Fixed Assets (Net)</td><td style="padding:8px; text-align:right;">${netFixedAssets.toLocaleString('en-IN')}</td></tr>`;
                 html += `<tr><td style="padding:8px; padding-left:20px;">Add: Net Profit (Adjusted)</td><td style="padding:8px; text-align:right; font-weight:bold; color:${netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">${netProfit.toLocaleString('en-IN')}</td><td style="padding:8px; font-weight:bold; border-left:2px solid #CBD5E1;">Current Assets</td><td style="padding:8px;"></td></tr>`;
-                html += `<tr><td style="padding:8px; font-weight:bold;">Loans (Liability)</td><td style="padding:8px; text-align:right;">${loans.toLocaleString('en-IN')}</td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1;">Sundry Debtors (Receivables)</td><td style="padding:8px; text-align:right;">${debtors.toLocaleString('en-IN')}</td></tr>`;
-                html += `<tr><td style="padding:8px; font-weight:bold;">Current Liabilities</td><td style="padding:8px;"></td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1;">Cash & Bank Balances</td><td style="padding:8px; text-align:right;">${cashBank.toLocaleString('en-IN')}</td></tr>`;
-                html += `<tr><td style="padding:8px; padding-left:20px;">Sundry Creditors (Payables)</td><td style="padding:8px; text-align:right;">${creditors.toLocaleString('en-IN')}</td><td style="padding:8px; border-left:2px solid #CBD5E1;"></td><td style="padding:8px;"></td></tr>`;
+                html += `<tr><td style="padding:8px; font-weight:bold;">Loans (Liability)</td><td style="padding:8px; text-align:right;">${loans.toLocaleString('en-IN')}</td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1; color:var(--accent-color); font-weight:bold;">Closing Inventory (Stock)</td><td style="padding:8px; text-align:right; color:var(--accent-color); font-weight:bold;">${closingStockValue.toLocaleString('en-IN')}</td></tr>`;
+                html += `<tr><td style="padding:8px; font-weight:bold;">Current Liabilities</td><td style="padding:8px;"></td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1;">Sundry Debtors (Receivables)</td><td style="padding:8px; text-align:right;">${debtors.toLocaleString('en-IN')}</td></tr>`;
+                html += `<tr><td style="padding:8px; padding-left:20px;">Sundry Creditors (Payables)</td><td style="padding:8px; text-align:right;">${creditors.toLocaleString('en-IN')}</td><td style="padding:8px; padding-left:20px; border-left:2px solid #CBD5E1;">Cash & Bank Balances</td><td style="padding:8px; text-align:right;">${cashBank.toLocaleString('en-IN')}</td></tr>`;
                 html += `<tr style="background:#F1F5F9; font-weight:bold; font-size:14px;"><td style="padding:8px;">Total</td><td style="padding:8px; text-align:right;">₹${totLiab.toLocaleString('en-IN')}</td><td style="padding:8px; border-left:2px solid #CBD5E1;">Total</td><td style="padding:8px; text-align:right;">₹${totAssets.toLocaleString('en-IN')}</td></tr>`;
             }
-            // ... Yahan se aage ka code same rahega (Sales, Purchase, Daybook wagaira)
 
             // 🚀 SMART FIX: Detailed SALES Report
             else if (currentReportType === 'sales') {
@@ -16372,8 +16391,45 @@
 
         // 🛠️ 4. INVENTORY FILTERS & LIST VIEW (NO SCROLL, PREVIEW MODAL)
         window.invFilterFrom = null; window.invFilterTo = null; window.invSubFilter = 'All';
-        window.applyInvDateFilter = function() { window.invFilterFrom = document.getElementById('inv_from_date').value; window.invFilterTo = document.getElementById('inv_to_date').value; window.renderInventoryHubList(); };
-        window.clearInvDateFilter = function() { document.getElementById('inv_from_date').value = ""; document.getElementById('inv_to_date').value = ""; window.invFilterFrom = null; window.invFilterTo = null; window.renderInventoryHubList(); };
+        // 🚀 LIVE FILTER ENGINE FOR INVENTORY
+        window.applyInvDateFilter = function() {
+            window.invFilterFrom = document.getElementById('inv_from_date').value;
+            window.invFilterTo = document.getElementById('inv_to_date').value;
+            window.renderInventoryHubList();
+        };
+        window.clearInvDateFilter = function() {
+            document.getElementById('inv_from_date').value = "";
+            document.getElementById('inv_to_date').value = "";
+            window.invFilterFrom = null; window.invFilterTo = null;
+            window.renderInventoryHubList();
+        };
+
+        // 🚀 DELETE DIRECT STOCK LOGIC
+        window.deleteLogisticsRecord = function(id, logType, event) {
+            if (event) { event.stopPropagation(); event.preventDefault(); }
+            closeAllMenus();
+            if (!confirm("🚨 Are you sure you want to delete this record? Stock will be reversed.")) return;
+            
+            let record = stockMovementDB[id];
+            if (!record) return;
+
+            // Agar Direct Stock tha toh item minus karo
+            if (record.type === 'DirectStock' || logType === 'Direct Stock') {
+                record.items.forEach(item => {
+                    if (itemsDB[item.name]) {
+                        itemsDB[item.name].totalStock -= item.qty;
+                        if (itemsDB[item.name].godowns[record.godownId]) {
+                            itemsDB[item.name].godowns[record.godownId] -= item.qty;
+                        }
+                    }
+                });
+            }
+            
+            delete stockMovementDB[id];
+            updateDataAndUI();
+            window.renderInventoryHubList();
+            alert("✅ Record deleted and stock reversed.");
+        };
         window.setInvSubFilter = function(filter, btn) { window.invSubFilter = filter; document.querySelectorAll('#inv-sub-filters .sales-tab-btn').forEach(b => { b.classList.remove('active-sales-tab'); b.style.background = '#F1F5F9'; b.style.color = '#64748B'; }); btn.classList.add('active-sales-tab'); btn.style.background = '#0F172A'; btn.style.color = 'white'; window.renderInventoryHubList(); };
 
         window.renderInventoryHubList = function() {
