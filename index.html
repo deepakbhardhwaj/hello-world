@@ -9111,48 +9111,243 @@
         // ==========================================
         // COMMAND CENTER (TASKS & CALENDAR)
         // ==========================================
-        function openQuickTaskModal() { 
-            closeAllMenus(); 
+        window.openQuickTaskModal = function() { 
+            if(typeof closeAllMenus === 'function') closeAllMenus(); 
             document.getElementById('quickTaskForm').reset(); 
-            toggleTaskLeadSelect(); 
             
-            // 🚀 FIX 3: LIVE LOAD STAFF LIST WHEN MODAL OPENS
-            if(typeof loadStaffForAssignment === 'function') {
-                loadStaffForAssignment('qt_assign_to');
+            // 🚀 SMART FIX: Naya task banate waqt staff list aur state fresh load karo
+            let assignSel = document.getElementById('qt_assign_to');
+            if (assignSel && typeof getStaffOptions === 'function') {
+                assignSel.innerHTML = getStaffOptions("");
             }
 
+            window.editingTaskId = null; // Ensure system knows it's a NEW task
+            window.editingTaskIsGlobal = false;
+            window.editingTaskLeadId = null;
+            
+            let titleEl = document.querySelector('#quickTaskModal h3');
+            if(titleEl) titleEl.innerText = "Add Task";
+
+            if(typeof toggleTaskLeadSelect === 'function') toggleTaskLeadSelect(); 
             document.getElementById('quickTaskModal').style.display = 'flex'; 
-        }
-        function toggleTaskLeadSelect() { let type = document.getElementById('qt_type').value; document.getElementById('qt_lead_group').style.display = type === 'Event' ? 'block' : 'none'; if (type === 'Event') loadEventsIntoSelect('qt_lead', ""); }
+        };
+
+        window.toggleTaskLeadSelect = function() { 
+            let typeEl = document.getElementById('qt_type');
+            if(!typeEl) return;
+            let type = typeEl.value; 
+            
+            let groupEl = document.getElementById('qt_lead_group');
+            if(groupEl) groupEl.style.display = type === 'Event' ? 'block' : 'none'; 
+            
+            if (type === 'Event' && typeof loadEventsIntoSelect === 'function') {
+                loadEventsIntoSelect('qt_lead', ""); 
+            }
+        };
+        // ==========================================
+        // 🚀 MASTER ADVANCED TASKS ENGINE (EDIT MODAL & WHATSAPP FIXED)
+        // ==========================================
+        window.editingTaskId = null;
+        window.editingTaskIsGlobal = false;
+        window.editingTaskLeadId = null;
+
+        window.renderTasksDashboard = function(filter = null, element = null) {
+            if (filter) currentTaskFilter = filter;
+            
+            if (element) {
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab'));
+                element.classList.add('active-sales-tab');
+            } else {
+                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => {
+                    if (b.id === 'task-filter-' + currentTaskFilter) b.classList.add('active-sales-tab');
+                    else b.classList.remove('active-sales-tab');
+                });
+            }
+
+            let container = document.getElementById('task-dash-container');
+            if (!container) return;
+            container.innerHTML = "";
+
+            let searchWord = (searchTerms.tasks || "").toLowerCase();
+            let addedCount = 0;
+
+            // 1. SCAN GENERAL TASKS & MEETINGS
+            Object.values(globalTasksDB || {}).forEach(t => {
+                let isMatch = true;
+                if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
+                if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
+                if (currentTaskFilter === 'Meetings' && t.type !== 'Meeting') isMatch = false;
+
+                let textStr = (t.text || "").toLowerCase();
+                let personStr = (t.leadName || "").toLowerCase();
+                if (searchWord && !textStr.includes(searchWord) && !personStr.includes(searchWord)) isMatch = false;
+
+                if (isMatch) {
+                    let badge = t.type === 'Meeting' ? '<span class="status-badge badge-meet">Meeting</span>' : '<span class="status-badge badge-other">General</span>';
+                    let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : (t.date ? `📅 ${t.date} ${t.time || ''}` : '');
+                    
+                    // 💬 Smart WhatsApp Routing
+                    let waPhone = t.assignedTo || loggedInMobile || "";
+                    let waMsg = encodeURIComponent(`*📝 UTSAVhq Task Reminder*\n\nTask: ${t.text}\nSchedule: ${t.date || ''} ${t.time || ''}\nStatus: Pending ⏳`);
+                    let waBtn = `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px;" title="Share on WhatsApp">💬</button>`;
+
+                    container.innerHTML += `
+                        <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
+                            <div style="display:flex; align-items:flex-start; gap:10px; flex:1; text-align:left;">
+                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', true)" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
+                                <div>
+                                    <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${t.text} ${badge}</div>
+                                    <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} ${t.leadName ? '• Person: ' + t.leadName : ''}</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
+                                ${waBtn}
+                                <button onclick="window.editTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
+                                <button onclick="deleteTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
+                            </div>
+                        </div>`;
+                    addedCount++;
+                }
+            });
+
+            // 2. SCAN EVENT TASKS
+            Object.values(leadsDB || {}).forEach(lead => {
+                if (lead.tasks && Array.isArray(lead.tasks)) {
+                    lead.tasks.forEach(t => {
+                        let isMatch = true;
+                        if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
+                        if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
+                        if (currentTaskFilter === 'Meetings') isMatch = false; 
+
+                        let textStr = (t.text || "").toLowerCase();
+                        let leadNameStr = (lead.name || "").toLowerCase();
+                        let funcStr = (lead.func || "").toLowerCase();
+                        if (searchWord && !textStr.includes(searchWord) && !leadNameStr.includes(searchWord) && !funcStr.includes(searchWord)) isMatch = false;
+
+                        let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
+                        if (!isOwner && lead.assignedTo !== loggedInMobile && t.assignedTo !== loggedInMobile) isMatch = false;
+
+                        if (isMatch) {
+                            let badge = `<span class="status-badge badge-new" style="font-size:9px;">Event: ${lead.func}</span>`;
+                            let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : '';
+                            let taskIdStr = t.id ? t.id : t;
+                            
+                            // 💬 Smart WhatsApp Routing (Staff ko bhejo, nahi toh Client ko!)
+                            let waPhone = t.assignedTo || lead.phone || loggedInMobile || "";
+                            let waMsg = encodeURIComponent(`*🎪 UTSAVhq Event Task Reminder*\n\nEvent: ${lead.func} (${lead.name})\nTask: ${t.text}\nDeadline: ${t.deadline ? new Date(t.deadline).toLocaleString('en-IN') : 'TBD'}`);
+                            let waBtn = `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px;" title="Share on WhatsApp">💬</button>`;
+
+                            container.innerHTML += `
+                                <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
+                                    <div style="display:flex; align-items:flex-start; gap:10px; flex:1; text-align:left;">
+                                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${taskIdStr}', false, '${lead.id}')" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
+                                        <div>
+                                            <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${t.text} ${badge}</div>
+                                            <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} • Client: ${lead.name}</div>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
+                                        ${waBtn}
+                                        <button onclick="window.editTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
+                                        <button onclick="deleteTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
+                                    </div>
+                                </div>`;
+                            addedCount++;
+                        }
+                    });
+                }
+            });
+
+            if (addedCount === 0) {
+                container.innerHTML = `<p style="padding:30px; text-align:center; color:var(--text-secondary); font-weight:600; font-size:13px;">No tasks found in this category.</p>`;
+            }
+        };
+
+        // 📝 OPEN MODAL IN ADVANCED EDIT MODE
+        window.editTaskItem = function(id, isGlobal, leadId) {
+            window.editingTaskId = id;
+            window.editingTaskIsGlobal = isGlobal;
+            window.editingTaskLeadId = leadId;
+            if(typeof closeAllMenus === 'function') closeAllMenus();
+            
+            let task = isGlobal ? globalTasksDB[id] : leadsDB[leadId].tasks.find(t => (t.id || t) === id);
+            if (!task) return;
+
+            document.getElementById('quickTaskForm').reset();
+            document.querySelector('#quickTaskModal h3').innerText = "Edit Task Configurations";
+            
+            document.getElementById('qt_text').value = task.text || "";
+            let assignSel = document.getElementById('qt_assign_to');
+            if (assignSel) assignSel.innerHTML = getStaffOptions(task.assignedTo);
+            
+            let typeSel = document.getElementById('qt_type');
+            if (typeSel) {
+                typeSel.value = isGlobal ? 'General' : 'Event';
+                if(typeof toggleTaskLeadSelect === 'function') toggleTaskLeadSelect();
+            }
+            
+            if (!isGlobal && leadId && document.getElementById('qt_lead')) {
+                if(typeof loadEventsIntoSelect === 'function') loadEventsIntoSelect('qt_lead', leadId);
+            }
+
+            if (document.getElementById('qt_deadline')) {
+                document.getElementById('qt_deadline').value = task.deadline || task.date || "";
+            }
+
+            document.getElementById('quickTaskModal').style.display = 'flex';
+        };
+
+        // 💾 SAVE MODAL TRANSFERS (ADD + EDIT LOGIC BALANCED)
         window.saveQuickTask = function() { 
             let type = document.getElementById('qt_type').value; 
             let text = document.getElementById('qt_text').value; 
             let deadline = document.getElementById('qt_deadline').value; 
             let assignedTo = document.getElementById('qt_assign_to').value; 
 
-            // 🔒 AUTO-ASSIGN TO SELF IF NOT OWNER AND LEFT BLANK
             let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
-            if (!assignedTo && !isOwner) {
-                assignedTo = loggedInMobile;
-            }
+            if (!assignedTo && !isOwner) assignedTo = loggedInMobile;
 
             if (!text) return alert("Task description required!"); 
             
-            let tId = "TSK" + Date.now(); 
-            
-            if (type === 'Event') { 
-                let lId = document.getElementById('qt_lead').value; 
-                if (!lId) return alert("Select an Event!"); 
-                leadsDB[lId].tasks.push({ id: tId, text: text, done: false, deadline: deadline, assignedTo: assignedTo }); 
-            } else { 
-                globalTasksDB[tId] = { id: tId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: new Date().toISOString().split('T')[0] }; 
-            } 
+            if (window.editingTaskId) {
+                // UPDATE RECORD LOGIC
+                if (window.editingTaskIsGlobal) {
+                    let t = globalTasksDB[window.editingTaskId];
+                    if (t) { t.text = text; t.deadline = deadline; t.assignedTo = assignedTo; if (deadline) t.date = deadline.split('T')[0]; }
+                } else {
+                    let currentLinkedEventId = document.getElementById('qt_lead').value;
+                    let targetEventId = type === 'Event' ? currentLinkedEventId : window.editingTaskLeadId;
+                    if (!targetEventId && type === 'Event') return alert("Select an Event!");
+
+                    if (window.editingTaskLeadId && leadsDB[window.editingTaskLeadId]) {
+                        leadsDB[window.editingTaskLeadId].tasks = leadsDB[window.editingTaskLeadId].tasks.filter(t => (t.id || t) !== window.editingTaskId);
+                    }
+                    
+                    if (type === 'Event') {
+                        if (!leadsDB[targetEventId].tasks) leadsDB[targetEventId].tasks = [];
+                        leadsDB[targetEventId].tasks.push({ id: window.editingTaskId, text: text, done: false, deadline: deadline, assignedTo: assignedTo });
+                    } else {
+                        globalTasksDB[window.editingTaskId] = { id: window.editingTaskId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: deadline ? deadline.split('T')[0] : new Date().toISOString().split('T')[0] };
+                    }
+                }
+                window.editingTaskId = null; // Reset lock
+            } else {
+                // FRESH ADD RECORD LOGIC
+                let tId = "TSK" + Date.now(); 
+                if (type === 'Event') { 
+                    let lId = document.getElementById('qt_lead').value; 
+                    if (!lId) return alert("Select an Event!"); 
+                    if (!leadsDB[lId].tasks) leadsDB[lId].tasks = [];
+                    leadsDB[lId].tasks.push({ id: tId, text: text, done: false, deadline: deadline, assignedTo: assignedTo }); 
+                } else { 
+                    globalTasksDB[tId] = { id: tId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: deadline ? deadline.split('T')[0] : new Date().toISOString().split('T')[0] }; 
+                } 
+            }
             
             updateDataAndUI(); 
             document.getElementById('quickTaskModal').style.display = 'none'; 
-            // 🚀 MAGIC: Save hote hi list ko auto-refresh maro!
-            if(typeof renderTasksDashboard === 'function') renderTasksDashboard('All', document.getElementById('task-filter-All'));
-            alert("Task Added!"); 
+            if(typeof window.renderTasksDashboard === 'function') window.renderTasksDashboard('All', document.getElementById('task-filter-All'));
+            alert("Task Configurations Saved!"); 
         };
 
         function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); document.getElementById('quickMeetingModal').style.display = 'flex'; }
@@ -9161,7 +9356,7 @@
         function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; document.getElementById('p_status').value = "Meeting Scheduled"; }
 
         function toggleTaskStatus(taskId, isGlobal, leadId) { if (isGlobal) { let t = globalTasksDB[taskId]; t.done = !t.done; if (t.done && t.type === 'Meeting' && t.leadId && leadsDB[t.leadId] && leadsDB[t.leadId].status !== 'Won' && leadsDB[t.leadId].status !== 'Lost') { leadsDB[t.leadId].status = "Meeting Completed"; leadsDB[t.leadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting completed from Tasks Hub." }); } } else { let task = leadsDB[leadId].tasks.find(x => (x.id || x) === taskId); if (task) task.done = !task.done; } updateDataAndUI(); }
-        function editTaskItem(id, isGlobal, leadId) { let task = isGlobal ? globalTasksDB[id] : leadsDB[leadId].tasks.find(t => (t.id || t) === id); if (task) { let newText = prompt("Edit Task:", task.text); if (newText && newText.trim() !== "") { task.text = newText; updateDataAndUI(); } } }
+        
         function deleteTaskItem(id, isGlobal, leadId) { if (!confirm("Delete this task?")) return; if (isGlobal) { delete globalTasksDB[id]; } else { leadsDB[leadId].tasks = leadsDB[leadId].tasks.filter(t => (t.id || t) !== id); } updateDataAndUI(); }
 
         function renderCalendar() {
@@ -17760,123 +17955,7 @@
             }, 300);
         };
 
-        // ==========================================
-        // 🚀 SMART & LIVE TASKS HUB ENGINE (WITH WHATSAPP 💬)
-        // ==========================================
-        window.renderTasksDashboard = function(filter = null, element = null) {
-            if (filter) currentTaskFilter = filter;
-            
-            // UI Tab active high-lighting state controller
-            if (element) {
-                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab'));
-                element.classList.add('active-sales-tab');
-            } else {
-                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => {
-                    if (b.id === 'task-filter-' + currentTaskFilter) b.classList.add('active-sales-tab');
-                    else b.classList.remove('active-sales-tab');
-                });
-            }
-
-            let container = document.getElementById('task-dash-container');
-            if (!container) return;
-            container.innerHTML = "";
-
-            let searchWord = (searchTerms.tasks || "").toLowerCase();
-            let addedCount = 0;
-
-            // 1. Scan General Tasks & Meetings from globalTasksDB
-            Object.values(globalTasksDB || {}).forEach(t => {
-                let isMatch = true;
-                
-                if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
-                if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
-                if (currentTaskFilter === 'Meetings' && t.type !== 'Meeting') isMatch = false;
-
-                let textStr = (t.text || "").toLowerCase();
-                let personStr = (t.leadName || "").toLowerCase();
-                if (searchWord && !textStr.includes(searchWord) && !personStr.includes(searchWord)) isMatch = false;
-
-                if (isMatch) {
-                    let badge = t.type === 'Meeting' ? '<span class="status-badge badge-meet">Meeting</span>' : '<span class="status-badge badge-other">General</span>';
-                    let dateInfo = t.date ? `📅 ${t.date} ${t.time || ''}` : '';
-                    
-                    // 🚀 WHATSAPP BUTTON LOGIC
-                    let waPhone = t.assignedTo || "";
-                    let waMsg = encodeURIComponent(`Hello, gentle reminder for task:\n*${t.text}*`);
-                    let waBtn = waPhone ? `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px;" title="WhatsApp Staff">💬</button>` : '';
-
-                    container.innerHTML += `
-                        <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
-                            <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
-                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', true)" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
-                                <div>
-                                    <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${t.text} ${badge}</div>
-                                    <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} ${t.leadName ? '• With: ' + t.leadName : ''}</div>
-                                </div>
-                            </div>
-                            <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
-                                ${waBtn}
-                                <button onclick="editTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
-                                <button onclick="deleteTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
-                            </div>
-                        </div>`;
-                    addedCount++;
-                }
-            });
-
-            // 2. Scan Event Tasks from leadsDB
-            Object.values(leadsDB || {}).forEach(lead => {
-                if (lead.tasks && Array.isArray(lead.tasks)) {
-                    lead.tasks.forEach(t => {
-                        let isMatch = true;
-
-                        if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
-                        if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
-                        if (currentTaskFilter === 'Meetings') isMatch = false; 
-
-                        let textStr = (t.text || "").toLowerCase();
-                        let leadNameStr = (lead.name || "").toLowerCase();
-                        let funcStr = (lead.func || "").toLowerCase();
-                        if (searchWord && !textStr.includes(searchWord) && !leadNameStr.includes(searchWord) && !funcStr.includes(searchWord)) isMatch = false;
-
-                        let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
-                        if (!isOwner && lead.assignedTo !== loggedInMobile && t.assignedTo !== loggedInMobile) isMatch = false;
-
-                        if (isMatch) {
-                            let badge = `<span class="status-badge badge-new" style="font-size:9px;">Event: ${lead.func}</span>`;
-                            let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : '';
-                            let taskIdStr = t.id ? t.id : t;
-                            
-                            // 🚀 WHATSAPP BUTTON LOGIC
-                            let waPhone = t.assignedTo || "";
-                            let waMsg = encodeURIComponent(`Hello, gentle reminder for event task:\n*${t.text}*\nEvent: ${lead.func} (${lead.name})`);
-                            let waBtn = waPhone ? `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px;" title="WhatsApp Staff">💬</button>` : '';
-
-                            container.innerHTML += `
-                                <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
-                                    <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
-                                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${taskIdStr}', false, '${lead.id}')" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
-                                        <div>
-                                            <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${t.text} ${badge}</div>
-                                            <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} • Client: ${lead.name}</div>
-                                        </div>
-                                    </div>
-                                    <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
-                                        ${waBtn}
-                                        <button onclick="editTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
-                                        <button onclick="deleteTaskItem('${taskIdStr}', false, '${lead.id}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
-                                    </div>
-                                </div>`;
-                            addedCount++;
-                        }
-                    });
-                }
-            });
-
-            if (addedCount === 0) {
-                container.innerHTML = `<p style="padding:30px; text-align:center; color:var(--text-secondary); font-weight:600; font-size:13px;">No tasks found in this category.</p>`;
-            }
-        };
+        
 
         // ==========================================
         // 🚀 INVENTORY ITEM LEDGER (TALLY STYLE - PREMIUM UI FIX)
