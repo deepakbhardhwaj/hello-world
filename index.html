@@ -13237,17 +13237,31 @@
                 let netFixedAssets = fixAssets - assetLoss;
                 if(netFixedAssets < 0) netFixedAssets = 0;
 
-                // 🚀 CA MAGIC: Calculate Direct Stock Value (Opening Inventory)
+                // 🚀 CA MAGIC: Calculate Closing Inventory (Ultra-Foolproof)
                 let closingStockValue = 0;
+                
+                // Engine 1: Try getting from Stock Movement Logs
                 Object.values(stockMovementDB || {}).forEach(sm => {
-                    if ((sm.type === 'DirectStock' || sm.logType === 'Direct Stock') && sm.date <= toD) {
+                    let typeStr = (sm.type || sm.logType || "").toLowerCase();
+                    if ((typeStr.includes('direct') || typeStr.includes('inward')) && sm.date <= toD) {
                         if (sm.items) {
                             sm.items.forEach(item => {
-                                closingStockValue += (item.qty * (item.rate || 0));
+                                let itemRate = parseFloat(item.rate) || parseFloat(document.getElementById('ds_rate')?.value) || 0;
+                                closingStockValue += (item.qty * itemRate);
                             });
                         }
                     }
                 });
+
+                // Engine 2: Agar Logs se value zero aayi, toh seedha Live Items Database se utha lo!
+                if (closingStockValue === 0) {
+                    Object.values(itemsDB || {}).forEach(item => {
+                        let qty = parseFloat(item.totalStock) || 0;
+                        // Grab rate from purchasePrice, direct rate, or rent as fallback
+                        let rate = parseFloat(item.purchasePrice || item.rate || item.rent) || 0; 
+                        closingStockValue += (qty * rate);
+                    });
+                }
 
                 // Asset me Stock jodo aur utna hi paisa Capital/Equity me jodo (Double Entry Rule)
                 let finalCapital = capital + closingStockValue; 
