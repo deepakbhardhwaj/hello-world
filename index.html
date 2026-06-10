@@ -17764,17 +17764,18 @@
         setTimeout(() => { document.querySelectorAll('#inventory-hub .premium-sticky-header .btn-icon').forEach(icon => { icon.style.width = '28px'; icon.style.height = '28px'; icon.style.fontSize = '13px'; }); }, 500);
 
         // ==============================================================
-        // 🚀 FIXED: DIRECT OPENING STOCK ADDITION 
+        // 🚀 FIXED: DIRECT OPENING STOCK ADDITION (WITH CA RATE ENGINE)
         window.saveDirectStock = function() {
             let selectEl = document.getElementById('ds_name_select');
             let name = selectEl ? selectEl.value : "";
             let qty = parseInt(document.getElementById('ds_qty').value);
             let rate = parseFloat(document.getElementById('ds_rate').value) || 0;
             let gId = document.getElementById('ds_godown').value;
+            let dateVal = document.getElementById('ds_date') ? document.getElementById('ds_date').value : new Date().toISOString().split('T')[0];
 
             if(!name || isNaN(qty) || !gId) return alert("Please select Item, Quantity, and Godown!");
 
-            // Database mein check aur add
+            // 1. MASTER STOCK UPDATE
             if (!itemsDB[name]) {
                 itemsDB[name] = { name: name, totalStock: 0, godowns: {} };
             }
@@ -17784,11 +17785,29 @@
 
             itemsDB[name].totalStock += qty;
             itemsDB[name].godowns[gId] += qty;
+            
+            // 🚀 CRITICAL FIX 1: Save Rate in Item Master
+            if (rate > 0) {
+                itemsDB[name].purchasePrice = rate; 
+            }
+
+            // 🚀 CRITICAL FIX 2: Create a Movement Log for Balance Sheet to Read!
+            let logId = "DS" + Date.now();
+            stockMovementDB[logId] = {
+                id: logId,
+                date: dateVal,
+                type: 'DirectStock', // CA engine looks exactly for this tag
+                logType: 'Direct Stock',
+                godownId: gId,
+                items: [{ name: name, qty: qty, rate: rate }], // Rate safely locked here
+                totalValue: qty * rate,
+                notes: "Direct Opening Stock"
+            };
 
             updateDataAndUI();
-            if(typeof window.renderItemMasterList === 'function') window.renderItemMasterList(); // 👈 YAHAN SE LIST TURANT REFRESH HOGI
+            if(typeof window.renderItemMasterList === 'function') window.renderItemMasterList(); 
             document.getElementById('directStockModal').style.display = 'none';
-            alert(`✅ ${qty} x '${name}' added to your Godown successfully!`);
+            alert(`✅ ${qty} x '${name}' at ₹${rate} added to your Godown successfully!`);
             if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
         };
         // 🚀 1. SALES HUB FLOATING BUTTON FIX
