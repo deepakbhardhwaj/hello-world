@@ -16709,7 +16709,7 @@
             Object.values(stockMovementDB || {}).forEach(out => { 
                 if (out && out.type === 'Outward') transactions.push({...out, logType: 'Outward Challan'}); 
                 if (out && out.type === 'Transfer') transactions.push({...out, logType: 'Stock Transfer'}); 
-                if (out && out.type === 'Audit') transactions.push({...out, logType: 'Stock Audit'}); // 👈 Audit Added
+                if (out && out.type === 'Audit') transactions.push({...out, logType: 'Stock Audit'}); 
             });
             transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
 
@@ -16726,10 +16726,11 @@
                 let isPartialReturned = (t.rentalStatus === 'Partial Returned' || t.status === 'Partial Returned');
                 let isOverdue = (!isFullyReturned && !isPartialReturned && t.returnDate && t.returnDate < todayStr);
                 
-                if (window.invSubFilter === 'On Rent' && (t.logType !== 'Rental Invoice' || isReturned)) return;
-                if (window.invSubFilter === 'On Event' && (t.logType !== 'Outward Challan' || isReturned)) return;
+                // 🛠️ BUG FIXED: changed isReturned to isFullyReturned to prevent crashes
+                if (window.invSubFilter === 'On Rent' && (t.logType !== 'Rental Invoice' || isFullyReturned)) return;
+                if (window.invSubFilter === 'On Event' && (t.logType !== 'Outward Challan' || isFullyReturned)) return;
                 if (window.invSubFilter === 'Over Due' && !isOverdue) return;
-                if (window.invSubFilter === 'Received' && !isReturned) return;
+                if (window.invSubFilter === 'Received' && !isFullyReturned) return;
                 
                 let pName = (t.partyId && partiesDB[t.partyId]) ? partiesDB[t.partyId].name : (t.logType === 'Outward Challan' ? 'Internal Event Use' : 'Unknown');
                 let eventName = t.event || (t.eventId && leadsDB[t.eventId] ? leadsDB[t.eventId].func : "");
@@ -16745,7 +16746,6 @@
 
                 visibleCount++; let fDate = new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                 
-                // 🪄 SMART BADGE ASSIGNMENT FOR INVENTORY HUB
                 let statusBadge = '';
                 if(t.logType === 'Stock Transfer') {
                     statusBadge = `<span style="background:#F0FDF4; color:#166534; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #BBF7D0;">🔄 TRANSFERRED</span>`;
@@ -16759,10 +16759,7 @@
                     statusBadge = `<span style="background:#FFFBEB; color:#D97706; padding:3px 8px; border-radius:4px; font-size:9px; font-weight:900; border:1px solid #FDE68A;">🚚 DEPLOYED</span>`;
                 }
                 
-                // Hide inward button if fully returned
-               // 🪄 INWARD BUTTON (Sirf ek baar define kiya hai)
                 let inwardBtnHtml = (!isFullyReturned && t.logType !== 'Stock Transfer') ? `<div class="dropdown-item text-green" style="font-weight:bold;" onclick="window.openReturnStockModal('${t.id}', '${t.logType}')">📥 Process Inward (Return)</div>` : '';
-                
                 let editBtnHtml = t.logType !== 'Stock Transfer' ? `<div class="dropdown-item" onclick="window.editLogisticsRecord('${t.id}', '${t.logType}')">✏️ Edit Record</div>` : '';
                 let typeColor = t.logType === 'Rental Invoice' ? '#3B82F6' : (t.logType === 'Stock Transfer' ? '#10B981' : (t.logType === 'Stock Audit' ? '#F59E0B' : '#8B5CF6'));
 
@@ -16794,7 +16791,17 @@
                     </div>
                 </div>`;
             });
-            if(visibleCount === 0) container.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding:30px; font-size:13px; font-weight:600;">No transactions found.</p>`; else container.innerHTML = html;
+            
+            if(visibleCount === 0) {
+                container.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding:30px; font-size:13px; font-weight:600;">No transactions found.</p>`; 
+            } else {
+                container.innerHTML = html;
+            }
+
+            // 🚀 MAGIC FIX: HTML ko mitne se bacha kar naya box add karna!
+            container.insertAdjacentHTML('beforeend', `<div id="order_book_calendar_space" style="margin-top:40px; padding-top:20px; border-top:2px dashed #CBD5E1;"></div>`);
+
+            // Ab is naye bane hue dambe mein Order Book load hoga
             if(typeof window.renderOrderBookDashboard === 'function') {
                 window.renderOrderBookDashboard('order_book_calendar_space');
             }
