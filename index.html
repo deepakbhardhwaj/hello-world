@@ -19121,6 +19121,148 @@
             }
             oldDeleteLogisticsRecord(id, logType, e);
         };
+        // ==============================================================
+        // 🚀 INDEPENDENT HUB ENGINE (ORDER BOOK & CALENDAR)
+        // ==============================================================
+        window.orderBookDB = JSON.parse(localStorage.getItem('utsav_orderBookDB')) || {};
+        window.hubCalMonth = new Date().getMonth();
+        window.hubCalYear = new Date().getFullYear();
+
+        // Ye function aapko tab call karna hai jab aap Logistics ka main page kholen
+        window.renderMainLogisticsHub = function() {
+            renderHubOrderBookList();
+            renderHubCalendarGrid();
+        };
+
+        // 📋 1. ORDER BOOK LIST RENDERER (Mobile Optimized)
+        window.renderHubOrderBookList = function() {
+            let listDiv = document.getElementById('hub_order_book_list');
+            if(!listDiv) return;
+
+            let orders = Object.values(orderBookDB).sort((a,b) => new Date(a.date) - new Date(b.date));
+            if(orders.length === 0) {
+                listDiv.innerHTML = `<div style="text-align:center; padding:20px; color:#64748B; font-size:12px; font-weight:600;">No reservations found.</div>`;
+                return;
+            }
+
+            let html = "";
+            orders.forEach(o => {
+                let lead = leadsDB[o.leadId] || { name: 'Unknown', func: 'Event' };
+                // 🛠️ Date Fix (Invalid date hatane ke liye)
+                let d = new Date(o.date);
+                let dateStr = isNaN(d) ? 'No Date' : d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+                
+                let itemsHtml = o.items.map(i => `<span style="background:#E2E8F0; color:#334155; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap;">${i.qty} x ${i.name}</span>`).join(" ");
+                let statusBadge = o.status === 'Invoiced' ? '🟢 Invoiced' : (o.status === 'Dispatched' ? '🟠 Dispatched' : '🔵 Reserved');
+
+                html += `
+                <div style="background:white; padding:12px; border-radius:8px; border:1px solid #CBD5E1; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                        <div>
+                            <div style="font-weight:800; font-size:13px; color:var(--text-primary);">📅 ${dateStr}</div>
+                            <div style="font-size:12px; font-weight:600; color:#475569; margin-top:2px;">${lead.name} <span style="font-weight:normal;">(${lead.func})</span></div>
+                        </div>
+                        <span style="font-size:10px; font-weight:bold; background:#F1F5F9; padding:3px 6px; border-radius:4px;">${statusBadge}</span>
+                    </div>
+                    
+                    <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">${itemsHtml}</div>
+                    
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; border-top:1px dashed #E2E8F0; padding-top:10px;">
+                        <button onclick="convertObToOutward('${o.id}')" style="flex:1; min-width:80px; background:#0ea5e9; color:white; border:none; padding:6px 0; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🚚 Outward</button>
+                        <button onclick="convertObToInvoice('${o.id}')" style="flex:1; min-width:80px; background:#10b981; color:white; border:none; padding:6px 0; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🧾 Invoice</button>
+                        
+                        <div style="display:flex; gap:5px; flex:1; justify-content:flex-end;">
+                            <button onclick="previewOrderDocument('${o.id}')" style="background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; width:28px; height:28px; cursor:pointer;">🖨️</button>
+                            <button onclick="whatsappOrder('${o.id}')" style="background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; width:28px; height:28px; cursor:pointer;">💬</button>
+                            <button onclick="openOrderBookModal('${o.id}')" style="background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; width:28px; height:28px; cursor:pointer; color:var(--accent-color);">✏️</button>
+                            <button onclick="deleteOrderEntry('${o.id}')" style="background:#FEE2E2; border:1px solid #FECACA; border-radius:4px; width:28px; height:28px; cursor:pointer; color:red;">✖</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            listDiv.innerHTML = html;
+        };
+
+        // 🗓️ 2. HUB CALENDAR RENDERER
+        window.changeHubCalendar = function(dir) {
+            hubCalMonth += dir;
+            if(hubCalMonth > 11) { hubCalMonth = 0; hubCalYear++; }
+            else if(hubCalMonth < 0) { hubCalMonth = 11; hubCalYear--; }
+            renderHubCalendarGrid();
+        };
+
+        window.renderHubCalendarGrid = function() {
+            let grid = document.getElementById('hub_cal_grid');
+            let title = document.getElementById('hub_cal_month');
+            if(!grid || !title) return;
+
+            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            title.innerText = `${months[hubCalMonth]} ${hubCalYear}`;
+
+            let firstDay = new Date(hubCalYear, hubCalMonth, 1).getDay();
+            let totalDays = new Date(hubCalYear, hubCalMonth + 1, 0).getDate();
+
+            let html = "";
+            ['S','M','T','W','T','F','S'].forEach(l => html += `<div style="text-align:center; font-size:10px; font-weight:bold; color:#64748B;">${l}</div>`);
+            for(let i=0; i<firstDay; i++) html += `<div></div>`;
+
+            for(let day=1; day<=totalDays; day++) {
+                let loopDate = `${hubCalYear}-${String(hubCalMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                let matches = Object.values(orderBookDB).filter(o => o.date === loopDate);
+                let dot = matches.length > 0 ? `<div style="width:5px; height:5px; background:var(--danger); border-radius:50%; margin:2px auto 0;"></div>` : '';
+                let bg = (loopDate === new Date().toISOString().split('T')[0]) ? 'background:#DBEAFE; border:1px solid #3B82F6;' : 'background:#F8FAFC; border:1px solid #E2E8F0;';
+                
+                html += `<div onclick="showHubCalDetails('${loopDate}')" style="${bg} border-radius:6px; padding:8px 0; text-align:center; cursor:pointer;">
+                            <span style="font-size:12px; font-weight:bold; color:${matches.length > 0 ? 'var(--text-primary)' : '#64748B'};">${day}</span>
+                            ${dot}
+                         </div>`;
+            }
+            grid.innerHTML = html;
+        };
+
+        window.showHubCalDetails = function(dateStr) {
+            let panel = document.getElementById('hub_cal_details');
+            let dayOrders = Object.values(orderBookDB).filter(o => o.date === dateStr);
+            let displayDate = new Date(dateStr).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+            
+            if(dayOrders.length === 0) { 
+                panel.innerHTML = `<div style="color:var(--success); font-weight:bold; font-size:12px; text-align:center;">📅 ${displayDate}: No reservations. Godown is free!</div>`; 
+                panel.style.display = 'block'; return; 
+            }
+            
+            let totalsUsed = {}; 
+            dayOrders.forEach(o => o.items.forEach(i => totalsUsed[i.name] = (totalsUsed[i.name] || 0) + i.qty));
+            
+            let html = `<div style="font-size:12px; font-weight:bold; margin-bottom:8px; color:var(--text-primary); border-bottom:1px solid #BFDBFE; padding-bottom:5px;">📅 Status on ${displayDate}</div><div style="display:flex; flex-direction:column; gap:6px;">`;
+            for(let name in totalsUsed) {
+                let masterTotal = itemsDB[name] ? (parseInt(itemsDB[name].totalStock) || 0) : 0; 
+                let booked = totalsUsed[name]; let bal = masterTotal - booked;
+                let color = bal < 0 ? 'color:var(--danger);' : (bal === 0 ? 'color:#D97706;' : 'color:var(--success);');
+                let alert = bal < 0 ? ' 🚨' : '';
+                
+                html += `<div style="background:white; padding:8px; border-radius:6px; border:1px solid #CBD5E1; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="font-weight:bold; font-size:11px;">${name}</div>
+                                <div style="font-size:9px; color:#64748B;">Master: ${masterTotal} | Booked: ${booked}</div>
+                            </div>
+                            <div style="font-size:11px; font-weight:bold; ${color}">Bal: ${bal}${alert}</div>
+                         </div>`;
+            }
+            panel.innerHTML = html + `</div>`; 
+            panel.style.display = 'block';
+        };
+
+        // Make sure to refresh list when saving!
+        let oldSaveOrder = window.saveOrderBookEntry;
+        window.saveOrderBookEntry = function() {
+            if(oldSaveOrder) oldSaveOrder(); // Call purana logic
+            renderMainLogisticsHub(); // Refresh naya hub
+        };
+        let oldDeleteOrder = window.deleteOrderEntry;
+        window.deleteOrderEntry = function(id) {
+            if(oldDeleteOrder) oldDeleteOrder(id);
+            renderMainLogisticsHub();
+        };
     </SCRIPT>
 </body>
 
