@@ -3858,52 +3858,69 @@
                 <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;"></div>
             </div>
 
-            <div id="inv-menu-view" style="display:block; animation: fadeIn 0.4s ease;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                    
-                    <div class="premium-grid-card grad-blue card-wide" onclick="window.openInvView('orderbook', 'Order Book')">
-                        <div class="bg-icon">📋</div>
-                        <div class="quick-add-btn" onclick="event.stopPropagation(); window.openOrderBookModal();" title="New Order">+</div>
-                        <div>
-                            <div class="card-title">Order Book</div>
-                            <div class="card-sub">Upcoming Equipment Reservations</div>
-                        </div>
-                    </div>
-
-                    <div class="premium-grid-card grad-teal" onclick="window.openInvView('movement', 'Stock Movement')">
-                        <div class="bg-icon">🚚</div>
-                        <div class="quick-add-btn" onclick="event.stopPropagation(); window.openOutwardChallanModal();" title="Outward Material">+</div>
-                        <div>
-                            <div class="card-title">Stock Movement</div>
-                            <div class="card-sub">Challans & Returns</div>
-                        </div>
-                    </div>
-
-                    <div class="premium-grid-card grad-purple" onclick="window.openInvView('master', 'Stock Master')">
-                        <div class="bg-icon">📦</div>
-                        <div class="quick-add-btn" onclick="event.stopPropagation(); window.openItemMasterModal();" title="Add Item">+</div>
-                        <div>
-                            <div class="card-title">Stock Master</div>
-                            <div class="card-sub">Items & Live Godowns</div>
-                        </div>
-                    </div>
+            <div id="inventory-hub" class="content section" style="padding-bottom:120px;">
+            
+            <div class="premium-sticky-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button id="ih_header_back" onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    </button>
+                    <h2 id="ih_header_title" class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
                 </div>
-
-                <div id="hub_cal_wrapper" style="background: white; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 12px 14px; margin-bottom: 20px;">
-                    <div class="cal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <button class="cal-btn" onclick="changeHubCalendar(-1)" style="border-radius: 6px; border: 1px solid #E2E8F0; background: #F8FAFC; width: 28px; height: 28px; font-size:12px; color: #475569; font-weight:bold;">❮</button>
-                        <span id="hub_cal_month" style="font-size: 14px; font-weight: 900; color: #0F172A;">Month Year</span>
-                        <button class="cal-btn" onclick="changeHubCalendar(1)" style="border-radius: 6px; border: 1px solid #E2E8F0; background: #F8FAFC; width: 28px; height: 28px; font-size:12px; color: #475569; font-weight:bold;">❯</button>
-                    </div>
-                    <div class="cal-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 6px;">
-                        <div class="cal-day-label">Su</div><div class="cal-day-label">Mo</div><div class="cal-day-label">Tu</div><div class="cal-day-label">We</div><div class="cal-day-label">Th</div><div class="cal-day-label">Fr</div><div class="cal-day-label">Sa</div>
-                    </div>
-                    <div class="cal-grid" id="hub_cal_grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center;"></div>
-                    <div id="hub_cal_details" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #E2E8F0; font-size: 11.5px; display:none;"></div>
-                </div>
+                <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;"></div>
             </div>
 
-            <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+            <div id="inv-menu-view" style="display:block; animation: fadeIn 0.4s ease;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: linear-gradient(135deg, #1E293B, #0F172A); border-radius: 14px; padding: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.2); cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; grid-column: span 2;" onclick="window.openInvView('orderbook', 'Order Book')">
+                        <div style="position: absolute; right: 10px; bottom: -20px; font-size: 80px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">📋</div>
+                        <button onclick="event.stopPropagation(); window.openOrderBookModal();" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">Order Book</h3>
+                            <span style="font-size: 11px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 6px; display: inline-block;">Upcoming Reservations</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #06B6D4, #164E63); border-radius: 14px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(6, 182, 212, 0.2); cursor: pointer; min-height: 105px; display: flex; flex-direction: column; justify-content: center;" onclick="window.openInvView('movement', 'Stock Movement')">
+                        <div style="position: absolute; right: 5px; bottom: -15px; font-size: 60px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">🚚</div>
+                        <button onclick="event.stopPropagation(); window.openOutwardChallanModal();" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1; padding-right: 20px; margin-top: 10px;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2;">Stock Movement</h3>
+                            <span style="font-size: 9px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: inline-block;">Challans & Returns</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #8B5CF6, #4C1D95); border-radius: 14px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(139, 92, 246, 0.2); cursor: pointer; min-height: 105px; display: flex; flex-direction: column; justify-content: center;" onclick="window.openInvView('master', 'Stock Master')">
+                        <div style="position: absolute; right: 5px; bottom: -15px; font-size: 60px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">📦</div>
+                        <button onclick="event.stopPropagation(); window.openItemMasterModal();" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1; padding-right: 20px; margin-top: 10px;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2;">Stock Master</h3>
+                            <span style="font-size: 9px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: inline-block;">Items & Godowns</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="hub_cal_wrapper" style="background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#F8FAFC; padding:8px 12px; border-radius:8px; border:1px solid #E2E8F0;">
+                        <button onclick="changeHubCalendar(-1)" style="padding:4px 8px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer; font-size:16px; color:#475569;">◀</button>
+                        <span id="hub_cal_month" style="font-weight:900; font-size:14px; min-width:100px; text-align:center; color:#0F172A;">Month Year</span>
+                        <button onclick="changeHubCalendar(1)" style="padding:4px 8px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer; font-size:16px; color:#475569;">▶</button>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; margin-bottom:6px;">
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Su</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Mo</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Tu</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">We</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Th</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Fr</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Sa</div>
+                    </div>
+                    <div id="hub_cal_grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
+                    <div id="hub_cal_details" style="margin-top:15px; display:none; padding:12px; background:#EFF6FF; border-radius:8px; border:1px dashed #BFDBFE;"></div>
+                </div>
+            </div> <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
                 <div class="premium-sticky-filters" style="top: 56px;">
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -3924,6 +3941,7 @@
                         <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
                     </div>
                 </div>
+
                 <div class="premium-sticky-filters" style="top: 56px;">
                     <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
                         <div style="flex:1; min-width:100px;">
@@ -3965,6 +3983,260 @@
                 <button id="inv_btn_1" class="dual-fab-btn"></button>
                 <button id="inv_btn_2" class="dual-fab-btn"></button>
             </div>
+            
+        </div><div id="inventory-hub" class="content section" style="padding-bottom:120px;">
+            
+            <div class="premium-sticky-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button id="ih_header_back" onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    </button>
+                    <h2 id="ih_header_title" class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
+                </div>
+                <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;"></div>
+            </div>
+
+            <div id="inv-menu-view" style="display:block; animation: fadeIn 0.4s ease;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: linear-gradient(135deg, #1E293B, #0F172A); border-radius: 14px; padding: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.2); cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; grid-column: span 2;" onclick="window.openInvView('orderbook', 'Order Book')">
+                        <div style="position: absolute; right: 10px; bottom: -20px; font-size: 80px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">📋</div>
+                        <button onclick="event.stopPropagation(); window.openOrderBookModal();" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">Order Book</h3>
+                            <span style="font-size: 11px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 6px; display: inline-block;">Upcoming Reservations</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #06B6D4, #164E63); border-radius: 14px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(6, 182, 212, 0.2); cursor: pointer; min-height: 105px; display: flex; flex-direction: column; justify-content: center;" onclick="window.openInvView('movement', 'Stock Movement')">
+                        <div style="position: absolute; right: 5px; bottom: -15px; font-size: 60px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">🚚</div>
+                        <button onclick="event.stopPropagation(); window.openOutwardChallanModal();" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1; padding-right: 20px; margin-top: 10px;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2;">Stock Movement</h3>
+                            <span style="font-size: 9px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: inline-block;">Challans & Returns</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #8B5CF6, #4C1D95); border-radius: 14px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(139, 92, 246, 0.2); cursor: pointer; min-height: 105px; display: flex; flex-direction: column; justify-content: center;" onclick="window.openInvView('master', 'Stock Master')">
+                        <div style="position: absolute; right: 5px; bottom: -15px; font-size: 60px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">📦</div>
+                        <button onclick="event.stopPropagation(); window.openItemMasterModal();" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1; padding-right: 20px; margin-top: 10px;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2;">Stock Master</h3>
+                            <span style="font-size: 9px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: inline-block;">Items & Godowns</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="hub_cal_wrapper" style="background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#F8FAFC; padding:8px 12px; border-radius:8px; border:1px solid #E2E8F0;">
+                        <button onclick="changeHubCalendar(-1)" style="padding:4px 8px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer; font-size:16px; color:#475569;">◀</button>
+                        <span id="hub_cal_month" style="font-weight:900; font-size:14px; min-width:100px; text-align:center; color:#0F172A;">Month Year</span>
+                        <button onclick="changeHubCalendar(1)" style="padding:4px 8px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer; font-size:16px; color:#475569;">▶</button>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; margin-bottom:6px;">
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Su</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Mo</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Tu</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">We</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Th</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Fr</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Sa</div>
+                    </div>
+                    <div id="hub_cal_grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
+                    <div id="hub_cal_details" style="margin-top:15px; display:none; padding:12px; background:#EFF6FF; border-radius:8px; border:1px dashed #BFDBFE;"></div>
+                </div>
+            </div> <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+                <div class="premium-sticky-filters" style="top: 56px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client name or event..." oninput="window.renderHubOrderBookList()">
+                    </div>
+                </div>
+                <div id="orderbook-list-container"></div>
+            </div>
+
+            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
+                    <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
+                        <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
+                        <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
+                    </div>
+                    <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
+                        <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
+                        <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
+                    </div>
+                </div>
+
+                <div class="premium-sticky-filters" style="top: 56px;">
+                    <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
+                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                        </div>
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
+                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                        </div>
+                        <div style="display:flex; gap:8px; flex:1; min-width:120px;">
+                            <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
+                            <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                        </div>
+                    </div>
+                    <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+                    </div>
+                </div>
+                <div id="inventory-list-container"></div>
+            </div>
+
+            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+                <div class="premium-sticky-filters" style="top: 56px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
+                    </div>
+                </div>
+                <div id="item-master-list-container"></div>
+            </div>
+
+            <button id="ob_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px !important; background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openOrderBookModal()">➕ New Order</button>
+            <button id="inv_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px !important; background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
+            
+            <div id="inv_dual_fabs" class="dual-fab-container" style="display:none; bottom:25px !important;">
+                <button id="inv_btn_1" class="dual-fab-btn"></button>
+                <button id="inv_btn_2" class="dual-fab-btn"></button>
+            </div>
+            
+        </div><div id="inventory-hub" class="content section" style="padding-bottom:120px;">
+            
+            <div class="premium-sticky-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button id="ih_header_back" onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    </button>
+                    <h2 id="ih_header_title" class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
+                </div>
+                <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;"></div>
+            </div>
+
+            <div id="inv-menu-view" style="display:block; animation: fadeIn 0.4s ease;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: linear-gradient(135deg, #1E293B, #0F172A); border-radius: 14px; padding: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.2); cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; grid-column: span 2;" onclick="window.openInvView('orderbook', 'Order Book')">
+                        <div style="position: absolute; right: 10px; bottom: -20px; font-size: 80px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">📋</div>
+                        <button onclick="event.stopPropagation(); window.openOrderBookModal();" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">Order Book</h3>
+                            <span style="font-size: 11px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 6px; display: inline-block;">Upcoming Reservations</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #06B6D4, #164E63); border-radius: 14px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(6, 182, 212, 0.2); cursor: pointer; min-height: 105px; display: flex; flex-direction: column; justify-content: center;" onclick="window.openInvView('movement', 'Stock Movement')">
+                        <div style="position: absolute; right: 5px; bottom: -15px; font-size: 60px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">🚚</div>
+                        <button onclick="event.stopPropagation(); window.openOutwardChallanModal();" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1; padding-right: 20px; margin-top: 10px;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2;">Stock Movement</h3>
+                            <span style="font-size: 9px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: inline-block;">Challans & Returns</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #8B5CF6, #4C1D95); border-radius: 14px; padding: 16px; color: white; position: relative; overflow: hidden; box-shadow: 0 6px 15px rgba(139, 92, 246, 0.2); cursor: pointer; min-height: 105px; display: flex; flex-direction: column; justify-content: center;" onclick="window.openInvView('master', 'Stock Master')">
+                        <div style="position: absolute; right: 5px; bottom: -15px; font-size: 60px; opacity: 0.15; transform: rotate(-15deg); pointer-events: none;">📦</div>
+                        <button onclick="event.stopPropagation(); window.openItemMasterModal();" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); padding-bottom:2px; line-height: 1;">+</button>
+                        <div style="position: relative; z-index: 1; padding-right: 20px; margin-top: 10px;">
+                            <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2;">Stock Master</h3>
+                            <span style="font-size: 9px; font-weight: 700; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: inline-block;">Items & Godowns</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="hub_cal_wrapper" style="background: white; border-radius: 14px; padding: 15px; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#F8FAFC; padding:8px 12px; border-radius:8px; border:1px solid #E2E8F0;">
+                        <button onclick="changeHubCalendar(-1)" style="padding:4px 8px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer; font-size:16px; color:#475569;">◀</button>
+                        <span id="hub_cal_month" style="font-weight:900; font-size:14px; min-width:100px; text-align:center; color:#0F172A;">Month Year</span>
+                        <button onclick="changeHubCalendar(1)" style="padding:4px 8px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer; font-size:16px; color:#475569;">▶</button>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; margin-bottom:6px;">
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Su</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Mo</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Tu</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">We</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Th</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Fr</div>
+                        <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Sa</div>
+                    </div>
+                    <div id="hub_cal_grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
+                    <div id="hub_cal_details" style="margin-top:15px; display:none; padding:12px; background:#EFF6FF; border-radius:8px; border:1px dashed #BFDBFE;"></div>
+                </div>
+            </div> <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+                <div class="premium-sticky-filters" style="top: 56px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client name or event..." oninput="window.renderHubOrderBookList()">
+                    </div>
+                </div>
+                <div id="orderbook-list-container"></div>
+            </div>
+
+            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
+                    <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
+                        <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
+                        <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
+                    </div>
+                    <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
+                        <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
+                        <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
+                    </div>
+                </div>
+
+                <div class="premium-sticky-filters" style="top: 56px;">
+                    <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
+                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                        </div>
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
+                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                        </div>
+                        <div style="display:flex; gap:8px; flex:1; min-width:120px;">
+                            <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
+                            <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                        </div>
+                    </div>
+                    <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+                    </div>
+                </div>
+                <div id="inventory-list-container"></div>
+            </div>
+
+            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+                <div class="premium-sticky-filters" style="top: 56px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
+                    </div>
+                </div>
+                <div id="item-master-list-container"></div>
+            </div>
+
+            <button id="ob_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px !important; background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openOrderBookModal()">➕ New Order</button>
+            <button id="inv_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px !important; background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
+            
+            <div id="inv_dual_fabs" class="dual-fab-container" style="display:none; bottom:25px !important;">
+                <button id="inv_btn_1" class="dual-fab-btn"></button>
+                <button id="inv_btn_2" class="dual-fab-btn"></button>
+            </div>
+            
+        </div>
 
         <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
             <div class="modal-content" style="max-width: 500px;">
@@ -18905,10 +19177,11 @@
         };
 
         // 🗓️ 5. PREMIUM CALENDAR SYSTEM (LIKE HOME DASHBOARD)
-        window.hubCalDate = new Date(); // Modern Date tracker
+        window.hubCalDate = new Date(); 
         
         window.changeHubCalendar = function(dir) {
             if (!document.getElementById('hub_cal_grid')) return;
+            // Modern Date Tracker (Fixes month change data hiding issue)
             window.hubCalDate.setMonth(window.hubCalDate.getMonth() + dir);
             window.renderHubCalendarGrid();
             
@@ -18924,7 +19197,8 @@
             let year = window.hubCalDate.getFullYear();
             let month = window.hubCalDate.getMonth();
             
-            title.innerText = new Date(year, month).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+            let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            title.innerText = `${monthNames[month]} ${year}`;
 
             let firstDay = new Date(year, month, 1).getDay();
             let totalDays = new Date(year, month + 1, 0).getDate();
@@ -18932,38 +19206,59 @@
 
             let html = "";
             for(let i=0; i<firstDay; i++) {
-                html += `<div class="cal-day faded"></div>`;
+                html += `<div style="padding:10px 0;"></div>`;
             }
 
             for(let day=1; day<=totalDays; day++) {
                 let loopDate = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                let isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) ? "today" : "";
+                let isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
                 
                 let matches = Object.values(window.orderBookDB || {}).filter(o => o.date === loopDate);
                 
                 let dotsHtml = "";
                 if(matches.length > 0) {
-                    dotsHtml = `<div class="dots-container"><div class="cal-dot-blue"></div></div>`;
+                    let dotColor = isToday ? 'white' : 'var(--danger)';
+                    dotsHtml = `<div style="display:flex; justify-content:center; margin-top:3px;"><div style="background:${dotColor}; width:5px; height:5px; border-radius:50%; box-shadow:0 1px 2px rgba(0,0,0,0.2);"></div></div>`;
                 }
                 
-                html += `<div class="cal-day ${isToday}" onclick="selectHubCalDate('${loopDate}', this)">
-                            ${day}
-                            ${dotsHtml}
-                         </div>`;
+                let baseStyle = "padding:8px 0; border-radius:8px; cursor:pointer; font-weight:800; font-size:12px; display:flex; flex-direction:column; align-items:center; min-height:36px; box-sizing:border-box;";
+                
+                if (isToday) {
+                    html += `<div style="${baseStyle} background:var(--accent-color); color:white; box-shadow:0 2px 6px rgba(37,99,235,0.4);" onclick="selectHubCalDate('${loopDate}', this)">
+                                ${day}
+                                ${dotsHtml}
+                             </div>`;
+                } else {
+                    let hoverEffect = `onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'"`;
+                    html += `<div style="${baseStyle} color:var(--text-primary); border:1px solid transparent;" ${hoverEffect} onclick="selectHubCalDate('${loopDate}', this)">
+                                ${day}
+                                ${dotsHtml}
+                             </div>`;
+                }
             }
             grid.innerHTML = html;
         };
 
         window.selectHubCalDate = function(dStr, el) {
-            document.querySelectorAll('#hub_cal_grid .cal-day').forEach(d => d.classList.remove('selected'));
-            if(el) el.classList.add('selected');
+            document.querySelectorAll('#hub_cal_grid > div').forEach(d => {
+                if(!d.classList.contains('faded') && d.innerText) {
+                    d.style.border = "1px solid transparent";
+                    d.style.background = "transparent";
+                }
+            });
+            window.renderHubCalendarGrid(); 
+
+            if(el) {
+                el.style.border = "2px solid var(--accent-color)";
+                el.style.background = "#EFF6FF";
+            }
             window.showHubCalDetails(dStr);
         };
 
         window.showHubCalDetails = function(dateStr) {
             let panel = document.getElementById('hub_cal_details');
             let dayOrders = Object.values(window.orderBookDB || {}).filter(o => o.date === dateStr);
-            let displayDate = new Date(dateStr).toLocaleDateString('en-IN', {weekday:'long', day:'2-digit', month:'long'});
+            let displayDate = new Date(dateStr).toLocaleDateString('en-IN', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
             
             if(dayOrders.length === 0) { 
                 panel.innerHTML = `<div style="color:var(--success); font-weight:800; font-size:13px; text-align:center; padding:10px;">📅 ${displayDate}<br><span style="font-weight:600; font-size:11px; color:var(--text-secondary); display:block; margin-top:4px;">No equipment booked. Godown is completely free! 🎉</span></div>`; 
@@ -18973,7 +19268,7 @@
             let totalsUsed = {}; 
             dayOrders.forEach(o => o.items.forEach(i => totalsUsed[i.name] = (totalsUsed[i.name] || 0) + i.qty));
             
-            let html = `<div style="font-size:13px; font-weight:900; margin-bottom:12px; color:var(--accent-color);">📅 Bookings on ${displayDate}</div><div style="display:flex; flex-direction:column; gap:8px;">`;
+            let html = `<div style="font-size:13px; font-weight:900; margin-bottom:12px; color:var(--accent-color); border-bottom:1px solid #BFDBFE; padding-bottom:6px;">📅 Bookings on ${displayDate}</div><div style="display:flex; flex-direction:column; gap:8px;">`;
             
             for(let name in totalsUsed) {
                 let masterTotal = (typeof itemsDB !== 'undefined' && itemsDB[name]) ? (parseInt(itemsDB[name].totalStock) || 0) : 0; 
