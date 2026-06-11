@@ -3912,7 +3912,8 @@
 
             <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
                 <div class="premium-sticky-filters" style="top: 56px;">
-                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; background:white; padding:10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                    
+                    <div id="ob_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:10px; background:white; padding:10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm); align-items:flex-end;">
                         <div style="flex:1; min-width:110px;">
                             <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From (Dispatch)</label>
                             <input type="date" id="ob_filter_from" class="form-input" style="padding:6px 8px; font-size:12px;" onchange="window.renderHubOrderBookList()">
@@ -3921,8 +3922,15 @@
                             <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To (Dispatch)</label>
                             <input type="date" id="ob_filter_to" class="form-input" style="padding:6px 8px; font-size:12px;" onchange="window.renderHubOrderBookList()">
                         </div>
-                        <button onclick="document.getElementById('ob_filter_from').value=''; document.getElementById('ob_filter_to').value=''; window.renderHubOrderBookList();" style="background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                        <button onclick="document.getElementById('ob_filter_from').value=''; document.getElementById('ob_filter_to').value=''; window.renderHubOrderBookList();" style="background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
                     </div>
+
+                    <div id="ob-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;">
+                        <button class="sales-tab-btn active-sales-tab" style="background:#0F172A; color:white;" onclick="window.setObSubFilter('All', this)">All</button>
+                        <button class="sales-tab-btn" style="background:#F1F5F9; color:#64748B; border-color:transparent;" onclick="window.setObSubFilter('Pending', this)">Pending</button>
+                        <button class="sales-tab-btn" style="background:#F1F5F9; color:#64748B; border-color:transparent;" onclick="window.setObSubFilter('Dispatched', this)">Dispatched</button>
+                    </div>
+
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client, event or party..." oninput="window.renderHubOrderBookList()">
@@ -4015,7 +4023,7 @@
                     <div class="form-group" id="ob_rent_sec" style="display:none;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label class="form-label" style="margin:0; color:var(--purple);">Select Client/Party</label>
-                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New Party</button>
+                            <button type="button" class="link-btn" onclick="document.getElementById('orderBookModal').style.display='none'; activeParentModal='orderBookModal'; openPartyModal();">+ Add New Party</button>
                         </div>
                         <input type="text" class="select-search-box" placeholder="Search Client..." oninput="loadPartiesIntoSelect('ob_party_select', document.getElementById('ob_party_select').value, this.value)">
                         <select id="ob_party_select" class="form-select"></select>
@@ -9577,6 +9585,7 @@
                         if (pModal === 'assetModal') loadPartiesIntoSelect('ast_vendor', newId);
                         if (pModal === 'loanModal') loadLendersIntoSelect('loan_party', newId);
                         if (pModal === 'expenseModal') loadStaffIntoSelect('exp_party_link', newId);
+                        if (pModal === 'orderBookModal') loadPartiesIntoSelect('ob_party_select', newId);
                     }
                     activeParentModal = null;
                 }, 100);
@@ -18931,76 +18940,6 @@
             if (detailPanel) detailPanel.style.display = 'none';
         };
 
-        window.renderHubOrderBookList = function() {
-            let container = document.getElementById('orderbook-list-container');
-            if(!container) return;
-
-            let searchBox = document.getElementById('inv_ob_search');
-            let fromDate = document.getElementById('ob_filter_from') ? document.getElementById('ob_filter_from').value : '';
-            let toDate = document.getElementById('ob_filter_to') ? document.getElementById('ob_filter_to').value : '';
-            let term = searchBox ? searchBox.value.toLowerCase() : "";
-
-            let orders = Object.values(window.orderBookDB || {}).sort((a,b) => new Date(a.dispatchDate || a.date) - new Date(b.dispatchDate || b.date));
-            container.innerHTML = "";
-            let visibleCount = 0;
-
-            orders.forEach(o => {
-                let isRent = o.orderType === 'Rent';
-                let partyName = isRent ? (partiesDB[o.partyId] ? partiesDB[o.partyId].name : 'Unknown Party') : '';
-                let lead = (!isRent && typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: partyName || 'Unknown', func: isRent ? 'Rental' : 'Event' };
-                
-                let dispatchStr = o.dispatchDate ? new Date(o.dispatchDate).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : "TBD";
-                
-                // Filters
-                if(fromDate && o.dispatchDate < fromDate) return;
-                if(toDate && o.dispatchDate > toDate) return;
-                if (term && !lead.name.toLowerCase().includes(term) && !lead.func.toLowerCase().includes(term) && !o.id.toLowerCase().includes(term)) return;
-                
-                visibleCount++;
-                let itemsCount = o.items ? o.items.length : 0;
-                let badgeStyle = o.status === 'Invoiced' ? `background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;` : (o.status === 'Dispatched' ? `background:#FEF3C7; color:#D97706; border:1px solid #FDE68A;` : `background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;`);
-                let statusBadge = `<span style="padding:4px 8px; border-radius:6px; font-size:9px; font-weight:900; text-transform:uppercase; ${badgeStyle}">${o.status || 'Reserved'}</span>`;
-                let typeBadge = isRent ? `<span style="background:#F3E8FF; color:#7E22CE; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold;">📦 RENT</span>` : `<span style="background:#E0F2FE; color:#1E40AF; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold;">🎪 EVENT</span>`;
-
-                // SMART 3-DOT MENU LOGIC
-                let convertAction = "";
-                if(isRent) {
-                    convertAction = `<div class="dropdown-item text-green" onclick="convertObToInvoice('${o.id}')">🧾 Generate Rent Bill</div>`;
-                } else {
-                    convertAction = `<div class="dropdown-item text-green" onclick="convertObToOutward('${o.id}')">🚚 Create Outward Challan</div>`;
-                }
-
-                container.innerHTML += `
-                <div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 5px solid ${isRent ? '#8B5CF6' : '#3B82F6'}; background:white; padding:15px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); box-sizing:border-box;">
-                    <div style="flex-grow:1;">
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                            ${typeBadge}
-                            <span style="font-family:monospace; font-size:12px; font-weight:900; color:#475569;">${o.id}</span>
-                            <span style="font-size:11px; font-weight:800; color:var(--danger);" title="Dispatch Date">📅 ${dispatchStr}</span>
-                            ${statusBadge}
-                        </div>
-                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:2px;">${lead.name}</div>
-                        <div style="font-size:12px; color:#64748B; font-weight:600;">${lead.func} • <span style="color:#1E293B;">Items: ${itemsCount}</span></div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
-                        <div class="dropdown-container">
-                            <button class="btn-icon" style="padding:6px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; color:#475569;" onclick="toggleMenu('ob-${o.id}', event)">⋮</button>
-                            <div class="dropdown-menu" id="menu-ob-${o.id}">
-                                ${convertAction}
-                                <div style="border-top:1px solid #E2E8F0; margin: 4px 0;"></div>
-                                <div class="dropdown-item" onclick="previewOrderDocument('${o.id}')">🖨️ Print Premium</div>
-                                <div class="dropdown-item" onclick="whatsappOrder('${o.id}')">💬 Send WhatsApp</div>
-                                <div class="dropdown-item" onclick="openOrderBookModal('${o.id}')">✏️ Edit Order</div>
-                                <div class="dropdown-item text-red" onclick="deleteOrderEntry('${o.id}')">🗑️ Delete</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-
-            if(visibleCount === 0) container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found matching criteria.</div>`;
-        };
-
         // AUTO-FILL CONVERTERS
         window.convertObToOutward = function(id) {
             let o = orderBookDB[id];
@@ -19058,15 +18997,115 @@
             }
         };
 
-        // 🚀 2. Open Modal Logic
-        window.openOrderBookModal = function(id = null) {
-            window.editingOrderId = id;
-            document.getElementById('orderBookForm').reset();
-            document.getElementById('ob_items_container').innerHTML = "";
-            document.getElementById('ob_date').valueAsDate = new Date();
+        window.obSubFilter = 'All';
+        window.setObSubFilter = function(filter, btn) {
+            window.obSubFilter = filter;
+            document.querySelectorAll('#ob-sub-filters .sales-tab-btn').forEach(b => {
+                b.classList.remove('active-sales-tab');
+                b.style.background = '#F1F5F9';
+                b.style.color = '#64748B';
+            });
+            btn.classList.add('active-sales-tab');
+            btn.style.background = '#0F172A';
+            btn.style.color = 'white';
+            window.renderHubOrderBookList();
+        };
 
-            loadEventsToLinkSelect('ob_lead_select');
-            loadPartiesIntoSelect('ob_party_select');
+        window.renderHubOrderBookList = function() {
+            let container = document.getElementById('orderbook-list-container');
+            if(!container) return;
+
+            let searchBox = document.getElementById('inv_ob_search');
+            let fromDate = document.getElementById('ob_filter_from') ? document.getElementById('ob_filter_from').value : '';
+            let toDate = document.getElementById('ob_filter_to') ? document.getElementById('ob_filter_to').value : '';
+            let term = searchBox ? searchBox.value.toLowerCase() : "";
+
+            let orders = Object.values(window.orderBookDB || {}).sort((a,b) => new Date(b.dispatchDate || b.date) - new Date(a.dispatchDate || a.date)); 
+            container.innerHTML = "";
+            let visibleCount = 0;
+
+            orders.forEach(o => {
+                let isRent = o.orderType === 'Rent';
+                let partyName = isRent ? (partiesDB[o.partyId] ? partiesDB[o.partyId].name : 'Unknown Party') : '';
+                let lead = (!isRent && typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: partyName || 'Unknown', func: isRent ? 'Rental' : 'Event' };
+                
+                let dispatchStr = o.dispatchDate ? new Date(o.dispatchDate).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : "TBD";
+                
+                // Filters Check
+                if(fromDate && o.dispatchDate < fromDate) return;
+                if(toDate && o.dispatchDate > toDate) return;
+                if (term && !lead.name.toLowerCase().includes(term) && !lead.func.toLowerCase().includes(term) && !o.id.toLowerCase().includes(term)) return;
+                
+                // Pending vs Dispatched Logic
+                let isPending = (o.status !== 'Invoiced' && o.status !== 'Dispatched');
+                if (window.obSubFilter === 'Pending' && !isPending) return;
+                if (window.obSubFilter === 'Dispatched' && isPending) return;
+                
+                visibleCount++;
+                let itemsCount = o.items ? o.items.length : 0;
+                let badgeStyle = o.status === 'Invoiced' ? `background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;` : (o.status === 'Dispatched' ? `background:#FEF3C7; color:#D97706; border:1px solid #FDE68A;` : `background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;`);
+                let statusBadge = `<span style="padding:4px 8px; border-radius:6px; font-size:9px; font-weight:900; text-transform:uppercase; ${badgeStyle}">${o.status || 'Reserved'}</span>`;
+                let typeBadge = isRent ? `<span style="background:#F3E8FF; color:#7E22CE; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold;">📦 RENT</span>` : `<span style="background:#E0F2FE; color:#1E40AF; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold;">🎪 EVENT</span>`;
+
+                let convertAction = "";
+                if(isPending) {
+                    if(isRent) {
+                        convertAction = `<div class="dropdown-item text-green" onclick="convertObToInvoice('${o.id}')">🧾 Generate Rent Bill</div>`;
+                    } else {
+                        convertAction = `<div class="dropdown-item text-green" onclick="convertObToOutward('${o.id}')">🚚 Create Outward Challan</div>`;
+                    }
+                } else {
+                    convertAction = `<div class="dropdown-item text-green" style="opacity:0.5; pointer-events:none;">✅ Already ${o.status}</div>`;
+                }
+
+                container.innerHTML += `
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 5px solid ${isRent ? '#8B5CF6' : '#3B82F6'}; background:white; padding:15px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); box-sizing:border-box;">
+                    <div style="flex-grow:1; cursor:pointer;" onclick="previewOrderDocument('${o.id}')">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                            ${typeBadge}
+                            <span style="font-family:monospace; font-size:12px; font-weight:900; color:#475569;">${o.id}</span>
+                            <span style="font-size:11px; font-weight:800; color:var(--danger);" title="Dispatch Date">📅 ${dispatchStr}</span>
+                            ${statusBadge}
+                        </div>
+                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:2px;">${lead.name}</div>
+                        <div style="font-size:12px; color:#64748B; font-weight:600;">${lead.func} • <span style="color:#1E293B;">Items: ${itemsCount}</span></div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                        <div class="dropdown-container">
+                            <button class="btn-icon" style="padding:6px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; color:#475569;" onclick="toggleMenu('ob-${o.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-ob-${o.id}">
+                                ${convertAction}
+                                <div style="border-top:1px solid #E2E8F0; margin: 4px 0;"></div>
+                                <div class="dropdown-item" onclick="previewOrderDocument('${o.id}')">👁️ Preview Document</div>
+                                <div class="dropdown-item" onclick="whatsappOrder('${o.id}')">💬 Send WhatsApp</div>
+                                <div class="dropdown-item" onclick="openOrderBookModal('${o.id}')">✏️ Edit Order</div>
+                                <div class="dropdown-item text-red" onclick="deleteOrderEntry('${o.id}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            if(visibleCount === 0) container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found.</div>`;
+        };
+
+        // 🚀 EMPTY ITEM ROW FIX
+        window.openOrderBookModal = function(id = null) {
+            window.ensureOrderBookModalsExist();
+            window.editingOrderId = id;
+            
+            let leadSel = document.getElementById('ob_lead_select');
+            if(leadSel && typeof leadsDB !== 'undefined') {
+                leadSel.innerHTML = `<option value="">-- Select Event --</option>` + Object.values(leadsDB).filter(l => l.status === 'Won' && l.eventStatus !== 'Completed').map(l => `<option value="${l.id}">${l.name} (${l.func || 'Event'}) - ${l.date || ''}</option>`).join("");
+            }
+            let partySel = document.getElementById('ob_party_select');
+            if(partySel && typeof partiesDB !== 'undefined') {
+                partySel.innerHTML = `<option value="">-- Select Party / Account --</option>` + Object.values(partiesDB).filter(p => p.type === 'Customer').map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+            }
+            
+            document.getElementById('ob_items_container').innerHTML = "";
+            document.getElementById('orderBookForm').reset();
+            document.getElementById('ob_date').value = new Date().toISOString().split('T')[0];
 
             if (id && orderBookDB && orderBookDB[id]) {
                 document.getElementById('ob-modal-title').innerText = "Edit Reservation";
@@ -19074,11 +19113,8 @@
                 document.getElementById('ob_type').value = data.orderType || 'Event';
                 window.toggleObType();
                 
-                if (data.orderType === 'Rent') {
-                    document.getElementById('ob_party_select').value = data.partyId;
-                } else {
-                    document.getElementById('ob_lead_select').value = data.leadId;
-                }
+                if (data.orderType === 'Rent') document.getElementById('ob_party_select').value = data.partyId;
+                else document.getElementById('ob_lead_select').value = data.leadId;
                 
                 document.getElementById('ob_dispatch_date').value = data.dispatchDate || data.date;
                 document.getElementById('ob_date').value = data.date;
@@ -19086,22 +19122,21 @@
                 
                 if (data.items) {
                     data.items.forEach(i => {
-                        window.addObItem();
+                        window.addOrderBookItemRow(i.name, i.qty, i.rate);
+                        // Fix for newly added description inside loop
                         let rows = document.querySelectorAll('#ob_items_container .quote-item-row');
                         let lastRow = rows[rows.length - 1];
-                        lastRow.querySelector('.i-item-name').value = i.name;
-                        lastRow.querySelector('.i-item-qty').value = i.qty;
-                        lastRow.querySelector('.i-item-rate').value = i.rate || 0;
-                        if(lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = i.desc || "";
+                        if(lastRow && lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = i.desc || "";
                     });
                 }
             } else { 
                 document.getElementById('ob-modal-title').innerText = "Create Reservation";
                 window.toggleObType();
-                window.addObItem(); 
+                // 🛑 NO addOrderBookItemRow() HERE! Isliye blank box nahi aayega!
             }
             document.getElementById('orderBookModal').style.display = 'flex';
         };
+
         // 🚀 5. THEME-FRIENDLY PREVIEW & PRINT ENGINE
         window.previewOrderDocument = function(id) {
             window.previewOrderId = id; // Reference for WhatsApp
@@ -19554,7 +19589,84 @@
                 window.renderHubCalendarGrid();
             }
         }, 800); // 0.8 seconds ka delay taaki database pehle load ho jaye
-    </SCRIPT>
+        
+        // 🚀 Add Header Icons for Order Book
+        let oldOpenInvView = window.openInvView;
+        window.openInvView = function(view, title) {
+            oldOpenInvView(view, title); // Call purana function
+            
+            if (view === 'orderbook') {
+                let listActions = document.getElementById('ih_list_actions');
+                if (listActions) {
+                    listActions.innerHTML = `
+                        <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('ob_filter_bar').style.display = document.getElementById('ob_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
+                        <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printOrderBookList()" title="Print List">🖨️</button>
+                    `;
+                    listActions.style.display = 'flex';
+                }
+            }
+        };
+
+        // 🚀 MASTER PRINT LIST FUNCTION
+        window.printOrderBookList = function() {
+            let fromDate = document.getElementById('ob_filter_from') ? document.getElementById('ob_filter_from').value : '';
+            let toDate = document.getElementById('ob_filter_to') ? document.getElementById('ob_filter_to').value : '';
+            
+            let orders = Object.values(window.orderBookDB || {}).sort((a,b) => new Date(a.dispatchDate || a.date) - new Date(b.dispatchDate || b.date));
+            
+            let filteredOrders = orders.filter(o => {
+                if(fromDate && o.dispatchDate < fromDate) return false;
+                if(toDate && o.dispatchDate > toDate) return false;
+                let isPending = (o.status !== 'Invoiced' && o.status !== 'Dispatched');
+                if (window.obSubFilter === 'Pending' && !isPending) return false;
+                if (window.obSubFilter === 'Dispatched' && isPending) return false;
+                return true;
+            });
+
+            if(filteredOrders.length === 0) return alert("No orders found to print in the selected filter!");
+
+            let cName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.company : "UTSAVhq ERP";
+            let dateStr = (fromDate || toDate) ? `(Dispatch: ${fromDate || 'Start'} to ${toDate || 'End'})` : '(All Time)';
+
+            let html = `<html><head><title>Order Book Report</title>
+            <style>
+                body{font-family:'Segoe UI',sans-serif; padding:15px; color:#111;} 
+                table{width:100%; border-collapse:collapse; margin-top:20px; font-size:12px;} 
+                th,td{border:1px solid #CBD5E1; padding:8px; text-align:left; vertical-align:top;} 
+                th{background:#F1F5F9; -webkit-print-color-adjust: exact;}
+                @media print { #mobile-print-btn { display:none !important; } }
+            </style></head><body>
+            <h2 style="text-align:center; margin-bottom:5px; text-transform:uppercase;">${cName}</h2>
+            <h3 style="text-align:center; margin-top:0; color:#64748B;">Equipment Reservation Report ${dateStr}</h3>
+            <table><tr><th style="width:10%">Date</th><th style="width:12%">Order ID</th><th style="width:25%">Client / Event</th><th style="width:40%">Items to Dispatch</th><th style="width:13%">Status</th></tr>`;
+
+            filteredOrders.forEach(o => {
+                let isRent = o.orderType === 'Rent';
+                let partyName = isRent ? (partiesDB[o.partyId] ? partiesDB[o.partyId].name : 'Unknown Party') : '';
+                let lead = (!isRent && typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: partyName || 'Unknown', func: isRent ? 'Rental' : 'Event' };
+                let d = o.dispatchDate ? new Date(o.dispatchDate).toLocaleDateString('en-IN', {day: '2-digit', month: 'short'}) : '-';
+                
+                let itemsList = o.items ? o.items.map(i => `<b>${i.qty}</b> x ${i.name}`).join("<br>") : "No items";
+
+                html += `<tr>
+                    <td>${d}</td>
+                    <td><b>${o.id}</b></td>
+                    <td><b>${lead.name}</b><br><span style="font-size:10px; color:#64748B;">${lead.func}</span></td>
+                    <td style="font-size:11px; line-height:1.4;">${itemsList}</td>
+                    <td><b>${o.status || 'Reserved'}</b></td>
+                </tr>`;
+            });
+
+            html += `</table>
+            <div id="mobile-print-btn" style="text-align:center; margin-top:20px;">
+                <button onclick="window.print()" style="background:#2563EB; color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:bold; cursor:pointer;">🖨️ Print List</button>
+            </div>
+            <script>setTimeout(function(){ window.print(); }, 1000);<\/script></body></html>`;
+
+            let printWin = window.open('', '_blank');
+            if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
+        };
+    </script>
 </body>
 
 </html>
