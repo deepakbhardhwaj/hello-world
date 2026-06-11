@@ -18938,83 +18938,79 @@
             }, 300);
         };
 
-        // ==============================================================
-        // 📋 PROFESSIONAL ORDER BOOK MODAL & LOGIC
+       // ==============================================================
+        // 📋 PROFESSIONAL ORDER BOOK MODAL & LOGIC (QUOTATION THEME)
         // ==============================================================
 
         window.ensureOrderBookModalsExist = function() {
             if (!document.getElementById('orderBookModal')) {
                 let modalHtml = `
-                <div id="orderBookModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center;">
-                    <div style="background:white; width:95%; max-width:650px; padding:20px 25px; border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto; font-family:sans-serif;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #F1F5F9; padding-bottom:12px; margin-bottom:20px;">
-                            <h3 style="margin:0; color:#0F172A; font-size:18px; font-weight:800;">Equipment Reservation</h3>
-                            <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="background:none; border:none; font-size:24px; color:#64748B; cursor:pointer;">&times;</button>
+                <div id="orderBookModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(2px);">
+                    <div style="background:white; width:95%; max-width:600px; padding:25px; border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto; font-family:sans-serif;">
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:15px; margin-bottom:20px;">
+                            <h3 style="margin:0; color:#0F172A; font-size:18px; font-weight:900;">Equipment Reservation</h3>
+                            <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="background:#F1F5F9; border:none; width:30px; height:30px; border-radius:50%; font-size:16px; color:#64748B; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
                         </div>
+                        
                         <form id="orderBookForm">
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
-                                <div>
-                                    <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Booking Type</label>
-                                    <select id="ob_type" style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; font-weight:600; color:#1E293B;" onchange="window.toggleObType()">
-                                        <option value="Event">For Event</option>
+                            
+                            <div style="display:flex; gap:15px; margin-bottom:15px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Booking Type</label>
+                                    <select id="ob_type" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A; font-weight:600;" onchange="window.toggleObType()">
+                                        <option value="Event">For Event / Booking</option>
                                         <option value="Rent">For Rent (Direct Party)</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Creation Date</label>
-                                    <input type="date" id="ob_date" style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; box-sizing:border-box;" readonly>
+                                <div style="flex:1;">
+                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Date</label>
+                                    <input type="date" id="ob_date" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A; background:#F8FAFC;" readonly>
                                 </div>
                             </div>
 
-                            <div id="ob_event_sec" style="margin-bottom:15px;">
-                                <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Select Event / Lead</label>
-                                <select id="ob_lead_select" style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px;" onchange="window.autoFillDispatchDate()"></select>
-                            </div>
-
-                            <div id="ob_rent_sec" style="margin-bottom:15px; display:none;">
-                                <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Select Party / Vendor</label>
-                                <select id="ob_party_select" style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px;"></select>
+                            <div style="display:flex; gap:15px; margin-bottom:25px;">
+                                <div id="ob_event_sec" style="flex:2;">
+                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Select Event / Lead</label>
+                                    <select id="ob_lead_select" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A;" onchange="window.autoFillDispatchDate()"></select>
+                                </div>
+                                <div id="ob_rent_sec" style="flex:2; display:none;">
+                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Select Client/Party</label>
+                                    <select id="ob_party_select" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A;"></select>
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Dispatch Date</label>
+                                    <input type="date" id="ob_dispatch_date" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A; box-sizing:border-box;" required>
+                                </div>
                             </div>
 
                             <div style="margin-bottom:20px;">
-                                <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Dispatch / Event Date <span style="color:red;">*</span></label>
-                                <input type="date" id="ob_dispatch_date" style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid #94A3B8; font-size:13px; box-sizing:border-box;" required>
-                            </div>
-
-                            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:15px; margin-bottom:20px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                    <label style="font-size:14px; font-weight:800; color:#0F172A; margin:0;">Item Details</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                    <label style="font-size:11px; font-weight:800; color:#2563EB; text-transform:uppercase; margin:0;">SERVICES / ITEMS</label>
+                                    <button type="button" onclick="addOrderBookItemRow()" style="background:white; color:#2563EB; font-size:11px; font-weight:bold; border:1px solid #2563EB; padding:6px 12px; border-radius:4px; cursor:pointer;">+ Add Item</button>
                                 </div>
                                 
-                                <div style="display:flex; gap:10px; margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid #CBD5E1; font-size:11px; font-weight:bold; color:#64748B;">
-                                    <div style="flex:3;">Product Name</div>
-                                    <div style="width:70px; text-align:center;">Qty</div>
-                                    <div class="ob-rate-col" style="width:90px; text-align:center; display:none;">Rate (₹)</div>
-                                    <div style="width:30px;"></div>
-                                </div>
-                                
-                                <div id="ob_items_container" style="margin-bottom:10px;"></div>
-                                <button type="button" onclick="addOrderBookItemRow()" style="background:white; color:#2563EB; font-size:12px; font-weight:700; border:1px solid #BFDBFE; padding:6px 12px; border-radius:6px; cursor:pointer;">+ Add Row</button>
+                                <div id="ob_items_container"></div>
                             </div>
 
-                            <div id="ob_advance_sec" style="display:none; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:15px; margin-bottom:20px;">
-                                <label style="font-size:13px; font-weight:800; color:#166534; display:block; margin-bottom:10px;">Advance Payment Received</label>
+                            <div id="ob_advance_sec" style="display:none; margin-bottom:20px;">
+                                <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Advance Received (Optional)</label>
                                 <div style="display:flex; gap:10px;">
-                                    <input type="number" id="ob_adv_amount" placeholder="Amount (₹)" style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid #86EFAC; font-size:13px;">
-                                    <select id="ob_adv_mode" style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid #86EFAC; font-size:13px;">
+                                    <input type="number" id="ob_adv_amount" placeholder="Amount (₹)" style="flex:1; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none;">
+                                    <select id="ob_adv_mode" style="flex:1; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none;">
                                         <option value="Cash">Cash</option>
                                     </select>
                                 </div>
                             </div>
                             
-                            <div style="margin-bottom:20px;">
-                                <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Remarks / Notes</label>
-                                <textarea id="ob_notes" placeholder="Enter notes..." style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid #CBD5E1; box-sizing:border-box; font-family:inherit; font-size:13px; resize:vertical; min-height:60px;"></textarea>
+                            <div style="margin-bottom:25px;">
+                                <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Notes / Remarks</label>
+                                <input type="text" id="ob_notes" placeholder="Any special instructions..." style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; box-sizing:border-box;">
                             </div>
                             
-                            <div style="display:flex; justify-content:flex-end; gap:10px; border-top:2px solid #F1F5F9; padding-top:15px;">
-                                <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="background:white; color:#475569; padding:10px 20px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; font-weight:700; cursor:pointer;">Cancel</button>
-                                <button type="button" onclick="saveOrderBookEntry()" style="background:#2563EB; color:white; padding:10px 25px; border-radius:6px; border:none; font-size:13px; font-weight:700; cursor:pointer;">Save Order</button>
+                            <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #E2E8F0; padding-top:15px;">
+                                <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="background:white; color:#475569; padding:10px 20px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; font-weight:bold; cursor:pointer;">Cancel</button>
+                                <button type="button" onclick="saveOrderBookEntry()" style="background:#0F172A; color:white; padding:10px 25px; border-radius:6px; border:none; font-size:13px; font-weight:bold; cursor:pointer;">Save</button>
                             </div>
                         </form>
                     </div>
@@ -19022,17 +19018,17 @@
                 document.body.insertAdjacentHTML('beforeend', modalHtml);
             }
 
-            // Clean Preview Modal Update
+            // Print Preview Modal (Clean Theme)
             if (!document.getElementById('orderPreviewModal')) {
                 document.body.insertAdjacentHTML('beforeend', `
-                <div id="orderPreviewModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center;">
+                <div id="orderPreviewModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; justify-content:center; align-items:center;">
                     <div style="background:white; width:95%; max-width:700px; padding:0; border-radius:8px; max-height:90vh; overflow-y:auto; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                         <div style="padding:15px 20px; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border-radius:8px 8px 0 0;">
                             <h3 style="margin:0; font-size:16px; color:#0F172A;">Document Preview</h3>
                             <button onclick="document.getElementById('orderPreviewModal').style.display='none'" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748B;">&times;</button>
                         </div>
                         <div style="padding:20px;">
-                            <div id="order_print_area" style="background:white; padding:20px; border:1px solid #E2E8F0; margin-bottom:20px;"></div>
+                            <div id="order_print_area" style="background:white; padding:20px; border:1px solid #E2E8F0; margin-bottom:20px; border-radius:8px;"></div>
                             <div style="display:flex; justify-content:flex-end; gap:10px;">
                                 <button onclick="printOrderDocument()" style="padding:10px 20px; background:#1E293B; color:white; border:none; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">🖨️ Print Document</button>
                             </div>
@@ -19076,11 +19072,11 @@
             
             let leadSel = document.getElementById('ob_lead_select');
             if(leadSel && typeof leadsDB !== 'undefined') {
-                leadSel.innerHTML = `<option value="">-- Search & Select Event --</option>` + Object.values(leadsDB).map(l => `<option value="${l.id}">${l.name} (${l.func || 'Event'}) - ${l.date || ''}</option>`).join("");
+                leadSel.innerHTML = `<option value="">-- Select Event --</option>` + Object.values(leadsDB).map(l => `<option value="${l.id}">${l.name} (${l.func || 'Event'}) - ${l.date || ''}</option>`).join("");
             }
             let partySel = document.getElementById('ob_party_select');
             if(partySel && typeof partiesDB !== 'undefined') {
-                partySel.innerHTML = `<option value="">-- Select Party / Vendor --</option>` + Object.values(partiesDB).map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+                partySel.innerHTML = `<option value="">-- Select Party / Account --</option>` + Object.values(partiesDB).map(p => `<option value="${p.id}">${p.name}</option>`).join("");
             }
             
             document.getElementById('ob_items_container').innerHTML = "";
@@ -19116,7 +19112,7 @@
                 Object.values(itemsDB).forEach(i => {
                     let r = i.rentPrice || 0;
                     let sel = (i.name === name) ? 'selected' : '';
-                    options += `<option value="${i.name}" data-rent="${r}" ${sel}>${i.name} (Stock: ${i.totalStock || 0})</option>`;
+                    options += `<option value="${i.name}" data-rent="${r}" ${sel}>${i.name}</option>`;
                 });
             }
 
@@ -19125,17 +19121,29 @@
             let displayRate = isRent ? 'block' : 'none';
 
             let rowId = 'obrow_' + Date.now() + Math.floor(Math.random()*100);
+            
+            // QUOTATION STYLE CARD HTML
             container.insertAdjacentHTML('beforeend', `
-                <div id="${rowId}" style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
-                    <select class="ob-row-name" style="flex:3; padding:8px 10px; border-radius:6px; border:1px solid #CBD5E1; font-size:12px; background:white;" onchange="
-                        let r = this.options[this.selectedIndex].getAttribute('data-rent'); 
-                        if(r) this.parentElement.querySelector('.ob-row-rate').value = r;
-                    " required>
-                        ${options}
-                    </select>
-                    <input type="number" class="ob-row-qty" value="${qty}" min="1" style="width:70px; padding:8px; border-radius:6px; border:1px solid #CBD5E1; font-size:12px; text-align:center;" required>
-                    <input type="number" class="ob-row-rate ob-rate-col" value="${rate}" placeholder="Rate" style="width:90px; padding:8px; border-radius:6px; border:1px solid #CBD5E1; font-size:12px; text-align:center; display:${displayRate};">
-                    <button type="button" onclick="document.getElementById('${rowId}').remove()" style="width:30px; background:none; border:none; color:var(--danger); cursor:pointer; font-size:18px; font-weight:bold; line-height:1;">&times;</button>
+                <div id="${rowId}" style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:15px; margin-bottom:12px; position:relative;">
+                    
+                    <button type="button" onclick="document.getElementById('${rowId}').remove()" style="position:absolute; top:-10px; right:-10px; background:#EF4444; color:white; border:none; width:22px; height:22px; border-radius:50%; font-size:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.2);">&times;</button>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:2;">
+                            <label style="font-size:9px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:4px;">Item/Service</label>
+                            <select class="ob-row-name" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; background:white;" onchange="let r = this.options[this.selectedIndex].getAttribute('data-rent'); if(r) this.parentElement.parentElement.querySelector('.ob-row-rate').value = r;" required>
+                                ${options}
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:9px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:4px;">Qty</label>
+                            <input type="number" class="ob-row-qty" value="${qty}" min="1" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; text-align:center; background:white; box-sizing:border-box;" required>
+                        </div>
+                        <div class="ob-rate-col" style="flex:1; display:${displayRate};">
+                            <label style="font-size:9px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:4px;">Rate(₹)</label>
+                            <input type="number" class="ob-row-rate" value="${rate}" placeholder="Rate" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; text-align:center; background:white; box-sizing:border-box;">
+                        </div>
+                    </div>
                 </div>
             `);
         };
