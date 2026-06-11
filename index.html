@@ -19170,35 +19170,6 @@
             }
         };
 
-        let oldDeleteLogisticsRecord = window.deleteLogisticsRecord;
-        window.deleteLogisticsRecord = function(id, logType, e) {
-            if(e) { e.stopPropagation(); closeAllMenus(); }
-            if(!confirm(`🚨 WARNING!\nAre you sure you want to delete this ${logType}?\nThe stock will be reversed to your Godown.`)) return;
-
-            if (logType === 'Rental Invoice') {
-                window.deleteSalesRecord(id, true);
-                alert("Rental Invoice deleted & stock reverted successfully!");
-                if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
-                return;
-            }
-
-            let record = stockMovementDB[id];
-            if(record && record.status !== 'Returned' && record.items) {
-                record.items.forEach(item => {
-                    if(itemsDB[item.name]) {
-                        let gId = record.godownId || 'WH_MAIN';
-                        if(itemsDB[item.name].godowns[gId] !== undefined) {
-                            itemsDB[item.name].godowns[gId] += parseInt(item.qty) || 0;
-                        }
-                    }
-                });
-            }
-            delete stockMovementDB[id];
-            if(typeof updateDataAndUI === 'function') updateDataAndUI();
-            if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
-            alert("Challan deleted & stock reverted successfully!");
-        };
-
         let oldSaveDirectInvoiceData = window.saveDirectInvoiceData;
         window.saveDirectInvoiceData = function() {
             let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
