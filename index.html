@@ -3985,6 +3985,89 @@
             </div>
             
         </div>
+        <div id="orderBookModal" class="modal-overlay" style="z-index: 5500;">
+            <div class="modal-content" style="max-width: 550px;">
+                <div class="modal-header">
+                    <h3 id="ob-modal-title">Create Reservation (Order Book)</h3>
+                    <button class="modal-close" onclick="document.getElementById('orderBookModal').style.display='none';">&times;</button>
+                </div>
+                <form id="orderBookForm" onsubmit="event.preventDefault();" novalidate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" style="color:var(--accent-color);">Booking Type</label>
+                            <select id="ob_type" class="form-select" onchange="window.toggleObType()">
+                                <option value="Event">For Event / Booking</option>
+                                <option value="Rent">For Rent (Direct Party)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Order Date</label>
+                            <input type="date" id="ob_date" class="form-input" required readonly style="background:#F8FAFC;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="ob_event_sec">
+                        <label class="form-label" style="color:var(--warning);">Select Event / Lead</label>
+                        <input type="text" class="select-search-box" placeholder="Search events..." oninput="loadEventsToLinkSelect('ob_lead_select', null, this.value)">
+                        <select id="ob_lead_select" class="form-select" onchange="window.autoFillDispatchDate()"></select>
+                    </div>
+
+                    <div class="form-group" id="ob_rent_sec" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0; color:var(--purple);">Select Client/Party</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New Party</button>
+                        </div>
+                        <input type="text" class="select-search-box" placeholder="Search Client..." oninput="loadPartiesIntoSelect('ob_party_select', document.getElementById('ob_party_select').value, this.value)">
+                        <select id="ob_party_select" class="form-select"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Dispatch / Event Date</label>
+                        <input type="date" id="ob_dispatch_date" class="form-input" required>
+                    </div>
+
+                    <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items Needed</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" style="background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('ob')">📦 Fetch Stock</button>
+                                <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addObItem()">+ Add Item</button>
+                            </div>
+                        </div>
+                        <div id="ob_items_container"></div>
+                    </div>
+
+                    <div id="ob_advance_sec" style="display:none; background:#EFF6FF; padding:12px; border-radius:8px; border:1px dashed #BFDBFE; margin-bottom:15px;">
+                        <label class="form-label" style="color:var(--accent-color);">Advance Received (Optional)</label>
+                        <div class="form-row">
+                            <input type="number" id="ob_adv_amount" class="form-input" placeholder="Amount (₹)">
+                            <select id="ob_adv_mode" class="form-select dynamic-pay-mode"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes / Remarks</label>
+                        <input type="text" id="ob_notes" class="form-input" placeholder="Any special instructions...">
+                    </div>
+                    
+                    <button type="button" class="btn-main" style="background:var(--accent-color);" onclick="saveOrderBookEntry()">💾 Save Reservation</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="orderPreviewModal" class="modal-overlay" style="z-index: 10600;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="op_modal_title">Order Details</h3>
+                    <button class="modal-close" onclick="document.getElementById('orderPreviewModal').style.display='none';">&times;</button>
+                </div>
+                <div id="order_print_area" style="font-size:13px; line-height:1.5;"></div>
+                <div style="display:flex; gap:10px; margin-top:15px; border-top:1px solid #E2E8F0; padding-top:15px;">
+                    <button onclick="printOrderDocument()" style="flex:1; padding:10px; background:#0F172A; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🖨️ Print</button>
+                    <button onclick="whatsappOrder(window.previewOrderId)" style="flex:1; padding:10px; background:#25D366; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">💬 WhatsApp</button>
+                </div>
+            </div>
+        </div>
 
         <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
             <div class="modal-content" style="max-width: 500px;">
@@ -17738,6 +17821,7 @@
             });
         };
 
+        // 🚀 4. Stock Fetch Integration for Order Book
         window.addSelectedItemsToForm = function() {
             let context = document.getElementById('inventorySelectModal').dataset.context || 'out';
             let checkboxes = document.querySelectorAll('.inv-select-cb:checked');
@@ -17760,19 +17844,31 @@
                 }
 
                 let itemDef = itemsDB[name];
-                let rate = itemDef ? (itemDef.rent || 0) : 0;
+                let rate = itemDef ? (itemDef.rentPrice || itemDef.purchasePrice || 0) : 0;
 
-                if(context === 'out') {
+                if (context === 'ob') { // 👈 Naya OB Link
+                    window.addObItem();
+                    let rows = document.querySelectorAll('#ob_items_container .quote-item-row');
+                    if (rows.length > 0) {
+                        let lastRow = rows[rows.length - 1];
+                        let nameInp = lastRow.querySelector('.i-item-name');
+                        let qtyInp = lastRow.querySelector('.i-item-qty');
+                        let rateInp = lastRow.querySelector('.i-item-rate');
+                        
+                        if (nameInp) nameInp.value = name;
+                        if (qtyInp) { qtyInp.value = qty; qtyInp.setAttribute('value', qty); }
+                        if (rateInp) rateInp.value = rate;
+                    }
+                } 
+                // ... (Aage ka code context === 'out' aur 'di' waisa hi rahega jaisa purane mein tha)
+                else if(context === 'out') {
                     if (typeof window.addOutwardItemRow === 'function') {
                         window.addOutwardItemRow(name);
                         let rows = document.querySelectorAll('#out_items_container .quote-item-row, #out_items_container tr');
                         let lastRow = rows[rows.length - 1];
                         if (lastRow) {
                             let qField = lastRow.querySelector('.out-item-qty, input[type="number"]');
-                            if (qField) {
-                                qField.value = qty;
-                                qField.setAttribute('value', qty);
-                            }
+                            if (qField) { qField.value = qty; qField.setAttribute('value', qty); }
                         }
                     }
                 } else if (context === 'di') {
@@ -17786,10 +17882,7 @@
                             let rateInp = lastRow.querySelector('.i-item-rate');
                             
                             if (nameInp) nameInp.value = name;
-                            if (qtyInp) {
-                                qtyInp.value = qty;
-                                qtyInp.setAttribute('value', qty); // Force DOM Lock
-                            }
+                            if (qtyInp) { qtyInp.value = qty; qtyInp.setAttribute('value', qty); }
                             if (rateInp) rateInp.value = rate;
                         }
                     }
@@ -17798,11 +17891,9 @@
             
             if (stockError) return;
 
-            // 🪄 MAGIC FIX: Forcefully recalculate totals after inserting items
+            // Recalculate based on context
             setTimeout(() => {
-                if (context === 'di' && typeof calculateDirectInvoiceTotal === 'function') {
-                    calculateDirectInvoiceTotal();
-                }
+                if (context === 'di' && typeof calculateDirectInvoiceTotal === 'function') calculateDirectInvoiceTotal();
             }, 100);
             
             document.getElementById('inventorySelectModal').style.display = 'none';
@@ -18942,121 +19033,6 @@
         // 📋 PROFESSIONAL ORDER BOOK MODAL & LOGIC (QUOTATION THEME)
         // ==============================================================
 
-        window.ensureOrderBookModalsExist = function() {
-            if (!document.getElementById('orderBookModal')) {
-                let modalHtml = `
-                <div id="orderBookModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center; backdrop-filter:blur(2px);">
-                    <div style="background:white; width:95%; max-width:600px; padding:25px; border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto; font-family:sans-serif;">
-                        
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:15px; margin-bottom:20px;">
-                            <h3 style="margin:0; color:#0F172A; font-size:18px; font-weight:900;">Equipment Reservation</h3>
-                            <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="background:#F1F5F9; border:none; width:30px; height:30px; border-radius:50%; font-size:16px; color:#64748B; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
-                        </div>
-                        
-                        <form id="orderBookForm">
-                            
-                            <div style="display:flex; gap:15px; margin-bottom:15px;">
-                                <div style="flex:1;">
-                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Booking Type</label>
-                                    <select id="ob_type" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A; font-weight:600;" onchange="window.toggleObType()">
-                                        <option value="Event">For Event / Booking</option>
-                                        <option value="Rent">For Rent (Direct Party)</option>
-                                    </select>
-                                </div>
-                                <div style="flex:1;">
-                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Date</label>
-                                    <input type="date" id="ob_date" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A; background:#F8FAFC;" readonly>
-                                </div>
-                            </div>
-
-                            <div style="display:flex; gap:15px; margin-bottom:25px;">
-                                <div id="ob_event_sec" style="flex:2;">
-                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Select Event / Lead</label>
-                                    <select id="ob_lead_select" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A;" onchange="window.autoFillDispatchDate()"></select>
-                                </div>
-                                <div id="ob_rent_sec" style="flex:2; display:none;">
-                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Select Client/Party</label>
-                                    <select id="ob_party_select" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A;"></select>
-                                </div>
-                                <div style="flex:1;">
-                                    <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Dispatch Date</label>
-                                    <input type="date" id="ob_dispatch_date" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; color:#0F172A; box-sizing:border-box;" required>
-                                </div>
-                            </div>
-
-                            <div style="margin-bottom:20px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                    <label style="font-size:11px; font-weight:800; color:#2563EB; text-transform:uppercase; margin:0;">SERVICES / ITEMS</label>
-                                    <button type="button" onclick="addOrderBookItemRow()" style="background:white; color:#2563EB; font-size:11px; font-weight:bold; border:1px solid #2563EB; padding:6px 12px; border-radius:4px; cursor:pointer;">+ Add Item</button>
-                                </div>
-                                
-                                <div id="ob_items_container"></div>
-                            </div>
-
-                            <div id="ob_advance_sec" style="display:none; margin-bottom:20px;">
-                                <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Advance Received (Optional)</label>
-                                <div style="display:flex; gap:10px;">
-                                    <input type="number" id="ob_adv_amount" placeholder="Amount (₹)" style="flex:1; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none;">
-                                    <select id="ob_adv_mode" style="flex:1; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none;">
-                                        <option value="Cash">Cash</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div style="margin-bottom:25px;">
-                                <label style="font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:6px;">Notes / Remarks</label>
-                                <input type="text" id="ob_notes" placeholder="Any special instructions..." style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; outline:none; box-sizing:border-box;">
-                            </div>
-                            
-                            <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #E2E8F0; padding-top:15px;">
-                                <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="background:white; color:#475569; padding:10px 20px; border-radius:6px; border:1px solid #CBD5E1; font-size:13px; font-weight:bold; cursor:pointer;">Cancel</button>
-                                <button type="button" onclick="saveOrderBookEntry()" style="background:#0F172A; color:white; padding:10px 25px; border-radius:6px; border:none; font-size:13px; font-weight:bold; cursor:pointer;">Save</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>`;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-            }
-
-            // Print Preview Modal (Clean Theme)
-            if (!document.getElementById('orderPreviewModal')) {
-                document.body.insertAdjacentHTML('beforeend', `
-                <div id="orderPreviewModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; justify-content:center; align-items:center;">
-                    <div style="background:white; width:95%; max-width:700px; padding:0; border-radius:8px; max-height:90vh; overflow-y:auto; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-                        <div style="padding:15px 20px; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border-radius:8px 8px 0 0;">
-                            <h3 style="margin:0; font-size:16px; color:#0F172A;">Document Preview</h3>
-                            <button onclick="document.getElementById('orderPreviewModal').style.display='none'" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748B;">&times;</button>
-                        </div>
-                        <div style="padding:20px;">
-                            <div id="order_print_area" style="background:white; padding:20px; border:1px solid #E2E8F0; margin-bottom:20px; border-radius:8px;"></div>
-                            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                                <button onclick="printOrderDocument()" style="padding:10px 20px; background:#1E293B; color:white; border:none; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">🖨️ Print Document</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`);
-            }
-        };
-
-        window.toggleObType = function() {
-            let type = document.getElementById('ob_type').value;
-            let isRent = (type === 'Rent');
-            
-            document.getElementById('ob_event_sec').style.display = isRent ? 'none' : 'block';
-            document.getElementById('ob_rent_sec').style.display = isRent ? 'block' : 'none';
-            document.getElementById('ob_advance_sec').style.display = isRent ? 'block' : 'none';
-            
-            document.querySelectorAll('.ob-rate-col').forEach(el => el.style.display = isRent ? 'block' : 'none');
-
-            if (isRent) {
-                let bankHtml = `<option value="Cash">Cash</option>`;
-                if(typeof bankDB !== 'undefined') {
-                    Object.values(bankDB).forEach(b => bankHtml += `<option value="${b.id}">${b.name}</option>`);
-                }
-                document.getElementById('ob_adv_mode').innerHTML = bankHtml;
-            }
-        };
-
         window.autoFillDispatchDate = function() {
             let type = document.getElementById('ob_type').value;
             if(type !== 'Event') return;
@@ -19065,42 +19041,188 @@
                 document.getElementById('ob_dispatch_date').value = leadsDB[leadId].date;
             }
         };
+        // 🚀 1. Form Toggle Logic (Event vs Rent)
+        window.toggleObType = function() {
+            let type = document.getElementById('ob_type').value;
+            let isRent = (type === 'Rent');
+            
+            document.getElementById('ob_event_sec').style.display = isRent ? 'none' : 'block';
+            document.getElementById('ob_rent_sec').style.display = isRent ? 'block' : 'none';
+            document.getElementById('ob_advance_sec').style.display = isRent ? 'block' : 'none';
+            
+            // Item row mein rate ki visibility control
+            document.querySelectorAll('.ob-rate-col').forEach(el => el.style.display = isRent ? 'block' : 'none');
 
+            if (isRent && typeof updateDynamicPayModes === 'function') {
+                updateDynamicPayModes();
+            }
+        };
+
+        // 🚀 2. Open Modal Logic
         window.openOrderBookModal = function(id = null) {
-            window.ensureOrderBookModalsExist();
             window.editingOrderId = id;
-            
-            let leadSel = document.getElementById('ob_lead_select');
-            if(leadSel && typeof leadsDB !== 'undefined') {
-                leadSel.innerHTML = `<option value="">-- Select Event --</option>` + Object.values(leadsDB).map(l => `<option value="${l.id}">${l.name} (${l.func || 'Event'}) - ${l.date || ''}</option>`).join("");
-            }
-            let partySel = document.getElementById('ob_party_select');
-            if(partySel && typeof partiesDB !== 'undefined') {
-                partySel.innerHTML = `<option value="">-- Select Party / Account --</option>` + Object.values(partiesDB).map(p => `<option value="${p.id}">${p.name}</option>`).join("");
-            }
-            
-            document.getElementById('ob_items_container').innerHTML = "";
             document.getElementById('orderBookForm').reset();
-            document.getElementById('ob_date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('ob_items_container').innerHTML = "";
+            document.getElementById('ob_date').valueAsDate = new Date();
+
+            loadEventsToLinkSelect('ob_lead_select');
+            loadPartiesIntoSelect('ob_party_select');
 
             if (id && orderBookDB && orderBookDB[id]) {
+                document.getElementById('ob-modal-title').innerText = "Edit Reservation";
                 let data = orderBookDB[id];
                 document.getElementById('ob_type').value = data.orderType || 'Event';
                 window.toggleObType();
-                if(data.orderType === 'Rent') {
-                    if(partySel) partySel.value = data.partyId;
+                
+                if (data.orderType === 'Rent') {
+                    document.getElementById('ob_party_select').value = data.partyId;
                 } else {
-                    if(leadSel) leadSel.value = data.leadId;
+                    document.getElementById('ob_lead_select').value = data.leadId;
                 }
+                
                 document.getElementById('ob_dispatch_date').value = data.dispatchDate || data.date;
                 document.getElementById('ob_date').value = data.date;
                 document.getElementById('ob_notes').value = data.notes || "";
-                if(data.items) data.items.forEach(i => addOrderBookItemRow(i.name, i.qty, i.rate));
+                
+                if (data.items) {
+                    data.items.forEach(i => {
+                        window.addObItem();
+                        let rows = document.querySelectorAll('#ob_items_container .quote-item-row');
+                        let lastRow = rows[rows.length - 1];
+                        lastRow.querySelector('.i-item-name').value = i.name;
+                        lastRow.querySelector('.i-item-qty').value = i.qty;
+                        lastRow.querySelector('.i-item-rate').value = i.rate || 0;
+                        if(lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = i.desc || "";
+                    });
+                }
             } else { 
+                document.getElementById('ob-modal-title').innerText = "Create Reservation";
                 window.toggleObType();
-                addOrderBookItemRow(); 
+                window.addObItem(); 
             }
             document.getElementById('orderBookModal').style.display = 'flex';
+        };
+        // 🚀 5. THEME-FRIENDLY PREVIEW & PRINT ENGINE
+        window.previewOrderDocument = function(id) {
+            window.previewOrderId = id; // Reference for WhatsApp
+            let o = orderBookDB[id];
+            let isRent = o.orderType === 'Rent';
+            
+            let partyName = isRent ? (partiesDB[o.partyId] ? partiesDB[o.partyId].name : 'Unknown Party') : '';
+            let lead = (!isRent && typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: partyName, phone: '', func: 'Rental Order' };
+            
+            let totalAmount = 0;
+            let rowsHtml = o.items.map((i, idx) => {
+                let lineTotal = (i.qty * (i.rate || 0));
+                totalAmount += lineTotal;
+                let rateCols = isRent ? `<td style="padding:8px; text-align:right;">₹${i.rate || 0}</td><td style="padding:8px; text-align:right; font-weight:bold;">₹${lineTotal}</td>` : '';
+                let descStr = i.desc ? `<br><i style="font-size:10px; color:#64748B;">${i.desc}</i>` : '';
+                return `<tr><td style="padding:8px; text-align:center;">${idx+1}</td><td style="padding:8px; color:#0F172A;"><b>${i.name}</b>${descStr}</td><td style="padding:8px; text-align:center;">${i.qty}</td>${rateCols}</tr>`;
+            }).join("");
+            
+            let rateHeaders = isRent ? `<th style="padding:8px; text-align:right;">Rate</th><th style="padding:8px; text-align:right;">Amount</th>` : '';
+            let totalSummary = isRent ? `<div style="text-align:right; margin-top:15px; font-size:16px; font-weight:900; color:var(--accent-color);">Total Value: ₹${totalAmount}</div>` : '';
+
+            // Body HTML for Preview Modal
+            document.getElementById('order_print_area').innerHTML = `
+                <div style="display:flex; justify-content:space-between; border-bottom:2px solid #E2E8F0; padding-bottom:10px; margin-bottom:15px;">
+                    <div>
+                        <div style="font-size:11px; color:#64748B; font-weight:bold; text-transform:uppercase;">Reservation / Order</div>
+                        <div style="font-size:18px; font-weight:900; color:#0F172A;">#${o.id}</div>
+                    </div>
+                    <div style="text-align:right; font-size:12px;">
+                        <div>Date: <b>${new Date(o.date).toLocaleDateString('en-IN')}</b></div>
+                        <div style="color:var(--danger); margin-top:2px;">Dispatch: <b>${new Date(o.dispatchDate).toLocaleDateString('en-IN')}</b></div>
+                    </div>
+                </div>
+                
+                <div style="background:#F8FAFC; padding:12px; border-radius:8px; border:1px solid #E2E8F0; margin-bottom:15px;">
+                    <div style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:bold; margin-bottom:2px;">Client / Event</div>
+                    <div style="font-weight:800; color:#0F172A; font-size:14px;">${lead.name}</div>
+                    <div style="color:#475569; font-size:12px;">Type: ${lead.func}</div>
+                </div>
+                
+                <table style="width:100%; border-collapse:collapse; font-size:12px; border:1px solid #CBD5E1; text-align:left;">
+                    <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                        <th style="padding:8px; width:30px; text-align:center;">#</th>
+                        <th style="padding:8px;">Item Description</th>
+                        <th style="padding:8px; width:50px; text-align:center;">Qty</th>
+                        ${rateHeaders}
+                    </tr>
+                    ${rowsHtml}
+                </table>
+                
+                ${totalSummary}
+
+                ${o.notes ? `<div style="margin-top:20px; font-size:11px; color:#475569; background:#FFFBEB; padding:10px; border-radius:6px; border:1px solid #FDE68A;"><b>Notes:</b> ${o.notes}</div>` : ''}
+            `;
+            
+            document.getElementById('orderPreviewModal').style.display = 'flex';
+            closeAllMenus();
+        };
+
+        // Custom A4 Print Theme matching UTSAVhq
+        window.printOrderDocument = function() {
+            let printContent = document.getElementById('order_print_area').innerHTML;
+            let cName = (typeof currentUser !== 'undefined' && currentUser.company) ? currentUser.company : "UTSAVhq ERP";
+            
+            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Order Document</title>
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; padding: 25px; color: #0f172a; margin:0;} 
+                .box { border: 1px solid #cbd5e1; padding: 30px; border-radius: 8px; max-width: 800px; margin: auto; position:relative; } 
+                .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; } 
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; text-align:left; border:1px solid #cbd5e1; } 
+                th { background: #f8fafc; font-weight: 800; padding: 12px; border: 1px solid #cbd5e1;} 
+                td { border: 1px solid #cbd5e1; padding: 12px; } 
+                @media print { #mobile-print-btn { display:none !important; } .box {border:none; padding:0;} }
+            </style></head><body>
+            <div class="box">
+                <div class="header">
+                    <h2 style="margin:0; font-size:26px;">${cName}</h2>
+                    <h3 style="margin:5px 0 0 0; color:#2563EB; text-transform:uppercase;">ORDER CONFIRMATION</h3>
+                </div>
+                ${printContent}
+                <div style="margin-top:40px; font-size:10px; color:#64748B; text-align:center;">This is a computer generated document.</div>
+            </div>
+            <div id="mobile-print-btn" style="text-align:center; margin-top:20px;">
+                <button onclick="window.print()" style="background:#0f172a; color:white; padding:12px 24px; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.1);">🖨️ Print Document</button>
+            </div>
+            <script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>`;
+            
+            let printWin = window.open('', '_blank'); 
+            if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
+        };
+
+        // 🚀 3. Add Item Row (Quotation / Challan Style)
+        window.addObItem = function() {
+            let container = document.getElementById('ob_items_container');
+            let rowId = 'ob_item_' + Date.now() + Math.floor(Math.random() * 100);
+            
+            let type = document.getElementById('ob_type').value;
+            let displayRate = (type === 'Rent') ? 'block' : 'none';
+
+            let rowHtml = `
+            <div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;">
+                <button type="button" onclick="document.getElementById('${rowId}').remove();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button>
+                <div style="display: flex; gap: 8px; align-items: flex-end; width:100%;">
+                    <div style="flex: 2;">
+                        <label class="form-label" style="margin:0 0 2px 0;">Item/Service</label>
+                        <input type="text" class="form-input i-item-name" placeholder="Name" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label" style="margin:0 0 2px 0;">Qty</label>
+                        <input type="number" class="form-input i-item-qty" value="1" min="1" required>
+                    </div>
+                    <div class="ob-rate-col" style="flex: 1.5; display:${displayRate};">
+                        <label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label>
+                        <input type="number" class="form-input i-item-rate" placeholder="Rate">
+                    </div>
+                </div>
+                <div>
+                    <input type="text" class="form-input i-item-desc" placeholder="Item description / notes (Optional)" style="font-size:11px; background:white; padding:6px 10px;">
+                </div>
+            </div>`;
+            container.insertAdjacentHTML('beforeend', rowHtml);
         };
 
         window.addOrderBookItemRow = function(name = "", qty = 1, rate = "") {
@@ -19162,10 +19284,11 @@
 
             let items = [];
             document.querySelectorAll('#ob_items_container > div').forEach(row => {
-                let n = row.querySelector('.ob-row-name').value;
-                let q = parseInt(row.querySelector('.ob-row-qty').value) || 0;
-                let r = parseFloat(row.querySelector('.ob-row-rate').value) || 0;
-                if(n && q > 0) items.push({ name: n, qty: q, rate: r });
+                let n = row.querySelector('.i-item-name').value; // Changed to .i-item-name
+                let q = parseInt(row.querySelector('.i-item-qty').value) || 0; // Changed
+                let r = parseFloat(row.querySelector('.i-item-rate').value) || 0; // Changed
+                let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : '';
+                if(n && q > 0) items.push({ name: n, qty: q, rate: r, desc: desc });
             });
 
             if(items.length === 0) return alert("Add at least 1 equipment item!");
@@ -19205,61 +19328,6 @@
             document.getElementById('orderBookModal').style.display = 'none';
             window.renderHubOrderBookList();
             window.renderHubCalendarGrid(); 
-        };
-
-        // 🖨️ PROFESSIONAL PRINT PREVIEW
-        window.previewOrderDocument = function(id) {
-            let o = orderBookDB[id];
-            let isRent = o.orderType === 'Rent';
-            let partyName = isRent ? (partiesDB[o.partyId] ? partiesDB[o.partyId].name : 'Unknown Party') : '';
-            let lead = (!isRent && typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: partyName, phone: '', func: 'Rental Order' };
-            
-            let totalAmount = 0;
-            let rows = o.items.map((i, idx) => {
-                let lineTotal = (i.qty * (i.rate || 0));
-                totalAmount += lineTotal;
-                let rateHtml = isRent ? `<td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:right;">₹${i.rate || 0}</td><td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:right; font-weight:bold;">₹${lineTotal}</td>` : '';
-                return `<tr><td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:center;">${idx+1}</td><td style="padding:10px; border-bottom:1px solid #E2E8F0; color:#0F172A;">${i.name}</td><td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:center;">${i.qty}</td>${rateHtml}</tr>`;
-            }).join("");
-            
-            let rateHeaders = isRent ? `<th style="padding:10px; text-align:right;">Rate</th><th style="padding:10px; text-align:right;">Amount</th>` : '';
-            let totalSummary = isRent ? `<div style="text-align:right; margin-top:15px; font-size:16px; font-weight:900; color:#0F172A;">Total Order Value: ₹${totalAmount}</div>` : '';
-
-            document.getElementById('order_print_area').innerHTML = `
-                <div style="border-bottom:2px solid #1E293B; padding-bottom:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-end;">
-                    <div>
-                        <h2 style="margin:0 0 5px 0; font-size:22px; color:#1E293B; text-transform:uppercase;">ORDER CONFIRMATION</h2>
-                        <div style="font-size:13px; color:#64748B;">Ref No: <b>${o.id}</b></div>
-                    </div>
-                    <div style="text-align:right; font-size:13px;">
-                        <div style="color:#64748B;">Date: <b>${new Date(o.date).toLocaleDateString('en-IN')}</b></div>
-                        <div style="color:#64748B; margin-top:3px;">Dispatch: <b style="color:#0F172A;">${new Date(o.dispatchDate).toLocaleDateString('en-IN')}</b></div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom:25px; font-size:14px;">
-                    <div style="font-size:11px; color:#64748B; text-transform:uppercase; font-weight:bold; margin-bottom:4px;">Billed To / Event Details</div>
-                    <div style="font-weight:800; color:#0F172A; font-size:16px;">${lead.name}</div>
-                    <div style="color:#475569; margin-top:2px;">Type: ${lead.func}</div>
-                </div>
-                
-                <table style="width:100%; text-align:left; border-collapse:collapse; font-size:13px; border:1px solid #CBD5E1;">
-                    <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
-                        <th style="padding:10px; width:40px; text-align:center;">#</th>
-                        <th style="padding:10px;">Item Description</th>
-                        <th style="padding:10px; width:60px; text-align:center;">Qty</th>
-                        ${rateHeaders}
-                    </tr>
-                    ${rows}
-                </table>
-                
-                ${totalSummary}
-
-                <div style="margin-top:30px; font-size:12px; color:#475569;">
-                    <b style="color:#0F172A;">Terms / Notes:</b><br>
-                    ${o.notes ? o.notes.replace(/\n/g, '<br>') : 'No specific terms provided.'}
-                </div>`;
-            document.getElementById('orderPreviewModal').style.display = 'flex';
         };
         
         // CALENDAR SYNC FIX (Uses Dispatch Date instead of Creation Date)
@@ -19367,15 +19435,7 @@
             if(typeof window.openTransactionModal === 'function') window.openTransactionModal('sales');
             window.renderHubOrderBookList();
         };
-
         
-
-        window.printOrderDocument = function() {
-            let win = window.open('','','height=600,width=800');
-            win.document.write('<html><body style="font-family:sans-serif; padding:20px;">' + document.getElementById('order_print_area').innerHTML + '</body></html>');
-            win.document.close(); setTimeout(() => win.print(), 300);
-        };
-
         window.whatsappOrder = function(id) {
             let o = orderBookDB[id];
             let lead = (typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: 'Client', phone: '' };
