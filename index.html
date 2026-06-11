@@ -3846,62 +3846,120 @@
             </div>
         </div>
 
-            <!-- 🚀 VIEW 1: STOCK MOVEMENT (OLD INVENTORY LIST) -->
-            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease;">
-                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
-                    <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
-                        <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
-                        <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
-                    </div>
-                    <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
-                        <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
-                        <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
-                    </div>
-                </div>
+        <div class="premium-sticky-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button id="ih_header_back" onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <h2 id="ih_header_title" class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
+            </div>
+            <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;"></div>
+        </div>
 
-                <div class="premium-sticky-filters" style="top: 110px;">
-                    <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
-                        <div style="flex:1; min-width:100px;">
-                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
-                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
-                        </div>
-                        <div style="flex:1; min-width:100px;">
-                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
-                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
-                        </div>
-                        <div style="display:flex; gap:8px; flex:1; min-width:120px;">
-                            <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
-                            <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
-                        </div>
-                    </div>
-
-                    <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
-
-                    <div class="search-container" style="margin-bottom:0;">
-                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+        <div id="inv-menu-view" style="display:block; animation: fadeIn 0.4s ease;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div class="premium-grid-card grad-blue card-wide" onclick="window.openInvView('orderbook', 'Order Book')">
+                    <div class="bg-icon">📋</div>
+                    <div class="quick-add-btn" onclick="event.stopPropagation(); window.openOrderBookModal();" title="New Order">+</div>
+                    <div>
+                        <div class="card-title">Order Book</div>
+                        <div class="card-sub">Upcoming Equipment Reservations</div>
                     </div>
                 </div>
 
-                <div id="inventory-list-container"></div>
-                <div id="inv_movement_fabs" style="position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 5000; width: 90%; max-width: 380px; display: none;">
-                    <button class="btn-main" style="flex: 1; border-radius: 30px; font-size:13px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); background: linear-gradient(135deg, #06B6D4, #164E63);" onclick="window.openOutwardChallanModal()">🚚 Outward</button>
-                    <button class="btn-main" style="flex: 1; border-radius: 30px; font-size:13px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); background: linear-gradient(135deg, #3B82F6, #1E3A8A);" onclick="window.openRentInvoice()">📄 Rent Invoice</button>
+                <div class="premium-grid-card grad-teal" onclick="window.openInvView('movement', 'Stock Movement')">
+                    <div class="bg-icon">🚚</div>
+                    <div class="quick-add-btn" onclick="event.stopPropagation(); window.openOutwardChallanModal();" title="Outward Material">+</div>
+                    <div>
+                        <div class="card-title">Stock Movement</div>
+                        <div class="card-sub">Challans & Returns</div>
+                    </div>
+                </div>
+
+                <div class="premium-grid-card grad-purple" onclick="window.openInvView('master', 'Stock Master')">
+                    <div class="bg-icon">📦</div>
+                    <div class="quick-add-btn" onclick="event.stopPropagation(); window.openItemMasterModal();" title="Add Item">+</div>
+                    <div>
+                        <div class="card-title">Stock Master</div>
+                        <div class="card-sub">Items & Live Godowns</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 🚀 VIEW 2: STOCK MASTER (NEW ITEM LEDGER CENTER) -->
-            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease;">
-                <div class="premium-sticky-filters" style="top: 110px;">
-                    <div class="search-container" style="margin-bottom:0;">
-                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
+            <div style="background: white; border-radius: 14px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 6px 15px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0; font-size:16px; color:var(--text-primary); font-weight:800;">🗓️ Booking Calendar</h3>
+                    <div style="display:flex; align-items:center; background:#F8FAFC; border-radius:8px; border:1px solid #E2E8F0; padding:2px;">
+                        <button onclick="changeHubCalendar(-1)" style="padding:6px 12px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer;">◀</button>
+                        <span id="hub_cal_month" style="font-weight:900; font-size:12px; min-width:85px; text-align:center; color:var(--accent-color);"></span>
+                        <button onclick="changeHubCalendar(1)" style="padding:6px 12px; border-radius:6px; border:none; background:transparent; font-weight:bold; cursor:pointer;">▶</button>
                     </div>
                 </div>
-                
-                <div id="item-master-list-container"></div>
-                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
+                <div id="hub_cal_grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px;"></div>
+                <div id="hub_cal_details" style="margin-top:15px; display:none; padding:12px; background:#EFF6FF; border-radius:8px; border:1px dashed #BFDBFE;"></div>
             </div>
+        </div>
+
+        <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+            <div class="premium-sticky-filters" style="top: 56px;">
+                <div class="search-container" style="margin-bottom:0;">
+                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client name or event..." oninput="window.renderHubOrderBookList()">
+                </div>
+            </div>
+            <div id="orderbook-list-container"></div>
+        </div>
+
+        <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+            <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
+                <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
+                    <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
+                    <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
+                </div>
+                <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
+                    <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
+                    <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
+                </div>
+            </div>
+            <div class="premium-sticky-filters" style="top: 56px;">
+                <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                    <div style="flex:1; min-width:100px;">
+                        <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
+                        <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                    </div>
+                    <div style="flex:1; min-width:100px;">
+                        <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
+                        <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                    </div>
+                    <div style="display:flex; gap:8px; flex:1; min-width:120px;">
+                        <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
+                        <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                    </div>
+                </div>
+                <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
+                <div class="search-container" style="margin-bottom:0;">
+                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+                </div>
+            </div>
+            <div id="inventory-list-container"></div>
+        </div>
+
+        <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
+            <div class="premium-sticky-filters" style="top: 56px;">
+                <div class="search-container" style="margin-bottom:0;">
+                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
+                </div>
+            </div>
+            <div id="item-master-list-container"></div>
+        </div>
+
+        <button id="inv_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px;" onclick="">➕ Action</button>
+        <div id="inv_dual_fabs" class="dual-fab-container" style="display:none; bottom:25px;">
+            <button id="inv_btn_1" class="dual-fab-btn"></button>
+            <button id="inv_btn_2" class="dual-fab-btn"></button>
         </div>
 
         <div id="outwardChallanModal" class="modal-overlay" style="z-index: 10500;">
@@ -18253,36 +18311,48 @@
             }
         };
         // ==============================================================
-        // 🚀 MASTER INVENTORY HUB NAVIGATION & UI ENGINE
+        // 🚀 MASTER INVENTORY HUB NAVIGATION (SALES HUB STYLE)
         // ==============================================================
-        
         window.openInvView = function(view, title) {
             document.getElementById('ih_header_title').innerText = title;
             document.getElementById('ih_header_back').onclick = window.closeInvView;
             
-            // Hide Main Dash & Calendar
-            document.getElementById('inv-dashboard-cards').style.display = 'none';
-            let calWrapper = document.getElementById('hub_cal_wrapper');
-            if(calWrapper) calWrapper.style.display = 'none'; 
+            // 🚀 MENU KO HIDE KARO
+            document.getElementById('inv-menu-view').style.display = 'none';
 
+            let pillBtn = document.getElementById('inv_dynamic_pill');
             let dualFabs = document.getElementById('inv_dual_fabs');
             let btn1 = document.getElementById('inv_btn_1');
             let btn2 = document.getElementById('inv_btn_2');
 
-            // 1. Reset all views
+            // Pehle sab chhupao
             document.getElementById('inv-movement-view').style.display = 'none';
             document.getElementById('inv-master-view').style.display = 'none';
             document.getElementById('inv-orderbook-view').style.display = 'none';
-            document.getElementById('ih_list_actions').innerHTML = ``;
+            pillBtn.style.setProperty('display', 'none', 'important');
+            dualFabs.style.setProperty('display', 'none', 'important');
+            
+            let listActions = document.getElementById('ih_list_actions');
+            listActions.innerHTML = ``;
 
-            if (view === 'movement') {
+            if (view === 'orderbook') {
+                document.getElementById('inv-orderbook-view').style.display = 'block';
+                
+                pillBtn.innerHTML = '➕ New Order';
+                pillBtn.style.background = 'linear-gradient(135deg, #1E293B, #0F172A)';
+                pillBtn.onclick = function() { window.openOrderBookModal(); };
+                pillBtn.style.setProperty('display', 'flex', 'important');
+                
+                window.renderHubOrderBookList();
+            } 
+            else if (view === 'movement') {
                 document.getElementById('inv-movement-view').style.display = 'block';
-                if(dualFabs) {
-                    dualFabs.style.display = 'flex';
-                    btn1.innerHTML = '🚚 Outward'; btn1.onclick = window.openOutwardChallanModal; btn1.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
-                    btn2.innerHTML = '📄 Rent Invoice'; btn2.onclick = window.openRentInvoice; btn2.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
-                }
-                document.getElementById('ih_list_actions').innerHTML = `
+                
+                dualFabs.style.setProperty('display', 'flex', 'important');
+                btn1.innerHTML = '🚚 Outward'; btn1.onclick = window.openOutwardChallanModal; btn1.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
+                btn2.innerHTML = '📄 Rent Invoice'; btn2.onclick = window.openRentInvoice; btn2.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
+                
+                listActions.innerHTML = `
                     <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
                     <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printLogisticsList()" title="Print List">🖨️</button>
                 `;
@@ -18290,32 +18360,23 @@
             } 
             else if (view === 'master') {
                 document.getElementById('inv-master-view').style.display = 'block';
-                if(dualFabs) {
-                    dualFabs.style.display = 'flex';
-                    btn1.innerHTML = '➕ Add Stock'; btn1.onclick = window.openDirectStockModal; btn1.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
-                    btn2.innerHTML = '⚖️ Audit Stock'; btn2.onclick = window.openStockAuditModal; btn2.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
-                }
-                document.getElementById('ih_list_actions').innerHTML = `
+                
+                pillBtn.innerHTML = '➕ Add Stock';
+                pillBtn.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
+                pillBtn.onclick = function() { window.openDirectStockModal(); };
+                pillBtn.style.setProperty('display', 'flex', 'important');
+                
+                listActions.innerHTML = `
                     <button class="btn-icon" style="background:#FEF3C7; color:#D97706; border:1px solid #FDE68A; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.openStockTransferModal()" title="Stock Transfer">🔄</button>
                     <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.printStockMaster()" title="Print Stock">🖨️</button>
                     <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex'; window.renderGodownList();" title="Manage Godowns">🏭</button>
                 `;
                 window.renderItemMasterList();
-            } 
-            else if (view === 'orderbook') {
-                // NAYA ORDER BOOK VIEW
-                document.getElementById('inv-orderbook-view').style.display = 'block';
-                if(dualFabs) dualFabs.style.display = 'none'; // Order book uses its own floating pill
-                
-                let obPill = document.getElementById('ob_dynamic_pill');
-                if(obPill) obPill.style.setProperty('display', 'flex', 'important');
-
-                window.renderHubOrderBookList();
             }
+
+            listActions.style.display = 'flex';
             
-            document.getElementById('ih_list_actions').style.display = 'flex';
-            
-            // App Layout Adjustments
+            // Hide Bottom Nav
             let navBar = document.querySelector('.nav-bar');
             if (navBar) navBar.style.setProperty('display', 'none', 'important');
             let mainFab = document.getElementById('main-fab-container');
@@ -18327,23 +18388,21 @@
             document.getElementById('ih_header_back').onclick = function () { openTab('erp', document.getElementById('btn-erp')); };
             document.getElementById('ih_list_actions').style.display = 'none';
             
-            // Show main cards & calendar again
-            document.getElementById('inv-dashboard-cards').style.display = 'grid';
-            let calWrapper = document.getElementById('hub_cal_wrapper');
-            if(calWrapper) calWrapper.style.display = 'block';
+            // 🚀 WAPAS MENU KO DIKHAO
+            document.getElementById('inv-menu-view').style.display = 'block';
             
-            // Hide all sub-views
+            // Sab views ko hide karo
+            document.getElementById('inv-orderbook-view').style.display = 'none';
             document.getElementById('inv-movement-view').style.display = 'none';
             document.getElementById('inv-master-view').style.display = 'none';
-            document.getElementById('inv-orderbook-view').style.display = 'none';
+            
+            let pillBtn = document.getElementById('inv_dynamic_pill');
+            if(pillBtn) pillBtn.style.setProperty('display', 'none', 'important');
             
             let dualFabs = document.getElementById('inv_dual_fabs');
-            if (dualFabs) dualFabs.style.display = 'none';
+            if(dualFabs) dualFabs.style.setProperty('display', 'none', 'important');
             
-            let obPill = document.getElementById('ob_dynamic_pill');
-            if(obPill) obPill.style.setProperty('display', 'none', 'important');
-            
-            // Restore Main Navs
+            // Restore Bottom Nav
             let navBar = document.querySelector('.nav-bar');
             if (navBar) navBar.style.setProperty('display', 'flex', 'important');
             let mainFab = document.getElementById('main-fab-container');
