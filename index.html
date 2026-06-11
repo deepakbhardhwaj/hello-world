@@ -18977,18 +18977,27 @@
         };
 
         window.selectHubCalDate = function(dStr, el) {
+            // 1. Saare dates se purana highlight hatao
             document.querySelectorAll('#hub_cal_grid > div').forEach(d => {
                 if(!d.classList.contains('faded') && d.innerText) {
-                    d.style.border = "1px solid transparent";
-                    d.style.background = "transparent";
+                    // Agar wo "Aaj" (Today) hai, toh usko uske original color me rakho
+                    if (d.classList.contains('today')) {
+                        d.style.background = "var(--accent-color)";
+                        d.style.border = "1px solid transparent";
+                    } else {
+                        d.style.background = "transparent";
+                        d.style.border = "1px solid transparent";
+                    }
                 }
             });
-            window.renderHubCalendarGrid(); 
 
+            // 2. Jis par click kiya hai, usko premium highlight karo
             if(el) {
                 el.style.border = "2px solid var(--accent-color)";
                 el.style.background = "#EFF6FF";
             }
+            
+            // 3. Details show karo
             window.showHubCalDetails(dStr);
         };
 
