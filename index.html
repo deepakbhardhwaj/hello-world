@@ -19089,9 +19089,8 @@
             if(visibleCount === 0) container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found.</div>`;
         };
 
-        // 🚀 EMPTY ITEM ROW FIX
+        // 🚀 BUG FIX: Removed ensureOrderBookModalsExist() call
         window.openOrderBookModal = function(id = null) {
-            window.ensureOrderBookModalsExist();
             window.editingOrderId = id;
             
             let leadSel = document.getElementById('ob_lead_select');
@@ -19132,7 +19131,7 @@
             } else { 
                 document.getElementById('ob-modal-title').innerText = "Create Reservation";
                 window.toggleObType();
-                // 🛑 NO addOrderBookItemRow() HERE! Isliye blank box nahi aayega!
+                // 🛑 No Auto-Row Added here, user will use "Fetch Stock" or "+ Add Item"
             }
             document.getElementById('orderBookModal').style.display = 'flex';
         };
