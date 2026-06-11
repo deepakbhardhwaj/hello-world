@@ -19770,6 +19770,14 @@
             let printWin = window.open('', '_blank');
             if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
         };
+        // 🚀 MASTER MODAL LAYERING FIX (FORCES ALL PREVIEWS ON TOP)
+        let zIndexFix = document.createElement('style');
+        zIndexFix.innerHTML = `
+            #quoteViewModal { z-index: 12000 !important; }
+            #logPreviewModal { z-index: 12000 !important; }
+            #orderPreviewModal { z-index: 12000 !important; }
+        `;
+        document.head.appendChild(zIndexFix);
     </script>
 </body>
 
