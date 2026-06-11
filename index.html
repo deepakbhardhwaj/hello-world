@@ -3898,7 +3898,7 @@
                 <div id="hub_cal_details" style="margin-top:15px; display:none; padding:12px; background:#EFF6FF; border-radius:8px; border:1px solid #BFDBFE;"></div>
             </div>
 
-            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease;">
+            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
                 <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
                     <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
                         <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
@@ -3937,19 +3937,18 @@
                 <div id="inventory-list-container"></div>
                 </div>
 
-            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease;">
+            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
                 <div class="premium-sticky-filters" style="top: 110px;">
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
                     </div>
                 </div>
-                
                 <div id="item-master-list-container"></div>
-                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
+                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95); bottom:45px !important;" onclick="window.openItemMasterModal()">➕ Add New Item</button>
             </div>
 
-            <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:60px;">
+            <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:100px;">
                 <div class="premium-sticky-filters" style="top: 110px;">
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -3958,43 +3957,9 @@
                 </div>
                 
                 <div id="orderbook-list-container"></div>
-                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openOrderBookModal()">➕ New Order</button>
+                <button class="pill-floating-btn" id="ob_dynamic_pill" style="background: linear-gradient(135deg, #1E293B, #0F172A); bottom:45px !important; display:none;" onclick="window.openOrderBookModal()">➕ New Order</button>
             </div>
 
-<div id="orderBookModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:15000; justify-content:center; align-items:center; backdrop-filter: blur(2px);">
-    <div style="background:white; width:92%; max-width:450px; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height:85vh; overflow-y:auto;">
-        <h3 style="margin:0 0 15px 0; color:#0F172A; border-bottom:1px solid #E2E8F0; padding-bottom:10px;">📋 Equipment Reservation</h3>
-        <form id="orderBookForm">
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Client / Event</label>
-            <select id="ob_lead_select" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #CBD5E1; font-size:13px;"></select>
-            
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Reservation Date</label>
-            <input type="date" id="ob_date" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #CBD5E1; font-size:13px; box-sizing:border-box;">
-            
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Items Required</label>
-            <div id="ob_items_container" style="margin-bottom:10px;"></div>
-            <button type="button" onclick="addOrderBookItemRow()" style="width:100%; background:#F8FAFC; color:#3B82F6; font-weight:800; border:1px dashed #93C5FD; padding:10px; border-radius:8px; margin-bottom:20px; cursor:pointer;">+ Add Item</button>
-            
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Notes</label>
-            <textarea id="ob_notes" placeholder="Any special instructions?" style="width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #CBD5E1; box-sizing:border-box; font-family:inherit; font-size:13px;"></textarea>
-            
-            <div style="display:flex; gap:12px;">
-                <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="flex:1; background:#F1F5F9; color:#475569; padding:12px; border-radius:8px; border:none; font-weight:800; cursor:pointer;">Cancel</button>
-                <button type="button" onclick="saveOrderBookEntry()" style="flex:1; background:#3B82F6; color:white; padding:12px; border-radius:8px; border:none; font-weight:800; cursor:pointer;">Save Order</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="orderPreviewModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:15000; justify-content:center; align-items:center;">
-    <div style="background:white; width:95%; max-width:600px; padding:20px; border-radius:12px; max-height:90vh; overflow-y:auto;">
-        <div id="order_print_area" style="padding:15px; border:1px solid #E2E8F0; margin-bottom:20px;"></div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="document.getElementById('orderPreviewModal').style.display='none'" style="flex:1; padding:12px; background:#F1F5F9; border:none; border-radius:8px; font-weight:bold;">Close</button>
-            <button onclick="printOrderDocument()" style="flex:1; padding:12px; background:#10B981; color:white; border:none; border-radius:8px; font-weight:bold;">🖨️ Print Document</button>
-        </div>
-    </div>
-</div>
             <!-- 🚀 VIEW 1: STOCK MOVEMENT (OLD INVENTORY LIST) -->
             <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease;">
                 <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
@@ -18402,26 +18367,26 @@
             }
         };
         // ==============================================================
-        // 🚀 MASTER INVENTORY HUB NAVIGATION (FIXED UI & CRASHES)
+        // 🚀 MASTER INVENTORY HUB NAVIGATION & UI ENGINE
         // ==============================================================
+        
         window.openInvView = function(view, title) {
             document.getElementById('ih_header_title').innerText = title;
             document.getElementById('ih_header_back').onclick = window.closeInvView;
-            document.getElementById('inv-dashboard-cards').style.display = 'none';
             
+            // Hide Main Dash & Calendar
+            document.getElementById('inv-dashboard-cards').style.display = 'none';
             let calWrapper = document.getElementById('hub_cal_wrapper');
-            if(calWrapper) calWrapper.style.display = 'none'; // List khulte hi calendar chhupega
+            if(calWrapper) calWrapper.style.display = 'none'; 
 
             let dualFabs = document.getElementById('inv_dual_fabs');
             let btn1 = document.getElementById('inv_btn_1');
             let btn2 = document.getElementById('inv_btn_2');
 
-            // Sab views ko hide karo
+            // 1. Reset all views
             document.getElementById('inv-movement-view').style.display = 'none';
             document.getElementById('inv-master-view').style.display = 'none';
-            let obView = document.getElementById('inv-orderbook-view');
-            if(obView) obView.style.display = 'none';
-            
+            document.getElementById('inv-orderbook-view').style.display = 'none';
             document.getElementById('ih_list_actions').innerHTML = ``;
 
             if (view === 'movement') {
@@ -18450,19 +18415,21 @@
                     <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex'; window.renderGodownList();" title="Manage Godowns">🏭</button>
                 `;
                 window.renderItemMasterList();
-            }
+            } 
             else if (view === 'orderbook') {
-                // NAYA ORDER BOOK VIEW 🚀
-                if(obView) obView.style.display = 'block';
-                if(dualFabs) dualFabs.style.display = 'none'; 
+                // NAYA ORDER BOOK VIEW
+                document.getElementById('inv-orderbook-view').style.display = 'block';
+                if(dualFabs) dualFabs.style.display = 'none'; // Order book uses its own floating pill
                 
-                let obPill = document.querySelector('#inv-orderbook-view .pill-floating-btn');
+                let obPill = document.getElementById('ob_dynamic_pill');
                 if(obPill) obPill.style.setProperty('display', 'flex', 'important');
-                
+
                 window.renderHubOrderBookList();
             }
-
+            
             document.getElementById('ih_list_actions').style.display = 'flex';
+            
+            // App Layout Adjustments
             let navBar = document.querySelector('.nav-bar');
             if (navBar) navBar.style.setProperty('display', 'none', 'important');
             let mainFab = document.getElementById('main-fab-container');
@@ -18482,13 +18449,12 @@
             // Hide all sub-views
             document.getElementById('inv-movement-view').style.display = 'none';
             document.getElementById('inv-master-view').style.display = 'none';
-            let obView = document.getElementById('inv-orderbook-view');
-            if(obView) obView.style.display = 'none';
+            document.getElementById('inv-orderbook-view').style.display = 'none';
             
             let dualFabs = document.getElementById('inv_dual_fabs');
             if (dualFabs) dualFabs.style.display = 'none';
             
-            let obPill = document.querySelector('#inv-orderbook-view .pill-floating-btn');
+            let obPill = document.getElementById('ob_dynamic_pill');
             if(obPill) obPill.style.setProperty('display', 'none', 'important');
             
             // Restore Main Navs
@@ -18496,6 +18462,284 @@
             if (navBar) navBar.style.setProperty('display', 'flex', 'important');
             let mainFab = document.getElementById('main-fab-container');
             if (mainFab) mainFab.style.setProperty('display', 'flex', 'important');
+        };
+
+        // 📋 ORDER BOOK LIST (Fixed "Invalid" Date & Beautiful Clean Layout)
+        window.renderHubOrderBookList = function() {
+            let container = document.getElementById('orderbook-list-container');
+            if(!container) return;
+
+            let searchBox = document.getElementById('inv_ob_search');
+            let term = searchBox ? searchBox.value.toLowerCase() : "";
+
+            let orders = Object.values(window.orderBookDB || {}).sort((a,b) => new Date(a.date) - new Date(b.date));
+            container.innerHTML = "";
+
+            let visibleCount = 0;
+
+            orders.forEach(o => {
+                let lead = (typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: 'Unknown', func: 'Event' };
+                
+                // 🚀 BUG FIX: Safe Date Parsing (No "Invalid Date" anymore)
+                let dateStr = "TBD";
+                if(o.date) {
+                    let d = new Date(o.date);
+                    if(!isNaN(d.getTime())) {
+                        dateStr = d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+                    } else {
+                        dateStr = o.date;
+                    }
+                }
+                
+                // Search Logic
+                if (term && !lead.name.toLowerCase().includes(term) && !lead.func.toLowerCase().includes(term) && !o.id.toLowerCase().includes(term)) {
+                    return;
+                }
+                
+                visibleCount++;
+
+                let itemsCount = o.items ? o.items.length : 0;
+                
+                let badgeStyle = '';
+                if(o.status === 'Invoiced') badgeStyle = `background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;`;
+                else if(o.status === 'Dispatched') badgeStyle = `background:#FEF3C7; color:#D97706; border:1px solid #FDE68A;`;
+                else badgeStyle = `background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;`;
+                
+                let statusBadge = `<span style="padding:4px 8px; border-radius:6px; font-size:9px; font-weight:900; text-transform:uppercase; ${badgeStyle}">${o.status || 'Reserved'}</span>`;
+
+                container.innerHTML += `
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 5px solid #1E293B; background:white; padding:15px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); box-sizing:border-box;">
+                    <div style="flex-grow:1;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                            <span style="font-family:monospace; font-size:12px; font-weight:900; color:#475569;">${o.id}</span>
+                            <span style="font-size:11px; font-weight:700; color:#64748B;">• ${dateStr}</span>
+                            ${statusBadge}
+                        </div>
+                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:2px;">${lead.name}</div>
+                        <div style="font-size:12px; color:#64748B; font-weight:600;">${lead.func} • <span style="color:#1E293B;">Items: ${itemsCount}</span></div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                        <div class="dropdown-container">
+                            <button class="btn-icon" style="padding:6px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; color:#475569;" onclick="toggleMenu('ob-${o.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-ob-${o.id}">
+                                <div class="dropdown-item text-green" onclick="convertObToOutward('${o.id}')">🚚 Convert to Outward</div>
+                                <div class="dropdown-item text-green" onclick="convertObToInvoice('${o.id}')">🧾 Convert to Rent Bill</div>
+                                <div style="border-top:1px solid #E2E8F0; margin: 4px 0;"></div>
+                                <div class="dropdown-item" onclick="previewOrderDocument('${o.id}')">🖨️ Print Preview</div>
+                                <div class="dropdown-item" onclick="whatsappOrder('${o.id}')">💬 Send WhatsApp</div>
+                                <div class="dropdown-item" onclick="openOrderBookModal('${o.id}')">✏️ Edit Order</div>
+                                <div class="dropdown-item text-red" onclick="deleteOrderEntry('${o.id}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            if(visibleCount === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found in the Order Book. Godown is free! 🎉</div>`;
+            }
+        };
+
+        // Auto Refresh Fixes
+        let oldSaveOrderBookEntry = window.saveOrderBookEntry;
+        window.saveOrderBookEntry = function() {
+            if(oldSaveOrderBookEntry) oldSaveOrderBookEntry(); 
+            window.renderHubOrderBookList();
+            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid(); 
+        };
+        
+        let oldDeleteOrderEntry = window.deleteOrderEntry;
+        window.deleteOrderEntry = function(id) {
+            if(oldDeleteOrderEntry) oldDeleteOrderEntry(id);
+            window.renderHubOrderBookList();
+            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid();
+        };// ==============================================================
+        // 🚀 MASTER INVENTORY HUB NAVIGATION & UI ENGINE
+        // ==============================================================
+        
+        window.openInvView = function(view, title) {
+            document.getElementById('ih_header_title').innerText = title;
+            document.getElementById('ih_header_back').onclick = window.closeInvView;
+            
+            // Hide Main Dash & Calendar
+            document.getElementById('inv-dashboard-cards').style.display = 'none';
+            let calWrapper = document.getElementById('hub_cal_wrapper');
+            if(calWrapper) calWrapper.style.display = 'none'; 
+
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            let btn1 = document.getElementById('inv_btn_1');
+            let btn2 = document.getElementById('inv_btn_2');
+
+            // 1. Reset all views
+            document.getElementById('inv-movement-view').style.display = 'none';
+            document.getElementById('inv-master-view').style.display = 'none';
+            document.getElementById('inv-orderbook-view').style.display = 'none';
+            document.getElementById('ih_list_actions').innerHTML = ``;
+
+            if (view === 'movement') {
+                document.getElementById('inv-movement-view').style.display = 'block';
+                if(dualFabs) {
+                    dualFabs.style.display = 'flex';
+                    btn1.innerHTML = '🚚 Outward'; btn1.onclick = window.openOutwardChallanModal; btn1.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
+                    btn2.innerHTML = '📄 Rent Invoice'; btn2.onclick = window.openRentInvoice; btn2.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
+                }
+                document.getElementById('ih_list_actions').innerHTML = `
+                    <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
+                    <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printLogisticsList()" title="Print List">🖨️</button>
+                `;
+                window.renderInventoryHubList();
+            } 
+            else if (view === 'master') {
+                document.getElementById('inv-master-view').style.display = 'block';
+                if(dualFabs) {
+                    dualFabs.style.display = 'flex';
+                    btn1.innerHTML = '➕ Add Stock'; btn1.onclick = window.openDirectStockModal; btn1.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
+                    btn2.innerHTML = '⚖️ Audit Stock'; btn2.onclick = window.openStockAuditModal; btn2.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
+                }
+                document.getElementById('ih_list_actions').innerHTML = `
+                    <button class="btn-icon" style="background:#FEF3C7; color:#D97706; border:1px solid #FDE68A; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.openStockTransferModal()" title="Stock Transfer">🔄</button>
+                    <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.printStockMaster()" title="Print Stock">🖨️</button>
+                    <button class="btn-icon" style="background:#F1F5F9; color:#0F172A; border:1px solid #CBD5E1; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('godownModal').style.display='flex'; window.renderGodownList();" title="Manage Godowns">🏭</button>
+                `;
+                window.renderItemMasterList();
+            } 
+            else if (view === 'orderbook') {
+                // NAYA ORDER BOOK VIEW
+                document.getElementById('inv-orderbook-view').style.display = 'block';
+                if(dualFabs) dualFabs.style.display = 'none'; // Order book uses its own floating pill
+                
+                let obPill = document.getElementById('ob_dynamic_pill');
+                if(obPill) obPill.style.setProperty('display', 'flex', 'important');
+
+                window.renderHubOrderBookList();
+            }
+            
+            document.getElementById('ih_list_actions').style.display = 'flex';
+            
+            // App Layout Adjustments
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.setProperty('display', 'none', 'important');
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.setProperty('display', 'none', 'important');
+        };
+
+        window.closeInvView = function() {
+            document.getElementById('ih_header_title').innerText = "Logistics & Rentals";
+            document.getElementById('ih_header_back').onclick = function () { openTab('erp', document.getElementById('btn-erp')); };
+            document.getElementById('ih_list_actions').style.display = 'none';
+            
+            // Show main cards & calendar again
+            document.getElementById('inv-dashboard-cards').style.display = 'grid';
+            let calWrapper = document.getElementById('hub_cal_wrapper');
+            if(calWrapper) calWrapper.style.display = 'block';
+            
+            // Hide all sub-views
+            document.getElementById('inv-movement-view').style.display = 'none';
+            document.getElementById('inv-master-view').style.display = 'none';
+            document.getElementById('inv-orderbook-view').style.display = 'none';
+            
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            if (dualFabs) dualFabs.style.display = 'none';
+            
+            let obPill = document.getElementById('ob_dynamic_pill');
+            if(obPill) obPill.style.setProperty('display', 'none', 'important');
+            
+            // Restore Main Navs
+            let navBar = document.querySelector('.nav-bar');
+            if (navBar) navBar.style.setProperty('display', 'flex', 'important');
+            let mainFab = document.getElementById('main-fab-container');
+            if (mainFab) mainFab.style.setProperty('display', 'flex', 'important');
+        };
+
+        // 📋 ORDER BOOK LIST (Fixed "Invalid" Date & Beautiful Clean Layout)
+        window.renderHubOrderBookList = function() {
+            let container = document.getElementById('orderbook-list-container');
+            if(!container) return;
+
+            let searchBox = document.getElementById('inv_ob_search');
+            let term = searchBox ? searchBox.value.toLowerCase() : "";
+
+            let orders = Object.values(window.orderBookDB || {}).sort((a,b) => new Date(a.date) - new Date(b.date));
+            container.innerHTML = "";
+
+            let visibleCount = 0;
+
+            orders.forEach(o => {
+                let lead = (typeof leadsDB !== 'undefined' && leadsDB[o.leadId]) ? leadsDB[o.leadId] : { name: 'Unknown', func: 'Event' };
+                
+                // 🚀 BUG FIX: Safe Date Parsing (No "Invalid Date" anymore)
+                let dateStr = "TBD";
+                if(o.date) {
+                    let d = new Date(o.date);
+                    if(!isNaN(d.getTime())) {
+                        dateStr = d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+                    } else {
+                        dateStr = o.date;
+                    }
+                }
+                
+                // Search Logic
+                if (term && !lead.name.toLowerCase().includes(term) && !lead.func.toLowerCase().includes(term) && !o.id.toLowerCase().includes(term)) {
+                    return;
+                }
+                
+                visibleCount++;
+
+                let itemsCount = o.items ? o.items.length : 0;
+                
+                let badgeStyle = '';
+                if(o.status === 'Invoiced') badgeStyle = `background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;`;
+                else if(o.status === 'Dispatched') badgeStyle = `background:#FEF3C7; color:#D97706; border:1px solid #FDE68A;`;
+                else badgeStyle = `background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;`;
+                
+                let statusBadge = `<span style="padding:4px 8px; border-radius:6px; font-size:9px; font-weight:900; text-transform:uppercase; ${badgeStyle}">${o.status || 'Reserved'}</span>`;
+
+                container.innerHTML += `
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%; border-left: 5px solid #1E293B; background:white; padding:15px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); box-sizing:border-box;">
+                    <div style="flex-grow:1;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                            <span style="font-family:monospace; font-size:12px; font-weight:900; color:#475569;">${o.id}</span>
+                            <span style="font-size:11px; font-weight:700; color:#64748B;">• ${dateStr}</span>
+                            ${statusBadge}
+                        </div>
+                        <div style="font-size:15px; font-weight:900; color:var(--text-primary); margin-bottom:2px;">${lead.name}</div>
+                        <div style="font-size:12px; color:#64748B; font-weight:600;">${lead.func} • <span style="color:#1E293B;">Items: ${itemsCount}</span></div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                        <div class="dropdown-container">
+                            <button class="btn-icon" style="padding:6px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; color:#475569;" onclick="toggleMenu('ob-${o.id}', event)">⋮</button>
+                            <div class="dropdown-menu" id="menu-ob-${o.id}">
+                                <div class="dropdown-item text-green" onclick="convertObToOutward('${o.id}')">🚚 Convert to Outward</div>
+                                <div class="dropdown-item text-green" onclick="convertObToInvoice('${o.id}')">🧾 Convert to Rent Bill</div>
+                                <div style="border-top:1px solid #E2E8F0; margin: 4px 0;"></div>
+                                <div class="dropdown-item" onclick="previewOrderDocument('${o.id}')">🖨️ Print Preview</div>
+                                <div class="dropdown-item" onclick="whatsappOrder('${o.id}')">💬 Send WhatsApp</div>
+                                <div class="dropdown-item" onclick="openOrderBookModal('${o.id}')">✏️ Edit Order</div>
+                                <div class="dropdown-item text-red" onclick="deleteOrderEntry('${o.id}')">🗑️ Delete</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            if(visibleCount === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found in the Order Book. Godown is free! 🎉</div>`;
+            }
+        };
+
+        // Auto Refresh Fixes
+        let oldSaveOrderBookEntry = window.saveOrderBookEntry;
+        window.saveOrderBookEntry = function() {
+            if(oldSaveOrderBookEntry) oldSaveOrderBookEntry(); 
+            window.renderHubOrderBookList();
+            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid(); 
+        };
+        
+        let oldDeleteOrderEntry = window.deleteOrderEntry;
+        window.deleteOrderEntry = function(id) {
+            if(oldDeleteOrderEntry) oldDeleteOrderEntry(id);
+            window.renderHubOrderBookList();
+            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid();
         };
 
         // 3. Render Beautiful Master List
