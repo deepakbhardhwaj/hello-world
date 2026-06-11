@@ -4019,6 +4019,11 @@
                         <input type="text" class="select-search-box" placeholder="Search events..." oninput="loadEventsToLinkSelect('ob_lead_select', null, this.value)">
                         <select id="ob_lead_select" class="form-select" onchange="window.autoFillDispatchDate()"></select>
                     </div>
+                    
+                    <div class="form-group" id="ob_function_group" style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-top:10px;">
+                        <label class="form-label" style="color:var(--accent-color); margin-bottom:8px;">Select Functions for this Order</label>
+                        <div id="ob_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    </div>
 
                     <div class="form-group" id="ob_rent_sec" style="display:none;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -8805,18 +8810,23 @@
             }
         }
 
+        // ==============================================================
+        // 🚀 REPLACED: FULL UPDATED EVENT WORKSPACE (WITH LOGISTICS ENGINE)
+        // ==============================================================
         function renderWorkspace(id) {
-            // 🚀 SMART CRASH FIX: Hamesha ID yaad rakho!
             currentLeadId = id; 
             activeWorkspaceEventId = id;
             let ev = leadsDB[id]; 
-            if (!ev) return; // Safety lock
+            if (!ev) return; 
 
-            document.getElementById('p_name').innerText = ev.name; document.getElementById('p_phone').innerText = "+91 " + ev.phone;
+            document.getElementById('p_name').innerText = ev.name; 
+            document.getElementById('p_phone').innerText = "+91 " + ev.phone;
+            
             let formattedDate = ev.dates && ev.dates[0] ? new Date(ev.dates[0].date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
-            document.getElementById('p_category').innerText = (ev.func || 'Other').toUpperCase() + " • " + formattedDate;
             let evCode = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date);
+            
             document.getElementById('p_budget').innerHTML = `<span style="color:var(--text-primary); background:#E2E8F0; padding:4px 8px; border-radius:6px; font-size:12px; letter-spacing:1px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">#${evCode}</span>`;
+            
             let partyId = Object.keys(partiesDB).find(pid => String(partiesDB[pid].phone).trim() === String(ev.phone).trim() && partiesDB[pid].type === 'Customer');
             let ledgerBtnHtml = partyId ? `<button onclick="jumpToLedger('${partyId}')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; transition:0.2s;">📖 View Ledger</button>` : '';
 
@@ -8832,17 +8842,79 @@
                         <button onclick="createExpenseFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
                     </div>
                 </div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4><div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">✅ Event Tasks</h4><div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);"><div id="ws_tasks_list"></div><div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"><input type="text" id="ws_new_task" class="form-input" style="padding:10px 12px; font-size:13px;" placeholder="What needs to be done?"><div style="display:flex; gap:8px;"><select id="ws_task_assignee" class="form-select" style="flex:1; padding:8px 10px; font-size:12px;">${getStaffOptions("")}</select><input type="datetime-local" id="ws_task_deadline" class="form-input" style="padding:8px 10px; font-size:12px; flex:1;"></div><button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button></div></div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Reference Media</h4><div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);"><label class="upload-btn" style="padding:12px;">+ Upload Photos<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label><div class="thumb-grid" id="p_thumbnails"></div></div>
-                `;
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4>
+                <div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
+            `;
 
-            let wsFooterHtml = `<button class="btn-main" style="background:var(${ev.eventStatus === 'Completed' ? '--text-secondary' : '--success'}); display:flex; justify-content:center; align-items:center; gap:8px;" onclick="openFeedbackModal('${ev.id}')">${ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback'}</button>`;
+            // 🛠️ BLOCK 5 INJECTED HERE (Logistics & Reservations cards)
+            let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
+            let outList = Object.values(window.stockMovementDB || {}).filter(o => o.eventId === id && o.type === 'Outward');
+            
+            let logisticsHtml = `<h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🚚 Logistics & Reservations</h4>`;
+            
+            if(obList.length === 0 && outList.length === 0) {
+                logisticsHtml += `<div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">No reservations or dispatches yet.</div>`;
+            } else {
+                logisticsHtml += `<div style="display:flex; flex-direction:column; gap:10px;">`;
+                
+                obList.forEach(o => {
+                    logisticsHtml += `<div onclick="previewOrderDocument('${o.id}')" style="background:#F8FAFC; border:1px solid #CBD5E1; border-left:4px solid #3B82F6; padding:12px; border-radius:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                        <div><div style="font-size:11px; color:#64748B; font-weight:700;">Order Book</div><div style="font-size:14px; font-weight:900; color:#0F172A;">${o.id}</div></div>
+                        <div style="text-align:right;"><span class="status-badge" style="background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;">${o.status}</span></div>
+                    </div>`;
+                });
+                
+                outList.forEach(o => {
+                    logisticsHtml += `<div onclick="window.openLogisticsPreviewModal('${o.id}', 'Outward Challan')" style="background:#F8FAFC; border:1px solid #CBD5E1; border-left:4px solid #10B981; padding:12px; border-radius:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                        <div><div style="font-size:11px; color:#64748B; font-weight:700;">Outward Challan</div><div style="font-size:14px; font-weight:900; color:#0F172A;">${o.id}</div></div>
+                        <div style="text-align:right;"><span class="status-badge" style="background:#F0FDF4; color:#166534; border:1px solid #BBF7D0;">${o.status}</span></div>
+                    </div>`;
+                });
+                logisticsHtml += `</div>`;
+            }
+            wsBodyHtml += logisticsHtml; // Add to Dashboard body
 
-            document.getElementById('detailPanelBody').innerHTML = wsBodyHtml; document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
-            let tCont = document.getElementById('ws_timeline'); let todayStr = new Date().toISOString().split('T')[0];
-            if (ev.dates && ev.dates.length > 0) { ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { let dStr = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); let isPast = d.date < todayStr; let icon = isPast ? "✅" : "⏳"; let color = isPast ? "var(--success)" : "var(--text-primary)"; tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${d.name}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr} ${d.time ? '| ' + d.time : ''}</span></div>`; }); } else { tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; }
-            renderEventTasks(ev); renderPhotos();
+            // Append Remaining Sections (Tasks & Media)
+            wsBodyHtml += `
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">✅ Event Tasks</h4>
+                <div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);">
+                    <div id="ws_tasks_list"></div>
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+                        <input type="text" id="ws_new_task" class="form-input" style="padding:10px 12px; font-size:13px;" placeholder="What needs to be done?">
+                        <div style="display:flex; gap:8px;">
+                            <select id="ws_task_assignee" class="form-select" style="flex:1; padding:8px 10px; font-size:12px;">\${getStaffOptions("")}</select>
+                            <input type="datetime-local" id="ws_task_deadline" class="form-input" style="padding:8px 10px; font-size:12px; flex:1;">
+                        </div>
+                        <button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button>
+                    </div>
+                </div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Reference Media</h4>
+                <div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);">
+                    <label class="upload-btn" style="padding:12px;">+ Upload Photos<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label>
+                    <div class="thumb-grid" id="p_thumbnails"></div>
+                </div>
+            `;
+
+            let wsFooterHtml = `<button class="btn-main" style="background:var(\${ev.eventStatus === 'Completed' ? '--text-secondary' : '--success'}); display:flex; justify-content:center; align-items:center; gap:8px;" onclick="openFeedbackModal('\${ev.id}')">\${ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback'}</button>`;
+
+            document.getElementById('detailPanelBody').innerHTML = wsBodyHtml; 
+            document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
+
+            let tCont = document.getElementById('ws_timeline'); 
+            let todayStr = new Date().toISOString().split('T')[0];
+            if (ev.dates && ev.dates.length > 0) { 
+                ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { 
+                    let dStr = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); 
+                    let isPast = d.date < todayStr; 
+                    let icon = isPast ? "✅" : "⏳"; 
+                    let color = isPast ? "var(--success)" : "var(--text-primary)"; 
+                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:\${color};">\${icon} \${d.name}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">\${dStr} \${d.time ? '| ' + d.time : ''}</span></div>`; 
+                }); 
+            } else { 
+                tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
+            }
+            renderEventTasks(ev); 
+            renderPhotos();
         }
 
         function createBillFromEvent(leadId) {
@@ -11569,6 +11641,12 @@
                 // Default fallback
                 if(typeof setSalesTab === 'function') setSalesTab('Invoice', document.getElementById('st-invoices')); 
                 if(typeof openTab === 'function') openTab('sales-hub', null); 
+            }
+            // 🚀 Finalizing conversion for Order Book (Rental Invoice)
+            if(window.convertingObToInvoiceId && window.orderBookDB[window.convertingObToInvoiceId]) {
+                window.orderBookDB[window.convertingObToInvoiceId].status = 'Invoiced';
+                localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
+                window.convertingObToInvoiceId = null; // Clear Tracker
             }
             
             alert("✅ Rental Invoice Saved & Auto-Routed Successfully!");
@@ -17170,27 +17248,41 @@
 
         window.handleOutwardEventChange = function() {
             let evId = document.getElementById('out_event').value;
+            
+            // 🚀 SMART CHECKBOX MAKER FOR OUTWARD CHALLAN
+            let funcGroupHtml = document.getElementById('out_function_group');
+            if(!funcGroupHtml) {
+                let html = `<div class="form-group" id="out_function_group" style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-top:10px;">
+                                <label class="form-label" style="color:var(--accent-color); margin-bottom:8px;">Select Functions for this Dispatch</label>
+                                <div id="out_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                            </div>`;
+                document.getElementById('out_event').parentElement.insertAdjacentHTML('afterend', html);
+            }
+            
             let funcGroup = document.getElementById('out_function_group');
-            let funcSelect = document.getElementById('out_function_select');
-            if(!evId) { funcGroup.style.display = 'none'; return; }
+            let funcList = document.getElementById('out_function_list');
+            
+            if(!evId) { if(funcGroup) funcGroup.style.display = 'none'; return; }
             
             let lead = leadsDB[evId];
-            if(lead.linkedDates && lead.linkedDates.length > 0) {
-                funcGroup.style.display = 'block';
-                funcSelect.innerHTML = `<option value="">-- Select Event Function --</option>`;
-                lead.linkedDates.forEach(d => { funcSelect.innerHTML += `<option value="${d.date}|${d.title}|${d.venue||lead.venue||''}">${d.title} (${new Date(d.date).toLocaleDateString('en-IN')})</option>`; });
-            } else {
-                funcGroup.style.display = 'none';
-                document.getElementById('out_date').value = lead.date || '';
-                let note = document.getElementById('out_note'); if(note && lead.venue) note.value = `Venue: ${lead.venue}`;
-            }
-        };
+            document.getElementById('out_date').value = lead.date || '';
+            let note = document.getElementById('out_note'); if(note && lead.venue) note.value = `Venue: ${lead.venue}`;
 
-        window.handleOutwardFunctionChange = function() {
-            let val = document.getElementById('out_function_select').value;
-            if(val) {
-                let parts = val.split('|'); document.getElementById('out_date').value = parts[0];
-                let note = document.getElementById('out_note'); if(note && parts[2]) note.value = `Venue: ${parts[2]}`;
+            if(lead.dates && lead.dates.length > 0) {
+                funcGroup.style.display = 'block';
+                let html = '';
+                lead.dates.forEach((d, idx) => {
+                    let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                    let vText = d.venue ? ` | 📍 ${d.venue}` : '';
+                    let tText = d.time ? ` | ⏰ ${d.time}` : '';
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
+                                <input type="checkbox" class="out-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
+                                <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
+                             </label>`;
+                });
+                if(funcList) funcList.innerHTML = html;
+            } else {
+                if(funcGroup) funcGroup.style.display = 'none';
             }
         };
 
@@ -17336,9 +17428,16 @@
             if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
             document.getElementById('outwardChallanModal').style.display = 'none'; 
             document.getElementById('outwardChallanModal').dataset.editId = "";
+            // 🚀 Finalizing conversion for Order Book (Outward)
+            if(window.convertingObToOutwardId && window.orderBookDB[window.convertingObToOutwardId]) {
+                window.orderBookDB[window.convertingObToOutwardId].status = 'Dispatched';
+                localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
+                window.convertingObToOutwardId = null; // Clear Tracker
+            }
             alert(`✅ Material Dispatched via Auto-Routing!`); 
             window.renderInventoryHubList();
         };
+
         // --------------------------------------------------------------
         // 🚀 MASTER PREVIEW ENGINE (With Partial Status & Return History)
         // --------------------------------------------------------------
@@ -19043,108 +19142,10 @@
             let detailPanel = document.getElementById('hub_cal_details');
             if (detailPanel) detailPanel.style.display = 'none';
         };
-
-
-        // 🚀 AUTO-FILL CONVERTERS (Order Book -> Challan / Rent Invoice)
-        window.convertObToOutward = function(id) {
-            let o = window.orderBookDB[id];
-            
-            // Tab change karke Inventory pe jao
-            window.openTab('inventory-hub', document.getElementById('btn-erp'));
-            
-            setTimeout(() => {
-                window.openOutwardChallanModal();
-                
-                setTimeout(() => {
-                    if(document.getElementById('out_event')) document.getElementById('out_event').value = o.leadId;
-                    if(document.getElementById('out_date')) document.getElementById('out_date').value = o.dispatchDate || o.date;
-                    if(document.getElementById('out_note')) document.getElementById('out_note').value = "Converted from Order: " + o.id;
-                    
-                    window.handleOutwardEventChange();
-                    
-                    // 🚀 Items Auto-Fill for Challan
-                    let itemsContainer = document.getElementById('out_items_container');
-                    if(itemsContainer) itemsContainer.innerHTML = '';
-                    if (o.items && o.items.length > 0) {
-                        o.items.forEach(item => {
-                            window.addOutwardItemRow(item.name);
-                            let rows = document.querySelectorAll('#out_items_container .outward-item-row');
-                            let lastRow = rows[rows.length - 1];
-                            if(lastRow) {
-                                let qField = lastRow.querySelector('.o-item-qty');
-                                if(qField) { qField.value = item.qty; qField.setAttribute('value', item.qty); }
-                            }
-                        });
-                    }
-
-                    // Status update
-                    o.status = 'Dispatched'; 
-                    localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
-                    window.renderHubOrderBookList();
-                }, 200);
-            }, 100);
-        };
-
-        window.convertObToInvoice = function(id) {
-            let o = window.orderBookDB[id];
-            
-            // Tab change karke Sales Hub pe jao
-            window.openTab('sales-hub', document.getElementById('btn-erp'));
-            
-            setTimeout(() => {
-                window.openDirectInvoiceModal(o.partyId); // 🚀 Party Auto-select
-                
-                setTimeout(() => {
-                    // 🚀 Type ko 'Rental' set karo aur Trigger karo
-                    let typeSel = document.getElementById('di_invoice_type');
-                    if(typeSel) { 
-                        typeSel.value = 'Rental'; 
-                        typeSel.dispatchEvent(new Event('change')); 
-                    }
-                    
-                    let diDate = document.getElementById('di_date');
-                    if(diDate) diDate.value = o.dispatchDate || o.date;
-                    
-                    // 🚀 Items Auto-Fill for Rent Invoice
-                    let itemsContainer = document.getElementById('inv_items_container');
-                    if (itemsContainer) itemsContainer.innerHTML = '';
-                    window.invItemCount = 0; 
-                    
-                    if (o.items && o.items.length > 0) {
-                        o.items.forEach(item => {
-                            window.addInvoiceItem();
-                            let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
-                            let lastRow = rows[rows.length - 1];
-                            if (lastRow) {
-                                let n = lastRow.querySelector('.i-item-name'); if(n) n.value = item.name;
-                                let q = lastRow.querySelector('.i-item-qty'); if(q) { q.value = item.qty; q.setAttribute('value', item.qty); }
-                                let r = lastRow.querySelector('.i-item-rate'); if(r) r.value = item.rate || 0;
-                            }
-                        });
-                    }
-                    
-                    if(typeof window.calculateDirectInvoiceTotal === 'function') window.calculateDirectInvoiceTotal();
-
-                    // Status update
-                    o.status = 'Invoiced'; 
-                    localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
-                    window.renderHubOrderBookList();
-                }, 250);
-            }, 100);
-        };
-
-       // ==============================================================
+        // ==============================================================
         // 📋 PROFESSIONAL ORDER BOOK MODAL & LOGIC (QUOTATION THEME)
         // ==============================================================
 
-        window.autoFillDispatchDate = function() {
-            let type = document.getElementById('ob_type').value;
-            if(type !== 'Event') return;
-            let leadId = document.getElementById('ob_lead_select').value;
-            if(leadId && leadsDB[leadId] && leadsDB[leadId].date) {
-                document.getElementById('ob_dispatch_date').value = leadsDB[leadId].date;
-            }
-        };
         // 🚀 1. Form Toggle Logic (Event vs Rent)
         window.toggleObType = function() {
             let type = document.getElementById('ob_type').value;
@@ -19469,6 +19470,135 @@
             `);
         };
 
+        // 🚀 GLOBAL TRACKERS FOR CONVERSION GLITCH FIX
+        window.convertingObToOutwardId = null;
+        window.convertingObToInvoiceId = null;
+
+        // 🚀 AUTO-FILL CONVERTERS (FIXED: Ab bina form save kiye status change nahi hoga)
+        window.convertObToOutward = function(id) {
+            let o = window.orderBookDB[id];
+            window.convertingObToOutwardId = id; // Set tracker
+            
+            window.openTab('inventory-hub', document.getElementById('btn-erp'));
+            setTimeout(() => {
+                window.openOutwardChallanModal();
+                setTimeout(() => {
+                    if(document.getElementById('out_event')) document.getElementById('out_event').value = o.leadId;
+                    if(document.getElementById('out_date')) document.getElementById('out_date').value = o.dispatchDate || o.date;
+                    if(document.getElementById('out_note')) document.getElementById('out_note').value = "Converted from Order: " + o.id;
+                    
+                    window.handleOutwardEventChange();
+                    
+                    // 🚀 Auto-tick dates based on what was selected in Order Book
+                    if(o.linkedDates && o.linkedDates.length > 0) {
+                        setTimeout(() => {
+                            let cbs = document.querySelectorAll('.out-func-cb');
+                            cbs.forEach(cb => {
+                                let idx = parseInt(cb.value);
+                                let dObj = leadsDB[o.leadId].dates[idx];
+                                let isMatch = o.linkedDates.some(ld => ld.name === dObj.name && ld.date === dObj.date);
+                                if(isMatch) cb.checked = true;
+                            });
+                        }, 100);
+                    }
+                    
+                    let itemsContainer = document.getElementById('out_items_container');
+                    if(itemsContainer) itemsContainer.innerHTML = '';
+                    if (o.items && o.items.length > 0) {
+                        o.items.forEach(item => {
+                            window.addOutwardItemRow(item.name);
+                            let rows = document.querySelectorAll('#out_items_container .outward-item-row');
+                            let lastRow = rows[rows.length - 1];
+                            if(lastRow) {
+                                let qField = lastRow.querySelector('.o-item-qty');
+                                if(qField) { qField.value = item.qty; qField.setAttribute('value', item.qty); }
+                            }
+                        });
+                    }
+                }, 200);
+            }, 100);
+        };
+
+        window.convertObToInvoice = function(id) {
+            let o = window.orderBookDB[id];
+            window.convertingObToInvoiceId = id; // Set tracker
+            
+            window.openTab('sales-hub', document.getElementById('btn-erp'));
+            setTimeout(() => {
+                window.openDirectInvoiceModal(o.partyId);
+                setTimeout(() => {
+                    let typeSel = document.getElementById('di_invoice_type');
+                    if(typeSel) { typeSel.value = 'Rental'; typeSel.dispatchEvent(new Event('change')); }
+                    
+                    let diDate = document.getElementById('di_date');
+                    if(diDate) diDate.value = o.dispatchDate || o.date;
+                    
+                    let itemsContainer = document.getElementById('inv_items_container');
+                    if (itemsContainer) itemsContainer.innerHTML = '';
+                    window.invItemCount = 0; 
+                    
+                    if (o.items && o.items.length > 0) {
+                        o.items.forEach(item => {
+                            window.addInvoiceItem();
+                            let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
+                            let lastRow = rows[rows.length - 1];
+                            if (lastRow) {
+                                let n = lastRow.querySelector('.i-item-name'); if(n) n.value = item.name;
+                                let q = lastRow.querySelector('.i-item-qty'); if(q) { q.value = item.qty; q.setAttribute('value', item.qty); }
+                                let r = lastRow.querySelector('.i-item-rate'); if(r) r.value = item.rate || 0;
+                            }
+                        });
+                    }
+                    if(typeof window.calculateDirectInvoiceTotal === 'function') window.calculateDirectInvoiceTotal();
+                }, 250);
+            }, 100);
+        };
+
+        // 🚀 FIXED: Helper to fetch selected Checkboxes
+        window.getSelectedDates = function(prefix, evId) {
+            let dates = [];
+            if (evId && leadsDB[evId]) {
+                document.querySelectorAll(`.${prefix}-func-cb:checked`).forEach(cb => {
+                    let idx = parseInt(cb.value);
+                    if (leadsDB[evId].dates[idx]) dates.push(leadsDB[evId].dates[idx]);
+                });
+            }
+            return dates;
+        };
+
+        // 🚀 MULTI-DATE CHECKBOX FOR ORDER BOOK
+        window.autoFillDispatchDate = function() {
+            let type = document.getElementById('ob_type').value;
+            if(type !== 'Event') return;
+            let leadId = document.getElementById('ob_lead_select').value;
+            
+            if(leadId && leadsDB[leadId] && leadsDB[leadId].date) {
+                document.getElementById('ob_dispatch_date').value = leadsDB[leadId].date;
+            }
+            
+            let funcGroup = document.getElementById('ob_function_group');
+            let funcList = document.getElementById('ob_function_list');
+            
+            if (leadId && leadsDB[leadId] && leadsDB[leadId].dates && leadsDB[leadId].dates.length > 0) {
+                let html = '';
+                leadsDB[leadId].dates.forEach((d, idx) => {
+                    let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                    let vText = d.venue ? ` | 📍 ${d.venue}` : '';
+                    let tText = d.time ? ` | ⏰ ${d.time}` : '';
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
+                                <input type="checkbox" class="ob-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
+                                <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
+                             </label>`;
+                });
+                if (funcList) funcList.innerHTML = html;
+                if (funcGroup) funcGroup.style.display = 'block';
+            } else {
+                if (funcGroup) funcGroup.style.display = 'none';
+                if (funcList) funcList.innerHTML = '';
+            }
+        };
+
+        // 🚀 SAVE ORDER BOOK & LINK MULTI-DATES
         window.saveOrderBookEntry = function() {
             let type = document.getElementById('ob_type').value;
             let leadId = type === 'Event' ? document.getElementById('ob_lead_select').value : null;
@@ -19483,52 +19613,30 @@
 
             let items = [];
             document.querySelectorAll('#ob_items_container > div').forEach(row => {
-                let n = row.querySelector('.i-item-name').value; // Changed to .i-item-name
-                let q = parseInt(row.querySelector('.i-item-qty').value) || 0; // Changed
-                let r = parseFloat(row.querySelector('.i-item-rate').value) || 0; // Changed
+                let n = row.querySelector('.i-item-name').value;
+                let q = parseInt(row.querySelector('.i-item-qty').value) || 0;
+                let r = parseFloat(row.querySelector('.i-item-rate').value) || 0;
                 let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : '';
                 if(n && q > 0) items.push({ name: n, qty: q, rate: r, desc: desc });
             });
 
             if(items.length === 0) return alert("Add at least 1 equipment item!");
 
-            // 🚀 NAYA: Short & Clean Order Book ID (e.g. OB-001)
+            let selectedDates = window.getSelectedDates('ob', leadId);
+
             let id = window.editingOrderId;
             if (!id) {
                 let counter = 1;
-                while (window.orderBookDB["OB-" + String(counter).padStart(3, '0')]) {
-                    counter++;
-                }
+                while (window.orderBookDB["OB-" + String(counter).padStart(3, '0')]) counter++;
                 id = "OB-" + String(counter).padStart(3, '0');
             }
             
             orderBookDB[id] = { 
                 id: id, orderType: type, leadId: leadId, partyId: partyId, 
                 date: creationDate, dispatchDate: dispatchDate, items: items, 
-                notes: notes, status: orderBookDB[id] ? orderBookDB[id].status : 'Reserved', timestamp: Date.now() 
+                notes: notes, status: orderBookDB[id] ? orderBookDB[id].status : 'Reserved', timestamp: Date.now(),
+                linkedDates: selectedDates // 👈 Checkboxes Saved
             };
-
-            // Process Advance Payment for Rent
-            if(type === 'Rent' && !window.editingOrderId) {
-                let advAmt = parseFloat(document.getElementById('ob_adv_amount').value) || 0;
-                if(advAmt > 0) {
-                    let rMode = document.getElementById('ob_adv_mode').value;
-                    let rcptId = "REC-" + Date.now();
-                    if(typeof salesDB !== 'undefined') {
-                        salesDB[rcptId] = {
-                            id: rcptId, type: 'Receipt', partyId: partyId, date: creationDate,
-                            amount: advAmt, mode: rMode, notes: `Advance for Order ${id}`,
-                            usedAmount: 0, availableAmount: advAmt, linkedInvoices: []
-                        };
-                    }
-                    if(typeof partiesDB !== 'undefined' && partiesDB[partyId]) partiesDB[partyId].balance += advAmt;
-                    if(rMode !== 'Cash' && typeof bankDB !== 'undefined' && bankDB[rMode]) {
-                        bankDB[rMode].balance += advAmt;
-                        let txId = "TXN-" + Date.now();
-                        if(typeof bankTxDB !== 'undefined') bankTxDB[txId] = { id: txId, bankId: rMode, date: creationDate, type: 'Credit', amount: advAmt, purpose: 'Advance Received', refId: rcptId, notes: `Advance for ${id}` };
-                    }
-                }
-            }
 
             localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
             if(typeof updateDataAndUI === 'function') updateDataAndUI();
