@@ -18940,32 +18940,93 @@
             if (detailPanel) detailPanel.style.display = 'none';
         };
 
-        // AUTO-FILL CONVERTERS
+
+        // 🚀 AUTO-FILL CONVERTERS (Order Book -> Challan / Rent Invoice)
         window.convertObToOutward = function(id) {
-            let o = orderBookDB[id];
-            window.openOutwardChallanModal();
+            let o = window.orderBookDB[id];
+            
+            // Tab change karke Inventory pe jao
+            window.openTab('inventory-hub', document.getElementById('btn-erp'));
+            
             setTimeout(() => {
-                if(document.getElementById('out_event')) document.getElementById('out_event').value = o.leadId;
-                if(document.getElementById('out_date')) document.getElementById('out_date').value = o.dispatchDate;
-                if(document.getElementById('out_notes')) document.getElementById('out_notes').value = "Converted from OB: " + o.id;
-                // Since adding items needs triggering DOM, we let the user manually pull items or just fill basic data for safety.
-                orderBookDB[id].status = 'Dispatched'; 
-                localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
-                window.renderHubOrderBookList();
-            }, 300);
+                window.openOutwardChallanModal();
+                
+                setTimeout(() => {
+                    if(document.getElementById('out_event')) document.getElementById('out_event').value = o.leadId;
+                    if(document.getElementById('out_date')) document.getElementById('out_date').value = o.dispatchDate || o.date;
+                    if(document.getElementById('out_note')) document.getElementById('out_note').value = "Converted from Order: " + o.id;
+                    
+                    window.handleOutwardEventChange();
+                    
+                    // 🚀 Items Auto-Fill for Challan
+                    let itemsContainer = document.getElementById('out_items_container');
+                    if(itemsContainer) itemsContainer.innerHTML = '';
+                    if (o.items && o.items.length > 0) {
+                        o.items.forEach(item => {
+                            window.addOutwardItemRow(item.name);
+                            let rows = document.querySelectorAll('#out_items_container .outward-item-row');
+                            let lastRow = rows[rows.length - 1];
+                            if(lastRow) {
+                                let qField = lastRow.querySelector('.o-item-qty');
+                                if(qField) { qField.value = item.qty; qField.setAttribute('value', item.qty); }
+                            }
+                        });
+                    }
+
+                    // Status update
+                    o.status = 'Dispatched'; 
+                    localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
+                    window.renderHubOrderBookList();
+                }, 200);
+            }, 100);
         };
 
         window.convertObToInvoice = function(id) {
-            let o = orderBookDB[id];
-            window.openTransactionModal('sales');
+            let o = window.orderBookDB[id];
+            
+            // Tab change karke Sales Hub pe jao
+            window.openTab('sales-hub', document.getElementById('btn-erp'));
+            
             setTimeout(() => {
-                if(document.getElementById('di_invoice_type')) { document.getElementById('di_invoice_type').value = 'Rental'; window.toggleInvoiceType(); }
-                if(document.getElementById('di_party_select')) document.getElementById('di_party_select').value = o.partyId;
-                if(document.getElementById('di_date')) document.getElementById('di_date').value = o.dispatchDate;
-                orderBookDB[id].status = 'Invoiced'; 
-                localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
-                window.renderHubOrderBookList();
-            }, 300);
+                window.openDirectInvoiceModal(o.partyId); // 🚀 Party Auto-select
+                
+                setTimeout(() => {
+                    // 🚀 Type ko 'Rental' set karo aur Trigger karo
+                    let typeSel = document.getElementById('di_invoice_type');
+                    if(typeSel) { 
+                        typeSel.value = 'Rental'; 
+                        typeSel.dispatchEvent(new Event('change')); 
+                    }
+                    
+                    let diDate = document.getElementById('di_date');
+                    if(diDate) diDate.value = o.dispatchDate || o.date;
+                    
+                    // 🚀 Items Auto-Fill for Rent Invoice
+                    let itemsContainer = document.getElementById('inv_items_container');
+                    if (itemsContainer) itemsContainer.innerHTML = '';
+                    window.invItemCount = 0; 
+                    
+                    if (o.items && o.items.length > 0) {
+                        o.items.forEach(item => {
+                            window.addInvoiceItem();
+                            let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
+                            let lastRow = rows[rows.length - 1];
+                            if (lastRow) {
+                                let n = lastRow.querySelector('.i-item-name'); if(n) n.value = item.name;
+                                let q = lastRow.querySelector('.i-item-qty'); if(q) { q.value = item.qty; q.setAttribute('value', item.qty); }
+                                let r = lastRow.querySelector('.i-item-rate'); if(r) r.value = item.rate || 0;
+                            }
+                        });
+                    }
+                    
+                    if(typeof window.calculateDirectInvoiceTotal === 'function') window.calculateDirectInvoiceTotal();
+
+                    // Status update
+                    o.status = 'Invoiced'; 
+                    localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
+                    window.renderHubOrderBookList();
+                }, 250);
+            }, 100);
         };
 
        // ==============================================================
@@ -19327,7 +19388,16 @@
 
             if(items.length === 0) return alert("Add at least 1 equipment item!");
 
-            let id = window.editingOrderId || ("OB-" + Date.now());
+            // 🚀 NAYA: Short & Clean Order Book ID (e.g. OB-001)
+            let id = window.editingOrderId;
+            if (!id) {
+                let counter = 1;
+                while (window.orderBookDB["OB-" + String(counter).padStart(3, '0')]) {
+                    counter++;
+                }
+                id = "OB-" + String(counter).padStart(3, '0');
+            }
+            
             orderBookDB[id] = { 
                 id: id, orderType: type, leadId: leadId, partyId: partyId, 
                 date: creationDate, dispatchDate: dispatchDate, items: items, 
@@ -19446,8 +19516,6 @@
             window.showHubCalDetails(dStr);
         };
 
-        
-
         window.deleteOrderEntry = function(id) {
             if (confirm("Permanently release and delete this equipment reservation?")) {
                 delete orderBookDB[id];
@@ -19455,19 +19523,6 @@
                 window.renderHubOrderBookList();
                 window.renderHubCalendarGrid();
             }
-        };
-
-        // 🔄 7. ORDER BOOK CONVERTERS & PRINT
-        window.convertObToOutward = function(id) {
-            orderBookDB[id].status = 'Dispatched'; localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
-            if(typeof window.openDirectStockModal === 'function') window.openDirectStockModal('outward');
-            window.renderHubOrderBookList();
-        };
-
-        window.convertObToInvoice = function(id) {
-            orderBookDB[id].status = 'Invoiced'; localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
-            if(typeof window.openTransactionModal === 'function') window.openTransactionModal('sales');
-            window.renderHubOrderBookList();
         };
         
         window.whatsappOrder = function(id) {
