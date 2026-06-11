@@ -18539,21 +18539,14 @@
                 container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found in the Order Book. Godown is free! 🎉</div>`;
             }
         };
-
-        // Auto Refresh Fixes
-        let oldSaveOrderBookEntry = window.saveOrderBookEntry;
-        window.saveOrderBookEntry = function() {
-            if(oldSaveOrderBookEntry) oldSaveOrderBookEntry(); 
-            window.renderHubOrderBookList();
-            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid(); 
-        };
         
         let oldDeleteOrderEntry = window.deleteOrderEntry;
         window.deleteOrderEntry = function(id) {
             if(oldDeleteOrderEntry) oldDeleteOrderEntry(id);
             window.renderHubOrderBookList();
             if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid();
-        };// ==============================================================
+        };
+        // ==============================================================
         // 🚀 MASTER INVENTORY HUB NAVIGATION & UI ENGINE
         // ==============================================================
         
@@ -18726,15 +18719,7 @@
                 container.innerHTML = `<div style="text-align:center; padding:40px 20px; color:#64748B; font-size:14px; font-weight:700;">No reservations found in the Order Book. Godown is free! 🎉</div>`;
             }
         };
-
-        // Auto Refresh Fixes
-        let oldSaveOrderBookEntry = window.saveOrderBookEntry;
-        window.saveOrderBookEntry = function() {
-            if(oldSaveOrderBookEntry) oldSaveOrderBookEntry(); 
-            window.renderHubOrderBookList();
-            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid(); 
-        };
-        
+       
         let oldDeleteOrderEntry = window.deleteOrderEntry;
         window.deleteOrderEntry = function(id) {
             if(oldDeleteOrderEntry) oldDeleteOrderEntry(id);
@@ -19714,6 +19699,9 @@
             `);
         };
 
+        // ==========================================
+        // 💾 SAVE ORDER ENTRY (Direct & Clean)
+        // ==========================================
         window.saveOrderBookEntry = function() {
             let leadId = document.getElementById('ob_lead_select').value;
             let date = document.getElementById('ob_date').value;
@@ -19736,15 +19724,26 @@
 
             localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
             document.getElementById('orderBookModal').style.display = 'none';
-            renderMainLogisticsHub(); 
+            
+            // 🚀 SMART UI REFRESH (Sirf Order Book ko refresh karega)
+            if(typeof window.renderHubOrderBookList === 'function') window.renderHubOrderBookList();
+            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid(); 
+            
             alert("Reservation Saved Successfully! 🚀");
         };
 
+        // ==========================================
+        // 🗑️ DELETE ORDER ENTRY (Direct & Clean)
+        // ==========================================
         window.deleteOrderEntry = function(id) {
+            // Confirmation check pehle hi ho jayega
             if (confirm("Permanently release and delete this equipment reservation?")) {
                 delete orderBookDB[id];
                 localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
-                renderMainLogisticsHub();
+                
+                // 🚀 UI REFRESH (Cancel dabane par ye refresh nahi hoga ab)
+                if(typeof window.renderHubOrderBookList === 'function') window.renderHubOrderBookList();
+                if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid();
             }
         };
 
