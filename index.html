@@ -8811,7 +8811,7 @@
         }
 
         // ==============================================================
-        // 🚀 REPLACED: FULL UPDATED EVENT WORKSPACE (WITH LOGISTICS ENGINE)
+        // 🚀 REPLACED: FULL UPDATED EVENT WORKSPACE (UI & ERROR FIXED)
         // ==============================================================
         function renderWorkspace(id) {
             currentLeadId = id; 
@@ -8846,7 +8846,6 @@
                 <div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
             `;
 
-            // 🛠️ BLOCK 5 INJECTED HERE (Logistics & Reservations cards)
             let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
             let outList = Object.values(window.stockMovementDB || {}).filter(o => o.eventId === id && o.type === 'Outward');
             
@@ -8872,9 +8871,8 @@
                 });
                 logisticsHtml += `</div>`;
             }
-            wsBodyHtml += logisticsHtml; // Add to Dashboard body
+            wsBodyHtml += logisticsHtml;
 
-            // Append Remaining Sections (Tasks & Media)
             wsBodyHtml += `
                 <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">✅ Event Tasks</h4>
                 <div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);">
@@ -8882,7 +8880,7 @@
                     <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
                         <input type="text" id="ws_new_task" class="form-input" style="padding:10px 12px; font-size:13px;" placeholder="What needs to be done?">
                         <div style="display:flex; gap:8px;">
-                            <select id="ws_task_assignee" class="form-select" style="flex:1; padding:8px 10px; font-size:12px;">\${getStaffOptions("")}</select>
+                            <select id="ws_task_assignee" class="form-select" style="flex:1; padding:8px 10px; font-size:12px;">${getStaffOptions("")}</select>
                             <input type="datetime-local" id="ws_task_deadline" class="form-input" style="padding:8px 10px; font-size:12px; flex:1;">
                         </div>
                         <button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button>
@@ -8895,20 +8893,25 @@
                 </div>
             `;
 
-            let wsFooterHtml = `<button class="btn-main" style="background:var(\${ev.eventStatus === 'Completed' ? '--text-secondary' : '--success'}); display:flex; justify-content:center; align-items:center; gap:8px;" onclick="openFeedbackModal('\${ev.id}')">\${ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback'}</button>`;
+            let btnBg = ev.eventStatus === 'Completed' ? 'var(--text-secondary)' : 'var(--success)';
+            let btnText = ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback';
+            
+            let wsFooterHtml = `<button class="btn-main" style="background:${btnBg}; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="openFeedbackModal('${ev.id}')">${btnText}</button>`;
 
             document.getElementById('detailPanelBody').innerHTML = wsBodyHtml; 
             document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
 
             let tCont = document.getElementById('ws_timeline'); 
             let todayStr = new Date().toISOString().split('T')[0];
+            
             if (ev.dates && ev.dates.length > 0) { 
                 ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { 
                     let dStr = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); 
                     let isPast = d.date < todayStr; 
                     let icon = isPast ? "✅" : "⏳"; 
                     let color = isPast ? "var(--success)" : "var(--text-primary)"; 
-                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:\${color};">\${icon} \${d.name}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">\${dStr} \${d.time ? '| ' + d.time : ''}</span></div>`; 
+                    let timeText = d.time ? ' | ' + d.time : '';
+                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${d.name}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr}${timeText}</span></div>`; 
                 }); 
             } else { 
                 tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
