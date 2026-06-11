@@ -18138,7 +18138,9 @@
             }, 300);
         };
 
-        // 🚀 SLEEK & MODERN ITEM LEDGER MODAL UI
+        // ==========================================
+        // 🚀 INVENTORY ITEM LEDGER (ULTRA-MINIMALIST & SLEEK UI)
+        // ==========================================
         window.openItemLedger = function(itemName) {
             let item = itemsDB[itemName];
             if(!item) return;
@@ -18150,8 +18152,8 @@
                 inGodown += gQty; 
                 if(gQty > 0) {
                     let gName = warehousesDB[g] ? warehousesDB[g].name : 'Unknown';
-                    // Clean minimal split view
-                    godownSplitHtml += `<div style="display: flex; justify-content: space-between; font-size: 10px; border-top: 1px dashed #E2E8F0; padding-top: 6px; margin-top: 6px;"><span style="color:#475569; font-weight:600;">${gName}</span><strong style="color:#059669;">${gQty}</strong></div>`;
+                    // 🚀 Ultra-clean list for Godown split
+                    godownSplitHtml += `<div style="display: flex; justify-content: space-between; font-size: 11px; border-top: 1px solid #F1F5F9; padding-top: 8px; margin-top: 8px; color: #64748B;"><span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${gName}</span><strong style="color: #0F172A; font-weight:600;">${gQty}</strong></div>`;
                 }
             }
             let onRent = (item.totalStock || 0) - inGodown;
@@ -18159,7 +18161,7 @@
             let records = [];
             records.push({ date: "2000-01-01", ref: "OPENING", party: "System Base Stock", out: 0, in: item.totalStock + (item.totalLost || 0), lost: 0, isOpening: true });
 
-            // Data gathering logic (same as before)
+            // Data gathering logic
             Object.values(salesDB).forEach(inv => {
                 if(inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.items) {
                     let matchedItem = inv.items.find(i => i.name === itemName);
@@ -18168,7 +18170,9 @@
                         records.push({ date: inv.date, ref: inv.id, party: pName, out: matchedItem.qty, in: 0, lost: 0 });
                         if(inv.rentalStatus === 'Returned' && inv.returnLog) {
                             let rLog = inv.returnLog.find(r => r.name === itemName);
-                            if(rLog) { records.push({ date: rLog.date, ref: "RTN-"+inv.id, party: pName, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost }); }
+                            if(rLog) {
+                                records.push({ date: rLog.date, ref: "RTN-"+inv.id, party: pName, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost });
+                            }
                         }
                     }
                 }
@@ -18205,90 +18209,260 @@
             records.forEach(r => {
                 runningBalance = runningBalance - r.out + r.in - r.lost;
                 
-                let outHtml = r.out > 0 ? `<span style="color:var(--warning); font-weight:900;">${r.out}</span>` : `<span style="color:#CBD5E1;">-</span>`;
-                let inHtml = r.in > 0 ? `<span style="color:var(--success); font-weight:900;">${r.in}</span>` : `<span style="color:#CBD5E1;">-</span>`;
+                // 🚀 Soft minimalist colors
+                let outHtml = r.out > 0 ? `<span style="color:#EF4444; font-weight:500;">${r.out}</span>` : `<span style="color:#E2E8F0;">-</span>`;
+                let inHtml = r.in > 0 ? `<span style="color:#10B981; font-weight:500;">${r.in}</span>` : `<span style="color:#E2E8F0;">-</span>`;
+                let lostHtml = r.lost > 0 ? `<span style="color:#DC2626; font-weight:600;">${r.lost}</span>` : `<span style="color:#E2E8F0;">-</span>`;
                 
-                // Formatted Date
-                let dStr = r.isOpening ? `<b>Opening</b>` : new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
+                let dParts = r.isOpening ? ["Opening",""] : new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }).split(" ");
+                let dStr = r.isOpening ? `<span style="font-weight:600; color:#0F172A;">Opening</span>` : `${dParts[0]} ${dParts[1]} <span style="color:#94A3B8;">${dParts[2]}</span>`;
 
-                // Smart ID Truncation
+                // 🚀 Ultra Sleek ID Truncation
                 let refStr = r.ref;
-                if(refStr && refStr.length > 10 && !r.isOpening) {
-                     refStr = `<span style="font-size:9px; font-family:monospace; color:#64748B; background:#F1F5F9; padding:2px 4px; border-radius:4px; border:1px solid #E2E8F0;">${r.ref.substring(0,6)}..</span>`;
+                if(refStr && refStr.length > 8 && !r.isOpening) {
+                     refStr = `<div style="font-size:9.5px; font-family:monospace; color:#94A3B8; margin-top:2px;">${r.ref.substring(0,6)}..</div>`;
                 } else if(!r.isOpening) {
-                     refStr = `<span style="font-size:9.5px; font-family:monospace; color:var(--accent-color); font-weight:bold;">${r.ref}</span>`;
+                     refStr = `<div style="font-size:9.5px; font-family:monospace; color:#94A3B8; margin-top:2px;">${r.ref}</div>`;
+                } else {
+                     refStr = "";
                 }
 
                 tbodyHtml += `
-                <tr style="border-bottom:1px solid #F1F5F9;">
-                    <td style="padding: 10px 8px; line-height: 1.4;">
-                        <div style="font-size:11px; font-weight: 700; color: #1E293B;">${dStr}</div>
-                        ${refStr !== 'OPENING' ? refStr : ''}
+                <tr style="border-bottom: 1px solid #F8FAFC; transition: background 0.2s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 14px 8px; line-height: 1.2;">
+                        <div style="font-size:11px; color:#475569;">${dStr}</div>
+                        ${refStr}
                     </td>
-                    <td style="padding: 10px 8px; font-size:11px; font-weight: 600; color: #475569; line-height: 1.3; word-break: break-word;">${r.party}</td>
-                    <td style="padding: 10px 4px; text-align: center;">${outHtml}</td>
-                    <td style="padding: 10px 4px; text-align: center;">${inHtml}</td>
-                    <td style="padding: 10px 8px; text-align: center; font-weight: 900; color: #0F172A; background:#F8FAFC;">${runningBalance}</td>
+                    <td style="padding: 14px 8px; font-size:11.5px; color:#334155; line-height: 1.4; word-break: break-word;">${r.party}</td>
+                    <td style="padding: 14px 4px; text-align: center;">${outHtml}</td>
+                    <td style="padding: 14px 4px; text-align: center;">${inHtml}</td>
+                    <td style="padding: 14px 8px; text-align: center; font-weight: 600; color: #0F172A;">${runningBalance}</td>
                 </tr>`;
             });
 
             let modalContent = document.querySelector('#itemLedgerModal .modal-content');
-            modalContent.style.cssText = 'max-width: 500px; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; background: #F8FAFC; border-radius: 12px;';
+            modalContent.style.cssText = 'max-width: 500px; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; background: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0;';
 
             modalContent.innerHTML = `
-                <div style="background: #0F172A; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; flex-shrink: 0;">
+                <div style="background: #FFFFFF; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F1F5F9; border-radius: 16px 16px 0 0; flex-shrink: 0;">
                     <div>
-                        <div style="font-size: 10px; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Stock Ledger</div>
-                        <div id="il_item_name" style="font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.5px;">${itemName}</div>
+                        <div style="font-size: 11px; color: #64748B; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Item Ledger</div>
+                        <h3 id="il_item_name" style="margin: 0; font-size: 20px; font-weight: 600; color: #0F172A; letter-spacing: -0.3px;">${itemName}</h3>
                     </div>
-                    <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background: rgba(255,255,255,0.15); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition:0.2s;">&times;</button>
+                    <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background: #F8FAFC; border: 1px solid #E2E8F0; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; color: #64748B; cursor: pointer; display: flex; align-items: center; justify-content: center; transition:0.2s;">&times;</button>
                 </div>
                 
-                <div style="flex: 1; overflow-y: auto; padding: 16px;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; background: #FAFAFA;">
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Total Purchased</div>
-                            <div style="font-size: 22px; font-weight: 900; color: #0F172A; margin-top: 4px;">${item.totalStock || 0}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#64748B;"></span> Total Purchased</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; padding-left:12px;">${item.totalStock || 0}</div>
                         </div>
                         
-                        <div style="background: white; border: 1px solid #E2E8F0; border-left: 4px solid #10B981; border-radius: 10px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-                            <div style="font-size: 10px; font-weight: 700; color: #059669; text-transform: uppercase;">In Godowns</div>
-                            <div style="font-size: 22px; font-weight: 900; color: #047857; margin-top: 4px;">${inGodown}</div>
-                            ${godownSplitHtml || '<div style="font-size:10px; color:#94A3B8; margin-top:6px;">No Stock</div>'}
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#10B981;"></span> In Godowns</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; margin-bottom: 8px; padding-left:12px;">${inGodown}</div>
+                            ${godownSplitHtml || '<div style="font-size:11px; color:#94A3B8; text-align:left; padding-left:12px;">No Stock</div>'}
                         </div>
                         
-                        <div style="background: white; border: 1px solid #E2E8F0; border-left: 4px solid #F59E0B; border-radius: 10px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; font-weight: 700; color: #D97706; text-transform: uppercase;">On Rent/Event</div>
-                            <div style="font-size: 22px; font-weight: 900; color: #B45309; margin-top: 4px;">${onRent}</div>
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#F59E0B;"></span> On Rent / Event</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; padding-left:12px;">${onRent}</div>
                         </div>
                         
-                        <div style="background: white; border: 1px solid #E2E8F0; border-left: 4px solid #EF4444; border-radius: 10px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; font-weight: 700; color: #DC2626; text-transform: uppercase;">Total Lost</div>
-                            <div style="font-size: 22px; font-weight: 900; color: #B91C1C; margin-top: 4px;">${item.totalLost || 0}</div>
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#EF4444;"></span> Total Lost</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; padding-left:12px;">${item.totalLost || 0}</div>
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h4 style="margin: 0; font-size: 13px; font-weight: 800; color: #0F172A;">Transactions</h4>
-                        <button onclick="window.printItemLedger('${itemName}')" style="background: white; border: 1px solid #CBD5E1; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; color: #2563EB; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">🖨️ Print</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: #0F172A;">Transaction History</h4>
+                        <button onclick="window.printItemLedger('${itemName}')" style="background: transparent; border: 1px solid #E2E8F0; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; transition:0.2s;" onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='transparent'">🖨️ Print</button>
                     </div>
 
-                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
-                            <thead style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1;">
-                                <tr>
-                                    <th style="padding: 10px 8px; font-size: 10px; font-weight: 800; color: #475569; width:25%;">Date/Ref</th>
-                                    <th style="padding: 10px 8px; font-size: 10px; font-weight: 800; color: #475569; width:35%;">Destination</th>
-                                    <th style="padding: 10px 4px; font-size: 10px; font-weight: 800; color: var(--warning); text-align: center; width:12%;">Out</th>
-                                    <th style="padding: 10px 4px; font-size: 10px; font-weight: 800; color: var(--success); text-align: center; width:12%;">In</th>
-                                    <th style="padding: 10px 8px; font-size: 10px; font-weight: 800; color: #0F172A; text-align: center; width:16%;">Bal</th>
+                            <thead>
+                                <tr style="border-bottom: 1px solid #E2E8F0;">
+                                    <th style="padding: 12px 8px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align:center; width:22%;">Date/Ref</th>
+                                    <th style="padding: 12px 8px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; width:38%;">Destination</th>
+                                    <th style="padding: 12px 4px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align: center; width:10%;">Out</th>
+                                    <th style="padding: 12px 4px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align: center; width:10%;">In</th>
+                                    <th style="padding: 12px 8px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align: center; width:20%;">Bal</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="il_table_body">
                                 ${tbodyHtml}
                             </tbody>
                         </table>
+                        ${records.length === 1 && records[0].isOpening ? '<div style="text-align:center; padding:30px; font-size:12px; color:#94A3B8; font-weight:500;">No movement recorded yet.</div>' : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('itemLedgerModal').style.display = 'flex';
+        };// ==========================================
+        // 🚀 INVENTORY ITEM LEDGER (ULTRA-MINIMALIST & SLEEK UI)
+        // ==========================================
+        window.openItemLedger = function(itemName) {
+            let item = itemsDB[itemName];
+            if(!item) return;
+
+            let inGodown = 0;
+            let godownSplitHtml = ""; 
+            for(let g in item.godowns) { 
+                let gQty = item.godowns[g] || 0;
+                inGodown += gQty; 
+                if(gQty > 0) {
+                    let gName = warehousesDB[g] ? warehousesDB[g].name : 'Unknown';
+                    // 🚀 Ultra-clean list for Godown split
+                    godownSplitHtml += `<div style="display: flex; justify-content: space-between; font-size: 11px; border-top: 1px solid #F1F5F9; padding-top: 8px; margin-top: 8px; color: #64748B;"><span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${gName}</span><strong style="color: #0F172A; font-weight:600;">${gQty}</strong></div>`;
+                }
+            }
+            let onRent = (item.totalStock || 0) - inGodown;
+
+            let records = [];
+            records.push({ date: "2000-01-01", ref: "OPENING", party: "System Base Stock", out: 0, in: item.totalStock + (item.totalLost || 0), lost: 0, isOpening: true });
+
+            // Data gathering logic
+            Object.values(salesDB).forEach(inv => {
+                if(inv.type === 'Invoice' && inv.invoiceType === 'Rental' && inv.items) {
+                    let matchedItem = inv.items.find(i => i.name === itemName);
+                    if(matchedItem) {
+                        let pName = partiesDB[inv.partyId] ? partiesDB[inv.partyId].name : 'Unknown';
+                        records.push({ date: inv.date, ref: inv.id, party: pName, out: matchedItem.qty, in: 0, lost: 0 });
+                        if(inv.rentalStatus === 'Returned' && inv.returnLog) {
+                            let rLog = inv.returnLog.find(r => r.name === itemName);
+                            if(rLog) {
+                                records.push({ date: rLog.date, ref: "RTN-"+inv.id, party: pName, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost });
+                            }
+                        }
+                    }
+                }
+            });
+
+            Object.values(stockMovementDB).forEach(out => {
+                if(out.items) {
+                    let matchedItem = out.items.find(i => i.name === itemName);
+                    if(matchedItem) {
+                        if (out.type === 'Transfer') {
+                            let fName = warehousesDB[out.fromGodown] ? warehousesDB[out.fromGodown].name : 'Unknown';
+                            let tName = warehousesDB[out.toGodown] ? warehousesDB[out.toGodown].name : 'Unknown';
+                            records.push({ date: out.date, ref: out.id, party: `Transfer: ${fName} ➡️ ${tName}`, out: matchedItem.qty, in: matchedItem.qty, lost: 0 });
+                        } else if (out.type === 'Audit') {
+                            let gName = warehousesDB[out.godownId] ? warehousesDB[out.godownId].name : 'Godown';
+                            records.push({ date: out.date, ref: out.id, party: `Stock Audit (${gName})`, out: 0, in: 0, lost: matchedItem.qty });
+                        } else {
+                            let dest = leadsDB[out.eventId] ? leadsDB[out.eventId].func : 'Internal Event';
+                            records.push({ date: out.date, ref: out.id, party: dest, out: matchedItem.qty, in: 0, lost: 0 });
+                            if(out.status === 'Returned' && out.returnLog) {
+                                let rLog = out.returnLog.find(r => r.name === itemName);
+                                if(rLog) { records.push({ date: rLog.date, ref: "RTN-"+out.id, party: dest, out: 0, in: rLog.safe + rLog.repair, lost: rLog.lost }); }
+                            }
+                        }
+                    }
+                }
+            });
+
+            records.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            let tbodyHtml = "";
+            let runningBalance = 0;
+
+            records.forEach(r => {
+                runningBalance = runningBalance - r.out + r.in - r.lost;
+                
+                // 🚀 Soft minimalist colors
+                let outHtml = r.out > 0 ? `<span style="color:#EF4444; font-weight:500;">${r.out}</span>` : `<span style="color:#E2E8F0;">-</span>`;
+                let inHtml = r.in > 0 ? `<span style="color:#10B981; font-weight:500;">${r.in}</span>` : `<span style="color:#E2E8F0;">-</span>`;
+                let lostHtml = r.lost > 0 ? `<span style="color:#DC2626; font-weight:600;">${r.lost}</span>` : `<span style="color:#E2E8F0;">-</span>`;
+                
+                let dParts = r.isOpening ? ["Opening",""] : new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }).split(" ");
+                let dStr = r.isOpening ? `<span style="font-weight:600; color:#0F172A;">Opening</span>` : `${dParts[0]} ${dParts[1]} <span style="color:#94A3B8;">${dParts[2]}</span>`;
+
+                // 🚀 Ultra Sleek ID Truncation
+                let refStr = r.ref;
+                if(refStr && refStr.length > 8 && !r.isOpening) {
+                     refStr = `<div style="font-size:9.5px; font-family:monospace; color:#94A3B8; margin-top:2px;">${r.ref.substring(0,6)}..</div>`;
+                } else if(!r.isOpening) {
+                     refStr = `<div style="font-size:9.5px; font-family:monospace; color:#94A3B8; margin-top:2px;">${r.ref}</div>`;
+                } else {
+                     refStr = "";
+                }
+
+                tbodyHtml += `
+                <tr style="border-bottom: 1px solid #F8FAFC; transition: background 0.2s;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 14px 8px; line-height: 1.2;">
+                        <div style="font-size:11px; color:#475569;">${dStr}</div>
+                        ${refStr}
+                    </td>
+                    <td style="padding: 14px 8px; font-size:11.5px; color:#334155; line-height: 1.4; word-break: break-word;">${r.party}</td>
+                    <td style="padding: 14px 4px; text-align: center;">${outHtml}</td>
+                    <td style="padding: 14px 4px; text-align: center;">${inHtml}</td>
+                    <td style="padding: 14px 8px; text-align: center; font-weight: 600; color: #0F172A;">${runningBalance}</td>
+                </tr>`;
+            });
+
+            let modalContent = document.querySelector('#itemLedgerModal .modal-content');
+            modalContent.style.cssText = 'max-width: 500px; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; background: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0;';
+
+            modalContent.innerHTML = `
+                <div style="background: #FFFFFF; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F1F5F9; border-radius: 16px 16px 0 0; flex-shrink: 0;">
+                    <div>
+                        <div style="font-size: 11px; color: #64748B; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Item Ledger</div>
+                        <h3 id="il_item_name" style="margin: 0; font-size: 20px; font-weight: 600; color: #0F172A; letter-spacing: -0.3px;">${itemName}</h3>
+                    </div>
+                    <button class="modal-close" onclick="document.getElementById('itemLedgerModal').style.display='none';" style="background: #F8FAFC; border: 1px solid #E2E8F0; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; color: #64748B; cursor: pointer; display: flex; align-items: center; justify-content: center; transition:0.2s;">&times;</button>
+                </div>
+                
+                <div style="flex: 1; overflow-y: auto; padding: 24px; background: #FAFAFA;">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#64748B;"></span> Total Purchased</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; padding-left:12px;">${item.totalStock || 0}</div>
+                        </div>
+                        
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#10B981;"></span> In Godowns</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; margin-bottom: 8px; padding-left:12px;">${inGodown}</div>
+                            ${godownSplitHtml || '<div style="font-size:11px; color:#94A3B8; text-align:left; padding-left:12px;">No Stock</div>'}
+                        </div>
+                        
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#F59E0B;"></span> On Rent / Event</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; padding-left:12px;">${onRent}</div>
+                        </div>
+                        
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:#EF4444;"></span> Total Lost</div>
+                            <div style="font-size: 24px; font-weight: 600; color: #0F172A; padding-left:12px;">${item.totalLost || 0}</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: #0F172A;">Transaction History</h4>
+                        <button onclick="window.printItemLedger('${itemName}')" style="background: transparent; border: 1px solid #E2E8F0; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; transition:0.2s;" onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='transparent'">🖨️ Print</button>
+                    </div>
+
+                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #E2E8F0;">
+                                    <th style="padding: 12px 8px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align:center; width:22%;">Date/Ref</th>
+                                    <th style="padding: 12px 8px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; width:38%;">Destination</th>
+                                    <th style="padding: 12px 4px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align: center; width:10%;">Out</th>
+                                    <th style="padding: 12px 4px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align: center; width:10%;">In</th>
+                                    <th style="padding: 12px 8px; font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; text-align: center; width:20%;">Bal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="il_table_body">
+                                ${tbodyHtml}
+                            </tbody>
+                        </table>
+                        ${records.length === 1 && records[0].isOpening ? '<div style="text-align:center; padding:30px; font-size:12px; color:#94A3B8; font-weight:500;">No movement recorded yet.</div>' : ''}
                     </div>
                 </div>
             `;
