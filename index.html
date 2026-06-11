@@ -18915,11 +18915,12 @@
 
         // 🗓️ 5. PREMIUM CALENDAR SYSTEM (LIKE HOME DASHBOARD)
         window.hubCalDate = new Date(); 
+        window.hubSelectedDate = null; // 🚀 Naya tracker: konsi date selected hai
         
         window.changeHubCalendar = function(dir) {
             if (!document.getElementById('hub_cal_grid')) return;
-            // Modern Date Tracker (Fixes month change data hiding issue)
             window.hubCalDate.setMonth(window.hubCalDate.getMonth() + dir);
+            window.hubSelectedDate = null; // Mahina change hone pe selection hata do
             window.renderHubCalendarGrid();
             
             let detailPanel = document.getElementById('hub_cal_details');
@@ -18939,7 +18940,9 @@
 
             let firstDay = new Date(year, month, 1).getDay();
             let totalDays = new Date(year, month + 1, 0).getDate();
+            
             let today = new Date();
+            let todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
             let html = "";
             for(let i=0; i<firstDay; i++) {
@@ -18948,26 +18951,37 @@
 
             for(let day=1; day<=totalDays; day++) {
                 let loopDate = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                let isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                
+                let isToday = (loopDate === todayStr);
+                let isSelected = (window.hubSelectedDate === loopDate);
                 
                 let matches = Object.values(window.orderBookDB || {}).filter(o => o.date === loopDate);
                 
+                // 🔴 Dot Color Logic: Agar neele dabbe (Today) par hai toh safed dot, warna lal dot
+                let dotColor = (isToday && !isSelected) ? 'white' : 'var(--danger)';
                 let dotsHtml = "";
                 if(matches.length > 0) {
-                    let dotColor = isToday ? 'white' : 'var(--danger)';
                     dotsHtml = `<div style="display:flex; justify-content:center; margin-top:3px;"><div style="background:${dotColor}; width:5px; height:5px; border-radius:50%; box-shadow:0 1px 2px rgba(0,0,0,0.2);"></div></div>`;
                 }
                 
-                let baseStyle = "padding:8px 0; border-radius:8px; cursor:pointer; font-weight:800; font-size:12px; display:flex; flex-direction:column; align-items:center; min-height:36px; box-sizing:border-box;";
+                let baseStyle = "padding:8px 0; border-radius:8px; cursor:pointer; font-weight:800; font-size:12px; display:flex; flex-direction:column; align-items:center; min-height:36px; box-sizing:border-box; transition:0.2s;";
                 
-                if (isToday) {
-                    html += `<div style="${baseStyle} background:var(--accent-color); color:white; box-shadow:0 2px 6px rgba(37,99,235,0.4);" onclick="selectHubCalDate('${loopDate}', this)">
+                if (isSelected) {
+                    // 🌟 SELECTED STATE (Light Blue, Dark Text)
+                    html += `<div style="${baseStyle} background:#EFF6FF; color:var(--text-primary); border:2px solid var(--accent-color);" onclick="selectHubCalDate('${loopDate}')">
+                                ${day}
+                                ${dotsHtml}
+                             </div>`;
+                } else if (isToday) {
+                    // 📅 TODAY STATE (Solid Blue, White Text)
+                    html += `<div style="${baseStyle} background:var(--accent-color); color:white; border:2px solid transparent; box-shadow:0 2px 6px rgba(37,99,235,0.4);" onclick="selectHubCalDate('${loopDate}')">
                                 ${day}
                                 ${dotsHtml}
                              </div>`;
                 } else {
+                    // ⚪ NORMAL STATE (Transparent, Dark Text)
                     let hoverEffect = `onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'"`;
-                    html += `<div style="${baseStyle} color:var(--text-primary); border:1px solid transparent;" ${hoverEffect} onclick="selectHubCalDate('${loopDate}', this)">
+                    html += `<div style="${baseStyle} background:transparent; color:var(--text-primary); border:2px solid transparent;" ${hoverEffect} onclick="selectHubCalDate('${loopDate}')">
                                 ${day}
                                 ${dotsHtml}
                              </div>`;
@@ -18976,28 +18990,9 @@
             grid.innerHTML = html;
         };
 
-        window.selectHubCalDate = function(dStr, el) {
-            // 1. Saare dates se purana highlight hatao
-            document.querySelectorAll('#hub_cal_grid > div').forEach(d => {
-                if(!d.classList.contains('faded') && d.innerText) {
-                    // Agar wo "Aaj" (Today) hai, toh usko uske original color me rakho
-                    if (d.classList.contains('today')) {
-                        d.style.background = "var(--accent-color)";
-                        d.style.border = "1px solid transparent";
-                    } else {
-                        d.style.background = "transparent";
-                        d.style.border = "1px solid transparent";
-                    }
-                }
-            });
-
-            // 2. Jis par click kiya hai, usko premium highlight karo
-            if(el) {
-                el.style.border = "2px solid var(--accent-color)";
-                el.style.background = "#EFF6FF";
-            }
-            
-            // 3. Details show karo
+        window.selectHubCalDate = function(dStr) {
+            window.hubSelectedDate = dStr; // Set kiya
+            window.renderHubCalendarGrid(); // 🚀 Re-render kar diya (Bina kisi color leak ke!)
             window.showHubCalDetails(dStr);
         };
 
