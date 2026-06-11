@@ -12791,16 +12791,56 @@
                 }
                 bodyHtml += `</div>`;
 
-                if (record.type === 'Invoice' || record.type === 'PB') {
+                if (record.type === 'Invoice' || record.type === 'PB' || record.type === 'Asset') {
                     let rDB = context === 'sales' ? salesDB : purchaseDB;
                     let rType = context === 'sales' ? 'Receipt' : 'PaymentOut';
+                    let isOut = (context === 'purchase');
+                    let colorTheme = isOut ? 'var(--danger)' : 'var(--success)';
+                    let sign = isOut ? '-' : '+';
+                    
                     let linkedPayments = Object.values(rDB).filter(r => r.type === rType && (r.linkedInvoices && r.linkedInvoices.includes(id)));
                     if (linkedPayments.length > 0) {
-                        bodyHtml += `<div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px; text-align:left;"><strong style="font-size:11px; color:var(--text-secondary); text-transform:uppercase;">Payment History</strong>`;
+                        bodyHtml += `<div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px; text-align:left;"><strong style="font-size:11px; color:var(--text-secondary); text-transform:uppercase;">Payment History & Adjustments</strong>`;
+                        
                         linkedPayments.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        let remainingAdvanceToJustify = record.advance || 0;
+
                         linkedPayments.forEach(p => {
+                            let appliedFromThis = 0;
+                            if (remainingAdvanceToJustify > 0) {
+                                appliedFromThis = Math.min(p.amount, remainingAdvanceToJustify);
+                                remainingAdvanceToJustify -= appliedFromThis;
+                            }
+                            
+                            if (appliedFromThis <= 0) return; // Ignore if 0
+
                             let pDate = new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                            bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-top:6px; padding-bottom:6px; border-bottom:1px dashed #E2E8F0;"><span>📅 ${pDate} <span style="color:var(--text-secondary); margin-left:4px;">(${bankDB[p.mode] ? bankDB[p.mode].name : p.mode})</span></span><span style="color:var(--success); font-weight:bold;">₹${p.amount.toLocaleString('en-IN')}</span></div>`;
+                            let amtHtml = "";
+                            
+                            // Agar receipt ka amount zyada tha, par bill me thoda use hua
+                            if (p.amount > appliedFromThis) {
+                                amtHtml = `
+                                <div style="text-align:right;">
+                                    <div style="font-size:10px; color:var(--text-secondary); text-decoration:line-through;" title="Original Receipt Amount">₹${p.amount.toLocaleString('en-IN')}</div>
+                                    <div style="color:${colorTheme}; font-weight:900; font-size:14px; margin-top:2px;">${sign} ₹${appliedFromThis.toLocaleString('en-IN')}</div>
+                                    <div style="font-size:9px; color:var(--warning); font-weight:800; margin-top:2px;">(Advance Adjusted)</div>
+                                </div>`;
+                            } else {
+                                // Pura amount use hua
+                                amtHtml = `
+                                <div style="text-align:right;">
+                                    <div style="color:${colorTheme}; font-weight:900; font-size:14px;">${sign} ₹${appliedFromThis.toLocaleString('en-IN')}</div>
+                                </div>`;
+                            }
+
+                            bodyHtml += `<div style="display:flex; justify-content:space-between; margin-top:8px; padding-bottom:8px; border-bottom:1px dashed #E2E8F0; align-items:center;">
+                                            <div>
+                                                <div style="font-size:12px; font-weight:700; color:var(--text-primary);">📅 ${pDate}</div>
+                                                <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Via: ${bankDB[p.mode] ? bankDB[p.mode].name : p.mode}</div>
+                                                <div style="font-size:9px; color:#94A3B8; font-family:monospace; margin-top:2px;">Ref: ${p.id}</div>
+                                            </div>
+                                            ${amtHtml}
+                                         </div>`;
                         });
                         bodyHtml += `</div>`;
                     }
@@ -13049,27 +13089,41 @@
                 html += `<div class="summary-container">`;
 
                 // Left: Payment History
-                if (record.type === 'Invoice') {
-                    let linkedPayments = Object.values(salesDB).filter(r => r.type === 'Receipt' && (r.linkedInvoices && r.linkedInvoices.includes(id)));
-                    html += `<div class="history-table"><span class="section-label">Payment Receipts History</span>`;
+                // Left: Payment History
+                let remainingAdvanceToJustify = record.advance || 0;
+                let isOut = context === 'purchase';
+                let rDB = context === 'sales' ? salesDB : purchaseDB;
+                let rType = context === 'sales' ? 'Receipt' : 'PaymentOut';
+
+                if (record.type === 'Invoice' || record.type === 'PB' || record.type === 'Asset') {
+                    let linkedPayments = Object.values(rDB).filter(r => r.type === rType && (r.linkedInvoices && r.linkedInvoices.includes(id)));
+                    linkedPayments.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    let titleStr = isOut ? 'Payments Made' : 'Payment Receipts History';
+                    let colorStr = isOut ? '#dc2626' : '#166534';
+                    
+                    html += `<div class="history-table"><span class="section-label">${titleStr}</span>`;
+                    
                     if (linkedPayments.length > 0) {
-                        html += `<table><tr style="background:#f8fafc;"><th>Date</th><th>Mode</th><th class="right">Amount</th></tr>`;
+                        html += `<table><tr style="background:#f8fafc;"><th>Date</th><th>Mode</th><th class="right">Amount Applied</th></tr>`;
+                        
                         linkedPayments.forEach(p => {
-                            html += `<tr><td>${new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td><td>${bankDB[p.mode] ? bankDB[p.mode].name : p.mode}</td><td class="right" style="color:#166534; font-weight:700;">₹${p.amount.toLocaleString('en-IN')}</td></tr>`;
+                            let appliedFromThis = 0;
+                            if (remainingAdvanceToJustify > 0) {
+                                appliedFromThis = Math.min(p.amount, remainingAdvanceToJustify);
+                                remainingAdvanceToJustify -= appliedFromThis;
+                            }
+                            
+                            if(appliedFromThis > 0) {
+                                // Agar advance tha toh purana bill crossed out aur adjusted likha aayega
+                                let displayAmt = p.amount > appliedFromThis ? `${appliedFromThis.toLocaleString('en-IN')} <br><span style="font-size:8px; color:#64748b;">(from total ₹${p.amount.toLocaleString('en-IN')})</span>` : `${appliedFromThis.toLocaleString('en-IN')}`;
+                                html += `<tr><td>${new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td><td>${bankDB[p.mode] ? bankDB[p.mode].name : p.mode}</td><td class="right" style="color:${colorStr}; font-weight:700;">₹${displayAmt}</td></tr>`;
+                            }
                         });
                         html += `</table>`;
-                    } else { html += `<p style="font-size:11px; color:#64748b;">No payments received yet.</p>`; }
-                    html += `</div>`;
-                } else if (record.type === 'PB' || record.type === 'Asset') {
-                    let linkedPayments = Object.values(purchaseDB).filter(r => r.type === 'PaymentOut' && (r.linkedInvoices && r.linkedInvoices.includes(id)));
-                    html += `<div class="history-table"><span class="section-label">Payments Made</span>`;
-                    if (linkedPayments.length > 0) {
-                        html += `<table><tr style="background:#f8fafc;"><th>Date</th><th>Mode</th><th class="right">Amount</th></tr>`;
-                        linkedPayments.forEach(p => {
-                            html += `<tr><td>${new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td><td>${bankDB[p.mode] ? bankDB[p.mode].name : p.mode}</td><td class="right" style="color:#dc2626; font-weight:700;">₹${p.amount.toLocaleString('en-IN')}</td></tr>`;
-                        });
-                        html += `</table>`;
-                    } else { html += `<p style="font-size:11px; color:#64748b;">No payments made yet.</p>`; }
+                    } else { 
+                        html += `<p style="font-size:11px; color:#64748b;">No payments ${isOut ? 'made' : 'received'} yet.</p>`; 
+                    }
                     html += `</div>`;
                 } else {
                     html += `<div class="history-table"></div>`;
