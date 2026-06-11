@@ -18720,13 +18720,6 @@
             }
         };
        
-        let oldDeleteOrderEntry = window.deleteOrderEntry;
-        window.deleteOrderEntry = function(id) {
-            if(oldDeleteOrderEntry) oldDeleteOrderEntry(id);
-            window.renderHubOrderBookList();
-            if(typeof window.renderHubCalendarGrid === 'function') window.renderHubCalendarGrid();
-        };
-
         // 3. Render Beautiful Master List
         window.renderItemMasterList = function() {
             let container = document.getElementById('item-master-list-container');
