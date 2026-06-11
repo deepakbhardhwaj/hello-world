@@ -3845,32 +3845,27 @@
                 <div id="report-table-container"></div>
             </div>
         </div>
-        <div id="inventory-hub" class="content section" style="padding-bottom:120px;">
-            <div class="premium-sticky-header">
+        <div class="premium-sticky-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <button id="ih_header_back" onclick="openTab('erp', document.getElementById('btn-erp'))" style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:0.2s;">
                         <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                     </button>
                     <h2 id="ih_header_title" class="section-title" style="margin: 0; font-size:18px; font-weight: 900; letter-spacing: -0.5px;">Logistics & Rentals</h2>
                 </div>
-                <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;">
-                    <!-- Actions will be injected here by JS -->
-                </div>
-            </div>
-
-            <div style="background: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); overflow: hidden; border: 1px solid #E2E8F0;">
-                <div style="background: linear-gradient(135deg, #1E293B, #0F172A); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden;">
-                    <div style="position: absolute; right: -10px; bottom: -15px; opacity: 0.15; font-size: 70px; pointer-events: none;">📋</div>
-                    <div style="position: relative; z-index: 1;">
-                        <h3 style="margin: 0; color: white; font-size: 16px; font-weight: 800; letter-spacing: 0.5px;">Order Book</h3>
-                        <div style="color: #94A3B8; font-size: 11px; margin-top: 4px; font-weight: 500;">Upcoming Reservations</div>
-                    </div>
-                    <button onclick="window.openOrderBookModal()" style="position: relative; z-index: 1; background: #3B82F6; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;">+ New Order</button>
-                </div>
-                <div id="hub_order_book_list" style="padding: 15px; max-height: 300px; overflow-y: auto; background: #F8FAFC;"></div>
+                <div id="ih_list_actions" style="display: none; gap: 10px; align-items: center;"></div>
             </div>
 
             <div id="inv-dashboard-cards" style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px;">
+                
+                <div class="premium-erp-card card-wide" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openInvView('orderbook', 'Order Book')">
+                    <div class="bg-icon" style="right: 15px; bottom: -20px; font-size: 80px;">📋</div>
+                    <div class="card-text-wrap">
+                        <div class="erp-card-title" style="font-size: 16px;">Order Book</div>
+                        <div class="erp-card-sub" style="font-size: 10.5px;">Upcoming Reservations & Equipment Blocking</div>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </div>
+
                 <div class="premium-erp-card card-wide" style="background: linear-gradient(135deg, #06B6D4, #164E63);" onclick="window.openInvView('movement', 'Stock Movement')">
                     <div class="bg-icon" style="right: 15px; bottom: -20px; font-size: 80px;">🚚</div>
                     <div class="card-text-wrap">
@@ -3879,6 +3874,7 @@
                     </div>
                     <div class="action-arrow">→</div>
                 </div>
+                
                 <div class="premium-erp-card card-wide" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openInvView('master', 'Stock Master')">
                     <div class="bg-icon" style="right: 15px; bottom: -20px; font-size: 80px;">📦</div>
                     <div class="card-text-wrap">
@@ -3889,22 +3885,116 @@
                 </div>
             </div>
 
-            <div style="background: white; border-radius: 16px; padding: 20px; border: 1px solid #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 20px; position: relative; overflow: hidden;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <div>
-                        <h3 style="margin:0; font-size:16px; color:#0F172A; font-weight: 800;">🗓️ Booking Calendar</h3>
-                        <div style="font-size: 11px; color: #64748B; margin-top: 4px; font-weight: 500;">Track Daily Stock Availability</div>
-                    </div>
-                    <div style="display:flex; align-items:center; background: #F1F5F9; border-radius: 8px; padding: 4px;">
-                        <button onclick="changeHubCalendar(-1)" style="padding:6px 14px; border-radius:6px; border:none; background:white; font-weight:bold; color: #0F172A; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;">◀</button>
-                        <span id="hub_cal_month" style="font-weight:800; font-size:12px; min-width:90px; text-align:center; color: #0F172A;"></span>
-                        <button onclick="changeHubCalendar(1)" style="padding:6px 14px; border-radius:6px; border:none; background:white; font-weight:bold; color: #0F172A; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;">▶</button>
+            <div id="hub_cal_wrapper" style="background: white; border-radius: 12px; padding: 15px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0; font-size:15px; color:var(--text-primary);">🗓️ Booking Calendar</h3>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <button onclick="changeHubCalendar(-1)" style="padding:4px 10px; border-radius:6px; border:1px solid #CBD5E1; background:white; font-weight:bold;">◀</button>
+                        <span id="hub_cal_month" style="font-weight:bold; font-size:12px; min-width:85px; text-align:center;"></span>
+                        <button onclick="changeHubCalendar(1)" style="padding:4px 10px; border-radius:6px; border:1px solid #CBD5E1; background:white; font-weight:bold;">▶</button>
                     </div>
                 </div>
-                <div id="hub_cal_grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:8px;"></div>
-                <div id="hub_cal_details" style="margin-top:20px; display:none; padding:15px; background:#EFF6FF; border-radius:12px; border:1px dashed #BFDBFE;"></div>
+                <div id="hub_cal_grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px;"></div>
+                <div id="hub_cal_details" style="margin-top:15px; display:none; padding:12px; background:#EFF6FF; border-radius:8px; border:1px solid #BFDBFE;"></div>
             </div>
 
+            <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease;">
+                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
+                    <div class="data-card" style="background: #F0F9FF; border-color: #BAE6FD;">
+                        <div class="data-card-label" style="color:var(--accent-color);">Total Items in Godown</div>
+                        <div class="data-card-value" style="color:var(--accent-color);" id="inv_stat_godown">0</div>
+                    </div>
+                    <div class="data-card" style="background: #FFFBEB; border-color: #FDE68A;">
+                        <div class="data-card-label" style="color:var(--warning);">Deployed on Events</div>
+                        <div class="data-card-value" style="color:var(--warning);" id="inv_stat_deployed">0</div>
+                    </div>
+                </div>
+
+                <div class="premium-sticky-filters" style="top: 110px;">
+                    <div id="inv_filter_bar" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:flex-end; background:white; padding:8px 10px; border-radius:12px; border:1px solid #E2E8F0; box-shadow:var(--shadow-sm);">
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">From</label>
+                            <input type="date" id="inv_from_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                        </div>
+                        <div style="flex:1; min-width:100px;">
+                            <label style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">To</label>
+                            <input type="date" id="inv_to_date" class="form-input" style="padding:6px 8px; font-size:11px;" onchange="window.applyInvDateFilter()">
+                        </div>
+                        <div style="display:flex; gap:8px; flex:1; min-width:120px;">
+                            <button onclick="window.applyInvDateFilter()" style="flex:1; background:var(--accent-color); color:white; border:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Apply</button>
+                            <button onclick="window.clearInvDateFilter()" style="flex:1; background:#F1F5F9; color:var(--text-secondary); border:1px solid #CBD5E1; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">Clear</button>
+                        </div>
+                    </div>
+
+                    <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
+
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
+                    </div>
+                </div>
+
+                <div id="inventory-list-container"></div>
+                </div>
+
+            <div id="inv-master-view" style="display:none; animation: fadeIn 0.4s ease;">
+                <div class="premium-sticky-filters" style="top: 110px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
+                    </div>
+                </div>
+                
+                <div id="item-master-list-container"></div>
+                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
+            </div>
+
+            <div id="inv-orderbook-view" style="display:none; animation: fadeIn 0.4s ease; padding-bottom:60px;">
+                <div class="premium-sticky-filters" style="top: 110px;">
+                    <div class="search-container" style="margin-bottom:0;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client name or event..." oninput="window.renderHubOrderBookList()">
+                    </div>
+                </div>
+                
+                <div id="orderbook-list-container"></div>
+                <button class="pill-floating-btn" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openOrderBookModal()">➕ New Order</button>
+            </div>
+
+            <div id="orderBookModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:15000; justify-content:center; align-items:center; backdrop-filter: blur(2px);">
+                <div style="background:white; width:92%; max-width:450px; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height:85vh; overflow-y:auto;">
+                    <h3 style="margin:0 0 15px 0; color:#0F172A; border-bottom:1px solid #E2E8F0; padding-bottom:10px;">📋 Equipment Reservation</h3>
+                    <form id="orderBookForm">
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Client / Event</label>
+                        <select id="ob_lead_select" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #CBD5E1; font-size:13px;"></select>
+                        
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Reservation Date</label>
+                        <input type="date" id="ob_date" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #CBD5E1; font-size:13px; box-sizing:border-box;">
+                        
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Items Required</label>
+                        <div id="ob_items_container" style="margin-bottom:10px;"></div>
+                        <button type="button" onclick="addOrderBookItemRow()" style="width:100%; background:#F8FAFC; color:#3B82F6; font-weight:800; border:1px dashed #93C5FD; padding:10px; border-radius:8px; margin-bottom:20px; cursor:pointer;">+ Add Item</button>
+                        
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">Notes</label>
+                        <textarea id="ob_notes" placeholder="Any special instructions?" style="width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #CBD5E1; box-sizing:border-box; font-family:inherit; font-size:13px;"></textarea>
+                        
+                        <div style="display:flex; gap:12px;">
+                            <button type="button" onclick="document.getElementById('orderBookModal').style.display='none'" style="flex:1; background:#F1F5F9; color:#475569; padding:12px; border-radius:8px; border:none; font-weight:800; cursor:pointer;">Cancel</button>
+                            <button type="button" onclick="saveOrderBookEntry()" style="flex:1; background:#3B82F6; color:white; padding:12px; border-radius:8px; border:none; font-weight:800; cursor:pointer;">Save Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="orderPreviewModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:15000; justify-content:center; align-items:center;">
+                <div style="background:white; width:95%; max-width:600px; padding:20px; border-radius:12px; max-height:90vh; overflow-y:auto;">
+                    <div id="order_print_area" style="padding:15px; border:1px solid #E2E8F0; margin-bottom:20px;"></div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="document.getElementById('orderPreviewModal').style.display='none'" style="flex:1; padding:12px; background:#F1F5F9; border:none; border-radius:8px; font-weight:bold;">Close</button>
+                        <button onclick="printOrderDocument()" style="flex:1; padding:12px; background:#10B981; color:white; border:none; border-radius:8px; font-weight:bold;">🖨️ Print Document</button>
+                    </div>
+                </div>
+            </div>
             <!-- 🚀 VIEW 1: STOCK MOVEMENT (OLD INVENTORY LIST) -->
             <div id="inv-movement-view" style="display:none; animation: fadeIn 0.4s ease;">
                 <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:15px;">
@@ -18311,45 +18401,49 @@
                 fab.classList.remove('menu-open'); 
             }
         };
-        // ==========================================
-        // 🚀 MEGA UPDATE: INVENTORY HUB NAVIGATION & MASTER LIST LOGIC
-        // ==========================================
-        
+        // ==============================================================
+        // 🚀 MASTER INVENTORY HUB NAVIGATION (FIXED UI & CRASHES)
+        // ==============================================================
         window.openInvView = function(view, title) {
             document.getElementById('ih_header_title').innerText = title;
             document.getElementById('ih_header_back').onclick = window.closeInvView;
             document.getElementById('inv-dashboard-cards').style.display = 'none';
+            
+            let calWrapper = document.getElementById('hub_cal_wrapper');
+            if(calWrapper) calWrapper.style.display = 'none'; // List khulte hi calendar chhupega
 
             let dualFabs = document.getElementById('inv_dual_fabs');
             let btn1 = document.getElementById('inv_btn_1');
             let btn2 = document.getElementById('inv_btn_2');
 
+            // Sab views ko hide karo
+            document.getElementById('inv-movement-view').style.display = 'none';
+            document.getElementById('inv-master-view').style.display = 'none';
+            let obView = document.getElementById('inv-orderbook-view');
+            if(obView) obView.style.display = 'none';
+            
+            document.getElementById('ih_list_actions').innerHTML = ``;
+
             if (view === 'movement') {
                 document.getElementById('inv-movement-view').style.display = 'block';
-                document.getElementById('inv-master-view').style.display = 'none';
-                
                 if(dualFabs) {
                     dualFabs.style.display = 'flex';
                     btn1.innerHTML = '🚚 Outward'; btn1.onclick = window.openOutwardChallanModal; btn1.style.background = 'linear-gradient(135deg, #06B6D4, #164E63)';
                     btn2.innerHTML = '📄 Rent Invoice'; btn2.onclick = window.openRentInvoice; btn2.style.background = 'linear-gradient(135deg, #3B82F6, #1E3A8A)';
                 }
-                
                 document.getElementById('ih_list_actions').innerHTML = `
                     <button class="btn-icon" style="background:#F3E8FF; color:var(--purple); border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="document.getElementById('inv_filter_bar').style.display = document.getElementById('inv_filter_bar').style.display === 'none' ? 'flex' : 'none'" title="Date Filter">📅</button>
                     <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:none; font-size:16px; width:36px; height:36px; border-radius:8px; box-shadow: var(--shadow-sm); cursor:pointer;" onclick="window.printLogisticsList()" title="Print List">🖨️</button>
                 `;
                 window.renderInventoryHubList();
-            } else if (view === 'master') {
-                document.getElementById('inv-movement-view').style.display = 'none';
+            } 
+            else if (view === 'master') {
                 document.getElementById('inv-master-view').style.display = 'block';
-
                 if(dualFabs) {
                     dualFabs.style.display = 'flex';
                     btn1.innerHTML = '➕ Add Stock'; btn1.onclick = window.openDirectStockModal; btn1.style.background = 'linear-gradient(135deg, #8B5CF6, #4C1D95)';
                     btn2.innerHTML = '⚖️ Audit Stock'; btn2.onclick = window.openStockAuditModal; btn2.style.background = 'linear-gradient(135deg, #F59E0B, #9A3412)';
                 }
-
-                // Set Header Buttons for Master (Godown Settings, Transfer, Print)
                 document.getElementById('ih_list_actions').innerHTML = `
                     <button class="btn-icon" style="background:#FEF3C7; color:#D97706; border:1px solid #FDE68A; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.openStockTransferModal()" title="Stock Transfer">🔄</button>
                     <button class="btn-icon" style="background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE; font-size:14px; width:36px; height:36px; border-radius:8px; cursor:pointer;" onclick="window.printStockMaster()" title="Print Stock">🖨️</button>
@@ -18357,29 +18451,51 @@
                 `;
                 window.renderItemMasterList();
             }
+            else if (view === 'orderbook') {
+                // NAYA ORDER BOOK VIEW 🚀
+                if(obView) obView.style.display = 'block';
+                if(dualFabs) dualFabs.style.display = 'none'; 
+                
+                let obPill = document.querySelector('#inv-orderbook-view .pill-floating-btn');
+                if(obPill) obPill.style.setProperty('display', 'flex', 'important');
+                
+                window.renderHubOrderBookList();
+            }
+
             document.getElementById('ih_list_actions').style.display = 'flex';
             let navBar = document.querySelector('.nav-bar');
-            if (navBar) navBar.style.display = 'none';
+            if (navBar) navBar.style.setProperty('display', 'none', 'important');
             let mainFab = document.getElementById('main-fab-container');
-            if (mainFab) mainFab.style.display = 'none';
+            if (mainFab) mainFab.style.setProperty('display', 'none', 'important');
         };
 
-        // 2. Back Button Logic
         window.closeInvView = function() {
             document.getElementById('ih_header_title').innerText = "Logistics & Rentals";
             document.getElementById('ih_header_back').onclick = function () { openTab('erp', document.getElementById('btn-erp')); };
             document.getElementById('ih_list_actions').style.display = 'none';
             
+            // Show main cards & calendar again
             document.getElementById('inv-dashboard-cards').style.display = 'grid';
-            if(document.getElementById('inv_movement_fabs')) document.getElementById('inv_movement_fabs').style.display = 'none';
+            let calWrapper = document.getElementById('hub_cal_wrapper');
+            if(calWrapper) calWrapper.style.display = 'block';
+            
+            // Hide all sub-views
             document.getElementById('inv-movement-view').style.display = 'none';
             document.getElementById('inv-master-view').style.display = 'none';
+            let obView = document.getElementById('inv-orderbook-view');
+            if(obView) obView.style.display = 'none';
             
-            // Restore Navigation
+            let dualFabs = document.getElementById('inv_dual_fabs');
+            if (dualFabs) dualFabs.style.display = 'none';
+            
+            let obPill = document.querySelector('#inv-orderbook-view .pill-floating-btn');
+            if(obPill) obPill.style.setProperty('display', 'none', 'important');
+            
+            // Restore Main Navs
             let navBar = document.querySelector('.nav-bar');
-            if (navBar) navBar.style.display = 'flex';
+            if (navBar) navBar.style.setProperty('display', 'flex', 'important');
             let mainFab = document.getElementById('main-fab-container');
-            if (mainFab) mainFab.style.display = 'flex';
+            if (mainFab) mainFab.style.setProperty('display', 'flex', 'important');
         };
 
         // 3. Render Beautiful Master List
