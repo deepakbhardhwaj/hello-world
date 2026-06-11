@@ -19240,7 +19240,22 @@
             }
             if(oldSaveDirectInvoiceData) oldSaveDirectInvoiceData();
         };
-        
+        // 🚀 CALENDAR AUTO-LOAD FIX (Page khulte hi data layega)
+        setTimeout(() => {
+            if (typeof window.renderHubCalendarGrid === 'function') {
+                // Agar aap purane variables use kar rahe hain:
+                if (typeof window.hubCalMonth !== 'undefined') {
+                    window.hubCalMonth = new Date().getMonth();
+                    window.hubCalYear = new Date().getFullYear();
+                }
+                // Agar aapne naya hubCalDate use kiya hai:
+                if (typeof window.hubCalDate !== 'undefined') {
+                    window.hubCalDate = new Date();
+                }
+                
+                window.renderHubCalendarGrid();
+            }
+        }, 800); // 0.8 seconds ka delay taaki database pehle load ho jaye
     </SCRIPT>
 </body>
 
