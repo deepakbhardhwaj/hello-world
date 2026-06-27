@@ -111,7 +111,7 @@
                             } catch (error) {
                                 reject(error);
                             }
-                        }, 'image/jpeg', 0.7);
+                        }, 'image/jpeg', 0.5);
                     };
                     img.onerror = (err) => reject(err); // Image load error handling
                     img.src = e.target.result;
@@ -8607,7 +8607,7 @@
                     // 🚀 Safety: 10 second ka timeout laga diya hai taaki loop na phanse
                     let uploadedUrl = await Promise.race([
                         compressAndUploadImage(files[i], `event_photos/${currentLeadId}`),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 10000))
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30000))
                     ]);
                     
                     if(uploadedUrl) {
