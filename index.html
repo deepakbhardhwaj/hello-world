@@ -81,15 +81,28 @@
         async function uploadToCloudinary(file) {
             let formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", "event_photos_preset"); // Bas yahi naam chahiye
+            formData.append("upload_preset", "event_photos_preset");
 
-            let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
-                method: "POST",
-                body: formData
-            });
-            
-            let data = await response.json();
-            return data.secure_url; 
+            try {
+                let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                let data = await response.json();
+                
+                if (response.ok) {
+                    return data.secure_url;
+                } else {
+                    // Yahan humein asli error milega
+                    console.error("Cloudinary Server Error:", data);
+                    alert("Error: " + (data.error?.message || "Check Console"));
+                    return null;
+                }
+            } catch (err) {
+                console.error("Network Error:", err);
+                return null;
+            }
         }
     </script>
     <style>
