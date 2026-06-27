@@ -79,23 +79,24 @@
         console.log("✅ Firebase & Database Connected Successfully (Secure Cloud Mode)!");
 
         async function uploadToCloudinary(file) {
-            let formData = new FormData();
+            const formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", "event_photos_preset");
+            formData.append("upload_preset", "event_photos_preset"); // Aapka exact preset naam
 
-            let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
+            // Cloud Name URL mein hardcode hai, isme koi authentication nahi hai
+            const response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
                 method: "POST",
-                // Headers hatayein, kyunki Cloudinary 'Unsigned' ke liye bina header ke request accept karta hai
-                body: formData
+                body: formData 
+                // Notice: No headers here!
             });
             
-            let data = await response.json();
+            const data = await response.json();
             
             if (data.secure_url) {
                 return data.secure_url;
             } else {
-                console.error("Cloudinary Detailed Error:", data); // Isse hume pata chalega ki API Key kahan se aa rahi hai
-                throw new Error(data.error?.message || "Unknown error");
+                console.error("Cloudinary Response:", data); // Isse hum live dekh lenge
+                throw new Error("Upload Failed");
             }
         }
     </script>
