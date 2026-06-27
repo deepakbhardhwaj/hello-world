@@ -19,7 +19,7 @@
         const urlCompName = urlParams.get('cname');
 
         if (urlInviteCode) {
-            
+            // Agar link mein invite code hai, toh browser memory mein save kar lo
             localStorage.setItem('utsav_pending_invite', urlInviteCode);
             if(urlCompName) localStorage.setItem('utsav_pending_invite_name', urlCompName);
             
@@ -68,187 +68,36 @@
             if (loader) loader.style.display = 'none';
         };
 
-        // ==========================================
-        // 🚀 GLOBAL PERFORMANCE UTILITIES
-        // ==========================================
-        function debounce(fn, delay = 300) {
-            let timer;
-            return function(...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
-        }
-        function throttle(fn, limit = 100) {
-            let lastCall = 0;
-            return function(...args) {
-                const now = Date.now();
-                if (now - lastCall >= limit) { lastCall = now; fn.apply(this, args); }
-            };
-        }
-        // Safe element helper
-        function el(id) { return document.getElementById(id); }
-        function safeText(id, val) { let e = el(id); if (e) e.innerText = val; }
-
-
         // 🚀 TURBO MODE SETTINGS (Pure Online Live Sync - 100% Safe)
-        // Firestore: auto-detect best polling strategy
         window.db.settings({
+            experimentalForceLongPolling: false, 
             experimentalAutoDetectLongPolling: true,
+            useFetchStreams: true, 
             merge: true
         });
 
         console.log("✅ Firebase & Database Connected Successfully (Secure Cloud Mode)!");
 
-        // ==========================================
-        // 🚀 TOAST NOTIFICATION SYSTEM (Replaces jarring alerts)
-        // ==========================================
-        window.showToast = function(message, type = 'info', duration = 3000) {
-            let existing = document.getElementById('utsav-toast');
-            if (existing) existing.remove();
-
-            const colors = {
-                success: { bg: '#059669', icon: '✅' },
-                error:   { bg: '#DC2626', icon: '❌' },
-                warning: { bg: '#D97706', icon: '⚠️' },
-                info:    { bg: '#2563EB', icon: 'ℹ️' }
-            };
-            const c = colors[type] || colors.info;
-
-            let toast = document.createElement('div');
-            toast.id = 'utsav-toast';
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 80px;
-                left: 50%;
-                transform: translateX(-50%) translateY(20px);
-                background: ${c.bg};
-                color: white;
-                padding: 12px 20px;
-                border-radius: 12px;
-                font-size: 13px;
-                font-weight: 600;
-                z-index: 99999;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-                max-width: 320px;
-                text-align: center;
-                opacity: 0;
-                transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
-                pointer-events: none;
-            `;
-            toast.textContent = c.icon + ' ' + message;
-            document.body.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateX(-50%) translateY(0)';
-            });
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(-50%) translateY(10px)';
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
-        };
-
-
-        async function uploadToCloudinary(file, folder = null) {
-            // ============================================================
-            // 🔧 CONFIGURATION — Verify both values in your Cloudinary
-            //    Dashboard before deploying.
-            // ============================================================
-            const CLOUD_NAME   = "dvjjyinbl";          // Dashboard → Top-right: your Cloud Name
-            const UPLOAD_PRESET = "event_photos_preset"; // Must be "Unsigned" in Dashboard →
-                                                          // Settings → Upload → Upload Presets
-
-            // ── 1. INPUT VALIDATION ──────────────────────────────────────
-            if (!file || !(file instanceof File)) {
-                throw new Error("uploadToCloudinary: A valid File object is required.");
-            }
-
-            const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                throw new Error(`Invalid file type "${file.type}". Allowed: JPEG, PNG, GIF, WEBP, AVIF.`);
-            }
-
-            const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
-            if (file.size > MAX_SIZE_BYTES) {
-                throw new Error(`File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed size is 10 MB.`);
-            }
-
-            // ── 2. BUILD FORM DATA ───────────────────────────────────────
-            // ⚠️  For UNSIGNED uploads, only "file", "upload_preset", and
-            //     "folder" are safe to include. Do NOT add api_key,
-            //     timestamp, or signature — those fields force Cloudinary
-            //     into signed-upload mode and will trigger "Unknown API
-            //     key" errors.
+        async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", UPLOAD_PRESET);
-            if (folder && typeof folder === "string") {
-                formData.append("folder", folder); // e.g. 'logos/auth_logo'
+            formData.append("upload_preset", "event_photos_preset"); // Aapka exact preset naam
+
+            // Cloud Name URL mein hardcode hai, isme koi authentication nahi hai
+            const response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
+                method: "POST",
+                body: formData 
+                // Notice: No headers here!
+            });
+            
+            const data = await response.json();
+            
+            if (data.secure_url) {
+                return data.secure_url;
+            } else {
+                console.error("Cloudinary Response:", data); // Isse hum live dekh lenge
+                throw new Error("Upload Failed");
             }
-
-            // ── 3. NETWORK REQUEST ───────────────────────────────────────
-            // ⚠️  Do NOT set a Content-Type header manually. The browser
-            //     must set it automatically so the multipart boundary is
-            //     included. A manually set header breaks the request.
-            const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-
-            let response;
-            try {
-                response = await fetch(CLOUDINARY_URL, {
-                    method: "POST",
-                    body: formData
-                    // No headers — intentional for unsigned uploads
-                });
-            } catch (networkError) {
-                throw new Error(`Network error while contacting Cloudinary: ${networkError.message}`);
-            }
-
-            // ── 4. PARSE RESPONSE ────────────────────────────────────────
-            let data;
-            try {
-                data = await response.json();
-            } catch (parseError) {
-                throw new Error(`Could not parse Cloudinary response (HTTP ${response.status}). The cloud name "${CLOUD_NAME}" may be incorrect.`);
-            }
-
-            // ── 5. HANDLE ERRORS WITH ACTIONABLE MESSAGES ───────────────
-            if (!response.ok || data.error) {
-                const msg = data.error?.message || `HTTP ${response.status}`;
-                console.error("❌ Cloudinary Upload Error Response:", data);
-
-                if (msg.toLowerCase().includes("unknown api key") || msg.toLowerCase().includes("invalid api key")) {
-                    throw new Error(
-                        `[Cloudinary] Auth Error — "${msg}"\n` +
-                        `→ Your upload preset "${UPLOAD_PRESET}" is almost certainly set to "Signed" mode.\n` +
-                        `→ Fix: Dashboard → Settings → Upload → Upload Presets → "${UPLOAD_PRESET}" → Change Signing Mode to "Unsigned" → Save.`
-                    );
-                }
-                if (msg.toLowerCase().includes("upload preset")) {
-                    throw new Error(
-                        `[Cloudinary] Preset Error — "${msg}"\n` +
-                        `→ Verify that a preset named exactly "${UPLOAD_PRESET}" exists in your Dashboard (case-sensitive).`
-                    );
-                }
-                if (msg.toLowerCase().includes("cloud")) {
-                    throw new Error(
-                        `[Cloudinary] Cloud Name Error — "${msg}"\n` +
-                        `→ Verify your cloud name is exactly "${CLOUD_NAME}" (check Dashboard → top-right corner).`
-                    );
-                }
-
-                throw new Error(`[Cloudinary] Upload failed: ${msg}`);
-            }
-
-            // ── 6. SUCCESS ───────────────────────────────────────────────
-            if (!data.secure_url) {
-                throw new Error("[Cloudinary] Upload appeared to succeed but no secure_url was returned.");
-            }
-
-            console.log("✅ Cloudinary upload successful:", data.secure_url);
-            if (typeof window.showToast === "function") window.showToast("Photo uploaded successfully!", "success", 2000);
-            return data.secure_url;
         }
     </script>
     <style>
@@ -2009,90 +1858,6 @@
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
         @keyframes utsav-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* ==========================================
-           🚀 GLOBAL PERFORMANCE & UX IMPROVEMENTS
-           ========================================== */
-        html { scroll-behavior: smooth; }
-        
-        /* Better focus accessibility */
-        :focus-visible {
-            outline: 2px solid var(--accent-color);
-            outline-offset: 2px;
-        }
-        
-        /* Smooth transitions on interactive elements */
-        .btn-main, .btn-icon, .nav-btn, .list-row, .premium-erp-card,
-        .filter-box, .sales-tab-btn, .form-input, .form-select,
-        .dropdown-item, .nav-link {
-            transition: all 0.15s ease;
-        }
-        
-        /* GPU-accelerated transforms for modals */
-        .modal-content, .side-panel, #global-loader {
-            will-change: transform;
-        }
-        
-        /* Better touch targets on mobile */
-        @media (max-width: 768px) {
-            .btn-icon { min-width: 40px; min-height: 40px; }
-            .dropdown-item { padding: 12px 16px; }
-            .list-row { padding: 10px 14px; }
-        }
-        
-        /* Prevent layout shift on image load */
-        img { max-width: 100%; height: auto; }
-        
-        /* Toast notification improvements */
-        .toast-notification {
-            animation: slideUp 0.3s ease forwards;
-        }
-        
-        /* Better empty states */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            gap: 8px;
-        }
-        
-        /* Skeleton loading shimmer */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f4f8 25%, #e8edf2 50%, #f0f4f8 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
-            border-radius: 6px;
-        }
-        
-        /* Improved form inputs */
-        .form-input:focus, .form-select:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-            outline: none;
-        }
-        
-        /* Better button active states */
-        .btn-main:active, .nav-btn:active {
-            transform: scale(0.97);
-        }
-        
-        /* Smooth badge transitions */
-        .status-badge {
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-        
-        /* Reduce motion for accessibility */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
         
         .loader-text {
             margin-top: 15px; font-size: 14px; font-weight: 800; color: #0F172A;
@@ -2107,14 +1872,6 @@
             background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 6px;
         }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
     </style>
 
     <div id="global-loader">
@@ -2129,7 +1886,7 @@
     <!-- Splash Screen -->
     <div id="splash-screen">
         <div class="splash-logo">
-            <img loading="lazy" src="logo.png" alt="UTSAVhq Logo" onerror="this.style.display='none'"
+            <img src="logo.png" alt="UTSAVhq Logo" onerror="this.style.display='none'"
                 style="max-height: 80px; object-fit: contain;">
         </div>
     </div>
@@ -2138,7 +1895,7 @@
 
         <div class="auth-card auth-view" id="view_email_auth" style="border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 40px rgba(15,23,42,0.08); border: 1px solid white; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px);">
             <div class="auth-logo">
-                <img loading="lazy" src="logo.png" onerror="this.style.display='none'" style="max-height: 60px; margin-bottom: 20px;">
+                <img src="logo.png" onerror="this.style.display='none'" style="max-height: 60px; margin-bottom: 20px;">
                 <h2 class="auth-title">Welcome to UTSAVhq</h2>
                 <p class="auth-subtitle">Secure access with your Email</p>
             </div>
@@ -2153,7 +1910,7 @@
                     <div style="margin: 15px 0; text-align: center; color: var(--text-secondary); font-size: 12px; font-weight: 700;">OR</div>
                     
                     <button type="button" class="btn-main" style="background: white; color: #475569; border: 1px solid #CBD5E1; box-shadow: none; padding: 14px; font-size: 14px; border-radius: 10px;" onclick="signInWithGoogle()">
-                        <img loading="lazy" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px; margin-right:8px;"> Sign in with Google
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px; margin-right:8px;"> Sign in with Google
                     </button>
                 </div>
             </form>
@@ -4256,7 +4013,7 @@
 
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client, event or party..." oninput="debounce(window.renderHubOrderBookList, 250)()">
+                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client, event or party..." oninput="window.renderHubOrderBookList()">
                     </div>
                 </div>
                 <div id="orderbook-list-container"></div>
@@ -4291,7 +4048,7 @@
                     <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="debounce(window.renderInventoryHubList, 250)()">
+                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="window.renderInventoryHubList()">
                     </div>
                 </div>
                 <div id="inventory-list-container"></div>
@@ -4301,7 +4058,7 @@
                 <div class="premium-sticky-filters" style="top: 56px;">
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="debounce(window.renderItemMasterList, 250)()">
+                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="window.renderItemMasterList()">
                     </div>
                 </div>
                 <div id="item-master-list-container"></div>
@@ -4566,7 +4323,7 @@
                 </div>
                 <div style="padding: 12px 16px; background: white; border-bottom: 1px solid var(--border-color);">
                     <div class="search-container" style="margin-bottom:0;">
-                        <input type="text" id="inv_select_search" class="search-input" placeholder="🔍 Search items dynamically..." oninput="debounce(window.filterSelectInventory, 200)()">
+                        <input type="text" id="inv_select_search" class="search-input" placeholder="🔍 Search items dynamically..." oninput="window.filterSelectInventory()">
                     </div>
                 </div>
                 <div id="inv_select_grid" style="flex: 1; overflow-y: auto; padding: 16px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px;">
@@ -6865,7 +6622,7 @@
                     let activeToken = data["session_" + deviceType];
                     let localToken = localStorage.getItem('utsav_device_token');
 
-                    
+                    // Agar cloud ka token aur mere phone ka token alag hai -> KICK OUT!
                     if (activeToken && localToken && activeToken !== localToken) {
                         alert(`⚠️ SESSION EXPIRED!\n\nYour account was logged in from another ${deviceType}.\nFor security, you have been logged out from this device.`);
                         forceLogoutApp();
@@ -6989,7 +6746,7 @@
                 }
             } catch(e) { console.log(e); }
 
-            
+            // Agar sach me Naya User hai toh fresh entry banegi
             loggedInMobile = mob; 
             let userObj = { name: name, mobile: mob, email: email, dob: "", companies: [] };
             masterUsersDB[mob] = userObj;
@@ -7336,7 +7093,7 @@
         window.addEventListener('scroll', function () {
             clearTimeout(scrollTimeoutMenu);
             scrollTimeoutMenu = setTimeout(() => { closeAllMenus(); }, 200);
-        }, { passive: true, capture: true });
+        }, true);
 
         window.onclick = function (e) {
             if (!e.target.matches('.btn-icon') && !e.target.closest('.btn-icon') && !e.target.closest('#main-fab-container') && !e.target.matches('path') && !e.target.matches('svg') && !e.target.matches('circle')) {
@@ -7355,6 +7112,40 @@
         function closeNav() { document.getElementById("mySidebar").style.width = "0"; document.body.style.overflow = "auto"; }
 
         // 🚀 SMART FIX 1: Tab click par Dashboard ko force update karna
+        function openTab(tabName, btnElement) {
+            let sections = document.getElementsByClassName("section");
+            for (let i = 0; i < sections.length; i++) {
+                sections[i].classList.remove("active-section");
+            }
+            let btns = document.querySelectorAll(".nav-btn");
+            for (let i = 0; i < btns.length; i++) {
+                btns[i].classList.remove("active-btn");
+            }
+
+            document.getElementById(tabName).classList.add("active-section");
+            if (btnElement) { btnElement.classList.add("active-btn"); }
+
+            // FAB Hide/Show Logic
+            let fabContainer = document.getElementById('main-fab-container');
+            if (fabContainer) {
+                // Ab yahan global hideFabTabs use ho raha hai, error nahi aayega
+                if (hideFabTabs.includes(tabName)) {
+                    fabContainer.style.display = 'none';
+                } else {
+                    fabContainer.style.display = 'flex';
+                }
+            }
+
+            closeAllMenus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Settings auto-load
+            if (tabName === 'settings-hub') {
+                if (typeof initSettingsHub === 'function') {
+                    setTimeout(() => { initSettingsHub(); }, 100);
+                }
+            }
+        } // 👈 YAHAN YE BRACKET MISSING THA!
 
         // ==========================================
         // 🚀 SMART MULTI-TENANT AUTH SYSTEM (MOBILE NO BASED)
@@ -7389,7 +7180,7 @@
             let phoneInput = document.getElementById('auth_comp_phone1');
             if (phoneInput) {
                 phoneInput.value = loggedInMobile || "";
-                
+                // Agar phir bhi blank hai toh user ko manually type karne ki permission do
                 if (!loggedInMobile) phoneInput.removeAttribute('readonly'); 
             }
             
@@ -7628,7 +7419,7 @@
 
             // 🚀 NAYA FUNCTION: Bahar se Workspace delete karne ke liye
             async function deleteWorkspaceFromList(compId, event) {
-                event.stopPropagation(); 
+                event.stopPropagation(); // Isse box par click hone se andar nahi jayega
                 let compName = masterCompsDB[compId].name;
                 let code = prompt(`🚨 DANGER ZONE 🚨\nAre you sure you want to permanently delete "${compName}"?\n\nType exactly: DELETE`);
                 
@@ -7697,7 +7488,7 @@
                 let snapshot = await db.collection("companies").where("joinCode", "==", inputCode).get();
 
                 if (snapshot.empty) {
-                    
+                    // Agar Firebase mein code nahi mila
                     return alert("❌ Invalid Code! Please check the code and try again.");
                 }
 
@@ -7852,7 +7643,7 @@
                 });
             }
             
-            
+            // Agar koi pending request nahi hai
             if(pendingCount === 0) pendingDiv.innerHTML += `<p style="font-size:11px; color:#94A3B8;">No pending requests.</p>`;
             
             document.getElementById('teamModal').style.display = 'flex';
@@ -7889,7 +7680,7 @@
             let comp = masterCompsDB[compId];
             let isOwner = (comp.ownerMob === loggedInMobile);
             
-            
+            // Agar Owner hai toh sab allowed
             if (isOwner) {
                 currentPermissions = { 
                     modules: { crm:true, event:true, sales:true, purch:true, exp:true, bank:true, rep:true, inv:true },
@@ -8067,6 +7858,8 @@
             document.getElementById('companyProfileModal').style.display = 'none';
         }
 
+        function confirmExitApp() { window.close(); }
+
         // ==========================================
         // 🚀 FIREBASE REAL-TIME CLOUD SYNC ENGINE
         // ==========================================
@@ -8132,7 +7925,7 @@
                     masterCompsDB[doc.id] = compData; // Memory update
                     localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
 
-                    
+                    // Agar Owner ne 'Team' dabba khol rakha hai toh LIVE update karo
                     let teamModal = document.getElementById('teamModal');
                     if (teamModal && teamModal.style.display === 'flex') {
                         openTeamModal(); 
@@ -8240,7 +8033,7 @@
             // 2. ☁️ FIREBASE CLOUD PUSH (Strict Update - DELETES removed records permanently)
             db.collection("workspace_data").doc(currentWorkspaceId).update(dataToSave)
             .catch(e => {
-                
+                // Agar document first time ban raha hai
                 db.collection("workspace_data").doc(currentWorkspaceId).set(dataToSave);
             });
         }
@@ -8274,6 +8067,8 @@
         function setFilter(type, element) { currentFilter = type; document.querySelectorAll('#crm .filter-box').forEach(box => { box.classList.remove('active-filter'); }); element.classList.add('active-filter'); renderLeadsList(); }
         function actionEdit(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); openLeadModal(id); }
         function actionLost(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); leadsDB[id].status = "Lost"; leadsDB[id].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Marked as Lost from quick menu." }); updateDataAndUI(); }
+        function actionDelete(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); if (confirm("Are you sure you want to delete this lead?")) { delete leadsDB[id]; updateDataAndUI(); } }
+
         function openLeadModal(editId = null) {
             refreshSourceList(); // <--- NAYI LINE
             editingLeadId = editId;
@@ -8324,7 +8119,7 @@
             // 🚀 FIX: Auto-Assign to Staff if they created it
             let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
             let dropdownAssign = document.getElementById('l_assign_to').value;
-            
+            // Agar owner nahi hai aur dropdown khali hai, toh khud ko assign kar lega
             let finalAssignee = dropdownAssign || (isOwner ? "" : loggedInMobile);
 
             // Naya Lead Object banao
@@ -8350,7 +8145,7 @@
 
             // 🚀 SMART FIX: Lead saved securely to current Workspace ONLY!
             leadsDB[id] = leadObj;
-            updateDataAndUI(); 
+            updateDataAndUI(); // Ye automatic Cloud Sync handle kar lega
             document.getElementById('leadModal').style.display = 'none';
             editingLeadId = null;
             console.log("✅ Lead securely saved to Workspace!");
@@ -8428,7 +8223,7 @@
                     }
                 }
 
-                
+                // Agar lead show karni hai, toh uske andar ka UI yahan banega
                 if (show) {
                     let badgeClass = "badge-new";
                     if (lead.status === "Hot") badgeClass = "badge-hot";
@@ -8443,12 +8238,282 @@
                     if (staffKey) {
                         staffName = staffKey; // Default to Mobile No
                         let comp = masterCompsDB[currentWorkspaceId];
-                        
+                        // Pehle Workspace/Company team me dhundho
                         if (comp && comp.staff) {
                             let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
-                            if (staffObj && staffObj.name) staffName = staffObj.name.split(' ')[0]; 
+                            if (staffObj && staffObj.name) staffName = staffObj.name.split(' ')[0]; // Sirf First Name
                         } 
-                        
+                        // Agar fir bhi nahi mila, tab global users me check karo
+                        if (staffName === staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
+                            staffName = masterUsersDB[staffKey].name.split(' ')[0];
+                        }
+                    }
+
+                    let assignedTag = staffKey ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
+
+                    let div = document.createElement('div');
+                    div.className = "list-row";
+                    div.id = `row-${lead.id}`;
+                    div.innerHTML = `
+                        <div class="clickable-area" onclick="openPanel('${lead.id}')">
+                            <div class="row-main" style="${lead.status === 'Lost' ? 'text-decoration:line-through; color:var(--text-secondary)' : ''}">
+                                ${lead.name} ${assignedTag} 
+                                <span style="font-weight:normal; font-size:12px; color:var(--text-secondary);">(${lead.cat})</span>
+                            </div>
+                            <div class="row-sub">📅 ${lead.date || "TBD"} • ${lead.phone}</div>
+                        </div>
+                        <div class="actions-area">
+                            <span class="status-badge ${badgeClass}">${lead.status}</span>
+                            <div class="dropdown-container">
+                                <button class="btn-icon" onclick="toggleMenu('${lead.id}', event)">⋮</button>
+                                <div class="dropdown-menu" id="menu-${lead.id}">
+                                    <div class="dropdown-item" onclick="actionEdit('${lead.id}', event)">✏️ Edit Lead</div>
+                                    <div class="dropdown-item" onclick="actionLost('${lead.id}', event)">❌ Mark as Lost</div>
+                                    <div class="dropdown-item text-red" onclick="actionDelete('${lead.id}', event)">🗑️ Delete Lead</div>
+                                </div>
+                            </div>
+                        </div>`;
+                    fragment.appendChild(div);
+                }
+            });
+
+            crmContainer.appendChild(fragment);
+
+            document.getElementById('crm-stat-total').innerText = counts.total;
+            document.getElementById('crm-stat-new').innerText = counts.new;
+            document.getElementById('crm-stat-active').innerText = counts.active;
+            document.getElementById('crm-stat-lost').innerText = counts.lost;
+
+            if (crmContainer.innerHTML === "") crmContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary);'>No leads found.</p>";
+            if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
+        }function renderLeadsList() {
+            let crmContainer = document.getElementById('crm-leads-list');
+            let homeContainer = document.getElementById('home-hot-leads');
+            if (!crmContainer) return;
+
+            crmContainer.innerHTML = "";
+            if (homeContainer) homeContainer.innerHTML = ""; 
+
+            let counts = { total: 0, new: 0, active: 0, lost: 0 };
+            let fragment = document.createDocumentFragment();
+
+            let sortedLeads = Object.values(leadsDB).sort((a, b) => {
+                let dateA = a.date ? new Date(a.date) : new Date('2099-01-01');
+                let dateB = b.date ? new Date(b.date) : new Date('2099-01-01');
+                return dateA - dateB;
+            });
+
+            sortedLeads.forEach(lead => {
+                let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
+                if (!isOwner && lead.assignedTo !== loggedInMobile) return;
+                if (lead.status === "Won") return;
+
+                counts.total++;
+                if (lead.status === "New") counts.new++;
+                if (["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) counts.active++;
+                if (lead.status === "Lost") counts.lost++;
+
+                if (homeContainer && (lead.status === "Hot" || lead.status === "Meeting Scheduled")) {
+                    homeContainer.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #F1F5F9; cursor:pointer;" onclick="openTab('crm', document.getElementById('btn-crm')); setTimeout(()=>openPanel('${lead.id}'), 300);">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">${lead.name}</strong>
+                            <div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">${lead.func} • ${lead.date || 'TBD'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="status-badge ${lead.status === 'Hot' ? 'badge-hot' : 'badge-meet'}">${lead.status}</span>
+                            <div style="font-size:11px; font-weight:700; color:var(--success); margin-top:4px;">₹${(parseFloat(lead.budget)||0).toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>`;
+                }
+
+                let show = true;
+                if (currentFilter === 'New' && lead.status !== 'New') show = false;
+                if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
+                if (currentFilter === 'Lost' && lead.status !== 'Lost') show = false;
+
+                // 🚀 SMART FIX 1: Search Box Logic (Workspace Staff Check)
+                let searchTerm = (searchTerms.crm || "").toLowerCase();
+                if (searchTerm !== "") {
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
+                    
+                    let staffNameForSearch = "";
+                    let comp = masterCompsDB[currentWorkspaceId];
+                    if (staffKey && comp && comp.staff) {
+                        let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
+                        if (staffObj && staffObj.name) staffNameForSearch = staffObj.name.toLowerCase();
+                    } else if (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
+                        staffNameForSearch = masterUsersDB[staffKey].name.toLowerCase();
+                    }
+
+                    let leadNameForSearch = (lead.name || "").toLowerCase();
+                    let catForSearch = (lead.cat || "").toLowerCase();
+                    let phoneForSearch = String(lead.phone || "").toLowerCase();
+
+                    if (!leadNameForSearch.includes(searchTerm) && 
+                        !staffNameForSearch.includes(searchTerm) && 
+                        !catForSearch.includes(searchTerm) &&
+                        !phoneForSearch.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+
+                // Agar lead show karni hai, toh uske andar ka UI yahan banega
+                if (show) {
+                    let badgeClass = "badge-new";
+                    if (lead.status === "Hot") badgeClass = "badge-hot";
+                    else if (lead.status === "Thinking") badgeClass = "badge-think";
+                    else if (lead.status === "Meeting Scheduled" || lead.status === "Meeting Completed") badgeClass = "badge-meet";
+                    else if (lead.status === "Lost") badgeClass = "badge-lost";
+
+                    // 🚀 SMART FIX 2: UI Name Tag Logic (Number ki jagah proper Name)
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
+                    let staffName = "Unassigned";
+                    
+                    if (staffKey) {
+                        staffName = staffKey; // Default to Mobile No
+                        let comp = masterCompsDB[currentWorkspaceId];
+                        // Pehle Workspace/Company team me dhundho
+                        if (comp && comp.staff) {
+                            let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
+                            if (staffObj && staffObj.name) staffName = staffObj.name.split(' ')[0]; // Sirf First Name
+                        } 
+                        // Agar fir bhi nahi mila, tab global users me check karo
+                        if (staffName === staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
+                            staffName = masterUsersDB[staffKey].name.split(' ')[0];
+                        }
+                    }
+
+                    let assignedTag = staffKey ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
+
+                    let div = document.createElement('div');
+                    div.className = "list-row";
+                    div.id = `row-${lead.id}`;
+                    div.innerHTML = `
+                        <div class="clickable-area" onclick="openPanel('${lead.id}')">
+                            <div class="row-main" style="${lead.status === 'Lost' ? 'text-decoration:line-through; color:var(--text-secondary)' : ''}">
+                                ${lead.name} ${assignedTag} 
+                                <span style="font-weight:normal; font-size:12px; color:var(--text-secondary);">(${lead.cat})</span>
+                            </div>
+                            <div class="row-sub">📅 ${lead.date || "TBD"} • ${lead.phone}</div>
+                        </div>
+                        <div class="actions-area">
+                            <span class="status-badge ${badgeClass}">${lead.status}</span>
+                            <div class="dropdown-container">
+                                <button class="btn-icon" onclick="toggleMenu('${lead.id}', event)">⋮</button>
+                                <div class="dropdown-menu" id="menu-${lead.id}">
+                                    <div class="dropdown-item" onclick="actionEdit('${lead.id}', event)">✏️ Edit Lead</div>
+                                    <div class="dropdown-item" onclick="actionLost('${lead.id}', event)">❌ Mark as Lost</div>
+                                    <div class="dropdown-item text-red" onclick="actionDelete('${lead.id}', event)">🗑️ Delete Lead</div>
+                                </div>
+                            </div>
+                        </div>`;
+                    fragment.appendChild(div);
+                }
+            });
+
+            crmContainer.appendChild(fragment);
+
+            document.getElementById('crm-stat-total').innerText = counts.total;
+            document.getElementById('crm-stat-new').innerText = counts.new;
+            document.getElementById('crm-stat-active').innerText = counts.active;
+            document.getElementById('crm-stat-lost').innerText = counts.lost;
+
+            if (crmContainer.innerHTML === "") crmContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary);'>No leads found.</p>";
+            if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
+        }function renderLeadsList() {
+            let crmContainer = document.getElementById('crm-leads-list');
+            let homeContainer = document.getElementById('home-hot-leads');
+            if (!crmContainer) return;
+
+            crmContainer.innerHTML = "";
+            if (homeContainer) homeContainer.innerHTML = ""; 
+
+            let counts = { total: 0, new: 0, active: 0, lost: 0 };
+            let fragment = document.createDocumentFragment();
+
+            let sortedLeads = Object.values(leadsDB).sort((a, b) => {
+                let dateA = a.date ? new Date(a.date) : new Date('2099-01-01');
+                let dateB = b.date ? new Date(b.date) : new Date('2099-01-01');
+                return dateA - dateB;
+            });
+
+            sortedLeads.forEach(lead => {
+                let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
+                if (!isOwner && lead.assignedTo !== loggedInMobile) return;
+                if (lead.status === "Won") return;
+
+                counts.total++;
+                if (lead.status === "New") counts.new++;
+                if (["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) counts.active++;
+                if (lead.status === "Lost") counts.lost++;
+
+                if (homeContainer && (lead.status === "Hot" || lead.status === "Meeting Scheduled")) {
+                    homeContainer.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #F1F5F9; cursor:pointer;" onclick="openTab('crm', document.getElementById('btn-crm')); setTimeout(()=>openPanel('${lead.id}'), 300);">
+                        <div>
+                            <strong style="font-size:13px; color:var(--text-primary);">${lead.name}</strong>
+                            <div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">${lead.func} • ${lead.date || 'TBD'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="status-badge ${lead.status === 'Hot' ? 'badge-hot' : 'badge-meet'}">${lead.status}</span>
+                            <div style="font-size:11px; font-weight:700; color:var(--success); margin-top:4px;">₹${(parseFloat(lead.budget)||0).toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>`;
+                }
+
+                let show = true;
+                if (currentFilter === 'New' && lead.status !== 'New') show = false;
+                if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
+                if (currentFilter === 'Lost' && lead.status !== 'Lost') show = false;
+
+                // 🚀 SMART FIX 1: Search Box Logic (Workspace Staff Check)
+                let searchTerm = (searchTerms.crm || "").toLowerCase();
+                if (searchTerm !== "") {
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
+                    
+                    let staffNameForSearch = "";
+                    let comp = masterCompsDB[currentWorkspaceId];
+                    if (staffKey && comp && comp.staff) {
+                        let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
+                        if (staffObj && staffObj.name) staffNameForSearch = staffObj.name.toLowerCase();
+                    } else if (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
+                        staffNameForSearch = masterUsersDB[staffKey].name.toLowerCase();
+                    }
+
+                    let leadNameForSearch = (lead.name || "").toLowerCase();
+                    let catForSearch = (lead.cat || "").toLowerCase();
+                    let phoneForSearch = String(lead.phone || "").toLowerCase();
+
+                    if (!leadNameForSearch.includes(searchTerm) && 
+                        !staffNameForSearch.includes(searchTerm) && 
+                        !catForSearch.includes(searchTerm) &&
+                        !phoneForSearch.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+
+                // Agar lead show karni hai, toh uske andar ka UI yahan banega
+                if (show) {
+                    let badgeClass = "badge-new";
+                    if (lead.status === "Hot") badgeClass = "badge-hot";
+                    else if (lead.status === "Thinking") badgeClass = "badge-think";
+                    else if (lead.status === "Meeting Scheduled" || lead.status === "Meeting Completed") badgeClass = "badge-meet";
+                    else if (lead.status === "Lost") badgeClass = "badge-lost";
+
+                    // 🚀 SMART FIX 2: UI Name Tag Logic (Number ki jagah proper Name)
+                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
+                    let staffName = "Unassigned";
+                    
+                    if (staffKey) {
+                        staffName = staffKey; // Default to Mobile No
+                        let comp = masterCompsDB[currentWorkspaceId];
+                        // Pehle Workspace/Company team me dhundho
+                        if (comp && comp.staff) {
+                            let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
+                            if (staffObj && staffObj.name) staffName = staffObj.name.split(' ')[0]; // Sirf First Name
+                        } 
+                        // Agar fir bhi nahi mila, tab global users me check karo
                         if (staffName === staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
                             staffName = masterUsersDB[staffKey].name.split(' ')[0];
                         }
@@ -8492,6 +8557,8 @@
             if (crmContainer.innerHTML === "") crmContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary);'>No leads found.</p>";
             if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
         }
+
+        // 🚀 FIREBASE CLOUD DELETE FIX (WORKSPACE SCOPED)
         function actionDelete(id, event) { 
             event.stopPropagation(); event.preventDefault(); closeAllMenus(); 
             if (confirm("Are you sure you want to permanently delete this lead?")) { 
@@ -8527,7 +8594,7 @@
                     }
                 } catch (e) {
                     console.error("Upload Error:", e);
-                    alert("Upload Failed! Error: " + e.message); 
+                    alert("Upload Failed! Error: " + e.message); // Yahan error dikhega
                 }
             }
             
@@ -8569,7 +8636,7 @@
                     thumbContainer.innerHTML += `
                     <div style="position:relative; display:inline-flex; flex-direction:column; gap:6px; margin-right:10px; width:85px;">
                         <div style="position:relative;">
-                            <img loading="lazy" src="${url}" style="width: 85px; height: 85px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="openImgPreview('${url}', event)">
+                            <img src="${url}" style="width: 85px; height: 85px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="openImgPreview('${url}', event)">
                             <button onclick="deleteLeadPhoto(${index})" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:10;">&times;</button>
                         </div>
                         <input type="text" value="${label}" placeholder="e.g. Stage" onchange="updatePhotoLabel(${index}, this.value)" style="font-size:10px; padding:4px 2px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; font-weight:600; outline:none; background:#F8FAFC;">
@@ -8665,6 +8732,20 @@
         }
 
         // Iske neeche jahan createBillFromEvent hai, wahan se bhi tab jump hata do:
+        function createBillFromEvent(leadId) {
+            let lead = leadsDB[leadId];
+            let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer');
+            if (!partyId) {
+                partyId = "P" + Date.now();
+                partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] };
+                updateDataAndUI();
+            }
+            tempEventIdForInvoice = leadId;
+            setTimeout(() => {
+                openDirectInvoiceModal(partyId);
+                document.getElementById('di_event').value = lead.func;
+            }, 100);
+        }
 
         // ==========================================
         // EVENTS DASHBOARD & WORKSPACE
@@ -8710,7 +8791,7 @@
                 let dName = item.querySelector('.fn-name').value;
                 let dDate = item.querySelector('.fn-date').value;
                 let dTime = item.querySelector('.fn-time').value;
-                let dVenue = item.querySelector('.fn-venue').value || mainVenue; 
+                let dVenue = item.querySelector('.fn-venue').value || mainVenue; // Agar specific venue nahi dala toh main venue le lega
                 if (dName && dDate) dates.push({ name: dName, date: dDate, time: dTime, venue: dVenue });
             });
 
@@ -8950,8 +9031,49 @@
             renderPhotos();
         }
 
+        function createBillFromEvent(leadId) {
+            let lead = leadsDB[leadId];
+            let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer');
+            if (!partyId) {
+                partyId = "P" + Date.now();
+                partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] };
+                updateDataAndUI();
+            }
+            // closePanel(); <--- Yeh line hata di
+            tempEventIdForInvoice = leadId;
+            setTimeout(() => {
+                openDirectInvoiceModal(partyId);
+                document.getElementById('di_event').value = lead.func;
+            }, 100);
+        }
+        function createPurchaseBillFromEvent(leadId) { closePanel(); tempEventIdForPurchase = leadId; setTimeout(() => { openTab('purchase-hub', document.getElementById('btn-erp')); openPurchaseBillModal(); }, 400); }
+        function createPOFromEvent() {
+            document.getElementById('poPbChoiceModal').style.display = 'none';
+            // closePanel(); <--- Yeh line hata di
+            setTimeout(() => { openPurchaseOrderModal(); }, 100);
+        }
+        function createPBFromEvent() {
+            document.getElementById('poPbChoiceModal').style.display = 'none';
+            // closePanel(); <--- Yeh line hata di
+            setTimeout(() => { openPurchaseBillModal(); }, 100);
+        }
         function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
 
+        function createExpenseFromEvent(leadId) {
+            // closePanel(); <--- Yeh line hata di
+            setTimeout(() => { openExpenseModal(leadId); }, 100);
+        }
+        function receivePaymentFromEvent(leadId) {
+            let lead = leadsDB[leadId];
+            let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer');
+            if (!partyId) {
+                partyId = "P" + Date.now();
+                partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] };
+                updateDataAndUI();
+            }
+            // closePanel(); <--- Yeh line hata di
+            setTimeout(() => { openPaymentModal(partyId); }, 100);
+        }
         function jumpToLedger(partyId) { closePanel(); setTimeout(() => { openPartyLedger(partyId); }, 400); }
         function togglePrivacy() { privacyMode = !privacyMode; let ev = leadsDB[activeWorkspaceEventId]; if (ev) renderWorkspace(ev.id); }
         function closePanel() { 
@@ -9050,7 +9172,7 @@
                 container.innerHTML += `
                 <div style="position:relative; display:inline-flex; flex-direction:column; gap:6px; margin-right:10px; width:80px;">
                     <div style="position:relative;">
-                        <img loading="lazy" src="${p.url}" style="width: 80px; height: 80px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="openImgPreview('${p.url}', event)">
+                        <img src="${p.url}" style="width: 80px; height: 80px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="openImgPreview('${p.url}', event)">
                         <button type="button" onclick="deleteFbPhoto(${idx})" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; font-weight:bold; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:10;">&times;</button>
                     </div>
                     <input type="text" value="${p.label}" placeholder="Label..." onchange="tempFbPhotos[${idx}].label = this.value" style="font-size:10px; padding:4px 2px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; font-weight:600; outline:none; background:#F8FAFC;">
@@ -9260,7 +9382,7 @@
                             let label = typeof photo === 'string' ? '' : (photo.label || '');
                             fbHtml += `
                             <div style="display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 8px; background: #f8fafc;">
-                                <img loading="lazy" src="${url}" style="width: 100%; height: 320px; object-fit: contain; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;" />
+                                <img src="${url}" style="width: 100%; height: 320px; object-fit: contain; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;" />
                                 ${label ? `<div style="text-align: center; font-weight: 800; font-size: 13px; color: #0f172a; text-transform: uppercase; margin-top: 10px;">${label}</div>` : ''}
                             </div>`;
                         });
@@ -9274,7 +9396,7 @@
             let cName = (typeof profileDB !== 'undefined' && profileDB.name) ? profileDB.name : (currentUser && currentUser.company ? currentUser.company : "UTSAVhq ERP");
             let cPhone = (typeof profileDB !== 'undefined' && profileDB.phone1) ? profileDB.phone1 : "";
             let cAddress = (typeof profileDB !== 'undefined' && profileDB.address) ? profileDB.address : "";
-            let cLogo = (typeof profileDB !== 'undefined' && profileDB.logo) ? `<img loading="lazy" src="${profileDB.logo}" style="max-height:70px; max-width:180px; object-fit:contain;">` : "";
+            let cLogo = (typeof profileDB !== 'undefined' && profileDB.logo) ? `<img src="${profileDB.logo}" style="max-height:70px; max-width:180px; object-fit:contain;">` : "";
 
             let printWindow = window.open('', '_blank');
             if (!printWindow) return alert("⚠️ Popup Blocked! Please allow popups.");
@@ -11303,7 +11425,7 @@
             let hiddenFlag = false; // By default list mein dikhega
             if (editId && salesDB[editId]) {
                 let old = salesDB[editId];
-                hiddenFlag = old.isFundAdd || false; 
+                hiddenFlag = old.isFundAdd || false; // Agar purana hidden tha toh naya bhi hidden rahega
                 if (bankDB[old.mode]) bankDB[old.mode].balance -= old.amount;
                 if (typeof bankTxDB !== 'undefined') { let tx = Object.values(bankTxDB).find(t => t.refId === old.id); if (tx) delete bankTxDB[tx.id]; }
             }
@@ -11885,7 +12007,7 @@
                     container.innerHTML += `
                         <label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;">
                             <input type="checkbox" class="po-photo-cb" value="${url}" data-label="${label}" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;">
-                            <img loading="lazy" src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+                            <img src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
                             <span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label || 'Photo ' + (idx + 1)}</span>
                         </label>
                     `;
@@ -11979,7 +12101,7 @@
             let eventSelect = document.getElementById('pb_event_link');
             if (po.eventId && leadsDB[po.eventId]) {
                 eventSelect.value = po.eventId;
-                handleEventLinkChange('pb'); 
+                handleEventLinkChange('pb'); // Ye bill wale checkboxes generate karega
 
                 // Jo dates PO me tick thi, unhe Bill me automatically tick kar do
                 if (po.linkedDates && po.linkedDates.length > 0) {
@@ -12362,7 +12484,7 @@
                 if (record.selectedPhotos && record.selectedPhotos.length > 0) {
                     photoList.innerHTML = '';
                     record.selectedPhotos.forEach((p, idx) => {
-                        photoList.innerHTML += `<label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;"><input type="checkbox" class="po-photo-cb" value="${p.url}" data-label="${p.label}" checked style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;"><img loading="lazy" src="${p.url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;"><span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.label || 'Photo ' + (idx + 1)}</span></label>`;
+                        photoList.innerHTML += `<label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;"><input type="checkbox" class="po-photo-cb" value="${p.url}" data-label="${p.label}" checked style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;"><img src="${p.url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;"><span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.label || 'Photo ' + (idx + 1)}</span></label>`;
                     });
                     photoGroup.style.display = 'block';
                 } else { photoGroup.style.display = 'none'; loadEventPhotosForPO(); }
@@ -12911,7 +13033,7 @@
                             let pDate = new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                             let amtHtml = "";
                             
-                            
+                            // Agar receipt ka amount zyada tha, par bill me thoda use hua
                             if (p.amount > appliedFromThis) {
                                 amtHtml = `
                                 <div style="text-align:right;">
@@ -13005,7 +13127,7 @@
 
             let cName = currentUser && currentUser.company ? currentUser.company : "Your Company Name";
             let cUser = currentUser && currentUser.name ? currentUser.name : "Your Name";
-            let cLogo = currentUser && currentUser.logo ? `<img loading="lazy" src="${currentUser.logo}" style="max-height:70px; max-width:180px; object-fit:contain;">` : "";
+            let cLogo = currentUser && currentUser.logo ? `<img src="${currentUser.logo}" style="max-height:70px; max-width:180px; object-fit:contain;">` : "";
 
             let dateStr = new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
             let tMap = { 'Quotation': 'Quotation / Estimate', 'Invoice': 'Tax Invoice', 'PO': 'Purchase Order', 'PB': 'Vendor Bill', 'Asset': 'Asset Purchase', 'Receipt': 'Payment Receipt', 'PaymentOut': 'Payment Voucher', 'General': 'Expense Voucher' };
@@ -13129,7 +13251,7 @@
                 // 🚀 EVENT SCHEDULE (DATES) - Prints ONLY selected dates with Venue
                 if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
                     let ev = leadsDB[record.eventId];
-                    
+                    // Agar bill me specific dates select hui hain (linkedDates), toh wahi print hongi, warna saari.
                     let datesToPrint = (record.linkedDates && record.linkedDates.length > 0) ? record.linkedDates : (ev.dates || []);
 
                     if (datesToPrint && datesToPrint.length > 0) {
@@ -13209,7 +13331,7 @@
                             }
                             
                             if(appliedFromThis > 0) {
-                                
+                                // Agar advance tha toh purana bill crossed out aur adjusted likha aayega
                                 let displayAmt = p.amount > appliedFromThis ? `${appliedFromThis.toLocaleString('en-IN')} <br><span style="font-size:8px; color:#64748b;">(from total ₹${p.amount.toLocaleString('en-IN')})</span>` : `${appliedFromThis.toLocaleString('en-IN')}`;
                                 html += `<tr><td>${new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td><td>${bankDB[p.mode] ? bankDB[p.mode].name : p.mode}</td><td class="right" style="color:${colorStr}; font-weight:700;">₹${displayAmt}</td></tr>`;
                             }
@@ -13269,7 +13391,7 @@
             }
 
             // 🚀 SIGNATURE LOGIC ADDED HERE
-            let sigImgHtml = (typeof profileDB !== 'undefined' && profileDB.signature) ? `<img loading="lazy" src="${profileDB.signature}" style="height: 45px; object-fit:contain; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto;">` : `<div style="height: 45px; margin-bottom: 5px;"></div>`;
+            let sigImgHtml = (typeof profileDB !== 'undefined' && profileDB.signature) ? `<img src="${profileDB.signature}" style="height: 45px; object-fit:contain; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto;">` : `<div style="height: 45px; margin-bottom: 5px;"></div>`;
 
             html += `</div>
                     <div style="width: 180px; text-align: center;">
@@ -13323,7 +13445,7 @@
 
                         html += `
                         <div style="display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 8px; border-radius: 8px; background: #f8fafc; box-sizing: border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                            <img loading="lazy" src="${url}" style="width: 100%; height: 320px; object-fit: contain; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;" />
+                            <img src="${url}" style="width: 100%; height: 320px; object-fit: contain; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;" />
                             ${label ? `<div style="text-align: center; font-weight: 800; font-size: 13px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 10px; padding-bottom: 4px;">${label}</div>` : ''}
                         </div>`;
                     });
@@ -14032,6 +14154,15 @@
         }
 
         // 🚀 ENGLISH FIX: Revert Event Status
+        function actionRevertToUpcoming(id, e) {
+            e.stopPropagation();
+            closeAllMenus();
+            if (confirm("Do you want to revert this event back to 'Upcoming' status?")) {
+                leadsDB[id].eventStatus = 'Upcoming';
+                updateDataAndUI();
+                alert("Event successfully reverted to Upcoming status!");
+            }
+        }
 
         // 🚀 ENGLISH FIX: Delete Bank Account Warning
         function deleteBankAccount(id) {
@@ -14118,7 +14249,7 @@
 
         // 🚀 SMART CAPITAL REDIRECTOR: Link to Receipt & Payment Out
         function openCapitalModal(partyId, type) {
-            closePartyLedger(); 
+            closePartyLedger(); // Pehle ledger band karo
 
             setTimeout(() => {
                 if (type === 'IN') {
@@ -14859,7 +14990,7 @@
                     refreshCategoryList();
                     document.getElementById('exp_cat').value = newCat;
 
-                    
+                    // Agar Manage Modal khula hai toh usko bhi update karo
                     if (document.getElementById('manageCatModal') && document.getElementById('manageCatModal').style.display === 'flex') {
                         openManageCatModal();
                     } else {
@@ -15278,8 +15409,8 @@
         }
 
         window.addEventListener('popstate', function (event) {
-            
-            
+            // Jab hardware back dabega, toh URL se '#utsav' hat jayega. 
+            // Hum yahan check kar rahe hain ki hash hat gaya hai kya?
             if (window.location.hash !== "#utsav") {
 
                 let handled = false;
@@ -15298,7 +15429,7 @@
                     let highest = openModals.reduce((prev, current) => (parseInt(getComputedStyle(prev).zIndex) || 0) > (parseInt(getComputedStyle(current).zIndex) || 0) ? prev : current);
 
                     if (highest.id === 'exitConfirmModal') {
-                        
+                        // Agar exit modal already khula tha aur fir back dabaya, toh sach me app band kar do
                         confirmExitApp();
                         return;
                     } else {
@@ -15339,7 +15470,7 @@
                 }
 
                 // 🚀 SMART TRAP RESTORE: Har back action ke baad, wapas '#utsav' hash set kar do 
-                
+                // Taaki agli baar back dabane par app exit na ho
                 window.history.pushState(null, null, '#utsav');
             }
         });
@@ -15428,6 +15559,9 @@
         }
 
         // SETTINGS & DARK MODE FUNCTIONS
+        function openSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
 
         let isDarkMode = localStorage.getItem('utsav_dark_mode') === 'true';
         if (isDarkMode) { applyDarkModeCSS(); }
@@ -15641,7 +15775,7 @@
             let timeStr = func.time ? ` (${func.time})` : '';
             let venueStr = func.venue ? ` | Venue: ${func.venue}` : '';
 
-            
+            // Ye naya text hai jo form mein jayega
             let newText = `${func.name} [${fDate}]${timeStr}${venueStr}`;
 
             let targetInput;
@@ -15783,7 +15917,7 @@
                 if (enteredPin !== appSettings.appPin) {
                     alert("❌ Incorrect PIN. Access Denied.");
                     document.body.innerHTML = "<h1 style='text-align:center; margin-top:20vh; color:var(--danger);'>App Locked. Refresh to try again.</h1>";
-                    return; 
+                    return; // Agar PIN galat hai toh aage ka code nahi chalega
                 }
             }
 
@@ -15803,7 +15937,7 @@
                 setTimeout(() => {
                     if (splash) splash.style.display = 'none';
                     
-                    
+                    // Agar Magic link se nahi aaya hai, tabhi normal login check karo
                     // (Agar link se aaya hai toh handleEmailLinkSignIn khud sab sambhal lega)
                     if (!isMagicLink) {
                         checkPersistentLogin(); 
@@ -16209,7 +16343,7 @@
             document.getElementById('quoteViewModal').style.display = 'none';
             closeAllMenus();
 
-            
+            // Agar expense me partyId hai, toh Payment Out form kholte hain
             if (exp.partyId) {
                 openPaymentOutModal(exp.partyId);
                 // Thoda delay taaki modal load ho jaye, phir bill select karein
@@ -16222,7 +16356,7 @@
                     }
                 }, 200);
             } else {
-                
+                // Agar partyId nahi hai (Direct Expense), toh Edit hi best option hai
                 editExpense(expId);
             }
         }
@@ -16432,7 +16566,7 @@
         // 🚀 FIX: SMART UI UPDATER (Infinite Loop Preventer)
         function updateDataAndUI(fromCloud = false) {
             
-            
+            // Agar user ne button dabaya hai, tabhi Firebase par upload karo
             if (!fromCloud) {
                 saveDataLocally(); 
             }
@@ -16523,7 +16657,7 @@
         function renderOtherIncomeList() {
             let container = document.getElementById('oi_list_container');
             container.innerHTML = "";
-            
+            // Sirf 'OtherIncome' type ka data uthayega
             let records = Object.values(salesDB).filter(s => s.type === 'OtherIncome').sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (records.length === 0) {
@@ -16623,7 +16757,7 @@
                 return;
             }
 
-            
+            // Agar Other Income nahi hai toh purana system chalao
             originalViewDetailsFn(id, tab);
         };
 
@@ -16867,7 +17001,7 @@
             let record = stockMovementDB[id];
             if (!record) return;
 
-            
+            // Agar Direct Stock tha toh item minus karo
             if (record.type === 'DirectStock' || logType === 'Direct Stock') {
                 record.items.forEach(item => {
                     if (itemsDB[item.name]) {
@@ -18506,7 +18640,7 @@
 
         // 🖨️ FIXED: Item Ledger Print Function (Error Fixed)
         window.printItemLedger = function(itemName) {
-            
+            // Agar naam pass nahi hua toh element se utha lo
             if (!itemName) {
                 let nameEl = document.getElementById('il_item_name');
                 itemName = nameEl ? nameEl.innerText : "Item Ledger";
@@ -19899,12 +20033,12 @@
         // 🚀 CALENDAR AUTO-LOAD FIX (Page khulte hi data layega)
         setTimeout(() => {
             if (typeof window.renderHubCalendarGrid === 'function') {
-                
+                // Agar aap purane variables use kar rahe hain:
                 if (typeof window.hubCalMonth !== 'undefined') {
                     window.hubCalMonth = new Date().getMonth();
                     window.hubCalYear = new Date().getFullYear();
                 }
-                
+                // Agar aapne naya hubCalDate use kiya hai:
                 if (typeof window.hubCalDate !== 'undefined') {
                     window.hubCalDate = new Date();
                 }
