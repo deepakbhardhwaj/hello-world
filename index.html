@@ -78,7 +78,6 @@
 
         console.log("✅ Firebase & Database Connected Successfully (Secure Cloud Mode)!");
 
-        // 🚀 IMAGE COMPRESSION & FIREBASE STORAGE UPLOAD HELPER
         async function compressAndUploadImage(file, storagePath) {
             return new Promise((resolve, reject) => {
                 let reader = new FileReader();
@@ -101,8 +100,10 @@
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                         canvas.toBlob(async (blob) => {
+                            if (!blob) return reject(new Error("Compression failed"));
                             try {
-                                let uniqueFileName = storagePath + '_' + Date.now() + '.jpg';
+                                // 🚀 Yahan hum window.storage use karenge
+                                let uniqueFileName = storagePath + '/' + Date.now() + '.jpg';
                                 let storageRef = window.storage.ref().child(uniqueFileName);
                                 let snapshot = await storageRef.put(blob);
                                 let downloadURL = await snapshot.ref.getDownloadURL();
@@ -112,8 +113,10 @@
                             }
                         }, 'image/jpeg', 0.7);
                     };
+                    img.onerror = (err) => reject(err); // Image load error handling
                     img.src = e.target.result;
                 };
+                reader.onerror = (err) => reject(err);
                 reader.readAsDataURL(file);
             });
         }
@@ -8595,32 +8598,31 @@
             let files = event.target.files;
             if (!files.length || !currentLeadId) return;
 
-            // 🚀 loader chalu
             window.showLoader("Uploading Photos...");
 
             if (!leadsDB[currentLeadId].photos) leadsDB[currentLeadId].photos = [];
 
             for (let i = 0; i < files.length; i++) {
                 try {
-                    // Firebase Storage Upload Start
-                    let uploadedUrl = await compressAndUploadImage(files[i], `event_photos/${currentLeadId}`);
+                    // 🚀 Safety: 10 second ka timeout laga diya hai taaki loop na phanse
+                    let uploadedUrl = await Promise.race([
+                        compressAndUploadImage(files[i], `event_photos/${currentLeadId}`),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 10000))
+                    ]);
                     
                     if(uploadedUrl) {
                         leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
                     }
                 } catch (e) {
                     console.error("Photo upload failed:", e);
-                    alert("❌ Upload failed for: " + files[i].name);
+                    alert("❌ Upload failed for: " + files[i].name + ". Check your internet.");
                 }
             }
             
-            // 🚀 Final UI Update
             renderPhotos(); 
             saveDataLocally();
             updateDataAndUI();
-            
-            // 🚀 Loader band
-            window.hideLoader();
+            window.hideLoader(); // 👈 Har haal me loader band hoga
         }
 
         function updatePhotoLabel(index, val) {
