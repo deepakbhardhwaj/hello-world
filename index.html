@@ -8565,35 +8565,33 @@
         function addNote() { let text = document.getElementById('p_new_note').value; if (!text || !currentLeadId) return; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), text: text }); document.getElementById('p_new_note').value = ""; renderNotes(); }
         function renderNotes() { let container = document.getElementById('p_notes_list'); container.innerHTML = ""; let notes = leadsDB[currentLeadId].notes || []; if (notes.length === 0) { container.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No notes yet.</p>"; return; } [...notes].reverse().forEach(note => { container.innerHTML += `<div class="note-item"><div class="note-time">${note.time}</div><div class="note-text">${note.text}</div></div>`; }); }
         function openImgPreview(url, event) { if (event) { event.stopPropagation(); } document.getElementById('fullSizeImg').src = url; document.getElementById('imgPreviewModal').style.display = 'flex'; }
-        async function handlePhotoUpload(event) {
-            let files = event.target.files;
-            if (!files.length || !currentLeadId) return;
+        
+        async function uploadToCloudinary(file) {
+            let formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "event_photos_preset"); 
 
-            window.showLoader("Uploading to Cloud..."); // Loader chalu
-
-            if (!leadsDB[currentLeadId].photos) leadsDB[currentLeadId].photos = [];
-
-            for (let i = 0; i < files.length; i++) {
-                try {
-                    console.log("Uploading file:", files[i].name);
-                    let uploadedUrl = await uploadToCloudinary(files[i]);
-                    
-                    if (uploadedUrl) {
-                        console.log("Upload Success, URL:", uploadedUrl);
-                        leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
-                    } else {
-                        alert("Cloudinary ne URL nahi diya!");
-                    }
-                } catch (e) {
-                    console.error("Upload Error:", e);
-                    alert("Upload Failed! Error: " + e.message); // Yahan error dikhega
+            try {
+                let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                let data = await response.json();
+                
+                // 🔍 Debugging ke liye check karein
+                console.log("Cloudinary Response:", data); 
+                
+                if (data.secure_url) {
+                    return data.secure_url;
+                } else {
+                    console.error("Cloudinary Error Details:", data.error); // Error yahan dikhega
+                    throw new Error(data.error?.message || "Unknown error");
                 }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                throw error;
             }
-            
-            renderPhotos(); 
-            saveDataLocally();
-            updateDataAndUI();
-            window.hideLoader(); // Loader band
         }
 
         function updatePhotoLabel(index, val) {
