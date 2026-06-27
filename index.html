@@ -78,47 +78,27 @@
 
         console.log("✅ Firebase & Database Connected Successfully (Secure Cloud Mode)!");
 
-        async function compressAndUploadImage(file, storagePath) {
-            return new Promise((resolve, reject) => {
-                let reader = new FileReader();
-                reader.onload = function (e) {
-                    let img = new Image();
-                    img.onload = async function () {
-                        let canvas = document.createElement('canvas');
-                        let MAX_WIDTH = 800; 
-                        let scaleSize = MAX_WIDTH / img.width;
-                        
-                        if (img.width > MAX_WIDTH) {
-                            canvas.width = MAX_WIDTH;
-                            canvas.height = img.height * scaleSize;
-                        } else {
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                        }
+        async function uploadToCloudinary(file, storagePath) {
+            let formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "ml_default"); // Cloudinary mein 'unsigned' preset enable kar lein
+            formData.append("cloud_name", "vjjyinbl");
 
-                        let ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                        canvas.toBlob(async (blob) => {
-                            if (!blob) return reject(new Error("Compression failed"));
-                            try {
-                                // 🚀 Yahan hum window.storage use karenge
-                                let uniqueFileName = storagePath + '/' + Date.now() + '.jpg';
-                                let storageRef = window.storage.ref().child(uniqueFileName);
-                                let snapshot = await storageRef.put(blob);
-                                let downloadURL = await snapshot.ref.getDownloadURL();
-                                resolve(downloadURL);
-                            } catch (error) {
-                                reject(error);
-                            }
-                        }, 'image/jpeg', 0.5);
-                    };
-                    img.onerror = (err) => reject(err); // Image load error handling
-                    img.src = e.target.result;
-                };
-                reader.onerror = (err) => reject(err);
-                reader.readAsDataURL(file);
-            });
+            try {
+                let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                let data = await response.json();
+                if (data.secure_url) {
+                    return data.secure_url;
+                } else {
+                    throw new Error(data.error.message);
+                }
+            } catch (error) {
+                console.error("Cloudinary Upload Error:", error);
+                throw error;
+            }
         }
     </script>
     <style>
@@ -7299,7 +7279,7 @@
             let file = event.target.files[0]; if (!file) return;
             document.getElementById('auth_comp_logo_text').innerText = "⏳";
             try {
-                tempAuthLogo = await compressAndUploadImage(file, 'logos/auth_logo');
+                tempAuthLogo = await uploadToCloudinary(file, 'logos/auth_logo');
                 document.getElementById('auth_comp_logo_preview').src = tempAuthLogo;
                 document.getElementById('auth_comp_logo_preview').style.display = 'block';
                 document.getElementById('auth_comp_logo_text').style.display = 'none';
@@ -7313,7 +7293,7 @@
             let file = event.target.files[0]; if (!file) return;
             document.getElementById('auth_comp_sig_text').innerText = "⏳";
             try {
-                tempAuthSig = await compressAndUploadImage(file, 'signatures/auth_sig');
+                tempAuthSig = await uploadToCloudinary(files[i], 'signatures/auth_sig');
                 document.getElementById('auth_comp_sig_preview').src = tempAuthSig;
                 document.getElementById('auth_comp_sig_preview').style.display = 'block';
                 document.getElementById('auth_comp_sig_text').style.display = 'none';
@@ -8606,7 +8586,7 @@
                 try {
                     // 🚀 Safety: 10 second ka timeout laga diya hai taaki loop na phanse
                     let uploadedUrl = await Promise.race([
-                        compressAndUploadImage(files[i], `event_photos/${currentLeadId}`),
+                        uploadToCloudinary(files[i], `event_photos/${currentLeadId}`),
                         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30000))
                     ]);
                     
@@ -9176,7 +9156,7 @@
             if (!files.length) return;
             for (let i = 0; i < files.length; i++) {
                 try {
-                    let uploadedUrl = await compressAndUploadImage(files[i], `feedback_photos/${activeWorkspaceEventId}`);
+                    let uploadedUrl = await uploadToCloudinary(files[i], `feedback_photos/${activeWorkspaceEventId}`);
                     tempFbPhotos.push({ url: uploadedUrl, label: 'Final Setup' });
                     renderFbPhotos();
                 } catch (e) {
@@ -15518,7 +15498,7 @@
             let file = event.target.files[0]; if (!file) return;
             document.getElementById('cp_logo_text').innerText = "⏳";
             try {
-                tempProfileLogo = await compressAndUploadImage(file, 'logos/profile_logo');
+                tempProfileLogo = await uploadToCloudinary(file, 'logos/profile_logo');
                 document.getElementById('cp_logo_preview').src = tempProfileLogo;
                 document.getElementById('cp_logo_preview').style.display = 'block';
                 document.getElementById('cp_logo_text').style.display = 'none';
@@ -15533,7 +15513,7 @@
             let file = event.target.files[0]; if (!file) return;
             document.getElementById('cp_sig_text').innerText = "⏳";
             try {
-                tempProfileSig = await compressAndUploadImage(file, 'signatures/profile_sig');
+                tempProfileSig = await uploadToCloudinary(file, 'signatures/profile_sig');
                 document.getElementById('cp_sig_preview').src = tempProfileSig;
                 document.getElementById('cp_sig_preview').style.display = 'block';
                 document.getElementById('cp_sig_text').style.display = 'none';
