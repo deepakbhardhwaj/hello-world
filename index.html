@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
     <script>
         // 🚀 URL se invite code catch karne ke liye
@@ -43,6 +44,29 @@
         // 3. Global Variables
         window.auth = firebase.auth();
         window.db = firebase.firestore();
+        window.storage = firebase.storage();
+        // ==========================================
+        // 🚀 GLOBAL LOADER ENGINE (TO PREVENT DOUBLE CLICKS)
+        // ==========================================
+        window.showLoader = function(message = "Processing...") {
+            let loader = document.getElementById('global-loader');
+            if (!loader) {
+                let loaderHtml = `
+                <div id="global-loader">
+                    <div class="utsav-spinner"></div>
+                    <div class="loader-text" id="loader-text-display">${message}</div>
+                </div>`;
+                document.body.insertAdjacentHTML('beforeend', loaderHtml);
+                loader = document.getElementById('global-loader');
+            }
+            document.getElementById('loader-text-display').innerText = message;
+            loader.style.display = 'flex';
+        };
+
+        window.hideLoader = function() {
+            let loader = document.getElementById('global-loader');
+            if (loader) loader.style.display = 'none';
+        };
 
         // 🚀 TURBO MODE SETTINGS (Pure Online Live Sync - 100% Safe)
         window.db.settings({
@@ -53,6 +77,46 @@
         });
 
         console.log("✅ Firebase & Database Connected Successfully (Secure Cloud Mode)!");
+
+        // 🚀 IMAGE COMPRESSION & FIREBASE STORAGE UPLOAD HELPER
+        async function compressAndUploadImage(file, storagePath) {
+            return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    let img = new Image();
+                    img.onload = async function () {
+                        let canvas = document.createElement('canvas');
+                        let MAX_WIDTH = 800; 
+                        let scaleSize = MAX_WIDTH / img.width;
+                        
+                        if (img.width > MAX_WIDTH) {
+                            canvas.width = MAX_WIDTH;
+                            canvas.height = img.height * scaleSize;
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+
+                        let ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        canvas.toBlob(async (blob) => {
+                            try {
+                                let uniqueFileName = storagePath + '_' + Date.now() + '.jpg';
+                                let storageRef = window.storage.ref().child(uniqueFileName);
+                                let snapshot = await storageRef.put(blob);
+                                let downloadURL = await snapshot.ref.getDownloadURL();
+                                resolve(downloadURL);
+                            } catch (error) {
+                                reject(error);
+                            }
+                        }, 'image/jpeg', 0.7);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
     </script>
     <style>
         /* --- ULTRA-COMPACT & MODERN UI OVERRIDES --- */
@@ -1797,7 +1861,41 @@
             height: 100%;
             transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* ========================================== */
+        /* 🚀 PREMIUM LOADING SPINNER & SKELETON CSS  */
+        /* ========================================== */
+        #global-loader {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 999999; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .utsav-spinner {
+            border: 4px solid #E2E8F0; border-top: 4px solid var(--accent-color);
+            border-radius: 50%; width: 45px; height: 45px; animation: utsav-spin 0.8s linear infinite;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+        @keyframes utsav-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loader-text {
+            margin-top: 15px; font-size: 14px; font-weight: 800; color: #0F172A;
+            letter-spacing: 0.5px; animation: pulse-text 1.5s infinite;
+        }
+        @keyframes pulse-text { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* 🦴 Skeleton Loader CSS (List ke liye) */
+        .skeleton {
+            background: #E2E8F0;
+            background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+            background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 6px;
+        }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
+
+    <div id="global-loader">
+        <div class="utsav-spinner"></div>
+        <div class="loader-text" id="loader-text-display">Processing...</div>
+    </div>
 </head>
 
 <body>
@@ -7171,15 +7269,6 @@
             event.target.value = ''; // Reset input
         }
 
-        function handleAuthLogoUpload(event) {
-            let file = event.target.files[0]; if (!file) return; let reader = new FileReader();
-            reader.onload = function (e) {
-                tempAuthLogo = e.target.result; // Simplified for demo
-                document.getElementById('auth_comp_logo_preview').src = tempAuthLogo;
-                document.getElementById('auth_comp_logo_preview').style.display = 'block';
-                document.getElementById('auth_comp_logo_text').style.display = 'none';
-            }; reader.readAsDataURL(file);
-        }
         // 🚀 FIX 1: Missing Transfer Lead Function
         function transferLead(leadId, newAssigneeMobile) {
             if (!leadId || !leadsDB[leadId]) return;
@@ -7203,20 +7292,32 @@
             alert(`✅ Lead successfully assigned to ${staffName}`);
         }
 
-        // Signature Upload Logic For Auth Screen
-        function handleAuthSigUpload(event) {
-            let file = event.target.files[0]; if (!file) return; let reader = new FileReader();
-            reader.onload = function (e) {
-                let img = new Image(); img.onload = function () {
-                    let canvas = document.createElement('canvas'); let MAX = 300; let w = img.width, h = img.height;
-                    if (w > MAX) { h *= MAX / w; w = MAX; }
-                    canvas.width = w; canvas.height = h; let ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0, w, h);
-                    tempAuthSig = canvas.toDataURL("image/png");
-                    document.getElementById('auth_comp_sig_preview').src = tempAuthSig;
-                    document.getElementById('auth_comp_sig_preview').style.display = 'block';
-                    document.getElementById('auth_comp_sig_text').style.display = 'none';
-                }; img.src = e.target.result;
-            }; reader.readAsDataURL(file);
+        async function handleAuthLogoUpload(event) {
+            let file = event.target.files[0]; if (!file) return;
+            document.getElementById('auth_comp_logo_text').innerText = "⏳";
+            try {
+                tempAuthLogo = await compressAndUploadImage(file, 'logos/auth_logo');
+                document.getElementById('auth_comp_logo_preview').src = tempAuthLogo;
+                document.getElementById('auth_comp_logo_preview').style.display = 'block';
+                document.getElementById('auth_comp_logo_text').style.display = 'none';
+            } catch (e) {
+                alert("Upload Failed: " + e.message);
+                document.getElementById('auth_comp_logo_text').innerText = "📸";
+            }
+        }
+
+        async function handleAuthSigUpload(event) {
+            let file = event.target.files[0]; if (!file) return;
+            document.getElementById('auth_comp_sig_text').innerText = "⏳";
+            try {
+                tempAuthSig = await compressAndUploadImage(file, 'signatures/auth_sig');
+                document.getElementById('auth_comp_sig_preview').src = tempAuthSig;
+                document.getElementById('auth_comp_sig_preview').style.display = 'block';
+                document.getElementById('auth_comp_sig_text').style.display = 'none';
+            } catch (e) {
+                alert("Upload Failed: " + e.message);
+                document.getElementById('auth_comp_sig_text').innerText = "✍️";
+            }
         }
 
         // ==========================================
@@ -7722,8 +7823,11 @@
             originalDeleteEmi(passedEditId, passedPartyId);
         };
 
-        // 🚀 EDIT PROFILE SYNC: Agar Andar se Profile Update ki toh wo Bahar (Master DB) mein bhi save hogi
-        function saveProfileData() {
+        // 🚀 EDIT PROFILE SYNC: Master DB & Cloud Sync with Premium Loader
+        async function saveProfileData() {
+            // ⏳ Loader Chalu
+            if(typeof window.showLoader === 'function') window.showLoader("Saving Profile & Images...");
+
             profileDB = {
                 name: document.getElementById('cp_name').value,
                 owner: document.getElementById('cp_owner').value,
@@ -7748,8 +7852,10 @@
                 
                 // ☁️ FIREBASE SYNC: Profile details pushed directly to Company Database
                 try {
-                    db.collection("companies").doc(currentWorkspaceId).update(profileDB);
-                } catch(e) { console.error("Cloud Profile Sync Error", e); }
+                    await db.collection("companies").doc(currentWorkspaceId).update(profileDB);
+                } catch(e) { 
+                    console.error("Cloud Profile Sync Error", e); 
+                }
             }
 
             // App UI update
@@ -7763,6 +7869,9 @@
             let topName = document.getElementById('top_company_text'); if (topName) topName.innerText = profileDB.name;
             let ownerName = document.getElementById('sb_user_name'); if (ownerName && profileDB.owner) ownerName.innerText = profileDB.owner;
 
+            // ⏳ Loader Band
+            if(typeof window.hideLoader === 'function') window.hideLoader();
+            
             alert("✅ Profile & Branding Updated Successfully!");
             document.getElementById('companyProfileModal').style.display = 'none';
         }
@@ -8482,15 +8591,20 @@
         function addNote() { let text = document.getElementById('p_new_note').value; if (!text || !currentLeadId) return; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), text: text }); document.getElementById('p_new_note').value = ""; renderNotes(); }
         function renderNotes() { let container = document.getElementById('p_notes_list'); container.innerHTML = ""; let notes = leadsDB[currentLeadId].notes || []; if (notes.length === 0) { container.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No notes yet.</p>"; return; } [...notes].reverse().forEach(note => { container.innerHTML += `<div class="note-item"><div class="note-time">${note.time}</div><div class="note-text">${note.text}</div></div>`; }); }
         function openImgPreview(url, event) { if (event) { event.stopPropagation(); } document.getElementById('fullSizeImg').src = url; document.getElementById('imgPreviewModal').style.display = 'flex'; }
-        function handlePhotoUpload(event) {
+        async function handlePhotoUpload(event) {
             let files = event.target.files;
             if (!files.length || !currentLeadId) return;
             if (!leadsDB[currentLeadId].photos) leadsDB[currentLeadId].photos = [];
             for (let i = 0; i < files.length; i++) {
-                leadsDB[currentLeadId].photos.push({ url: URL.createObjectURL(files[i]), label: '' });
+                try {
+                    let uploadedUrl = await compressAndUploadImage(files[i], `event_photos/${currentLeadId}`);
+                    leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
+                    renderPhotos(); 
+                    saveDataLocally();
+                } catch (e) {
+                    console.error("Photo upload failed:", e);
+                }
             }
-            renderPhotos();
-            saveDataLocally();
         }
 
         function updatePhotoLabel(index, val) {
@@ -9039,11 +9153,18 @@
             document.getElementById('feedbackModal').style.display = 'flex';
         }
 
-        function handleFbPhotoUpload(event) {
+        async function handleFbPhotoUpload(event) {
             let files = event.target.files;
             if (!files.length) return;
-            for (let i = 0; i < files.length; i++) { tempFbPhotos.push({ url: URL.createObjectURL(files[i]), label: 'Final Setup' }); }
-            renderFbPhotos();
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await compressAndUploadImage(files[i], `feedback_photos/${activeWorkspaceEventId}`);
+                    tempFbPhotos.push({ url: uploadedUrl, label: 'Final Setup' });
+                    renderFbPhotos();
+                } catch (e) {
+                    console.error("Feedback photo upload failed:", e);
+                }
+            }
         }
         function deleteFbPhoto(idx) { tempFbPhotos.splice(idx, 1); renderFbPhotos(); }
 
@@ -15374,36 +15495,34 @@
         let tempProfileLogo = "";
         let tempProfileSig = "";
 
-        // Logo Image Compressor
-        function handleProfileLogoUpload(event) {
-            let file = event.target.files[0]; if (!file) return; let reader = new FileReader();
-            reader.onload = function (e) {
-                let img = new Image(); img.onload = function () {
-                    let canvas = document.createElement('canvas'); let MAX = 200; let w = img.width, h = img.height;
-                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
-                    canvas.width = w; canvas.height = h; let ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0, w, h);
-                    tempProfileLogo = canvas.toDataURL("image/png");
-                    document.getElementById('cp_logo_preview').src = tempProfileLogo;
-                    document.getElementById('cp_logo_preview').style.display = 'block';
-                    document.getElementById('cp_logo_text').style.display = 'none';
-                }; img.src = e.target.result;
-            }; reader.readAsDataURL(file);
+        // Logo Image Upload via Firebase Storage
+        async function handleProfileLogoUpload(event) {
+            let file = event.target.files[0]; if (!file) return;
+            document.getElementById('cp_logo_text').innerText = "⏳";
+            try {
+                tempProfileLogo = await compressAndUploadImage(file, 'logos/profile_logo');
+                document.getElementById('cp_logo_preview').src = tempProfileLogo;
+                document.getElementById('cp_logo_preview').style.display = 'block';
+                document.getElementById('cp_logo_text').style.display = 'none';
+            } catch (e) {
+                alert("Upload Failed: " + e.message);
+                document.getElementById('cp_logo_text').innerText = "📸";
+            }
         }
 
-        // Signature Image Compressor
-        function handleProfileSigUpload(event) {
-            let file = event.target.files[0]; if (!file) return; let reader = new FileReader();
-            reader.onload = function (e) {
-                let img = new Image(); img.onload = function () {
-                    let canvas = document.createElement('canvas'); let MAX = 300; let w = img.width, h = img.height;
-                    if (w > MAX) { h *= MAX / w; w = MAX; }
-                    canvas.width = w; canvas.height = h; let ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0, w, h);
-                    tempProfileSig = canvas.toDataURL("image/png");
-                    document.getElementById('cp_sig_preview').src = tempProfileSig;
-                    document.getElementById('cp_sig_preview').style.display = 'block';
-                    document.getElementById('cp_sig_text').style.display = 'none';
-                }; img.src = e.target.result;
-            }; reader.readAsDataURL(file);
+        // Signature Image Upload via Firebase Storage
+        async function handleProfileSigUpload(event) {
+            let file = event.target.files[0]; if (!file) return;
+            document.getElementById('cp_sig_text').innerText = "⏳";
+            try {
+                tempProfileSig = await compressAndUploadImage(file, 'signatures/profile_sig');
+                document.getElementById('cp_sig_preview').src = tempProfileSig;
+                document.getElementById('cp_sig_preview').style.display = 'block';
+                document.getElementById('cp_sig_text').style.display = 'none';
+            } catch (e) {
+                alert("Upload Failed: " + e.message);
+                document.getElementById('cp_sig_text').innerText = "✍️";
+            }
         }
 
         function openCompanyProfile() {
@@ -15440,39 +15559,6 @@
             document.getElementById('cp_review').value = profileDB.review || "";
 
             document.getElementById('companyProfileModal').style.display = 'flex';
-        }
-
-        function saveProfileData() {
-            profileDB = {
-                name: document.getElementById('cp_name').value,
-                owner: document.getElementById('cp_owner').value,
-                phone1: document.getElementById('cp_phone1').value,
-                phone2: document.getElementById('cp_phone2').value,
-                email: document.getElementById('cp_email').value,
-                web: document.getElementById('cp_web').value,
-                desc: document.getElementById('cp_desc').value,
-                insta: document.getElementById('cp_insta').value,
-                google: document.getElementById('cp_google').value,
-                review: document.getElementById('cp_review').value,
-                logo: tempProfileLogo,
-                signature: tempProfileSig
-            };
-            localStorage.setItem('utsav_profile', JSON.stringify(profileDB));
-
-            // App UI me turant logo/name change karo
-            if (currentUser && tempProfileLogo) {
-                currentUser.logo = tempProfileLogo;
-                localStorage.setItem('utsav_erp_user_' + currentUser.email, JSON.stringify(currentUser));
-                let topImg = document.getElementById('top_logo_img'); if (topImg) { topImg.src = tempProfileLogo; topImg.style.display = 'block'; }
-                let sbImg = document.getElementById('sb_company_logo'); if (sbImg) { sbImg.src = tempProfileLogo; sbImg.style.display = 'block'; }
-            }
-
-            let sbName = document.getElementById('sb_company_name'); if (sbName) sbName.innerText = profileDB.name;
-            let topName = document.getElementById('top_company_text'); if (topName) topName.innerText = profileDB.name;
-            let ownerName = document.getElementById('sb_user_name'); if (ownerName && profileDB.owner) ownerName.innerText = profileDB.owner;
-
-            alert("✅ Profile & Branding Updated Successfully!");
-            document.getElementById('companyProfileModal').style.display = 'none';
         }
 
         // SETTINGS & DARK MODE FUNCTIONS
