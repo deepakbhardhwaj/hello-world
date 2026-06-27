@@ -8594,17 +8594,33 @@
         async function handlePhotoUpload(event) {
             let files = event.target.files;
             if (!files.length || !currentLeadId) return;
+
+            // 🚀 loader chalu
+            window.showLoader("Uploading Photos...");
+
             if (!leadsDB[currentLeadId].photos) leadsDB[currentLeadId].photos = [];
+
             for (let i = 0; i < files.length; i++) {
                 try {
+                    // Firebase Storage Upload Start
                     let uploadedUrl = await compressAndUploadImage(files[i], `event_photos/${currentLeadId}`);
-                    leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
-                    renderPhotos(); 
-                    saveDataLocally();
+                    
+                    if(uploadedUrl) {
+                        leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
+                    }
                 } catch (e) {
                     console.error("Photo upload failed:", e);
+                    alert("❌ Upload failed for: " + files[i].name);
                 }
             }
+            
+            // 🚀 Final UI Update
+            renderPhotos(); 
+            saveDataLocally();
+            updateDataAndUI();
+            
+            // 🚀 Loader band
+            window.hideLoader();
         }
 
         function updatePhotoLabel(index, val) {
