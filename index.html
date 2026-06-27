@@ -78,27 +78,18 @@
 
         console.log("✅ Firebase & Database Connected Successfully (Secure Cloud Mode)!");
 
-        async function uploadToCloudinary(file, storagePath) {
+        async function uploadToCloudinary(file) {
             let formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", "ml_default"); // Cloudinary mein 'unsigned' preset enable kar lein
-            formData.append("cloud_name", "vjjyinbl");
+            formData.append("upload_preset", "event_photos_preset"); // Ye aapka preset naam
 
-            try {
-                let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
-                    method: "POST",
-                    body: formData
-                });
-                let data = await response.json();
-                if (data.secure_url) {
-                    return data.secure_url;
-                } else {
-                    throw new Error(data.error.message);
-                }
-            } catch (error) {
-                console.error("Cloudinary Upload Error:", error);
-                throw error;
-            }
+            let response = await fetch("https://api.cloudinary.com/v1_1/vjjyinbl/image/upload", {
+                method: "POST",
+                body: formData
+            });
+            
+            let data = await response.json();
+            return data.secure_url; 
         }
     </script>
     <style>
