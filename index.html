@@ -8569,31 +8569,31 @@
             let files = event.target.files;
             if (!files.length || !currentLeadId) return;
 
-            window.showLoader("Uploading Photos...");
+            window.showLoader("Uploading to Cloud..."); // Loader chalu
 
             if (!leadsDB[currentLeadId].photos) leadsDB[currentLeadId].photos = [];
 
             for (let i = 0; i < files.length; i++) {
                 try {
-                    // 🚀 Safety: 10 second ka timeout laga diya hai taaki loop na phanse
-                    let uploadedUrl = await Promise.race([
-                        uploadToCloudinary(files[i], `event_photos/${currentLeadId}`),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30000))
-                    ]);
+                    console.log("Uploading file:", files[i].name);
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
                     
-                    if(uploadedUrl) {
+                    if (uploadedUrl) {
+                        console.log("Upload Success, URL:", uploadedUrl);
                         leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
+                    } else {
+                        alert("Cloudinary ne URL nahi diya!");
                     }
                 } catch (e) {
-                    console.error("Photo upload failed:", e);
-                    alert("❌ Upload failed for: " + files[i].name + ". Check your internet.");
+                    console.error("Upload Error:", e);
+                    alert("Upload Failed! Error: " + e.message); // Yahan error dikhega
                 }
             }
             
             renderPhotos(); 
             saveDataLocally();
             updateDataAndUI();
-            window.hideLoader(); // 👈 Har haal me loader band hoga
+            window.hideLoader(); // Loader band
         }
 
         function updatePhotoLabel(index, val) {
