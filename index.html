@@ -7202,64 +7202,35 @@
             if (setupView && getComputedStyle(setupView).display !== 'none') return; 
 
             let activeMob = localStorage.getItem('utsav_erp_active_session');
-            let savedWorkspace = localStorage.getItem('utsav_active_workspace');
+            let savedWorkspace = localStorage.getItem('utsav_active_workspace'); // 🚀 Saved lock check
             
             if (activeMob) {
                 loggedInMobile = activeMob;
 
-                // 🔒 FIX: Firebase Auth confirm hone ke baad hi Firestore call karo
-                let firebaseUser = auth.currentUser;
-                if (firebaseUser) {
-                    // ✅ Auth confirmed — Firestore se live data lo
-                    try {
-                        let compSnapshot = await db.collection("companies").get();
-                        let myComps = [];
-                        compSnapshot.forEach(doc => {
-                            let comp = doc.data();
-                            comp.id = doc.id;
-                            masterCompsDB[doc.id] = comp;
-                            if(comp.ownerMob === activeMob || (comp.staff && comp.staff.some(s => s.mobile === activeMob))) {
-                                myComps.push(doc.id);
-                            }
-                        });
-                        localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-                        if (!masterUsersDB[activeMob]) masterUsersDB[activeMob] = { mobile: activeMob, companies: [], name: "User" };
-                        masterUsersDB[activeMob].companies = myComps;
-                    } catch(e) { 
-                        console.log("Cloud sync delayed:", e.message);
-                        // Auth hai but network issue — local cache se chalo
-                    }
-                } else {
-                    // ⚠️ Firebase Auth session nahi hai (logged out ya expired)
-                    // Local cache se chalo aur silently try karo — permission error nahi aayega
-                    console.log("🔄 Firebase Auth not ready — using local cache, skipping Firestore.");
-                    // Force re-auth agar workspace bhi nahi mila
-                    let cachedComps = JSON.parse(localStorage.getItem('utsav_master_comps') || '{}');
-                    if (Object.keys(cachedComps).length > 0) {
-                        masterCompsDB = cachedComps;
-                        if (!masterUsersDB[activeMob]) masterUsersDB[activeMob] = { mobile: activeMob, companies: Object.keys(cachedComps), name: "User" };
-                    } else {
-                        // Koi cache nahi — login screen dikhao
-                        authScreen.style.display = 'flex';
-                        mainApp.style.display = 'none';
-                        switchAuthView('view_email_auth');
-                        return;
-                    }
-                }
+                try {
+                    let compSnapshot = await db.collection("companies").get();
+                    let myComps = [];
+                    compSnapshot.forEach(doc => {
+                        let comp = doc.data();
+                        comp.id = doc.id;
+                        masterCompsDB[doc.id] = comp;
+                        if(comp.ownerMob === activeMob || (comp.staff && comp.staff.some(s => s.mobile === activeMob))) {
+                            myComps.push(doc.id);
+                        }
+                    });
+                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                    
+                    if (!masterUsersDB[activeMob]) masterUsersDB[activeMob] = { mobile: activeMob, companies: [], name: "User" };
+                    masterUsersDB[activeMob].companies = myComps;
+                } catch(e) { console.log("Cloud sync delayed."); }
 
-                // 🚀 HIGH-VALUE SNAPSHOT AUTO ROUTE: Refresh hone par seedha dashboard kholo
+                // 🚨🚨🚨 HIGH-VALUE SNAPSHOT AUTO ROUTE: Refresh hone par seedha dashboard kholo
                 if (savedWorkspace && masterCompsDB[savedWorkspace]) {
                     launchWorkspace(savedWorkspace);
                     return;
                 }
 
                 let user = masterUsersDB[activeMob];
-                if (!user) {
-                    authScreen.style.display = 'flex';
-                    mainApp.style.display = 'none';
-                    switchAuthView('view_email_auth');
-                    return;
-                }
 
                 if (!user.companies || user.companies.length === 0) {
                     authScreen.style.display = 'flex';
@@ -8320,66 +8291,43 @@
             console.log("🔄 Connecting Workspace to Real-Time Cloud...");
 
             // 1. DATA LISTENER
-            // 🔒 FIX: Auth confirm hone ke baad hi onSnapshot lagao
-            function attachFirestoreListeners() {
-                if (unsubscribeWorkspace) unsubscribeWorkspace();
-                if (unsubscribeCompany) unsubscribeCompany();
+            unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    let data = doc.data();
+                    leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {}; 
+                    purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {}; 
+                    bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {}; 
+                    if (data.expenseCats) expenseCats = data.expenseCats;
+                    itemsDB = data.items || {};
+                    warehousesDB = data.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
+                    stockMovementDB = data.stockMovements || {};
+                    
+                    // ☁️ FIREBASE SYNC: Naye 4 variables cloud se load honge
+                    if (data.leadSources) leadSources = data.leadSources;
+                    if (data.itemUnits) itemUnits = data.itemUnits;
+                    if (data.appSettings) appSettings = data.appSettings;
+                    if (data.trashDB) trashDB = data.trashDB;
+                } 
+                if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
+                if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
+                updateDataAndUI(true); 
+            }, (error) => { console.error("Cloud Sync Error:", error); });
 
-                unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId).onSnapshot((doc) => {
-                    if (doc.exists) {
-                        let data = doc.data();
-                        leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {}; 
-                        purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {}; 
-                        bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {}; 
-                        if (data.expenseCats) expenseCats = data.expenseCats;
-                        itemsDB = data.items || {};
-                        warehousesDB = data.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
-                        stockMovementDB = data.stockMovements || {};
-                        if (data.leadSources) leadSources = data.leadSources;
-                        if (data.itemUnits) itemUnits = data.itemUnits;
-                        if (data.appSettings) appSettings = data.appSettings;
-                        if (data.trashDB) trashDB = data.trashDB;
-                    } 
-                    if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
-                    if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
-                    updateDataAndUI(true); 
-                }, (error) => { 
-                    if (error.code === 'permission-denied') {
-                        console.warn("🔒 Firestore permission denied — Firebase Auth session may have expired. Retrying after re-auth...");
-                    } else {
-                        console.error("Cloud Sync Error:", error);
-                    }
-                });
+            // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates)
+            unsubscribeCompany = db.collection("companies").doc(currentWorkspaceId).onSnapshot((doc) => {
+                if (doc.exists) {
+                    let compData = doc.data();
+                    compData.id = doc.id;
+                    masterCompsDB[doc.id] = compData; // Memory update
+                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
 
-                // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates)
-                unsubscribeCompany = db.collection("companies").doc(currentWorkspaceId).onSnapshot((doc) => {
-                    if (doc.exists) {
-                        let compData = doc.data();
-                        compData.id = doc.id;
-                        masterCompsDB[doc.id] = compData;
-                        localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-                        let teamModal = document.getElementById('teamModal');
-                        if (teamModal && teamModal.style.display === 'flex') {
-                            openTeamModal(); 
-                        }
+                    
+                    let teamModal = document.getElementById('teamModal');
+                    if (teamModal && teamModal.style.display === 'flex') {
+                        openTeamModal(); 
                     }
-                }, (error) => {
-                    if (error.code !== 'permission-denied') console.error("Company Sync Error:", error);
-                });
-            }
-
-            // 🔒 Auth ready hai toh abhi lagao, warna auth change hone par lagao
-            if (auth.currentUser) {
-                attachFirestoreListeners();
-            } else {
-                // Auth state restore hone ka wait karo (page refresh case)
-                let authListenerUnsub = auth.onAuthStateChanged(function(user) {
-                    if (user) {
-                        attachFirestoreListeners();
-                    }
-                    authListenerUnsub(); // Ek baar hi chahiye
-                });
-            }
+                }
+            });
         }
 
         // 🚀 STAFF ACTIONS CLOUD SAVE
@@ -8473,20 +8421,14 @@
             }; 
             
             // 1. ☁️ FIREBASE CLOUD PUSH (Primary — asli data store)
-            // 🔒 Only push if Firebase Auth is active (prevents permission-denied errors)
-            if (auth.currentUser) {
-                db.collection("workspace_data").doc(currentWorkspaceId).update(dataToSave)
-                .catch(e => {
-                    db.collection("workspace_data").doc(currentWorkspaceId).set(dataToSave)
-                    .catch(err => {
-                        console.error("🚨 Firebase save failed:", err);
-                        if (typeof window.showToast === 'function') window.showToast("Cloud sync failed! Data may not be saved.", "error", 5000);
-                    });
+            db.collection("workspace_data").doc(currentWorkspaceId).update(dataToSave)
+            .catch(e => {
+                db.collection("workspace_data").doc(currentWorkspaceId).set(dataToSave)
+                .catch(err => {
+                    console.error("🚨 Firebase save failed:", err);
+                    if (typeof window.showToast === 'function') window.showToast("Cloud sync failed! Data may not be saved.", "error", 5000);
                 });
-            } else {
-                // Auth nahi hai — sirf local save hoga, cloud sync baad mein hoga
-                console.warn("⚠️ Firebase Auth not active — data saved locally only.");
-            }
+            });
 
             // 2. 🛡️ Local backup (Secondary — sirf session cache)
             try {
@@ -16055,31 +15997,19 @@
             }
 
             // 4. Splash Screen Timeline & Safe Login Check
-            // 🔒 FIX: auth.onAuthStateChanged se Firebase Auth state confirm karo PEHLE Firestore call ho
-            // Ye callback page load hote hi fire hota hai — tab bhi jab user logged out ho
-            let splashHidden = false;
-            function hideSplashAndStart() {
-                if (splashHidden) return;
-                splashHidden = true;
+            setTimeout(() => {
                 let splash = document.getElementById('splash-screen');
                 if (splash) splash.style.opacity = '0';
                 setTimeout(() => {
                     if (splash) splash.style.display = 'none';
+                    
+                    
+                    // (Agar link se aaya hai toh handleEmailLinkSignIn khud sab sambhal lega)
                     if (!isMagicLink) {
-                        checkPersistentLogin();
+                        checkPersistentLogin(); 
                     }
-                }, 400);
-            }
-
-            // Auth state pata ho jate hi splash hatao (usually < 500ms)
-            auth.onAuthStateChanged(function(firebaseUser) {
-                // firebaseUser = null means logged out, non-null means authenticated
-                // Dono cases mein checkPersistentLogin sahi handle karega
-                hideSplashAndStart();
-            });
-
-            // Safety fallback: agar onAuthStateChanged 2s mein fire nahi hua toh bhi splash hatao
-            setTimeout(hideSplashAndStart, 2000);
+                }, 500);
+            }, 1500);
 
             // 5. Firebase Recaptcha Setup
             try {
