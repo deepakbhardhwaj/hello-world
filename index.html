@@ -6182,11 +6182,11 @@
                 </div>
             </div>
         </div>
-        <div id="imgPreviewModal" class="modal-overlay" style="z-index: 6000;"
+        <div id="imgPreviewModal" class="modal-overlay" style="z-index: 6000; align-items: center !important; justify-content: center !important;"
             onclick="document.getElementById('imgPreviewModal').style.display='none';"><span class="preview-close-btn"
                 style="position:absolute; top:16px; right:16px; font-size:32px; color:white; cursor:pointer;">&times;</span><img
                 id="fullSizeImg" src=""
-                style="max-width:90%; max-height:80vh; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>
+                style="max-width:90%; max-height:80vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>
 
         <div class="side-panel-overlay" id="panelOverlay" onclick="saveAndClosePanel()"></div>
         <div class="side-panel" id="detailPanel">
@@ -11626,8 +11626,16 @@
             party.balance += finalGrandTotal; 
             if (!editingSalesId) { 
                 if (receiptToUpdate) { receiptToUpdate.usedAmount += oldAdvanceAmount; receiptToUpdate.availableAmount -= oldAdvanceAmount; if (!receiptToUpdate.linkedInvoices) receiptToUpdate.linkedInvoices = []; receiptToUpdate.linkedInvoices.push(id); } 
-                if (manuallyEnteredAdvance > 0) { party.balance -= manuallyEnteredAdvance; let recId = generateDocId('Receipt'); salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; } 
-            } 
+                if (manuallyEnteredAdvance > 0) { 
+                    party.balance -= manuallyEnteredAdvance; 
+                    let recId = generateDocId('Receipt'); 
+                    salesDB[recId] = { id: recId, type: 'Receipt', partyId: partyId, amount: manuallyEnteredAdvance, usedAmount: manuallyEnteredAdvance, availableAmount: 0, mode: payMode, date: date, ref: `Advance for ${id}`, linkedInvoices: [id] }; 
+                    // 🚀 CA FIX: Bank/Cash ledger me paisa exactly Inflow (IN) hoga
+                    if (typeof logBankTransaction === 'function') {
+                        logBankTransaction(payMode, manuallyEnteredAdvance, 'IN', `Advance against Invoice ${id}`, recId, date);
+                    }
+                } 
+            }
             
             tempEventIdForInvoice = null; updateDataAndUI(); document.getElementById('directInvoiceModal').style.display = 'none'; 
             // 🚀 SMART TAB DETECTION (No unwanted redirect to Sales Hub)
@@ -12272,14 +12280,23 @@
                 });
             } else if (r.type === 'PaymentOut') {
                 p.balance -= r.amount;
+                // Bills revert
                 Object.values(purchaseDB).forEach(inv => {
                     if ((inv.type === 'PB' || inv.type === 'Asset') && r.linkedInvoices && r.linkedInvoices.includes(inv.id)) {
                         inv.advance -= r.usedAmount; inv.balanceDue += r.usedAmount;
                         if (inv.balanceDue >= inv.finalTotal) inv.status = 'Due'; else if (inv.advance > 0) inv.status = 'Partial';
                     }
                 });
+                // 🚀 CA FIX: Expenses Revert Logic
+                Object.values(expenseDB).forEach(exp => {
+                    if (r.linkedInvoices && r.linkedInvoices.includes(exp.id)) {
+                        exp.paid -= r.usedAmount; exp.balanceDue += r.usedAmount;
+                        if (exp.balanceDue >= exp.amount) exp.status = 'Due'; else if (exp.paid > 0) exp.status = 'Partial';
+                    }
+                });
                 if (r.mode !== 'Cash') { let bankId = r.mode; if (bankDB[bankId]) { bankDB[bankId].balance += r.amount; let tx = Object.values(bankTxDB).find(t => t.refId === id); if (tx) delete bankTxDB[tx.id]; } }
             }
+                
             // TRASH ME BHEJO
             let pName = partiesDB[r.partyId] ? partiesDB[r.partyId].name : "General";
             sendToTrash('Purchase', id, r, `${r.type} - ₹${r.finalTotal || r.amount} (${pName})`);
@@ -15014,6 +15031,8 @@
         function editExpense(id, event) {
             if (event) { event.stopPropagation(); event.preventDefault(); }
             if (typeof closeAllMenus === 'function') closeAllMenus();
+            // 🚀 FIX: Background Preview Modal band karo taaki form dikhe
+            if(document.getElementById('quoteViewModal')) document.getElementById('quoteViewModal').style.display = 'none';
             let e = expenseDB[id]; if (!e) return;
 
             let catSel = document.getElementById('exp_cat');
@@ -16922,16 +16941,21 @@
             let container = document.getElementById('inventory-list-container'); if (!container) return; 
             let filterContainer = document.getElementById('inv-sub-filters');
             
-            if (filterContainer && filterContainer.innerHTML.trim() === '') {
+            if (filterContainer) { 
                 filterContainer.style.flexWrap = 'wrap'; 
                 filterContainer.style.justifyContent = 'flex-start';
                 filterContainer.style.gap = '6px';
                 
-                let filters = ['All', 'On Rent', 'On Event', 'Over Due', 'Received']; 
+                // 🚀 Yahan humne saare filters wapas add kar diye hain
+                let filters = ['All', 'On Rent', 'On Event', 'Partial Returned', 'Fully Returned', 'Over Due'];
+                
+                // Purani buttons hatakar nayi bana rahe hain
                 filterContainer.innerHTML = '';
-                filters.forEach((f, idx) => { 
-                    let bg = idx===0 ? '#0F172A' : '#F1F5F9'; let col = idx===0 ? 'white' : '#64748B'; 
-                    filterContainer.innerHTML += `<button class="sales-tab-btn ${idx===0?'active-sales-tab':''}" style="background:${bg}; color:${col}; padding: 6px 12px; font-size:11px; border-radius:20px; font-weight:700; border:none; cursor:pointer;" onclick="window.setInvSubFilter('${f}', this)">${f}</button>`; 
+                filters.forEach((f) => { 
+                    let isActive = (f === window.invSubFilter);
+                    let bg = isActive ? '#0F172A' : '#F1F5F9'; 
+                    let col = isActive ? 'white' : '#64748B'; 
+                    filterContainer.innerHTML += `<button class="sales-tab-btn ${isActive ? 'active-sales-tab' : ''}" style="background:${bg}; color:${col}; padding: 6px 12px; font-size:11px; border-radius:20px; font-weight:700; border:none; cursor:pointer;" onclick="window.setInvSubFilter('${f}', this)">${f}</button>`; 
                 });
             }
 
@@ -16957,10 +16981,13 @@
                 let isPartialReturned = (t.rentalStatus === 'Partial Returned' || t.status === 'Partial Returned');
                 let isOverdue = (!isFullyReturned && !isPartialReturned && t.returnDate && t.returnDate < todayStr);
                 
-                if (window.invSubFilter === 'On Rent' && (t.logType !== 'Rental Invoice' || isReturned)) return;
-                if (window.invSubFilter === 'On Event' && (t.logType !== 'Outward Challan' || isReturned)) return;
+                // 🚀 SMART FILTERS
+                if (window.invSubFilter === 'On Rent' && (t.logType !== 'Rental Invoice' || isFullyReturned || isPartialReturned)) return;
+                if (window.invSubFilter === 'On Event' && (t.logType !== 'Outward Challan' || isFullyReturned || isPartialReturned)) return;
+                if (window.invSubFilter === 'Deployed (Out)' && (isFullyReturned || isPartialReturned)) return;
+                if (window.invSubFilter === 'Partial Returned' && !isPartialReturned) return;
+                if (window.invSubFilter === 'Fully Returned' && !isFullyReturned) return;
                 if (window.invSubFilter === 'Over Due' && !isOverdue) return;
-                if (window.invSubFilter === 'Received' && !isReturned) return;
                 
                 let pName = (t.partyId && partiesDB[t.partyId]) ? partiesDB[t.partyId].name : (t.logType === 'Outward Challan' ? 'Internal Event Use' : 'Unknown');
                 let eventName = t.event || (t.eventId && leadsDB[t.eventId] ? leadsDB[t.eventId].func : "");
@@ -17571,9 +17598,12 @@
                 record.returnLog.forEach((log, idx) => {
                     let gName = warehousesDB[log.returnGodown] ? warehousesDB[log.returnGodown].name : 'Main Godown';
                     bodyHtml += `<div style="border-bottom:${idx === record.returnLog.length - 1 ? 'none' : '1px dashed #86EFAC'}; padding-bottom:8px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
                             <strong style="color:#14532D; font-size:13px;">${log.name}</strong>
-                            <strong style="color:#166534; font-size:13px;">Total In: ${log.safe + log.lost + log.repair}</strong>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <strong style="color:#166534; font-size:13px;">Total In: ${log.safe + log.lost + log.repair}</strong>
+                                <button onclick="window.printInwardSlip('${id}', '${logType}', ${idx})" style="background:white; color:#166534; border:1px solid #166534; border-radius:4px; padding:2px 6px; font-size:10px; cursor:pointer; font-weight:bold;">🖨️ Print Slip</button>
+                            </div>
                         </div>
                         <div style="font-size:11px; color:#15803D; margin-top:4px;">
                             <span style="background:#DCFCE7; padding:2px 6px; border-radius:4px;">Safe: ${log.safe}</span>
@@ -17765,7 +17795,7 @@
 
                 if(rowTotal > pending) {
                     let name = row.querySelector('.ret-item-name').value;
-                    alert(`🚨 ERROR: '${name}' ka maximum pending sirf ${pending} hai. Aapne zyada daal diya!`);
+                    alert(`🚨 ERROR: The maximum pending quantity for '${name}' is ${pending}. You cannot return more than what was deployed!`);
                     error = true; 
                 }
             });
@@ -17949,19 +17979,42 @@
             let term = document.getElementById('inv_select_search').value.toLowerCase(); 
             let grid = document.getElementById('inv_select_grid'); grid.innerHTML = '';
             
+            // 🚀 Context check karenge (kya ye Order Book se khula hai?)
+            let context = document.getElementById('inventorySelectModal').dataset.context;
+            let checkDate = null;
+            if (context === 'ob') {
+                checkDate = document.getElementById('ob_dispatch_date').value;
+            }
+            
             Object.values(itemsDB || {}).forEach(item => {
                 if(!item.name.toLowerCase().includes(term) && !(item.sku && item.sku.toLowerCase().includes(term))) return;
                 
                 let liveStock = 0;
                 let stockDetails = "";
                 
-                if (item.godowns) {
-                    for (let g in item.godowns) {
-                        let qty = parseInt(item.godowns[g]) || 0;
-                        if (qty > 0) {
-                            liveStock += qty;
-                            let gName = warehousesDB[g] ? warehousesDB[g].name : g;
-                            stockDetails += `<span style="background:#EFF6FF; color:#1E40AF; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:4px; border:1px solid #BFDBFE; display:inline-block; margin-top:4px; font-weight:700;">📍 ${gName}: ${qty}</span>`;
+                // 🚀 FIX 6: Date-Based Stock Engine for Order Book
+                if (context === 'ob' && checkDate) {
+                    let bookedQty = 0;
+                    Object.values(window.orderBookDB || {}).forEach(o => {
+                        if ((o.dispatchDate === checkDate || o.date === checkDate) && o.status !== 'Cancelled' && o.status !== 'Dispatched' && o.status !== 'Invoiced') {
+                            if (o.id !== window.editingOrderId && o.items) {
+                                let matched = o.items.find(i => i.name === item.name);
+                                if (matched) bookedQty += (parseInt(matched.qty) || 0);
+                            }
+                        }
+                    });
+                    liveStock = (parseInt(item.totalStock) || 0) - bookedQty;
+                    stockDetails = `<span style="background:#FFFBEB; color:#D97706; padding:2px 6px; border-radius:4px; font-size:10px; border:1px solid #FDE68A; display:inline-block; font-weight:700;">📅 Date Availability: ${liveStock}</span>`;
+                } else {
+                    // Normal In-Godown calculation
+                    if (item.godowns) {
+                        for (let g in item.godowns) {
+                            let qty = parseInt(item.godowns[g]) || 0;
+                            if (qty > 0) {
+                                liveStock += qty;
+                                let gName = warehousesDB[g] ? warehousesDB[g].name : g;
+                                stockDetails += `<span style="background:#EFF6FF; color:#1E40AF; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:4px; border:1px solid #BFDBFE; display:inline-block; margin-top:4px; font-weight:700;">📍 ${gName}: ${qty}</span>`;
+                            }
                         }
                     }
                 }
@@ -19748,6 +19801,58 @@
             window.open(`https://wa.me/91${lead.phone || ''}?text=${msg}`, '_blank');
         };
 
+        // 🚀 FIX 5: ITEM MASTER EDIT & SAVE ENGINE (With Duplicate Prevention)
+        window.openItemMasterModal = function(itemName = null) {
+            let form = document.getElementById('itemMasterForm');
+            if (form) form.reset();
+            document.getElementById('im_old_name').value = "";
+            
+            if (itemName && itemsDB[itemName]) {
+                document.getElementById('im-modal-title').innerText = "Edit Stock Item";
+                let item = itemsDB[itemName];
+                document.getElementById('im_old_name').value = item.name;
+                document.getElementById('im_name').value = item.name;
+                document.getElementById('im_sku').value = item.sku || "";
+                document.getElementById('im_rent').value = item.rentPrice || item.rent || "";
+            } else {
+                document.getElementById('im-modal-title').innerText = "Add New Stock Item";
+            }
+            
+            document.getElementById('itemMasterModal').style.display = 'flex';
+            if(typeof closeAllMenus === 'function') closeAllMenus();
+        };
+        
+        window.saveItemMaster = function() {
+            let oldName = document.getElementById('im_old_name').value;
+            let newName = document.getElementById('im_name').value.trim();
+            let sku = document.getElementById('im_sku').value.trim();
+            let rent = parseFloat(document.getElementById('im_rent').value) || 0;
+            
+            if (!newName) return alert("Item Name is required!");
+            
+            // 🚀 EXTRA POINT 1: Case-Insensitive Duplicate Check
+            let existingItem = Object.values(itemsDB).find(i => i.name.toLowerCase() === newName.toLowerCase() && i.name !== oldName);
+            if (existingItem) return alert("An item with this name already exists in your Godown!");
+            
+            if (oldName && oldName !== newName) {
+                // Rename logic
+                itemsDB[newName] = itemsDB[oldName];
+                itemsDB[newName].name = newName;
+                delete itemsDB[oldName];
+            } else if (!oldName) {
+                // New item
+                itemsDB[newName] = { name: newName, totalStock: 0, totalLost: 0, godowns: {} };
+            }
+            
+            itemsDB[newName].sku = sku;
+            itemsDB[newName].rentPrice = rent;
+            
+            updateDataAndUI();
+            document.getElementById('itemMasterModal').style.display = 'none';
+            if(typeof window.renderItemMasterList === 'function') window.renderItemMasterList();
+            alert("✅ Item Master saved successfully!");
+        };
+
         // 📦 8. MASTER LIST
         window.renderItemMasterList = function() {
             let container = document.getElementById('item-master-list-container');
@@ -19943,6 +20048,62 @@
             #orderPreviewModal { z-index: 12000 !important; }
         `;
         document.head.appendChild(zIndexFix);
+
+        window.printInwardSlip = function(id, logType, logIdx) {
+            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id];
+            if(!record || !record.returnLog || !record.returnLog[logIdx]) return;
+            
+            let log = record.returnLog[logIdx];
+            let cName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.company : "UTSAVhq ERP";
+            let gName = warehousesDB[log.returnGodown] ? warehousesDB[log.returnGodown].name : 'Main Godown';
+            let partyName = (record.partyId && partiesDB[record.partyId]) ? partiesDB[record.partyId].name : 'Internal Event';
+
+            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Inward Slip - ${id}</title>
+            <style>
+                body { font-family: sans-serif; padding: 25px; color: #0f172a; margin:0;} 
+                .box { border: 1px solid #e2e8f0; padding: 30px; border-radius: 8px; max-width: 800px; margin: auto; position:relative; } 
+                .header { text-align: center; border-bottom: 3px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; } 
+                .stamp { position: absolute; top: 120px; right: 40px; font-size: 30px; font-weight: 900; color: #166534; border: 4px solid #166534; padding: 10px 20px; border-radius: 8px; transform: rotate(-15deg); opacity: 0.15; } 
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; } 
+                th { background: #f1f5f9; font-weight: 800; padding: 12px; border: 1px solid #cbd5e1; text-align: left;} 
+                td { border: 1px solid #cbd5e1; padding: 12px; } 
+                @media print { #mobile-print-btn { display:none !important; } .box {border:none; padding:0;} }
+            </style></head><body><div class="box">`;
+            
+            html += `<div class="stamp">✅ RECEIVED (INWARD)</div>`;
+            html += `<div class="header"><h2 style="margin:0; font-size:26px;">${cName}</h2><h3 style="margin:5px 0 0 0; color:#166534;">MATERIAL RETURN / INWARD SLIP</h3></div>`;
+            
+            html += `<div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <div>
+                            <div style="color:#64748b; font-size:11px; font-weight:bold;">Returned By (Client/Party):</div>
+                            <div style="font-size:14px; font-weight:700; color:#334155;">${partyName}</div>
+                            <div style="color:#64748b; font-size:11px; font-weight:bold; margin-top:10px;">Dropped At:</div>
+                            <div style="font-size:14px; font-weight:700; color:#166534;">${gName}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="color:#64748b; font-size:11px; font-weight:bold;">Original Outward Ref:</div>
+                            <div style="font-size:16px; font-weight:900; color:#3B82F6;">#${record.id}</div>
+                            <div style="font-size:13px; font-weight:600; color:#64748b; margin-top:4px;">Return Date: ${log.date}</div>
+                        </div>
+                     </div>`;
+            
+            html += `<table><tr><th>Item Name</th><th style="text-align:center;">Safe Return</th><th style="text-align:center; color:#B45309;">Repair</th><th style="text-align:center; color:#DC2626;">Lost/Damaged</th></tr>`;
+            html += `<tr>
+                        <td><strong>${log.name}</strong></td>
+                        <td style="text-align:center; font-weight:bold; font-size:15px; color:#166534;">${log.safe}</td>
+                        <td style="text-align:center; font-weight:bold; font-size:15px; color:#B45309;">${log.repair}</td>
+                        <td style="text-align:center; font-weight:bold; font-size:15px; color:#DC2626;">${log.lost}</td>
+                     </tr></table>`;
+                     
+            html += `</div>
+            <div id="mobile-print-btn" style="text-align:center; margin-top:20px;">
+                <button onclick="window.print()" style="background:#0f172a; color:white; padding:12px 24px; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.1);">🖨️ Print Inward Slip</button>
+            </div>
+            <script>setTimeout(function(){ window.print(); }, 800);<\/script></body></html>`;
+            
+            let printWin = window.open('', '_blank'); 
+            if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
+        };
     </script>
 </body>
 
