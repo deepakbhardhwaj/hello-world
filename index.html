@@ -2351,7 +2351,7 @@
         <div class="auth-card auth-view" id="view_new_user_setup" style="display:none; border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 40px rgba(15,23,42,0.08); border: 1px solid white; background: rgba(255, 255, 255, 0.9);">
             <div class="auth-logo">
                 <h2 class="auth-title">Complete Profile</h2>
-                <p class="auth-subtitle" style="color:var(--success);">Email Verified! Link your mobile number.</p>
+                <p class="auth-subtitle" style="color:var(--success);">✅ Email Verified! Just enter your name.</p>
             </div>
             <form onsubmit="event.preventDefault();">
                 <div class="form-group">
@@ -2362,11 +2362,7 @@
                     <label class="form-label">EMAIL ADDRESS (Verified)</label>
                     <input type="email" id="auth_setup_email" class="form-input" style="padding:12px; font-size:14px; background: #F1F5F9;" readonly>
                 </div>
-                <div class="form-group" style="margin-bottom:24px;">
-                    <label class="form-label">MOBILE NUMBER</label>
-                    <input type="number" id="auth_setup_mobile" class="form-input" style="padding:12px; font-size:14px;" placeholder="10-digit number" required>
-                </div>
-                <button type="button" class="btn-main" onclick="saveNewUserProfile()">Start Using App 🚀</button>
+                <button type="button" class="btn-main" style="padding:14px; font-size:15px; border-radius:10px; background:linear-gradient(135deg,var(--accent-color),#1D4ED8);" onclick="saveNewUserProfile()">Start Using App 🚀</button>
             </form>
         </div>
 
@@ -2441,9 +2437,7 @@
                         class="form-input" placeholder="Full Address" required></div>
 
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">MOBILE 1 (PRIMARY) <span
-                                style="color:red;">*</span></label><input type="number" id="auth_comp_phone1"
-                            class="form-input" readonly style="background:#E2E8F0; font-weight:bold;" required></div>
+                    <div class="form-group"><label class="form-label">BUSINESS MOBILE <span style="color:red;">*</span></label><input type="number" id="auth_comp_phone1" class="form-input" placeholder="10-digit number" required></div>
                     <div class="form-group"><label class="form-label">MOBILE 2</label><input type="number"
                             id="auth_comp_phone2" class="form-input" placeholder="Optional"></div>
                 </div>
@@ -5179,222 +5173,329 @@
 
         <div id="settings-hub" class="content section" style="padding-bottom:120px;">
             <style>
-                /* 🚀 Settings Hub Specific UI (Compact Version) */
-                .settings-grid {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                    max-width: 600px;
-                    margin: 0 auto;
-                }
+                /* =============================================
+                   ✨ PREMIUM SETTINGS HUB v2 — UTSAVhq 8.8
+                   ============================================= */
+                .settings-grid { display:flex; flex-direction:column; gap:14px; max-width:600px; margin:0 auto; }
 
-                .set-bento-card {
-                    background: #FFFFFF;
-                    border: 1px solid #E2E8F0;
-                    border-radius: 12px;
-                    padding: 14px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-                    transition: 0.3s;
+                /* 🔷 Hero Company Card */
+                .set-profile-hero {
+                    background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 55%, #2563EB 100%);
+                    border-radius: 20px; padding: 18px 20px; color: white;
+                    display: flex; align-items: center; gap: 14px;
+                    box-shadow: 0 10px 40px rgba(37,99,235,0.28);
+                    position: relative; overflow: hidden; cursor: pointer;
+                    margin-bottom: 2px;
                 }
+                .set-profile-hero::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:rgba(255,255,255,0.05); border-radius:50%; }
+                .set-profile-hero::after  { content:''; position:absolute; bottom:-40px; left:40%; width:160px; height:160px; background:rgba(255,255,255,0.04); border-radius:50%; }
+                .set-hero-logo { width:54px; height:54px; border-radius:14px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:22px; overflow:hidden; flex-shrink:0; border:2px solid rgba(255,255,255,0.25); position:relative; z-index:1; }
+                .set-hero-logo img { width:100%; height:100%; object-fit:cover; }
+                .set-hero-info { flex:1; min-width:0; position:relative; z-index:1; }
+                .set-hero-name { font-size:15px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                .set-hero-sub  { font-size:11px; color:rgba(255,255,255,0.65); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                .set-hero-edit { background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3); color:white; padding:7px 13px; border-radius:20px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:0.2s; position:relative; z-index:1; }
+                .set-hero-edit:hover { background:rgba(255,255,255,0.28); }
 
-                .set-bento-card:hover {
-                    border-color: #CBD5E1;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-                }
+                /* 🔷 Nav Pills */
+                .settings-nav-pill { display:flex; gap:7px; overflow-x:auto; padding:10px 2px; margin-bottom:2px; position:sticky; top:56px; z-index:100; background:rgba(241,245,249,0.94); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); scrollbar-width:none; }
+                .settings-nav-pill::-webkit-scrollbar { display:none; }
+                .set-pill { background:white; border:1.5px solid #E2E8F0; padding:9px 15px; border-radius:30px; font-size:11.5px; font-weight:800; color:#64748B; cursor:pointer; transition:0.25s; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
+                .set-pill:hover { border-color:#94A3B8; color:#0F172A; }
+                .set-pill.active-set-pill { background:linear-gradient(135deg,#0F172A,#1E293B)!important; color:white!important; border-color:transparent!important; box-shadow:0 6px 18px rgba(15,23,42,0.28)!important; transform:translateY(-1px); }
 
-                .set-badge {
-                    display: inline-block;
-                    font-size: 9.5px;
-                    font-weight: 800;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 12px;
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                }
+                /* 🔷 Bento Cards */
+                .set-bento-card { background:rgba(255,255,255,0.82); backdrop-filter:blur(10px); border:1px solid rgba(226,232,240,0.9); border-radius:16px; padding:18px; box-shadow:0 2px 12px rgba(0,0,0,0.04); transition:0.3s; margin-bottom:14px; }
+                .set-bento-card:last-child { margin-bottom:0; }
+                .set-bento-card:hover { border-color:#CBD5E1; box-shadow:0 6px 24px rgba(0,0,0,0.07); transform:translateY(-1px); }
+                .set-badge { display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:900; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:14px; padding:5px 11px; border-radius:20px; }
 
-                /* Pill Navigation for Sub-Tabs */
-                .settings-nav-pill {
-                    display: flex;
-                    gap: 6px;
-                    overflow-x: auto;
-                    padding: 8px 4px;
-                    margin-bottom: 14px;
-                    position: sticky;
-                    top: 56px;
-                    z-index: 100;
-                    background: rgba(248, 250, 252, 0.85);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border-radius: 10px;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.7);
-                }
+                /* 🔷 Inputs */
+                .set-input { height:38px; border-radius:10px; border:1.5px solid #E2E8F0; padding:0 12px; font-size:13px; font-weight:600; width:100%; transition:0.2s; box-sizing:border-box; background:#FAFBFC; font-family:inherit; }
+                .set-input:focus { border-color:var(--accent-color); outline:none; background:#F0F7FF; box-shadow:0 0 0 3px rgba(37,99,235,0.08); }
+                .set-row { display:flex; gap:10px; margin-bottom:12px; }
+                .set-row:last-child { margin-bottom:0; }
+                .set-group { flex:1; display:flex; flex-direction:column; gap:5px; }
+                .set-group label { font-size:10.5px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; }
 
-                .set-pill {
-                    background: white;
-                    border: 1px solid #E2E8F0;
-                    padding: 8px 14px;
-                    border-radius: 20px;
-                    font-size: 11px;
-                    font-weight: 800;
-                    color: #64748B;
-                    cursor: pointer;
-                    transition: 0.2s;
-                    white-space: nowrap;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-                }
+                /* 🔷 Toggle Switch */
+                .set-toggle-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #F1F5F9; }
+                .set-toggle-row:last-child { border-bottom:none; padding-bottom:0; }
+                .set-toggle-label { font-size:13px; font-weight:700; color:#1E293B; }
+                .set-toggle-sub { font-size:11px; color:#94A3B8; font-weight:500; margin-top:1px; }
+                .toggle-switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+                .toggle-switch input { opacity:0; width:0; height:0; }
+                .toggle-slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#E2E8F0; border-radius:24px; transition:0.3s; }
+                .toggle-slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+                .toggle-switch input:checked + .toggle-slider { background:var(--accent-color); }
+                .toggle-switch input:checked + .toggle-slider:before { transform:translateX(20px); }
 
-                .set-pill.active-set-pill {
-                    background: #0F172A !important;
-                    color: white !important;
-                    border-color: #0F172A !important;
-                    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2) !important;
-                    transform: translateY(-1px);
-                }
+                /* 🔷 Color Theme Dots */
+                .theme-dots { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+                .theme-dot { width:36px; height:36px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:0.22s; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+                .theme-dot.active-theme { border-color:#0F172A; transform:scale(1.18); box-shadow:0 4px 14px rgba(0,0,0,0.25); }
+                .theme-dot:hover { transform:scale(1.12); }
 
-                /* Layout Fixes */
-                .set-row {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 10px;
-                }
+                /* 🔷 Font Size Buttons */
+                .font-size-btns { display:flex; gap:7px; margin-top:10px; }
+                .font-size-btn { flex:1; padding:9px; border:1.5px solid #E2E8F0; border-radius:10px; cursor:pointer; background:white; text-align:center; font-weight:800; transition:0.2s; color:#64748B; font-family:inherit; }
+                .font-size-btn.active-fs { background:#0F172A; color:white; border-color:#0F172A; box-shadow:0 4px 12px rgba(15,23,42,0.18); }
 
-                .set-group {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                }
+                /* 🔷 WA Tag Chips */
+                .tag-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
+                .tag-chip { background:#EFF6FF; color:#2563EB; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:800; cursor:pointer; transition:0.15s; border:1px solid #BFDBFE; font-family:inherit; }
+                .tag-chip:hover { background:#2563EB; color:white; }
 
-                .set-input {
-                    height: 36px;
-                    border-radius: 8px;
-                    border: 1px solid #E2E8F0;
-                    padding: 0 10px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    width: 100%;
-                    transition: 0.2s;
-                    box-sizing: border-box;
-                }
-
-                .set-input:focus {
-                    border-color: var(--accent-color);
-                    outline: none;
-                    background: #F0F7FF;
-                }
-
-                .set-textarea {
-                    min-height: 70px;
-                    border-radius: 8px;
-                    border: 1px solid #E2E8F0;
-                    padding: 10px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    width: 100%;
-                    resize: vertical;
-                    line-height: 1.5;
-                    box-sizing: border-box;
-                }
-                /* 🚀 Settings Hub Premium UI */
-                .settings-grid { display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: 0 auto; }
-                .set-bento-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); transition: 0.3s; position: relative; overflow: hidden; }
-                .set-bento-card:hover { border-color: var(--accent-color); box-shadow: 0 10px 40px rgba(37, 99, 235, 0.1); transform: translateY(-2px); }
-                .set-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; padding: 6px 12px; border-radius: 20px; }
-                .settings-nav-pill { display: flex; gap: 8px; overflow-x: auto; padding: 10px 4px; margin-bottom: 20px; position: sticky; top: 56px; z-index: 100; background: rgba(248, 250, 252, 0.9); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(226, 232, 240, 0.7); }
-                .set-pill { background: white; border: 1px solid #E2E8F0; padding: 10px 18px; border-radius: 30px; font-size: 12px; font-weight: 800; color: #64748B; cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02); }
-                .set-pill:hover { border-color: #CBD5E1; color: #0F172A; }
-                .set-pill.active-set-pill { background: linear-gradient(135deg, #0F172A, #1E293B) !important; color: white !important; border-color: #0F172A !important; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2) !important; transform: translateY(-2px); }
+                /* 🔷 About Feature List */
+                .about-feature { display:flex; gap:10px; align-items:flex-start; padding:9px 10px; background:#F8FAFC; border-radius:10px; margin-bottom:8px; }
+                .about-feature:last-child { margin-bottom:0; }
             </style>
 
+            <!-- 🔷 Company Hero Card -->
+            <div class="settings-grid" style="margin-bottom:6px;">
+                <div class="set-profile-hero" onclick="openCompanyProfile()">
+                    <div class="set-hero-logo" id="set_hero_logo_wrap">
+                        <span id="set_hero_logo_emoji">🏢</span>
+                        <img loading="lazy" id="set_hero_logo_img" style="display:none; width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div class="set-hero-info">
+                        <div class="set-hero-name" id="set_hero_cname">Your Company</div>
+                        <div class="set-hero-sub" id="set_hero_email">No email set</div>
+                        <div class="set-hero-sub" id="set_hero_phone">Tap card to edit profile →</div>
+                    </div>
+                    <button class="set-hero-edit" onclick="event.stopPropagation(); openCompanyProfile()">✏️ Edit</button>
+                </div>
+            </div>
+
+            <!-- 🔷 Tab Pills -->
             <div class="settings-nav-pill">
-                <button class="set-pill active-set-pill" id="pill-bill" onclick="switchHubTab('hub-bill', this)">📄 Billing</button>
-                <button class="set-pill" id="pill-sec" onclick="switchHubTab('hub-sec', this)">🛡️ Security</button>
-                <button class="set-pill" id="pill-wa" onclick="switchHubTab('hub-wa', this)">💬 WhatsApp</button>
-                <button class="set-pill" id="pill-ui" onclick="switchHubTab('hub-ui', this)">🎨 Theme</button>
+                <button class="set-pill active-set-pill" id="pill-bill"  onclick="switchHubTab('hub-bill', this)">📄 Billing</button>
+                <button class="set-pill" id="pill-sec"   onclick="switchHubTab('hub-sec', this)">🛡️ Security</button>
+                <button class="set-pill" id="pill-wa"    onclick="switchHubTab('hub-wa', this)">💬 WhatsApp</button>
+                <button class="set-pill" id="pill-ui"    onclick="switchHubTab('hub-ui', this)">🎨 Appearance</button>
+                <button class="set-pill" id="pill-about" onclick="switchHubTab('hub-about', this)">ℹ️ About</button>
             </div>
 
             <div class="settings-grid">
-                <div id="hub-bill" class="hub-tab-content" style="display: block;">
+
+                <!-- ══════════════════ 📄 BILLING TAB ══════════════════ -->
+                <div id="hub-bill" class="hub-tab-content" style="display:block;">
+
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #2563EB; background: #EFF6FF;">🔢 Invoice Prefix Settings</div>
-                        <div class="form-row" style="margin-bottom:0;">
-                            <div class="form-group"><label class="form-label">Sales Invoice Prefix</label><input type="text" id="set_prefix_inv" class="form-input" placeholder="INV"></div>
-                            <div class="form-group"><label class="form-label">Quotation Prefix</label><input type="text" id="set_prefix_qt" class="form-input" placeholder="EST"></div>
+                        <div class="set-badge" style="color:#2563EB; background:#EFF6FF;">🔢 Document Prefix</div>
+                        <div class="set-row">
+                            <div class="set-group"><label>Sales Invoice</label><input type="text" id="set_prefix_inv" class="set-input" placeholder="INV"></div>
+                            <div class="set-group"><label>Quotation / Estimate</label><input type="text" id="set_prefix_qt" class="set-input" placeholder="EST"></div>
+                        </div>
+                        <div class="set-row">
+                            <div class="set-group"><label>Purchase Order (PO)</label><input type="text" id="set_prefix_po" class="set-input" placeholder="PO"></div>
+                            <div class="set-group"><label>Vendor Bill (PB)</label><input type="text" id="set_prefix_pb" class="set-input" placeholder="PB"></div>
                         </div>
                     </div>
+
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #059669; background: #ECFDF5;">💰 Tax & Compliance</div>
-                        <div class="form-row" style="align-items: flex-end; margin-bottom:0;">
-                            <div class="form-group"><label class="form-label">Default GST %</label><select id="set_def_gst" class="form-select"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option></select></div>
-                            <div class="form-group">
-                                <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; background:#F8FAFC; border:1px solid #E2E8F0; height:36px; padding:0 12px; border-radius:8px; cursor:pointer;">
-                                    <input type="checkbox" id="set_show_bank" style="width:16px; height:16px; accent-color:var(--accent-color);"> Print Bank Info
-                                </label>
-                            </div>
+                        <div class="set-badge" style="color:#059669; background:#ECFDF5;">💰 Tax & Print Options</div>
+                        <div class="set-group" style="margin-bottom:13px;">
+                            <label>Default GST Rate</label>
+                            <select id="set_def_gst" class="set-input" style="height:38px; cursor:pointer;">
+                                <option value="0">0% — No GST</option>
+                                <option value="5">5%</option>
+                                <option value="12">12%</option>
+                                <option value="18">18%</option>
+                                <option value="28">28%</option>
+                            </select>
+                        </div>
+                        <div class="set-toggle-row">
+                            <div><div class="set-toggle-label">Print Bank Details on Invoices</div><div class="set-toggle-sub">Shows bank account info on printouts</div></div>
+                            <label class="toggle-switch"><input type="checkbox" id="set_show_bank"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="set-toggle-row">
+                            <div><div class="set-toggle-label">Print Signature on Vouchers</div><div class="set-toggle-sub">Adds authorized signature block at bottom</div></div>
+                            <label class="toggle-switch"><input type="checkbox" id="set_show_sig"><span class="toggle-slider"></span></label>
                         </div>
                     </div>
+
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #D97706; background: #FFFBEB;">📜 Default Terms & Conditions</div>
-                        <textarea id="set_tnc" class="form-input" style="height: 100px; resize:vertical;" placeholder="Enter terms that appear on every PDF..."></textarea>
+                        <div class="set-badge" style="color:#D97706; background:#FFFBEB;">📜 Default Terms & Conditions</div>
+                        <textarea id="set_tnc" class="set-input" style="height:90px; resize:vertical; line-height:1.5; padding:10px;" placeholder="e.g. Payment due within 7 days. All disputes subject to local jurisdiction..."></textarea>
                     </div>
-                    
-                    <div class="set-bento-card" id="set_inventory_toggle_card" style="display:block;">
-                        <div class="set-badge" style="color: var(--purple); background: #FAF5FF;">📦 Advanced Modules</div>
-                        <p style="font-size:11px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Enable Inventory, Godown & Rental Prop Tracking System for this workspace.</p>
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; cursor:pointer;">
-                            <input type="checkbox" id="set_manage_inventory" style="width:16px; height:16px; accent-color:var(--accent-color);"> Activate Inventory Management
-                        </label>
+
+                    <div class="set-bento-card" id="set_inventory_toggle_card">
+                        <div class="set-badge" style="color:var(--purple); background:#FAF5FF;">📦 Advanced Modules</div>
+                        <div class="set-toggle-row" style="border-bottom:none; padding-bottom:0;">
+                            <div><div class="set-toggle-label">Inventory &amp; Rental Management</div><div class="set-toggle-sub">Enable Godown, Stock &amp; Rental tracking</div></div>
+                            <label class="toggle-switch"><input type="checkbox" id="set_manage_inventory"><span class="toggle-slider"></span></label>
+                        </div>
                     </div>
                 </div>
 
-                <div id="hub-sec" class="hub-tab-content" style="display: none;">
-                    <div class="set-bento-card" style="border-color: #FCA5A5; background: #FEF2F2;">
-                        <div class="set-badge" style="color: #DC2626; background: #FEE2E2;">🛡️ App Screen Lock</div>
-                        <p style="font-size:12px; color: #991B1B; margin:0 0 10px 0; font-weight:600;">Secure dashboard with a 4-digit PIN.</p>
-                        <input type="password" id="set_app_pin" class="form-input" placeholder="Set 4-Digit PIN (Blank to disable)" maxlength="4" style="text-align:center; font-size:20px; letter-spacing:10px; font-weight:900; height:45px; border-color:#FCA5A5; background:white;">
+                <!-- ══════════════════ 🛡️ SECURITY TAB ══════════════════ -->
+                <div id="hub-sec" class="hub-tab-content" style="display:none;">
+
+                    <div class="set-bento-card" style="border-color:#FCA5A5; background:linear-gradient(135deg,#FFF5F5,#FEF2F2);">
+                        <div class="set-badge" style="color:#DC2626; background:#FEE2E2;">🔐 App Screen Lock PIN</div>
+                        <p style="font-size:12px; color:#7F1D1D; margin:0 0 13px; font-weight:600; line-height:1.5;">Set a 4-digit PIN to lock the dashboard. Leave blank to disable.</p>
+                        <input type="password" id="set_app_pin" class="set-input" placeholder="• • • •" maxlength="4" style="text-align:center; font-size:24px; letter-spacing:14px; font-weight:900; height:54px; border-color:#FCA5A5; background:white;">
                     </div>
+
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #D97706; background: #FFFBEB;">♻️ Smart Recycle Bin</div>
-                        <p style="font-size:12px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Recover deleted leads, bills, and transactions safely.</p>
-                        <button class="btn-main" style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; box-shadow:none; height:40px; font-size:13px;" onclick="openRecycleBin()">🗑️ Open Recycle Bin</button>
+                        <div class="set-badge" style="color:#D97706; background:#FFFBEB;">♻️ Smart Recycle Bin</div>
+                        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 12px; font-weight:500; line-height:1.5;">Deleted leads, bills &amp; transactions are kept here safely for recovery.</p>
+                        <button class="btn-main" style="background:#FFFBEB; color:#D97706; border:1.5px solid #FDE68A; box-shadow:none; height:42px; font-size:13px; font-weight:800;" onclick="openRecycleBin()">🗑️ Open Recycle Bin</button>
                     </div>
+
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #059669; background: #ECFDF5;">💾 Database Backup</div>
-                        <p style="font-size:12px; color: var(--text-secondary); margin:0 0 10px 0; font-weight:500;">Export data into a JSON file for offline backup.</p>
+                        <div class="set-badge" style="color:#059669; background:#ECFDF5;">💾 Database Backup &amp; Restore</div>
+                        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 12px; font-weight:500; line-height:1.5;">Export all your data as a secure JSON file for offline backup or transfer.</p>
                         <div style="display:flex; gap:10px;">
-                            <button class="btn-main" style="background:var(--success); flex:1; box-shadow:none; height:40px; font-size:12px;" onclick="exportBackupData()">📥 Download Backup</button>
-                            <button class="btn-main" style="background:var(--accent-color); flex:1; box-shadow:none; height:40px; font-size:12px;" onclick="document.getElementById('import_backup_file').click()">🔄 Restore Data</button>
+                            <button class="btn-main" style="background:var(--success); flex:1; box-shadow:none; height:42px; font-size:12px; font-weight:800;" onclick="exportBackupData()">📥 Download Backup</button>
+                            <button class="btn-main" style="background:var(--accent-color); flex:1; box-shadow:none; height:42px; font-size:12px; font-weight:800;" onclick="document.getElementById('import_backup_file').click()">🔄 Restore Data</button>
                             <input type="file" id="import_backup_file" style="display:none;" accept=".json" onchange="importBackupData(event)">
                         </div>
                     </div>
-                    <div class="set-bento-card" style="border: 1px dashed #FECACA; background: #FFF5F5;">
-                        <div class="set-badge" style="color: #DC2626; background: transparent; padding:0; margin-bottom:8px;">⚠️ Danger Zone</div>
-                        <button class="btn-main" style="background:white; color:var(--danger); border:1px solid #FECACA; box-shadow:none; font-size:12px; width: 100%; height:40px; margin-bottom:10px;" onclick="deleteCompanyWorkspace()">❌ Delete This Workspace Permanently</button>
-                        <button class="btn-main" style="background:white; color:var(--danger); border:1px solid #FECACA; box-shadow:none; font-size:12px; width: 100%; height:40px;" onclick="factoryResetApp()">🔥 Clear App Data (Logout Device)</button>
+
+                    <div class="set-bento-card" style="border:1.5px dashed #FECACA; background:linear-gradient(135deg,#FFF5F5,white);">
+                        <div class="set-badge" style="color:#DC2626; background:transparent; padding:0; margin-bottom:11px;">⚠️ Danger Zone</div>
+                        <p style="font-size:11px; color:#DC2626; font-weight:600; margin:0 0 12px; line-height:1.5;">These actions are permanent and cannot be reversed. Please proceed with caution.</p>
+                        <button class="btn-main" style="background:white; color:var(--danger); border:1.5px solid #FECACA; box-shadow:none; font-size:12px; font-weight:800; width:100%; height:42px; margin-bottom:8px;" onclick="deleteCompanyWorkspace()">❌ Delete This Workspace Permanently</button>
+                        <button class="btn-main" style="background:white; color:var(--danger); border:1.5px solid #FECACA; box-shadow:none; font-size:12px; font-weight:800; width:100%; height:42px;" onclick="factoryResetApp()">🔥 Clear App Data &amp; Logout Device</button>
                     </div>
                 </div>
 
-                <div id="hub-wa" class="hub-tab-content" style="display: none;">
-                    <div class="set-bento-card">
-                        <div class="set-badge" style="color: #166534; background: #DCFCE7;">📄 Invoice Template</div>
-                        <textarea id="set_wa_inv" class="form-input" style="height:100px;" placeholder="Hello [Client], Your bill for [Total] is ready..."></textarea>
+                <!-- ══════════════════ 💬 WHATSAPP TAB ══════════════════ -->
+                <div id="hub-wa" class="hub-tab-content" style="display:none;">
+
+                    <div class="set-bento-card" style="background:linear-gradient(135deg,#F0FDF4,white);">
+                        <div class="set-badge" style="color:#166534; background:#DCFCE7;">📱 WhatsApp Business Number</div>
+                        <div class="set-group">
+                            <label>Your WhatsApp Number (10 digits)</label>
+                            <input type="tel" id="set_wa_phone" class="set-input" placeholder="e.g. 9876543210" maxlength="10">
+                        </div>
+                        <p style="font-size:11px; color:var(--text-secondary); margin:10px 0 0; font-weight:500; line-height:1.5;">Used for the "Share on WhatsApp" quick-action buttons throughout the app.</p>
                     </div>
+
                     <div class="set-bento-card">
-                        <div class="set-badge" style="color: #7E22CE; background: #FAF5FF;">⭐ Review Request</div>
-                        <textarea id="set_wa_review" class="form-input" style="height:100px;" placeholder="Hello [Client], please review us at [Link]..."></textarea>
+                        <div class="set-badge" style="color:#166534; background:#DCFCE7;">📄 Invoice Message Template</div>
+                        <div class="tag-chips">
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_inv','[Client]')">[Client]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_inv','[Total]')">[Total]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_inv','[InvoiceNo]')">[InvoiceNo]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_inv','[Company]')">[Company]</span>
+                        </div>
+                        <textarea id="set_wa_inv" class="set-input" style="height:90px; resize:vertical; line-height:1.5; padding:10px;" placeholder="Hello [Client], your invoice #[InvoiceNo] for ₹[Total] is ready. Thank you! — [Company]"></textarea>
+                    </div>
+
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#7E22CE; background:#FAF5FF;">⭐ Review Request Template</div>
+                        <div class="tag-chips">
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_review','[Client]')">[Client]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_review','[Company]')">[Company]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_review','[Link]')">[Link]</span>
+                        </div>
+                        <textarea id="set_wa_review" class="set-input" style="height:90px; resize:vertical; line-height:1.5; padding:10px;" placeholder="Hi [Client], we'd love your feedback! Rate us here: [Link] — [Company]"></textarea>
+                    </div>
+
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#0891B2; background:#ECFEFF;">🎯 Payment Reminder Template</div>
+                        <div class="tag-chips">
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_remind','[Client]')">[Client]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_remind','[Amount]')">[Amount]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_remind','[DueDate]')">[DueDate]</span>
+                            <span class="tag-chip" onclick="appendToWaTemplate('set_wa_remind','[Company]')">[Company]</span>
+                        </div>
+                        <textarea id="set_wa_remind" class="set-input" style="height:90px; resize:vertical; line-height:1.5; padding:10px;" placeholder="Dear [Client], a payment of ₹[Amount] is due on [DueDate]. Kindly arrange at your earliest. — [Company]"></textarea>
                     </div>
                 </div>
 
-                <div id="hub-ui" class="hub-tab-content" style="display: none;">
-                    <div class="set-bento-card" style="display:flex; flex-direction:column; gap:10px;">
-                        <button id="dark_mode_toggle_hub" class="btn-main" style="background:#0F172A; color:white; height:45px; border-radius:12px; font-size:14px; box-shadow:none;" onclick="toggleDarkMode()">🌙 Toggle Dark / Light Theme</button>
-                        <button id="privacy_toggle_hub" class="btn-main" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; height:45px; border-radius:12px; font-size:14px; box-shadow:none;" onclick="togglePrivacy()">👁️ Privacy Mode (Blur Amounts)</button>
+                <!-- ══════════════════ 🎨 APPEARANCE TAB ══════════════════ -->
+                <div id="hub-ui" class="hub-tab-content" style="display:none;">
+
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#0F172A; background:#F1F5F9;">🌗 Display Mode</div>
+                        <div class="set-toggle-row">
+                            <div><div class="set-toggle-label">Dark Mode</div><div class="set-toggle-sub">Switch between light and dark theme</div></div>
+                            <button id="dark_mode_toggle_hub" style="background:#0F172A; color:white; border:none; padding:8px 16px; border-radius:20px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;" onclick="toggleDarkMode()">🌙 Toggle</button>
+                        </div>
+                        <div class="set-toggle-row" style="border-bottom:none; padding-bottom:0;">
+                            <div><div class="set-toggle-label">Privacy Mode</div><div class="set-toggle-sub">Blurs all amounts for confidentiality</div></div>
+                            <button id="privacy_toggle_hub" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; padding:8px 16px; border-radius:20px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;" onclick="togglePrivacy()">👁️ Toggle</button>
+                        </div>
+                    </div>
+
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#2563EB; background:#EFF6FF;">🎨 Accent Color Theme</div>
+                        <p style="font-size:11px; color:var(--text-secondary); margin:0 0 2px; font-weight:500;">Pick your preferred app accent color. Tap to apply instantly.</p>
+                        <div class="theme-dots">
+                            <div class="theme-dot active-theme" id="theme-blue"   style="background:linear-gradient(135deg,#1D4ED8,#2563EB);"  onclick="setAccentTheme('blue',this)"   title="Classic Blue"></div>
+                            <div class="theme-dot" id="theme-purple" style="background:linear-gradient(135deg,#6D28D9,#7C3AED);"  onclick="setAccentTheme('purple',this)" title="Royal Purple"></div>
+                            <div class="theme-dot" id="theme-green"  style="background:linear-gradient(135deg,#047857,#059669);"  onclick="setAccentTheme('green',this)"  title="Emerald Green"></div>
+                            <div class="theme-dot" id="theme-rose"   style="background:linear-gradient(135deg,#BE123C,#E11D48);"  onclick="setAccentTheme('rose',this)"   title="Rose Red"></div>
+                            <div class="theme-dot" id="theme-orange" style="background:linear-gradient(135deg,#C2410C,#EA580C);"  onclick="setAccentTheme('orange',this)" title="Burnt Orange"></div>
+                            <div class="theme-dot" id="theme-teal"   style="background:linear-gradient(135deg,#0E7490,#0891B2);"  onclick="setAccentTheme('teal',this)"   title="Deep Teal"></div>
+                        </div>
+                    </div>
+
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#64748B; background:#F8FAFC;">🔠 App Font Size</div>
+                        <p style="font-size:11px; color:var(--text-secondary); margin:0 0 2px; font-weight:500;">Adjusts text size across the app for comfortable reading.</p>
+                        <div class="font-size-btns">
+                            <div class="font-size-btn" id="fs-small"  onclick="setFontSize('small',this)"  style="font-size:11px;">A⁻ Small</div>
+                            <div class="font-size-btn active-fs" id="fs-medium" onclick="setFontSize('medium',this)" style="font-size:13px;">A Medium</div>
+                            <div class="font-size-btn" id="fs-large"  onclick="setFontSize('large',this)"  style="font-size:15px;">A⁺ Large</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════ ℹ️ ABOUT TAB ══════════════════ -->
+                <div id="hub-about" class="hub-tab-content" style="display:none;">
+
+                    <div class="set-bento-card" style="background:linear-gradient(135deg,#0F172A,#1E3A8A); color:white; text-align:center; border:none;">
+                        <div style="font-size:44px; margin-bottom:8px;">🎊</div>
+                        <div style="font-size:20px; font-weight:900; letter-spacing:0.5px;">UTSAVhq ERP</div>
+                        <div style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:4px;">Version 8.8 — Enterprise Edition</div>
+                        <div style="margin-top:14px; background:rgba(255,255,255,0.1); border-radius:10px; padding:12px;">
+                            <div style="font-size:12px; color:rgba(255,255,255,0.75); font-weight:600;">Cloud-Based Event &amp; Business ERP</div>
+                            <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-top:3px;">Powered by Firebase &amp; Cloudinary</div>
+                        </div>
+                        <div style="margin-top:12px; display:flex; gap:10px; justify-content:center;">
+                            <div style="background:rgba(255,255,255,0.12); border-radius:8px; padding:8px 14px; font-size:11px; font-weight:700;">📱 PWA Installable</div>
+                            <div style="background:rgba(255,255,255,0.12); border-radius:8px; padding:8px 14px; font-size:11px; font-weight:700;">🔒 Firebase Secure</div>
+                        </div>
+                    </div>
+
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#2563EB; background:#EFF6FF;">⚡ What's New in v8.8</div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">✅</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Email Fix on Voucher Print</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Company email now shows correctly on all printouts instead of company ID</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">🎨</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Premium Settings Hub</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Completely redesigned with color themes, font size controls &amp; more</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">💬</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">WhatsApp Templates v2</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Payment reminder template + quick-insert tags for faster editing</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">🔢</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">PO &amp; PB Prefix Settings</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Custom prefix support for Purchase Orders &amp; Vendor Bills added</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">📱</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Install as Native App</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Save to home screen on Android &amp; iOS — no Play Store needed</div></div>
+                        </div>
+                    </div>
+
+                    <div class="set-bento-card" style="text-align:center; background:#F8FAFC;">
+                        <div style="font-size:11px; color:#94A3B8; font-weight:600;">Built with ❤️ for Event &amp; Rental Businesses</div>
+                        <div style="font-size:10px; color:#CBD5E1; margin-top:4px; font-weight:500;">© 2024–2025 UTSAVhq — All Rights Reserved</div>
                     </div>
                 </div>
             </div>
-            
-            <div style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <button type="button" class="btn-main" style="background: linear-gradient(135deg, var(--accent-color), #1E3A8A); padding: 14px; font-size: 14px; font-weight: 800; border-radius: 12px; width: 100%; box-shadow: 0 4px 12px rgba(37,99,235,0.2);" onclick="saveMasterSettings()">💾 Save App Configurations</button>
+
+            <div style="margin-top:20px; max-width:600px; margin-left:auto; margin-right:auto;">
+                <button type="button" class="btn-main" style="background:linear-gradient(135deg,#0F172A,#1E3A8A); padding:15px; font-size:14px; font-weight:900; border-radius:14px; width:100%; box-shadow:0 6px 20px rgba(15,23,42,0.22); letter-spacing:0.3px;" onclick="saveMasterSettings()">💾 Save All Settings</button>
             </div>
         </div>
 
@@ -6813,8 +6914,8 @@
                     <input type="text" id="new_staff_name" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Mobile Number</label>
-                    <input type="number" id="new_staff_mobile" class="form-input" required>
+                    <label class="form-label">Staff Email Address</label>
+                    <input type="email" id="new_staff_mobile" class="form-input" placeholder="staff@email.com" required>
                 </div>
                 <button type="button" class="btn-main" style="background:var(--success);" onclick="addStaffByOwner()">Add to Team</button>
             </form>
@@ -7078,176 +7179,164 @@
         // 🚀 FIREBASE INITIALIZATION & OTP ENGINE
         // =========================================
     
-        let confirmationResult; // OTP verify karne ke liye
+        let confirmationResult; // kept for compat
+
+        // ✅ Simple loader helpers
+        function showLoader(msg) {
+            let el = document.getElementById('global-loader');
+            if (el) el.style.display = 'flex';
+        }
+        function hideLoader() {
+            let el = document.getElementById('global-loader');
+            if (el) el.style.display = 'none';
+        }
+
 
         // Google Auth Provider setup
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // 🚀 FIX: LOGIN KARTA HI PURANA DATA WAPAS
+        // ✅ Google Sign-In — Email as primary key (no mobile needed)
         function signInWithGoogle() {
+            showLoader("Signing in with Google...");
             auth.signInWithPopup(googleProvider)
             .then(async (result) => {
-                let user = result.user;
-                let loggedInEmail = user.email.toLowerCase();
+                let firebaseUser = result.user;
+                let email = firebaseUser.email.toLowerCase();
+                loggedInEmail = email;
+                loggedInMobile = email; // alias
 
-                let snapshot = await db.collection("users").where("email", "==", loggedInEmail).get();
+                // Check if user profile exists (keyed by email)
+                let userDoc = await db.collection("users").doc(email).get();
 
-                if (!snapshot.empty) {
-                    let userData = snapshot.docs[0].data();
-                    let mob = userData.mobile;
-                    loggedInMobile = mob;
-                    localStorage.setItem('utsav_erp_active_session', mob);
-
-                    let compSnapshot = await db.collection("companies").get();
-                    let myComps = [];
-                    compSnapshot.forEach(doc => {
-                        let comp = doc.data(); comp.id = doc.id;
-                        masterCompsDB[doc.id] = comp; 
-                        if(comp.ownerMob === mob || (comp.staff && comp.staff.some(s => s.mobile === mob))) {
-                            myComps.push(doc.id);
-                        }
-                    });
-                    
-                    userData.companies = myComps;
-                    masterUsersDB[mob] = userData;
-                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-                    localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-
-                    manageDeviceSession(mob); // 🔒 Device Lock On
-                    checkPersistentLogin(); 
-                } else {
-                    document.getElementById('auth-screen').style.display = 'flex';
-                    document.getElementById('auth_setup_name').value = user.displayName || "";
-                    document.getElementById('auth_setup_email').value = loggedInEmail;
-                    switchAuthView('view_new_user_setup');
-                }
-            }).catch((error) => { alert("Google Login Failed: " + error.message); });
-        }
-
-        // 🚀 FIX: NAYE PHONE PAR MOBILE NUMBER DALTE HI PURANA DATA SYNC KARNA
-        // 🚀 FIX: STRICT EMAIL-MOBILE SECURITY BINDING
-        async function saveNewUserProfile() {
-            let name = document.getElementById('auth_setup_name').value.trim();
-            let email = document.getElementById('auth_setup_email').value.trim().toLowerCase();
-            let mob = document.getElementById('auth_setup_mobile').value.trim();
-
-            if (!name || !email || !mob) return alert("❌ All fields are required!");
-            if (mob.length !== 10 || isNaN(mob)) return alert("❌ Please enter a valid 10-digit mobile number!");
-
-            // ☁️ SMART CHECK: Kya ye mobile number Cloud par pehle se hai?
-            try {
-                let userDoc = await db.collection("users").doc(mob).get();
                 if (userDoc.exists) {
-                    let existingData = userDoc.data();
-
-                    // 🛡️ THE SECURITY LOCK: Koi random aadmin apna email dalkar aapka number nahi chura sakta!
-                    if (existingData.email && existingData.email !== "" && existingData.email !== email) {
-                        alert(`🚨 SECURITY ALERT!\n\nThis Mobile Number is already registered with another Google Account.\n\nPlease go back and login using the correct Google Account, or use a different mobile number.`);
-                        
-                        // Force Logout so they can't bypass
-                        auth.signOut();
-                        window.location.reload();
-                        return; // ⛔ Yahan code ruk jayega, andar ghusne nahi dega!
-                    }
-
-                    // Purana User mil gaya (aur email match ho gaya ya first time link ho raha hai)! 
-                    await db.collection("users").doc(mob).update({ email: email, name: name });
-                    
-                    loggedInMobile = mob;
-                    localStorage.setItem('utsav_erp_active_session', mob);
-
+                    let userData = userDoc.data();
+                    // Fetch companies this user belongs to
                     let compSnapshot = await db.collection("companies").get();
                     let myComps = [];
                     compSnapshot.forEach(doc => {
                         let comp = doc.data(); comp.id = doc.id;
                         masterCompsDB[doc.id] = comp;
-                        if(comp.ownerMob === mob || (comp.staff && comp.staff.some(s => s.mobile === mob))) myComps.push(doc.id);
+                        if (comp.ownerEmail === email || (comp.staff && comp.staff.some(s => s.email === email))) {
+                            myComps.push(doc.id);
+                        }
                     });
-                    
-                    let userData = existingData;
-                    userData.email = email; // update locally
                     userData.companies = myComps;
-                    masterUsersDB[mob] = userData;
+                    masterUsersDB[email] = userData;
                     localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
                     localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-
-                    manageDeviceSession(mob); // 🔒 Device Lock On
-                    document.getElementById('view_new_user_setup').style.display = 'none';
-                    checkPersistentLogin(); // Seedha dashboard!
-                    return;
+                    localStorage.setItem('utsav_erp_active_session', email);
+                    hideLoader();
+                    checkPersistentLogin();
+                } else {
+                    // New user — collect their name
+                    hideLoader();
+                    document.getElementById('auth-screen').style.display = 'flex';
+                    document.getElementById('auth_setup_name').value = firebaseUser.displayName || "";
+                    document.getElementById('auth_setup_email').value = email;
+                    switchAuthView('view_new_user_setup');
                 }
-            } catch(e) { console.log(e); }
-
-            
-            loggedInMobile = mob; 
-            let userObj = { name: name, mobile: mob, email: email, dob: "", companies: [] };
-            masterUsersDB[mob] = userObj;
-            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
-            localStorage.setItem('utsav_erp_active_session', mob);
-
-            try { await db.collection("users").doc(mob).set(userObj); } catch(e) { console.error(e); }
-
-            manageDeviceSession(mob); // 🔒 Device Lock On
-            document.getElementById('lbl_user_name_choice').innerText = name.split(' ')[0];
-            openChoiceScreen(name);
+            }).catch((error) => { hideLoader(); alert("Google Login Failed: " + error.message); });
         }
 
-        // 🚀 FIX 3: REFRESH PAR DIRECT DASHBOARD AUTO-LOAD
+        // ✅ Save new user — Email as key, no mobile required
+        async function saveNewUserProfile() {
+            let name = document.getElementById('auth_setup_name').value.trim();
+            let email = document.getElementById('auth_setup_email').value.trim().toLowerCase();
+            if (!name) return alert("❌ Please enter your full name!");
+            if (!email) return alert("❌ Email missing. Please go back and sign in again.");
+
+            showLoader("Setting up your profile...");
+            try {
+                let userObj = { name: name, email: email, companies: [], createdAt: new Date().toISOString() };
+                await db.collection("users").doc(email).set(userObj, { merge: true });
+                masterUsersDB[email] = userObj;
+                loggedInEmail = email;
+                loggedInMobile = email; // alias
+                localStorage.setItem('utsav_erp_active_session', email);
+                localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+                hideLoader();
+                document.getElementById('lbl_user_name_choice').innerText = name.split(' ')[0];
+                openChoiceScreen(name);
+            } catch(e) {
+                hideLoader();
+                console.error(e);
+                alert("❌ Error saving profile. Check internet and try again.");
+            }
+        }
+
+        // ✅ checkPersistentLogin — Email based, auth-guarded
         async function checkPersistentLogin() {
             let authScreen = document.getElementById('auth-screen');
             let mainApp = document.getElementById('main-app');
             if (!authScreen) return;
 
             let setupView = document.getElementById('view_new_user_setup');
-            if (setupView && getComputedStyle(setupView).display !== 'none') return; 
+            if (setupView && getComputedStyle(setupView).display !== 'none') return;
 
-            let activeMob = localStorage.getItem('utsav_erp_active_session');
-            let savedWorkspace = localStorage.getItem('utsav_active_workspace'); // 🚀 Saved lock check
-            
-            if (activeMob) {
-                loggedInMobile = activeMob;
+            // ✅ Primary source: Firebase Auth (most reliable)
+            let firebaseUser = auth.currentUser;
+            let activeEmail = firebaseUser
+                ? firebaseUser.email.toLowerCase()
+                : localStorage.getItem('utsav_erp_active_session');
+            let savedWorkspace = localStorage.getItem('utsav_active_workspace');
 
-                try {
-                    let compSnapshot = await db.collection("companies").get();
-                    let myComps = [];
-                    compSnapshot.forEach(doc => {
-                        let comp = doc.data();
-                        comp.id = doc.id;
-                        masterCompsDB[doc.id] = comp;
-                        if(comp.ownerMob === activeMob || (comp.staff && comp.staff.some(s => s.mobile === activeMob))) {
-                            myComps.push(doc.id);
+            if (activeEmail) {
+                loggedInEmail = activeEmail;
+                loggedInMobile = activeEmail; // backward compat alias
+
+                if (firebaseUser) {
+                    // ✅ Firebase confirmed — safe to call Firestore
+                    try {
+                        let compSnapshot = await db.collection("companies").get();
+                        let myComps = [];
+                        compSnapshot.forEach(doc => {
+                            let comp = doc.data(); comp.id = doc.id;
+                            masterCompsDB[doc.id] = comp;
+                            if (comp.ownerEmail === activeEmail ||
+                                (comp.staff && comp.staff.some(s => s.email === activeEmail))) {
+                                myComps.push(doc.id);
+                            }
+                        });
+                        localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
+                        if (!masterUsersDB[activeEmail]) {
+                            masterUsersDB[activeEmail] = { email: activeEmail, name: firebaseUser.displayName || "User", companies: [] };
                         }
-                    });
-                    localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
-                    
-                    if (!masterUsersDB[activeMob]) masterUsersDB[activeMob] = { mobile: activeMob, companies: [], name: "User" };
-                    masterUsersDB[activeMob].companies = myComps;
-                } catch(e) { console.log("Cloud sync delayed."); }
-
-                // 🚨🚨🚨 HIGH-VALUE SNAPSHOT AUTO ROUTE: Refresh hone par seedha dashboard kholo
-                if (savedWorkspace && masterCompsDB[savedWorkspace]) {
-                    launchWorkspace(savedWorkspace);
-                    return;
+                        masterUsersDB[activeEmail].companies = myComps;
+                        localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+                    } catch(e) { console.warn("Cloud sync delayed:", e.message); }
+                } else {
+                    // No Firebase session — use local cache only (no Firestore call to avoid permission error)
+                    let cachedComps = JSON.parse(localStorage.getItem('utsav_master_comps') || '{}');
+                    if (Object.keys(cachedComps).length > 0) {
+                        masterCompsDB = cachedComps;
+                        if (!masterUsersDB[activeEmail]) {
+                            masterUsersDB[activeEmail] = { email: activeEmail, companies: Object.keys(cachedComps), name: "User" };
+                        }
+                    } else {
+                        authScreen.style.display = 'flex'; mainApp.style.display = 'none';
+                        switchAuthView('view_email_auth'); return;
+                    }
                 }
 
-                let user = masterUsersDB[activeMob];
+                if (savedWorkspace && masterCompsDB[savedWorkspace]) {
+                    launchWorkspace(savedWorkspace); return;
+                }
+
+                let user = masterUsersDB[activeEmail];
+                if (!user) { authScreen.style.display = 'flex'; mainApp.style.display = 'none'; switchAuthView('view_email_auth'); return; }
 
                 if (!user.companies || user.companies.length === 0) {
-                    authScreen.style.display = 'flex';
-                    mainApp.style.display = 'none';
-                    openChoiceScreen(user.name); 
+                    authScreen.style.display = 'flex'; mainApp.style.display = 'none';
+                    openChoiceScreen(user.name || "User");
                 } else if (user.companies.length === 1) {
-                    handleWorkspaceClick(user.companies[0]); 
+                    handleWorkspaceClick(user.companies[0]);
                 } else {
-                    authScreen.style.display = 'flex';
-                    mainApp.style.display = 'none';
-                    renderCompanyList();
-                    switchAuthView('view_select_comp');
+                    authScreen.style.display = 'flex'; mainApp.style.display = 'none';
+                    renderCompanyList(); switchAuthView('view_select_comp');
                 }
             } else {
-                authScreen.style.display = 'flex';
-                mainApp.style.display = 'none';
-                switchAuthView('view_email_auth'); 
+                authScreen.style.display = 'flex'; mainApp.style.display = 'none';
+                switchAuthView('view_email_auth');
             }
         }
 
@@ -7274,38 +7363,34 @@
                 });
         }
 
-        // 🚀 2. VERIFY MAGIC LINK (Ye function window.onload me call karna hoga)
+        // ✅ Magic Link Sign-In — Email as key
         function handleEmailLinkSignIn() {
             if (auth.isSignInWithEmailLink(window.location.href)) {
                 let email = window.localStorage.getItem('emailForSignIn');
-                
-                if (!email) {
-                    email = window.prompt('Please provide your email for confirmation');
-                }
+                if (!email) email = window.prompt('Please enter your email to confirm login:');
+                if (!email) return;
 
-                auth.signInWithEmailLink(email, window.location.href)
-                    .then((result) => {
+                auth.signInWithEmailLink(email.toLowerCase(), window.location.href)
+                    .then(async (result) => {
                         window.localStorage.removeItem('emailForSignIn');
-                        let loggedInEmail = result.user.email.toLowerCase();
-                        
-                        // Check if user already exists in our database
-                        let users = Object.values(masterUsersDB);
-                        let existingUser = users.find(u => u.email.toLowerCase() === loggedInEmail);
-                        
-                        if (existingUser) {
-                            // Purana user hai -> Seedha login
-                            loggedInMobile = existingUser.mobile;
-                            localStorage.setItem('utsav_erp_active_session', loggedInMobile);
+                        let confirmedEmail = result.user.email.toLowerCase();
+                        loggedInEmail = confirmedEmail;
+                        loggedInMobile = confirmedEmail; // alias
+                        localStorage.setItem('utsav_erp_active_session', confirmedEmail);
+
+                        // Check if user profile exists (keyed by email)
+                        let userDoc = await db.collection("users").doc(confirmedEmail).get();
+                        if (userDoc.exists) {
+                            masterUsersDB[confirmedEmail] = userDoc.data();
+                            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
                             checkPersistentLogin();
                         } else {
-                            // Naya user hai -> Profile Setup par bhejo jahan wo mobile link karega
-                            document.getElementById('auth_setup_email').value = loggedInEmail;
+                            // New user — collect name
+                            document.getElementById('auth_setup_email').value = confirmedEmail;
                             switchAuthView('view_new_user_setup');
                         }
                     })
-                    .catch((error) => {
-                        alert("❌ Link expired or invalid. Please try again.");
-                    });
+                    .catch(() => { alert("❌ Link expired or invalid. Please request a new login link."); });
             }
         }
 
@@ -7546,14 +7631,15 @@
         // 🚀 SMART FIX 1: Tab click par Dashboard ko force update karna
 
         // ==========================================
-        // 🚀 SMART MULTI-TENANT AUTH SYSTEM (MOBILE NO BASED)
+        // ✅ EMAIL-BASED MULTI-TENANT AUTH SYSTEM
         // ==========================================
         let masterUsersDB = JSON.parse(localStorage.getItem('utsav_master_users')) || {};
         let masterCompsDB = JSON.parse(localStorage.getItem('utsav_master_comps')) || {};
-        let loggedInMobile = null;
+        let loggedInEmail = null;       // PRIMARY: Firebase Auth email
+        let loggedInMobile = null;      // ALIAS: same as loggedInEmail (backward compat for UI)
         let tempAuthLogo = "";
-        let tempAuthSig = ""; // Naya Signature Variable
-        let currentWorkspaceId = null; // Naya Workspace Tracker
+        let tempAuthSig = "";
+        let currentWorkspaceId = null;
 
         function switchAuthView(viewId) {
             // Sabhi views ko hide karein
@@ -7568,20 +7654,7 @@
             }
         }
 
-        // Auto-fill aur screen open karega
-        // 🚀 FIX 2: CREATE COMPANY AUTO-FILL FIX
         function prepareCreateCompany() {
-            if (!loggedInMobile) {
-                loggedInMobile = localStorage.getItem('utsav_erp_active_session');
-            }
-            
-            let phoneInput = document.getElementById('auth_comp_phone1');
-            if (phoneInput) {
-                phoneInput.value = loggedInMobile || "";
-                
-                if (!loggedInMobile) phoneInput.removeAttribute('readonly'); 
-            }
-            
             switchAuthView('view_create_comp');
         }
         // 🚀 CRM BULK IMPORT ENGINE
@@ -7659,6 +7732,8 @@
             let staffName = "Unassigned";
             if (newAssigneeMobile && masterUsersDB[newAssigneeMobile]) {
                 staffName = masterUsersDB[newAssigneeMobile].name;
+            } else if (newAssigneeMobile && masterUsersDB[newAssigneeMobile.toLowerCase()]) {
+                staffName = masterUsersDB[newAssigneeMobile.toLowerCase()].name;
             } else if (newAssigneeMobile) {
                 staffName = newAssigneeMobile;
             }
@@ -7690,7 +7765,7 @@
             let file = event.target.files[0]; if (!file) return;
             document.getElementById('auth_comp_sig_text').innerText = "⏳";
             try {
-                tempAuthSig = await uploadToCloudinary(files[i], 'signatures/auth_sig');
+                tempAuthSig = await uploadToCloudinary(file, 'signatures/auth_sig');
                 document.getElementById('auth_comp_sig_preview').src = tempAuthSig;
                 document.getElementById('auth_comp_sig_preview').style.display = 'block';
                 document.getElementById('auth_comp_sig_text').style.display = 'none';
@@ -7728,52 +7803,40 @@
 
             let compId = "COMP_" + Date.now();
 
-            // New Company Object Structure
+            let ownerUser = masterUsersDB[loggedInEmail] || { name: "Owner", email: loggedInEmail };
+
             let newCompany = {
-                id: compId,
-                name: compName,
-                ownerMob: loggedInMobile,
-                joinCode: generatedCode, // 👈 Saved permanently inside company object
-                phone1: phone1,
-                phone2: phone2,
-                email: email,
-                web: web,
-                desc: desc,
-                insta: insta,
-                google: google,
-                review: review,
-                address: address,
-                logo: tempAuthLogo || "",
-                signature: tempAuthSig || "",
-                staff: [{ mobile: loggedInMobile, name: masterUsersDB[loggedInMobile].name, status: 'Approved', role: 'Owner' }]
+                id: compId, name: compName,
+                ownerEmail: loggedInEmail,      // ✅ Primary: email
+                ownerMob: loggedInEmail,        // backward compat alias
+                joinCode: generatedCode,
+                phone1: phone1, phone2: phone2,
+                email: email, web: web, desc: desc,
+                insta: insta, google: google, review: review, address: address,
+                logo: tempAuthLogo || "", signature: tempAuthSig || "",
+                staff: [{ email: loggedInEmail, mobile: loggedInEmail, name: ownerUser.name, status: 'Approved', role: 'Owner' }]
             };
 
+            showLoader("Creating workspace...");
             try {
-                // 1. Save globally to Cloud (Firebase)
                 await db.collection("companies").doc(compId).set(newCompany);
-
-                // 2. Local State memory sync
                 masterCompsDB[compId] = newCompany;
                 localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
 
-                // 3. User mapping check and save
-                if (!masterUsersDB[loggedInMobile].companies.includes(compId)) {
-                    masterUsersDB[loggedInMobile].companies.push(compId);
+                if (!masterUsersDB[loggedInEmail]) masterUsersDB[loggedInEmail] = { email: loggedInEmail, companies: [], name: ownerUser.name };
+                if (!masterUsersDB[loggedInEmail].companies.includes(compId)) {
+                    masterUsersDB[loggedInEmail].companies.push(compId);
+                    await db.collection("users").doc(loggedInEmail).update({ companies: masterUsersDB[loggedInEmail].companies });
                     localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
                 }
-
-                // Clean temporary states
-                tempAuthLogo = "";
-                tempAuthSig = "";
-
-                alert(`🎉 Company Workspace Created Successfully!\n\n🏢 Company Name: ${compName}\n🔐 Your Shareable Join Code: ${generatedCode}\n\nThis code will always be visible inside your 'Team & Staff' side panel.`);
-                
-                // Directly launch dashboard
+                tempAuthLogo = ""; tempAuthSig = "";
+                hideLoader();
+                alert(`🎉 Workspace Created!\n\n🏢 ${compName}\n🔐 Join Code: ${generatedCode}\n\nShare this code with staff to invite them.`);
                 launchWorkspace(compId);
-
             } catch (error) {
+                hideLoader();
                 console.error("Firebase Company Create Error:", error);
-                alert("❌ Server Error: Network connection temporary failed. Try again!");
+                alert("❌ Server Error: " + error.message);
             }
         }
 
@@ -7783,7 +7846,7 @@
                 if(!listDiv) return;
                 
                 listDiv.innerHTML = "";
-                let user = masterUsersDB[loggedInMobile] || { companies: [] };
+                let user = masterUsersDB[loggedInEmail] || masterUsersDB[loggedInMobile] || { companies: [] };
                 
                 if (user.companies.length === 0) {
                     listDiv.innerHTML = "<p style='text-align:center; color:#64748B;'>No workspaces found.</p>";
@@ -7793,7 +7856,7 @@
                 user.companies.forEach(cId => {
                     let comp = masterCompsDB[cId];
                     if (comp) {
-                        let isOwner = (comp.ownerMob === loggedInMobile);
+                        let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
                         let role = isOwner ? "⭐ Owner" : "👤 Staff";
                         
                         // 🚀 NAYA: Sirf Owner ko Delete button dikhega
@@ -7825,9 +7888,9 @@
                     try {
                         await db.collection("companies").doc(compId).delete();
                         
-                        let user = masterUsersDB[loggedInMobile];
+                        let user = masterUsersDB[loggedInEmail] || masterUsersDB[loggedInMobile];
                         user.companies = user.companies.filter(c => c !== compId);
-                        await db.collection("users").doc(loggedInMobile).update({ companies: user.companies });
+                        await db.collection("users").doc(loggedInEmail).update({ companies: user.companies });
                         
                         localStorage.removeItem('utsav_erp_data_' + compId);
                         if(localStorage.getItem('utsav_active_workspace') === compId) {
@@ -7847,20 +7910,17 @@
             let comp = masterCompsDB[compId];
             if (!comp) return;
 
-            let isOwner = (comp.ownerMob === loggedInMobile);
+            let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
 
             if (isOwner) {
-                // Owner hamesha seedha andar jayega
                 launchWorkspace(compId);
             } else {
-                // Staff Check
-                let myStaff = comp.staff.find(s => s.mobile === loggedInMobile);
-                
+                // Staff check by email
+                let myStaff = comp.staff.find(s => s.email === loggedInEmail || s.mobile === loggedInEmail);
                 if (myStaff && myStaff.status === 'Approved') {
-                    // ✅ FIXED: Agar status Approved hai, toh bina kisi loop ke seedha dashboard kholo!
                     launchWorkspace(compId);
                 } else if (myStaff && myStaff.status === 'Pending') {
-                    alert(`⏳ Your request for "${comp.name}" is currently PENDING.\nPlease wait for the Owner to approve your access.`);
+                    alert(`⏳ Your request for "${comp.name}" is PENDING.\nPlease wait for the Owner to approve.`);
                 } else {
                     alert("❌ Access Denied: You are not a member of this workspace.");
                 }
@@ -7895,27 +7955,28 @@
                 let compId = doc.id;
                 let compData = doc.data();
 
-                let user = masterUsersDB[loggedInMobile];
-                
-                // Firebase mein staff ka request bhej do
+                let user = masterUsersDB[loggedInEmail] || masterUsersDB[loggedInMobile] || { name: "User", email: loggedInEmail, companies: [] };
+
                 await db.collection("companies").doc(compId).update({
                     staff: firebase.firestore.FieldValue.arrayUnion({
-                        mobile: loggedInMobile,
+                        email: loggedInEmail,
+                        mobile: loggedInEmail, // alias
                         name: user.name,
                         status: 'Pending',
                         role: 'Staff'
                     })
                 });
 
-                // Staff ke phone mein bhi save kar do ki usne ye company join ki hai
+                if (!user.companies) user.companies = [];
                 if (!user.companies.includes(compId)) {
                     user.companies.push(compId);
+                    masterUsersDB[loggedInEmail] = user;
                     localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
                 }
 
-                alert(`⏳ Request Sent!\n\nYou have requested to join "${compData.name}". The Owner will approve it soon.`);
+                alert(`⏳ Request Sent!\n\nYou requested to join "${compData.name}". The Owner will approve soon.`);
                 document.getElementById('auth_join_code').value = "";
-                openChoiceScreen(user.name); // Wapas choice screen par bhej do
+                openChoiceScreen(user.name);
 
             } catch (error) {
                 console.error("Join Error:", error);
@@ -7931,19 +7992,19 @@
                 // 🔒 MEMORY LOCK: Active company ko save kar lo taaki refresh par yaad rahe
                 localStorage.setItem('utsav_active_workspace', compId);
 
-                let user = masterUsersDB[loggedInMobile];
+                let user = masterUsersDB[loggedInEmail] || masterUsersDB[loggedInMobile];
                 let comp = masterCompsDB[compId];
 
                 if (!user || !comp) {
-                    alert("System Error: User or Company data is missing in memory!");
+                    alert("System Error: User or Company data missing. Please login again.");
                     document.getElementById('auth-screen').style.display = 'flex';
                     return;
                 }
 
-                // Security Lock
-                let isOwner = (comp.ownerMob === loggedInMobile);
+                // ✅ Email-based ownership + staff check
+                let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
                 if (!isOwner) {
-                    let myStaffRecord = comp.staff.find(s => s.mobile === loggedInMobile);
+                    let myStaffRecord = comp.staff.find(s => s.email === loggedInEmail || s.mobile === loggedInEmail);
                     if (!myStaffRecord || myStaffRecord.status !== 'Approved') {
                         alert(`⛔ ACCESS DENIED!\n\nYour request to join "${comp.name}" is still PENDING.`);
                         document.getElementById('main-app').style.display = 'none';
@@ -8053,7 +8114,7 @@
             document.getElementById('perm_modal_title').innerText = isEditing ? `Edit Access: ${name}` : `Approve: ${name}`;
 
             let comp = masterCompsDB[currentWorkspaceId];
-            let staff = comp.staff.find(s => s.mobile === mobile);
+            let staff = comp.staff.find(s => s.email === mobile || s.mobile === mobile);
 
             if (isEditing && staff.permissions) {
                 let p = staff.permissions;
@@ -8076,7 +8137,7 @@
         // 6. Security Engine: Apply Rules
         function enforceStaffPermissions(compId) {
             let comp = masterCompsDB[compId];
-            let isOwner = (comp.ownerMob === loggedInMobile);
+            let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
             
             
             if (isOwner) {
@@ -8086,7 +8147,7 @@
                 };
             } else {
                 // Staff ka record dhundho
-                let myStaffRecord = comp.staff.find(s => s.mobile === loggedInMobile);
+                let myStaffRecord = comp.staff.find(s => s.email === loggedInEmail || s.mobile === loggedInEmail);
                 if (myStaffRecord && myStaffRecord.permissions) {
                     currentPermissions = myStaffRecord.permissions;
                 } else {
@@ -8334,7 +8395,7 @@
         async function saveStaffPermissions() {
             let mobile = document.getElementById('perm_staff_mobile').value;
             let comp = masterCompsDB[currentWorkspaceId];
-            let staffIndex = comp.staff.findIndex(s => s.mobile === mobile);
+            let staffIndex = comp.staff.findIndex(s => s.email === mobile || s.mobile === mobile);
             if(staffIndex === -1) return;
 
             comp.staff[staffIndex].permissions = {
@@ -8358,7 +8419,7 @@
         async function rejectOrRemoveStaff(mobile, action) {
             if (!confirm(`Are you sure you want to ${action} this person?`)) return;
             let comp = masterCompsDB[currentWorkspaceId];
-            let staffIndex = comp.staff.findIndex(s => s.mobile === mobile);
+            let staffIndex = comp.staff.findIndex(s => s.email === mobile || s.mobile === mobile);
             comp.staff.splice(staffIndex, 1);
             
             try { await db.collection("companies").doc(currentWorkspaceId).update({ staff: comp.staff }); } catch(e) { }
@@ -8373,27 +8434,28 @@
 
         async function addStaffByOwner() {
             let name = document.getElementById('new_staff_name').value.trim();
-            let mob = document.getElementById('new_staff_mobile').value.trim();
+            let staffEmail = document.getElementById('new_staff_mobile').value.trim().toLowerCase();
             let comp = masterCompsDB[currentWorkspaceId];
 
-            if (!name || !mob) return alert("Please fill Name and Mobile!");
-            if (comp.staff.some(s => s.mobile === mob)) return alert("❌ This mobile number is already in the team!");
+            if (!name || !staffEmail) return alert("Please fill Name and Email!");
+            if (!staffEmail.includes('@')) return alert("❌ Please enter a valid email address!");
+            if (comp.staff.some(s => s.email === staffEmail || s.mobile === staffEmail)) return alert("❌ This email is already in the team!");
 
-            comp.staff.push({ mobile: mob, name: name, status: 'Approved', role: 'Staff', permissions: { modules: { crm: true, event: true, sales: false, purch: false, exp: false, bank: false, rep: false }, actions: { add: true, edit: false, del: false } } });
+            comp.staff.push({ email: staffEmail, mobile: staffEmail, name: name, status: 'Approved', role: 'Staff',
+                permissions: { modules: { crm: true, event: true, sales: false, purch: false, exp: false, bank: false, rep: false },
+                actions: { add: true, edit: false, del: false } } });
 
             try { await db.collection("companies").doc(currentWorkspaceId).update({ staff: comp.staff }); } catch(e) { }
 
-            if (!masterUsersDB[mob]) { masterUsersDB[mob] = { name: name, mobile: mob, email: "", companies: [currentWorkspaceId] }; } 
-            else { if (!masterUsersDB[mob].companies.includes(currentWorkspaceId)) masterUsersDB[mob].companies.push(currentWorkspaceId); }
+            if (!masterUsersDB[staffEmail]) { masterUsersDB[staffEmail] = { name: name, email: staffEmail, companies: [currentWorkspaceId] }; }
+            else { if (!masterUsersDB[staffEmail].companies) masterUsersDB[staffEmail].companies = []; if (!masterUsersDB[staffEmail].companies.includes(currentWorkspaceId)) masterUsersDB[staffEmail].companies.push(currentWorkspaceId); }
 
             localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
             localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
             document.getElementById('addStaffModal').style.display = 'none';
 
             let inviteLink = `${window.location.origin}${window.location.pathname}?invite=${comp.joinCode}&cname=${encodeURIComponent(comp.name)}`;
-            if(confirm(`✅ Staff Added!\n\nDo you want to send the Login Invite Link to ${name} via WhatsApp?`)) {
-                window.open('https://wa.me/91' + mob + '?text=' + encodeURIComponent(`Hello ${name},\n\nYou have been added as Staff in *${comp.name}*.\n🔗 ${inviteLink}`), '_blank');
-            }
+            alert(`✅ Staff "${name}" added!\n\nShare this invite link:\n${inviteLink}\n\nThey need to sign in with: ${staffEmail}`);
             openTeamModal();
         }
 
@@ -8420,15 +8482,18 @@
                 trashDB: trashDB
             }; 
             
-            // 1. ☁️ FIREBASE CLOUD PUSH (Primary — asli data store)
-            db.collection("workspace_data").doc(currentWorkspaceId).update(dataToSave)
-            .catch(e => {
-                db.collection("workspace_data").doc(currentWorkspaceId).set(dataToSave)
-                .catch(err => {
-                    console.error("🚨 Firebase save failed:", err);
-                    if (typeof window.showToast === 'function') window.showToast("Cloud sync failed! Data may not be saved.", "error", 5000);
+            // 1. ☁️ FIREBASE CLOUD PUSH — only when Firebase Auth is active
+            if (auth.currentUser) {
+                db.collection("workspace_data").doc(currentWorkspaceId).update(dataToSave)
+                .catch(e => {
+                    db.collection("workspace_data").doc(currentWorkspaceId).set(dataToSave)
+                    .catch(err => {
+                        console.error("🚨 Firebase save failed:", err);
+                        if (typeof window.showToast === 'function') window.showToast("Cloud sync failed!", "error", 5000);
+                    });
                 });
-            });
+            }
+            // No else warning — auth is always active when user is logged in
 
             // 2. 🛡️ Local backup (Secondary — sirf session cache)
             try {
@@ -8522,10 +8587,9 @@
             }
 
             // 🚀 FIX: Auto-Assign to Staff if they created it
-            let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
             let dropdownAssign = document.getElementById('l_assign_to').value;
-            
-            let finalAssignee = dropdownAssign || (isOwner ? "" : loggedInMobile);
+            let finalAssignee = dropdownAssign || (isOwner ? "" : loggedInEmail);
 
             // Naya Lead Object banao
             let id = editingLeadId ? editingLeadId : "L" + Date.now();
@@ -13249,11 +13313,15 @@
                 html += `<div class="status-stamp ${stampClass}">${displayStatus}</div>`;
             }
 
-            let cEmailHtml = currentUser && currentUser.email ? `<div>Email: ${currentUser.email}</div>` : '';
+            // 🐛 BUG FIX: currentUser.email is compId not actual email — use profileDB.email
+            let cCompanyEmail = (typeof profileDB !== 'undefined' && profileDB.email) ? profileDB.email : '';
+            let cCompanyPhone = (typeof profileDB !== 'undefined' && profileDB.phone1) ? profileDB.phone1 : '';
+            let cEmailHtml = cCompanyEmail ? `<div style="font-size:12px; color:#475569;">📧 ${cCompanyEmail}</div>` : '';
+            let cPhoneHtml = cCompanyPhone ? `<div style="font-size:12px; color:#475569;">📞 ${cCompanyPhone}</div>` : '';
 
             html += `
                 <div class="header-flex">
-                    <div>${cLogo}<div class="comp-name">${cName}</div>${cEmailHtml}</div>
+                    <div>${cLogo}<div class="comp-name">${cName}</div>${cEmailHtml}${cPhoneHtml}</div>
                     <div style="text-align:right;"><div class="doc-title">${docTitle}</div><div style="font-weight:800; font-size:15px;">#${record.id}</div><div style="font-weight:600; color:#64748b; font-size:13px;">Date: ${dateStr}</div></div>
                 </div>`;
 
@@ -15919,30 +15987,36 @@
         }
 
         function saveMasterSettings() {
-            let pin = document.getElementById('set_app_pin') ? document.getElementById('set_app_pin').value : "";
-            let invPrefix = document.getElementById('set_prefix_inv') ? document.getElementById('set_prefix_inv').value : appSettings.invPrefix;
-            let qtPrefix = document.getElementById('set_prefix_qt') ? document.getElementById('set_prefix_qt').value : appSettings.qtPrefix;
-            let defGst = document.getElementById('set_def_gst') ? document.getElementById('set_def_gst').value : appSettings.defGst;
-            let showBank = document.getElementById('set_show_bank') ? document.getElementById('set_show_bank').checked : appSettings.showBank;
-            let tnc = document.getElementById('set_tnc') ? document.getElementById('set_tnc').value : appSettings.tnc;
-            let waInv = document.getElementById('set_wa_inv') ? document.getElementById('set_wa_inv').value : appSettings.waInv;
-            let waQt = document.getElementById('set_wa_qt') ? document.getElementById('set_wa_qt').value : appSettings.waQt;
-            let waReview = document.getElementById('set_wa_review') ? document.getElementById('set_wa_review').value : appSettings.waReview;
-
+            let pin            = document.getElementById('set_app_pin')         ? document.getElementById('set_app_pin').value          : appSettings.appPin;
+            let invPrefix      = document.getElementById('set_prefix_inv')      ? document.getElementById('set_prefix_inv').value        : appSettings.invPrefix;
+            let qtPrefix       = document.getElementById('set_prefix_qt')       ? document.getElementById('set_prefix_qt').value         : appSettings.qtPrefix;
+            let poPrefix       = document.getElementById('set_prefix_po')       ? document.getElementById('set_prefix_po').value         : (appSettings.poPrefix || 'PO');
+            let pbPrefix       = document.getElementById('set_prefix_pb')       ? document.getElementById('set_prefix_pb').value         : (appSettings.pbPrefix || 'PB');
+            let defGst         = document.getElementById('set_def_gst')         ? document.getElementById('set_def_gst').value            : appSettings.defGst;
+            let showBank       = document.getElementById('set_show_bank')       ? document.getElementById('set_show_bank').checked        : appSettings.showBank;
+            let showSig        = document.getElementById('set_show_sig')        ? document.getElementById('set_show_sig').checked         : (appSettings.showSig || false);
+            let tnc            = document.getElementById('set_tnc')             ? document.getElementById('set_tnc').value                : appSettings.tnc;
+            let waInv          = document.getElementById('set_wa_inv')          ? document.getElementById('set_wa_inv').value             : appSettings.waInv;
+            let waReview       = document.getElementById('set_wa_review')       ? document.getElementById('set_wa_review').value          : appSettings.waReview;
+            let waRemind       = document.getElementById('set_wa_remind')       ? document.getElementById('set_wa_remind').value          : (appSettings.waRemind || '');
+            let waPhone        = document.getElementById('set_wa_phone')        ? document.getElementById('set_wa_phone').value           : (appSettings.waPhone || '');
             let manageInventory = document.getElementById('set_manage_inventory') ? document.getElementById('set_manage_inventory').checked : (appSettings.manageInventory || false);
 
             appSettings = {
-                invPrefix: invPrefix, qtPrefix: qtPrefix, defGst: parseInt(defGst) || 0,
-                showBank: showBank, appPin: pin, tnc: tnc, waInv: waInv, waQt: waQt, waReview: waReview,
-                manageInventory: manageInventory // 🚀 Saved to master configuration
+                invPrefix, qtPrefix, poPrefix, pbPrefix,
+                defGst: parseInt(defGst) || 0,
+                showBank, showSig, appPin: pin, tnc,
+                waInv, waReview, waRemind, waPhone,
+                manageInventory,
+                // Preserve theme settings saved by setAccentTheme / setFontSize
+                accentTheme: appSettings.accentTheme || 'blue',
+                fontSize:    appSettings.fontSize    || 'medium'
             };
 
             saveDataLocally();
-            
-            // 🚀 SMART FIX: Auto-refresh sidebar tabs instantly without reloading page!
             if(currentWorkspaceId) enforceStaffPermissions(currentWorkspaceId);
-
-            alert("✅ Settings Saved Successfully!");
+            if (typeof showToast === 'function') showToast('✅ Settings saved!', 'success', 2500);
+            else alert("✅ Settings Saved Successfully!");
         }
 
         // 🚀 APP PIN LOCK LOGIC (Runs on Startup)
@@ -15996,20 +16070,21 @@
                 handleEmailLinkSignIn();
             }
 
-            // 4. Splash Screen Timeline & Safe Login Check
-            setTimeout(() => {
+            // 4. ✅ Wait for Firebase Auth to resolve BEFORE calling Firestore
+            let splashShown = false;
+            function showAppAfterAuth() {
+                if (splashShown) return; splashShown = true;
                 let splash = document.getElementById('splash-screen');
                 if (splash) splash.style.opacity = '0';
                 setTimeout(() => {
                     if (splash) splash.style.display = 'none';
-                    
-                    
-                    // (Agar link se aaya hai toh handleEmailLinkSignIn khud sab sambhal lega)
-                    if (!isMagicLink) {
-                        checkPersistentLogin(); 
-                    }
-                }, 500);
-            }, 1500);
+                    if (!isMagicLink) checkPersistentLogin();
+                }, 400);
+            }
+            // Firebase Auth state confirms within ~300ms on page load
+            auth.onAuthStateChanged(() => { showAppAfterAuth(); });
+            // Fallback: if onAuthStateChanged takes too long
+            setTimeout(showAppAfterAuth, 2500);
 
             // 5. Firebase Recaptcha Setup
             try {
@@ -16890,33 +16965,124 @@
         // 🚀 SETTINGS HUB LOGIC
         function initSettingsHub() {
             if (typeof appSettings !== 'undefined') {
-                document.getElementById('set_prefix_inv').value = appSettings.invPrefix || '';
-                document.getElementById('set_prefix_qt').value = appSettings.qtPrefix || '';
-                document.getElementById('set_def_gst').value = appSettings.defGst || '0';
-                document.getElementById('set_show_bank').checked = appSettings.showBank || false;
-                document.getElementById('set_tnc').value = appSettings.tnc || '';
-                document.getElementById('set_app_pin').value = appSettings.appPin || "";
-                document.getElementById('set_wa_inv').value = appSettings.waInv || "";
-                document.getElementById('set_wa_review').value = appSettings.waReview || "";
+                let s = appSettings;
+                let g = id => document.getElementById(id);
+                if(g('set_prefix_inv'))   g('set_prefix_inv').value   = s.invPrefix    || '';
+                if(g('set_prefix_qt'))    g('set_prefix_qt').value    = s.qtPrefix     || '';
+                if(g('set_prefix_po'))    g('set_prefix_po').value    = s.poPrefix     || '';
+                if(g('set_prefix_pb'))    g('set_prefix_pb').value    = s.pbPrefix     || '';
+                if(g('set_def_gst'))      g('set_def_gst').value      = s.defGst       || '0';
+                if(g('set_show_bank'))    g('set_show_bank').checked   = !!s.showBank;
+                if(g('set_show_sig'))     g('set_show_sig').checked    = !!s.showSig;
+                if(g('set_tnc'))          g('set_tnc').value           = s.tnc          || '';
+                if(g('set_app_pin'))      g('set_app_pin').value       = s.appPin       || '';
+                if(g('set_wa_inv'))       g('set_wa_inv').value        = s.waInv        || '';
+                if(g('set_wa_review'))    g('set_wa_review').value     = s.waReview     || '';
+                if(g('set_wa_remind'))    g('set_wa_remind').value     = s.waRemind     || '';
+                if(g('set_wa_phone'))     g('set_wa_phone').value      = s.waPhone      || '';
+                if(g('set_manage_inventory')) g('set_manage_inventory').checked = !!s.manageInventory;
+
+                // Restore accent theme dot
+                let activeTheme = s.accentTheme || 'blue';
+                document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active-theme'));
+                let tDot = document.getElementById('theme-' + activeTheme);
+                if (tDot) tDot.classList.add('active-theme');
+
+                // Restore font size button
+                let activeFs = s.fontSize || 'medium';
+                document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active-fs'));
+                let fBtn = document.getElementById('fs-' + activeFs);
+                if (fBtn) fBtn.classList.add('active-fs');
             }
-            switchHubTab('hub-bill', document.getElementById('pill-bill'));
-            
-            // 🚀 FIX: Ab Inventory Checkbox sabko hamesha dikhega (Owner Lock hata diya)
+
+            // Always show inventory card
             let toggleCard = document.getElementById('set_inventory_toggle_card');
-            if (toggleCard) {
-                toggleCard.style.display = 'block'; // Forcefully show
-            }
-            if (document.getElementById('set_manage_inventory')) {
-                document.getElementById('set_manage_inventory').checked = appSettings.manageInventory || false;
+            if (toggleCard) toggleCard.style.display = 'block';
+
+            // Refresh hero card with latest profile data
+            refreshSettingsHeroCard();
+
+            // Default to billing tab
+            switchHubTab('hub-bill', document.getElementById('pill-bill'));
+        }
+
+        // 🔷 Refresh the hero company card at top of Settings
+        function refreshSettingsHeroCard() {
+            let pdb = (typeof profileDB !== 'undefined') ? profileDB : {};
+            let logo  = pdb.logo || (currentUser ? currentUser.logo : '');
+            let cname = pdb.name || (currentUser ? currentUser.company : 'Your Company');
+            let email = pdb.email || '';
+            let phone = pdb.phone1 || '';
+
+            let heroLogoEmoji = document.getElementById('set_hero_logo_emoji');
+            let heroLogoImg   = document.getElementById('set_hero_logo_img');
+            let heroCname     = document.getElementById('set_hero_cname');
+            let heroEmail     = document.getElementById('set_hero_email');
+            let heroPhone     = document.getElementById('set_hero_phone');
+
+            if (heroCname) heroCname.textContent = cname || 'Your Company';
+            if (heroEmail) heroEmail.textContent  = email || 'No email set';
+            if (heroPhone) heroPhone.textContent  = phone ? '📞 ' + phone : 'Tap to edit profile →';
+
+            if (logo && heroLogoImg) {
+                heroLogoImg.src = logo;
+                heroLogoImg.style.display = 'block';
+                if (heroLogoEmoji) heroLogoEmoji.style.display = 'none';
+            } else {
+                if (heroLogoImg)   heroLogoImg.style.display = 'none';
+                if (heroLogoEmoji) heroLogoEmoji.style.display = 'block';
             }
         }
 
+        // 🔷 WA Template quick-insert helper
+        function appendToWaTemplate(fieldId, tag) {
+            let el = document.getElementById(fieldId);
+            if (!el) return;
+            let pos = el.selectionStart ?? el.value.length;
+            el.value = el.value.slice(0, pos) + tag + el.value.slice(pos);
+            el.focus();
+            el.selectionStart = el.selectionEnd = pos + tag.length;
+        }
+
+        // 🔷 Accent Color Theme Switcher
+        const ACCENT_THEMES = {
+            blue:   { accent:'#1D4ED8', hover:'#1E40AF', light:'#EFF6FF' },
+            purple: { accent:'#7C3AED', hover:'#6D28D9', light:'#F5F3FF' },
+            green:  { accent:'#059669', hover:'#047857', light:'#ECFDF5' },
+            rose:   { accent:'#E11D48', hover:'#BE123C', light:'#FFF1F2' },
+            orange: { accent:'#EA580C', hover:'#C2410C', light:'#FFF7ED' },
+            teal:   { accent:'#0891B2', hover:'#0E7490', light:'#ECFEFF' }
+        };
+        function setAccentTheme(name, dotEl) {
+            let theme = ACCENT_THEMES[name];
+            if (!theme) return;
+            let root = document.documentElement;
+            root.style.setProperty('--accent-color', theme.accent);
+            root.style.setProperty('--accent-hover', theme.hover);
+            root.style.setProperty('--accent-light',  theme.light);
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active-theme'));
+            if (dotEl) dotEl.classList.add('active-theme');
+            if (typeof appSettings !== 'undefined') appSettings.accentTheme = name;
+            if (typeof showToast === 'function') showToast('🎨 Theme applied!', 'success', 1800);
+        }
+
+        // 🔷 Font Size Switcher
+        function setFontSize(size, btnEl) {
+            let sizeMap = { small: '13px', medium: '15px', large: '17px' };
+            document.body.style.fontSize = sizeMap[size] || '15px';
+            document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active-fs'));
+            if (btnEl) btnEl.classList.add('active-fs');
+            if (typeof appSettings !== 'undefined') appSettings.fontSize = size;
+            if (typeof showToast === 'function') showToast('🔠 Font size updated!', 'success', 1800);
+        }
+
+        // 🔷 Hub Tab Switcher
         function switchHubTab(tabId, btn) {
             document.querySelectorAll('.set-pill').forEach(b => b.classList.remove('active-set-pill'));
             if (btn) btn.classList.add('active-set-pill');
-
-            document.querySelectorAll('.hub-tab-content').forEach(c => c.style.display = 'none');
-            document.getElementById(tabId).style.display = 'block';
+            document.querySelectorAll('.hub-tab-content').forEach(c => { c.style.display = 'none'; });
+            let tab = document.getElementById(tabId);
+            if (tab) tab.style.display = 'block';
         }
 
         // Staff List Load karne ka function
