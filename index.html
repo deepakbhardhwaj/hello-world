@@ -10267,7 +10267,61 @@
             });
         };
 
-                function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); document.getElementById('quickMeetingModal').style.display = 'flex'; }
+                function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); window.editingTaskId = null; window.editingTaskIsGlobal = false; window.editingTaskLeadId = null; document.getElementById('quickMeetingModal').style.display = 'flex'; }
+
+        // 🚀 FIX: editTaskItem was being called by the ✏️ edit button on the Tasks dashboard but was never defined — adding it now.
+        window.editTaskItem = function(taskId, isGlobal) {
+            let t = null;
+            let foundLeadId = null;
+
+            if (isGlobal) {
+                t = globalTasksDB[taskId];
+            } else {
+                // Event-sourced task lives inside a lead's .tasks array — search for it
+                for (let lid in leadsDB) {
+                    let arr = leadsDB[lid].tasks || [];
+                    let found = arr.find(x => (x.id || x) === taskId);
+                    if (found) { t = (typeof found === 'object') ? found : null; foundLeadId = lid; break; }
+                }
+            }
+
+            if (!t) return alert("⚠️ This task can't be edited (not found or unsupported format).");
+
+            if (t.type === 'Meeting') {
+                // Meetings have their own simpler modal
+                document.getElementById('quickMeetingForm').reset();
+                document.getElementById('qm_person_name').value = t.leadName || (t.leadId && leadsDB[t.leadId] ? leadsDB[t.leadId].name : '') || '';
+                document.getElementById('qm_date').value = t.date || '';
+                document.getElementById('qm_time').value = t.time || '';
+                document.getElementById('qm_agenda').value = t.text || '';
+                window.editingTaskId = taskId;
+                window.editingTaskIsGlobal = isGlobal;
+                window.editingTaskLeadId = foundLeadId;
+                document.getElementById('quickMeetingModal').style.display = 'flex';
+                return;
+            }
+
+            // General / Event task → reuse the Quick Task modal
+            document.getElementById('quickTaskForm').reset();
+            document.getElementById('qt_type').value = t.type || 'General';
+            if (typeof toggleTaskLeadSelect === 'function') toggleTaskLeadSelect();
+            if (t.type === 'Event' && t.leadId) {
+                setTimeout(() => { let sel = document.getElementById('qt_lead'); if (sel) sel.value = t.leadId; }, 0);
+            }
+            document.getElementById('qt_text').value = t.text || '';
+            let assignSel = document.getElementById('qt_assign_to');
+            if (assignSel && typeof getStaffOptions === 'function') assignSel.innerHTML = getStaffOptions(t.assignedTo || '');
+            document.getElementById('qt_deadline').value = t.deadline || '';
+
+            window.editingTaskId = taskId;
+            window.editingTaskIsGlobal = isGlobal;
+            window.editingTaskLeadId = foundLeadId;
+
+            let titleEl = document.querySelector('#quickTaskModal h3');
+            if (titleEl) titleEl.innerText = "Edit Task";
+
+            document.getElementById('quickTaskModal').style.display = 'flex';
+        };
 
         // 🚀 FIX: saveQuickTask was being called by the "Add Task" button but was never defined — adding it now.
         window.saveQuickTask = function() {
@@ -10309,7 +10363,26 @@
             else alert("✅ Task Saved!");
         };
 
-        function saveQuickMeeting() { let personName = document.getElementById('qm_person_name').value; let date = document.getElementById('qm_date').value; let time = document.getElementById('qm_time').value; let agenda = document.getElementById('qm_agenda').value; if (!personName || !date || !time) return alert("Name, Date, and Time required!"); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!"); }
+        function saveQuickMeeting() {
+            let personName = document.getElementById('qm_person_name').value;
+            let date = document.getElementById('qm_date').value;
+            let time = document.getElementById('qm_time').value;
+            let agenda = document.getElementById('qm_agenda').value;
+            if (!personName || !date || !time) return alert("Name, Date, and Time required!");
+
+            if (window.editingTaskId && globalTasksDB[window.editingTaskId]) {
+                // ✏️ Editing an existing meeting
+                let t = globalTasksDB[window.editingTaskId];
+                t.text = agenda || "Follow-up Meeting"; t.date = date; t.time = time; t.leadName = personName;
+                window.editingTaskId = null; window.editingTaskIsGlobal = false; window.editingTaskLeadId = null;
+                updateDataAndUI();
+                document.getElementById('quickMeetingModal').style.display = 'none';
+                alert("✅ Meeting Updated!");
+                return;
+            }
+
+            let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!");
+        }
 
         function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; document.getElementById('p_status').value = "Meeting Scheduled"; }
 
@@ -17945,9 +18018,9 @@
             document.getElementById('out_event').value = record.eventId;
             window.handleOutwardEventChange();
             
-            if(record.functionTitle) {
-                let fSel = document.getElementById('out_function_select');
-                if(fSel) { for(let i=0; i<fSel.options.length; i++) { if(fSel.options[i].text.includes(record.functionTitle)) { fSel.selectedIndex = i; break; } } }
+            // 🚀 FIX: was referencing the dead <select id="out_function_select">; now re-checks the actual checkboxes
+            if(record.funcIndexes && record.funcIndexes.length) {
+                record.funcIndexes.forEach(idx => { let cb = document.querySelector(`.out-func-cb[value="${idx}"]`); if(cb) cb.checked = true; });
             }
             
             document.getElementById('out_godown_select').value = record.godownId || 'WH_MAIN';
@@ -18126,7 +18199,9 @@
             if(!document.getElementById('out_function_group')) {
                 let evSelect = document.getElementById('out_event');
                 evSelect.setAttribute('onchange', 'window.handleOutwardEventChange()');
-                let funcGroupHtml = `<div class="form-group" id="out_function_group" style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-top:10px;"><label class="form-label" style="color:var(--accent-color);">Select Function / Day</label><select id="out_function_select" class="form-select" onchange="window.handleOutwardFunctionChange()"></select></div>`;
+                // 🚀 FIX: was a dead <select> calling window.handleOutwardFunctionChange() (never defined → crash).
+                // handleOutwardEventChange() already builds a checkbox-based picker into this same group, so start it empty.
+                let funcGroupHtml = `<div class="form-group" id="out_function_group" style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-top:10px;"><label class="form-label" style="color:var(--accent-color); margin-bottom:8px;">Select Functions for this Dispatch</label><div id="out_function_list" style="display:flex; flex-direction:column; gap:6px;"></div></div>`;
                 evSelect.parentElement.insertAdjacentHTML('afterend', funcGroupHtml);
                 
                 let tncHtml = `<div style="font-size:10px; color:var(--text-secondary); background:#F1F5F9; padding:8px; border-radius:6px; margin-bottom:12px; margin-top:12px;"><b>Terms & Conditions:</b><br>1. Materials are dispatched on returnable basis.<br>2. On-site team is responsible for preventing damage or loss.</div>`;
@@ -18140,7 +18215,8 @@
                     evSelect.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`;
                 }
             });
-            document.getElementById('out_function_group').style.display = 'none';
+            let fGroup = document.getElementById('out_function_group');
+            if (fGroup) fGroup.style.display = 'none';
             window.loadGodownsIntoSelect();
             document.getElementById('outwardChallanModal').dataset.editId = "";
             document.getElementById('outwardChallanModal').style.display = 'flex';
@@ -18221,9 +18297,10 @@
             let date = document.getElementById('out_date').value; 
             let vehicle = document.getElementById('out_vehicle').value; 
             let note = document.getElementById('out_note') ? document.getElementById('out_note').value : '';
-            let funcSelect = document.getElementById('out_function_select');
-            let selectedFunc = funcSelect ? funcSelect.value : '';
-            let funcTitle = selectedFunc ? selectedFunc.split('|')[1] : '';
+            // 🚀 FIX: function/day picker is checkbox-based (.out-func-cb), not the old dead <select id="out_function_select">
+            let selectedDates = window.getSelectedDates('out', evId);
+            let funcIndexes = Array.from(document.querySelectorAll('.out-func-cb:checked')).map(cb => cb.value);
+            let funcTitle = selectedDates.map(d => d.name).join(', ');
 
             if(!evId || !date) return alert("Fill required fields!");
             let items = []; let totalInternalValue = 0;
@@ -18323,7 +18400,7 @@
                 }
             });
             
-            stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, godownId: 'AUTO_MULTI', date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed', logType: 'Outward Challan' };
+            stockMovementDB[id] = { id, type: 'Outward', eventId: evId, functionTitle: funcTitle, funcIndexes: funcIndexes, godownId: 'AUTO_MULTI', date, vehicle, note, items, totalValue: totalInternalValue, status: 'Deployed', logType: 'Outward Challan' };
 
             if(typeof updateDataAndUI === 'function') updateDataAndUI(); 
             document.getElementById('outwardChallanModal').style.display = 'none'; 
@@ -18512,9 +18589,9 @@
             window.openOutwardChallanModal();
             document.getElementById('outwardChallanModal').dataset.editId = id;
             document.getElementById('out_event').value = record.eventId; window.handleOutwardEventChange();
-            if(record.functionTitle) {
-                let fSel = document.getElementById('out_function_select');
-                if(fSel) { for(let i=0; i<fSel.options.length; i++) { if(fSel.options[i].text.includes(record.functionTitle)) { fSel.selectedIndex = i; break; } } }
+            // 🚀 FIX: was referencing the dead <select id="out_function_select">; now re-checks the actual checkboxes
+            if(record.funcIndexes && record.funcIndexes.length) {
+                record.funcIndexes.forEach(idx => { let cb = document.querySelector(`.out-func-cb[value="${idx}"]`); if(cb) cb.checked = true; });
             }
             document.getElementById('out_godown_select').value = record.godownId || 'WH_MAIN';
             document.getElementById('out_date').value = record.date; document.getElementById('out_vehicle').value = record.vehicle || '';
