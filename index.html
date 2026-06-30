@@ -2548,11 +2548,27 @@
                     display: flex;
                     gap: 14px;
                     align-items: center;
+                    justify-content: space-between;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     color: var(--text-primary);
                     text-decoration: none;
                     font-size: 13px;
                 }
+
+                .sidebar a.nav-link::after {
+                    content: '\203A';
+                    font-size: 18px;
+                    font-weight: 900;
+                    color: #CBD5E1;
+                    transition: 0.25s;
+                }
+
+                .sidebar a.nav-link:hover::after {
+                    color: var(--accent-color);
+                    transform: translateX(2px);
+                }
+
+                .sidebar a.nav-link-cta::after { display: none; }
 
                 body.dark-theme .sidebar a.nav-link {
                     background: rgba(0, 0, 0, 0.2);
@@ -2579,10 +2595,50 @@
                     letter-spacing: 0.8px;
                     padding: 24px 20px 8px 24px;
                 }
+
+                /* 🚀 PREMIUM ADD-ONS: Avatar, Role Badge, Quick Stats, Dark Toggle */
+                .sb-avatar {
+                    width: 38px; height: 38px; border-radius: 12px;
+                    background: linear-gradient(135deg, #3B82F6, #2563EB);
+                    display: flex; align-items: center; justify-content: center;
+                    color: white; font-weight: 900; font-size: 15px;
+                    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+                    flex-shrink: 0;
+                }
+
+                .sb-role-badge {
+                    font-size: 8.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;
+                    padding: 2px 7px; border-radius: 6px; display: inline-block; margin-top: 3px;
+                }
+
+                .sb-quickstats {
+                    display: flex; gap: 8px; padding: 0 20px; margin-top: -14px; position: relative; z-index: 3;
+                }
+
+                .sb-stat-chip {
+                    flex: 1; background: white; border: 1px solid #EEF2F7; border-radius: 12px;
+                    padding: 9px 6px; text-align: center; cursor: pointer;
+                    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .sb-stat-chip:active { transform: scale(0.96); }
+
+                body.dark-theme .sb-stat-chip { background: #1E293B; border-color: #334155; }
+
+                .sb-stat-chip .sb-stat-num { font-size: 16px; font-weight: 900; color: var(--text-primary); line-height: 1.1; }
+                .sb-stat-chip .sb-stat-lbl { font-size: 8px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 1px; }
+
+                .sb-dark-toggle-btn {
+                    background: rgba(255,255,255,0.1); border: none; position: absolute; top: 15px; right: 53px;
+                    width: 28px; height: 28px; border-radius: 50%; font-size: 13px; cursor: pointer;
+                    display: flex; align-items: center; justify-content: center; color: white;
+                }
             </style>
 
             <div
-                style="background: linear-gradient(135deg, #0F172A, #1E293B); padding: 30px 20px 25px; border-radius: 0 0 25px 25px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                style="background: linear-gradient(135deg, #0F172A, #1E293B); padding: 30px 20px 38px; border-radius: 0 0 25px 25px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <button class="sb-dark-toggle-btn" title="Toggle Dark Mode" onclick="if(typeof toggleDarkMode === 'function') toggleDarkMode();">🌙</button>
                 <button class="close-btn" onclick="closeNav()"
                     style="background: rgba(255,255,255,0.1); color: white; border: none; position: absolute; top: 15px; right: 15px; width: 28px; height: 28px; border-radius: 50%; font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
 
@@ -2595,11 +2651,32 @@
                 <div id="sb_company_name"
                     style="font-weight: 900; font-size: 17px; color: white; letter-spacing: -0.5px;">Company Name</div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <div id="sb_user_name" style="font-size: 11px; color: #94A3B8; font-weight: 600;">User Name</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 10px;">
+                    <div style="display:flex; align-items:center; gap: 10px; min-width:0;">
+                        <div class="sb-avatar" id="sb_avatar_initials">U</div>
+                        <div style="min-width:0;">
+                            <div id="sb_user_name" style="font-size: 12.5px; color: white; font-weight: 800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">User Name</div>
+                            <span class="sb-role-badge" id="sb_role_badge" style="background:rgba(255,255,255,0.12); color:#CBD5E1;">Staff</span>
+                        </div>
+                    </div>
                     <button onclick="openCompanyProfile(); closeNav();"
-                        style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✏️
-                        Edit Profile</button>
+                        style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink:0;">✏️
+                        Edit</button>
+                </div>
+            </div>
+
+            <div class="sb-quickstats">
+                <div class="sb-stat-chip" onclick="openTab('tasks', document.getElementById('btn-tasks')); closeNav();">
+                    <div class="sb-stat-num" id="sb_stat_tasks">0</div>
+                    <div class="sb-stat-lbl">Pending Tasks</div>
+                </div>
+                <div class="sb-stat-chip" onclick="openTab('crm', document.getElementById('btn-crm') || null); closeNav();">
+                    <div class="sb-stat-num" id="sb_stat_leads">0</div>
+                    <div class="sb-stat-lbl">Active Leads</div>
+                </div>
+                <div class="sb-stat-chip" onclick="openTab('bank-hub', document.getElementById('btn-erp') || null); closeNav();">
+                    <div class="sb-stat-num" id="sb_stat_dues" style="color:var(--danger);">₹0</div>
+                    <div class="sb-stat-lbl">Pending Dues</div>
                 </div>
             </div>
 
@@ -2627,10 +2704,10 @@
             <a href="javascript:void(0);" class="nav-link" onclick="openTab('inventory-hub', this); closeNav();">📦 Inventory & Godown</a>
             <a href="javascript:void(0);" class="nav-link" onclick="openTab('settings-hub', this); closeNav();">⚙️ App
                 Settings</a>
-            <a href="javascript:void(0);" class="nav-link"
+            <a href="javascript:void(0);" class="nav-link nav-link-cta"
                 style="color: var(--accent-color); border-color: #BFDBFE; background: #EFF6FF; justify-content: center; margin-top:20px;"
                 onclick="openCompanySelector()">🔄 Switch Workspace</a>
-            <a href="javascript:void(0);" class="nav-link"
+            <a href="javascript:void(0);" class="nav-link nav-link-cta"
                 style="color: var(--danger); margin-bottom: 30px; background: #FEF2F2; border-color: #FECACA; justify-content: center;"
                 onclick="logoutApp()">🚪 Sign Out</a>
         </div>
@@ -7899,8 +7976,56 @@
                 closeNav();
             }
         }
-        function openNav() { document.getElementById("mySidebar").style.width = "280px"; }
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "280px";
+            if (typeof populateSidebarQuickStats === 'function') populateSidebarQuickStats();
+        }
         function closeNav() { document.getElementById("mySidebar").style.width = "0"; document.body.style.overflow = "auto"; }
+
+        // 🚀 NEW FEATURE: Premium sidebar — avatar initials, role badge, and live quick-stats (Pending Tasks / Active Leads / Pending Dues)
+        function populateSidebarQuickStats() {
+            try {
+                let user = (typeof masterUsersDB !== 'undefined') ? (masterUsersDB[loggedInEmail] || masterUsersDB[loggedInMobile]) : null;
+                let uName = (user && user.name) ? user.name : (currentUser && currentUser.name) || "User";
+                let initialsEl = document.getElementById('sb_avatar_initials');
+                if (initialsEl) {
+                    let parts = uName.trim().split(' ').filter(Boolean);
+                    let initials = parts.length > 1 ? (parts[0][0] + parts[1][0]) : (parts[0] ? parts[0].substring(0, 2) : "U");
+                    initialsEl.innerText = initials.toUpperCase();
+                }
+
+                let roleEl = document.getElementById('sb_role_badge');
+                if (roleEl && currentWorkspaceId && masterCompsDB[currentWorkspaceId]) {
+                    let comp = masterCompsDB[currentWorkspaceId];
+                    let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
+                    roleEl.innerText = isOwner ? "Owner" : "Staff";
+                    roleEl.style.background = isOwner ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.12)";
+                    roleEl.style.color = isOwner ? "#6EE7B7" : "#CBD5E1";
+                }
+
+                // Pending Tasks (not done) assigned across the workspace
+                let taskEl = document.getElementById('sb_stat_tasks');
+                if (taskEl) {
+                    let pending = Object.values(globalTasksDB || {}).filter(t => !t.done).length;
+                    taskEl.innerText = pending;
+                }
+
+                // Active Leads (excluding Won/Lost)
+                let leadEl = document.getElementById('sb_stat_leads');
+                if (leadEl) {
+                    let active = Object.values(leadsDB || {}).filter(l => l.status !== 'Won' && l.status !== 'Lost').length;
+                    leadEl.innerText = active;
+                }
+
+                // Pending Dues (receivables — same convention as Party Master: positive balance = receivable)
+                let duesEl = document.getElementById('sb_stat_dues');
+                if (duesEl) {
+                    let totalDue = 0;
+                    Object.values(partiesDB || {}).forEach(p => { if ((p.balance || 0) > 0) totalDue += p.balance; });
+                    duesEl.innerText = '₹' + Math.round(totalDue).toLocaleString('en-IN');
+                }
+            } catch (e) { console.warn("Sidebar quick-stats error:", e); }
+        }
 
         // 🚀 SMART FIX 1: Tab click par Dashboard ko force update karna
 
@@ -8688,6 +8813,18 @@
             warehousesDB = localBackup.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
             stockMovementDB = localBackup.stockMovements || {};
 
+            // 🚀 FIX: Order Book used to live under one global localStorage key shared by ALL companies,
+            // so an order created in Company A showed up in Company B too. Now it's scoped per workspace.
+            window.orderBookDB = localBackup.orderBook || {};
+            let legacyOB = localStorage.getItem('utsav_orderBookDB');
+            if (legacyOB && Object.keys(window.orderBookDB).length === 0) {
+                try {
+                    let parsedLegacy = JSON.parse(legacyOB);
+                    if (parsedLegacy && Object.keys(parsedLegacy).length > 0) window.orderBookDB = parsedLegacy;
+                } catch (e) { /* ignore corrupt legacy data */ }
+                localStorage.removeItem('utsav_orderBookDB'); // 👈 Purani shared key hata di taaki dusri company me leak na ho
+            }
+
             if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
             if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
 
@@ -8705,6 +8842,7 @@
                     leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {}; 
                     purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {}; 
                     bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {}; 
+                    if (data.orderBook) window.orderBookDB = data.orderBook; // 🚀 FIX: workspace-scoped Order Book cloud sync (skips when field absent so migrated local data isn't wiped)
                     if (data.expenseCats) expenseCats = data.expenseCats;
                     itemsDB = data.items || {};
                     warehousesDB = data.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
@@ -8826,7 +8964,8 @@
                 leadSources: leadSources,
                 itemUnits: itemUnits,
                 appSettings: appSettings,
-                trashDB: trashDB
+                trashDB: trashDB,
+                orderBook: window.orderBookDB || {} // 🚀 FIX: Order Book ab har company ke saath scoped/saved hoga (pehle ek hi shared key tha)
             }; 
             
             // 1. ☁️ FIREBASE CLOUD PUSH — only when Firebase Auth is active
@@ -9067,19 +9206,32 @@
 
                     let assignedTag = staffKey ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
 
+                    // 🚀 NEW: Avatar initials (colored by name) for a more premium, scannable list
+                    let avatarPalette = ['#2563EB', '#7C3AED', '#DB2777', '#D97706', '#059669', '#0891B2', '#DC2626'];
+                    let nameForAvatar = (lead.name || "?").trim();
+                    let initials = nameForAvatar.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || "?";
+                    let colorIdx = 0; for (let c = 0; c < nameForAvatar.length; c++) colorIdx += nameForAvatar.charCodeAt(c);
+                    let avatarColor = avatarPalette[colorIdx % avatarPalette.length];
+                    let budgetVal = parseFloat(lead.budget) || 0;
+                    let budgetTag = budgetVal > 0 ? `<span style="color:var(--success); font-weight:800;">• ₹${budgetVal.toLocaleString('en-IN')}</span>` : '';
+                    let cleanPhone = String(lead.phone || "").replace(/\D/g, '');
+
                     let div = document.createElement('div');
                     div.className = "list-row";
                     div.id = `row-${sanitize(lead.id)}`;
                     div.innerHTML = `
+                        <div style="width:34px; height:34px; border-radius:10px; background:${avatarColor}; color:white; font-weight:900; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; align-self:center; margin-right:10px; box-shadow:0 3px 8px rgba(0,0,0,0.12);">${sanitize(initials)}</div>
                         <div class="clickable-area" onclick="openPanel('${sanitize(lead.id)}')">
                             <div class="row-main" style="${lead.status === 'Lost' ? 'text-decoration:line-through; color:var(--text-secondary)' : ''}">
                                 ${sanitize(lead.name)} ${assignedTag} 
                                 <span style="font-weight:normal; font-size:12px; color:var(--text-secondary);">(${sanitize(lead.cat)})</span>
                             </div>
-                            <div class="row-sub">📅 ${lead.date || "TBD"} • ${sanitize(lead.phone)}</div>
+                            <div class="row-sub">📅 ${lead.date || "TBD"} • ${sanitize(lead.phone)} ${budgetTag}</div>
                         </div>
                         <div class="actions-area">
                             <span class="status-badge ${badgeClass}">${sanitize(lead.status)}</span>
+                            ${cleanPhone ? `<button class="btn-icon" title="Call" onclick="event.stopPropagation(); window.location.href='tel:${cleanPhone}'" style="color:var(--success);">📞</button>
+                            <button class="btn-icon" title="WhatsApp" onclick="event.stopPropagation(); window.open('https://wa.me/91${cleanPhone}','_blank')" style="color:#25D366;">💬</button>` : ''}
                             <div class="dropdown-container">
                                 <button class="btn-icon" onclick="toggleMenu('${sanitize(lead.id)}', event)">⋮</button>
                                 <div class="dropdown-menu" id="menu-${sanitize(lead.id)}">
@@ -10116,6 +10268,47 @@
         };
 
                 function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); document.getElementById('quickMeetingModal').style.display = 'flex'; }
+
+        // 🚀 FIX: saveQuickTask was being called by the "Add Task" button but was never defined — adding it now.
+        window.saveQuickTask = function() {
+            let type = document.getElementById('qt_type').value;
+            let leadId = type === 'Event' ? document.getElementById('qt_lead').value : null;
+            let text = document.getElementById('qt_text').value.trim();
+            let assignTo = document.getElementById('qt_assign_to').value;
+            let deadline = document.getElementById('qt_deadline').value;
+
+            if (!text) return alert("Task Description is required!");
+            if (type === 'Event' && !leadId) return alert("Please select an Event for this task!");
+
+            let leadName = (leadId && typeof leadsDB !== 'undefined' && leadsDB[leadId]) ? leadsDB[leadId].name : null;
+
+            if (window.editingTaskId) {
+                // Editing an existing task
+                let t = window.editingTaskIsGlobal ? globalTasksDB[window.editingTaskId] : (leadsDB[window.editingTaskLeadId] && leadsDB[window.editingTaskLeadId].tasks.find(x => (x.id || x) === window.editingTaskId));
+                if (t) {
+                    t.type = type; t.leadId = leadId; t.leadName = leadName; t.text = text;
+                    t.assignedTo = assignTo || null; t.deadline = deadline || null;
+                }
+            } else {
+                let tId = "TSK" + Date.now();
+                globalTasksDB[tId] = {
+                    id: tId, type: type, text: text, done: false,
+                    leadId: leadId, leadName: leadName,
+                    assignedTo: assignTo || null, deadline: deadline || null,
+                    createdAt: Date.now()
+                };
+            }
+
+            window.editingTaskId = null;
+            window.editingTaskIsGlobal = false;
+            window.editingTaskLeadId = null;
+
+            updateDataAndUI();
+            document.getElementById('quickTaskModal').style.display = 'none';
+            if (typeof window.showToast === 'function') window.showToast("Task Saved!", "success");
+            else alert("✅ Task Saved!");
+        };
+
         function saveQuickMeeting() { let personName = document.getElementById('qm_person_name').value; let date = document.getElementById('qm_date').value; let time = document.getElementById('qm_time').value; let agenda = document.getElementById('qm_agenda').value; if (!personName || !date || !time) return alert("Name, Date, and Time required!"); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!"); }
 
         function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; document.getElementById('p_status').value = "Meeting Scheduled"; }
@@ -12208,7 +12401,7 @@
             // 🚀 Finalizing conversion for Order Book (Rental Invoice)
             if(window.convertingObToInvoiceId && window.orderBookDB[window.convertingObToInvoiceId]) {
                 window.orderBookDB[window.convertingObToInvoiceId].status = 'Invoiced';
-                localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
+                if (typeof saveDataLocally === 'function') saveDataLocally(); // 🚀 FIX: scoped per-workspace + cloud save (was writing to shared global key)
                 window.convertingObToInvoiceId = null; // Clear Tracker
             }
             
@@ -18138,7 +18331,7 @@
             // 🚀 Finalizing conversion for Order Book (Outward)
             if(window.convertingObToOutwardId && window.orderBookDB[window.convertingObToOutwardId]) {
                 window.orderBookDB[window.convertingObToOutwardId].status = 'Dispatched';
-                localStorage.setItem('utsav_orderBookDB', JSON.stringify(window.orderBookDB));
+                if (typeof saveDataLocally === 'function') saveDataLocally(); // 🚀 FIX: scoped per-workspace + cloud save (was writing to shared global key)
                 window.convertingObToOutwardId = null; // Clear Tracker
             }
             alert(`✅ Material Dispatched via Auto-Routing!`); 
@@ -19731,7 +19924,8 @@
         // ==============================================================
 
         // 🟢 1. GLOBAL VARIABLES
-        window.orderBookDB = JSON.parse(localStorage.getItem('utsav_orderBookDB')) || {};
+        // 🚀 FIX: was a single global key shared across ALL companies — now loaded per-workspace inside loadLocalData()
+        window.orderBookDB = window.orderBookDB || {};
         window.hubCalMonth = new Date().getMonth();
         window.hubCalYear = new Date().getFullYear();
         window.editingOrderId = null;
@@ -20371,7 +20565,7 @@
                 linkedDates: selectedDates // 👈 Checkboxes Saved
             };
 
-            localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
+            // 🚀 FIX: removed stale write to shared global key; updateDataAndUI() below now saves orderBookDB scoped per-workspace + to cloud
             if(typeof updateDataAndUI === 'function') updateDataAndUI();
             
             document.getElementById('orderBookModal').style.display = 'none';
@@ -20464,7 +20658,7 @@
         window.deleteOrderEntry = function(id) {
             if (confirm("Permanently release and delete this equipment reservation?")) {
                 delete orderBookDB[id];
-                localStorage.setItem('utsav_orderBookDB', JSON.stringify(orderBookDB));
+                if (typeof saveDataLocally === 'function') saveDataLocally(); // 🚀 FIX: scoped per-workspace + cloud save (was writing to shared global key)
                 window.renderHubOrderBookList();
                 window.renderHubCalendarGrid();
             }
