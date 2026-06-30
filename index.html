@@ -2490,15 +2490,28 @@
 
         <!-- 6. SELECT COMPANY SCREEN (For Login) -->
         <div class="auth-card auth-view" id="view_select_comp"
-            style="display: none; border-radius: 20px; padding: 30px;">
-            <h2 class="auth-title">Your Workspaces</h2>
-            <p class="auth-subtitle" style="margin-bottom:20px;">Select a company to continue</p>
-            <div id="auth_company_list"
-                style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px; max-height:250px; overflow-y:auto;">
+            style="display:none; border-radius:20px; padding:0; overflow:hidden; max-width:400px;">
+            <!-- Premium gradient header -->
+            <div style="background:linear-gradient(135deg,#0F172A,#1E3A8A); padding:28px 24px 22px; position:relative; overflow:hidden;">
+                <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.05);"></div>
+                <div style="font-size:22px; font-weight:900; color:white; margin-bottom:4px; letter-spacing:-0.5px;">🏢 Your Workspaces</div>
+                <div style="font-size:12px; color:rgba(255,255,255,0.55); font-weight:500;">Select a company to continue</div>
             </div>
-            <button type="button" class="btn-main"
-                style="padding: 12px; background: white; color:var(--accent-color); border:1px dashed var(--accent-color);"
-                onclick="switchAuthView('view_choice')">+ Add or Join Another</button>
+            <!-- Company List -->
+            <div style="padding:16px 20px;">
+                <div id="auth_company_list" style="display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; margin-bottom:12px; scrollbar-width:thin;"></div>
+                <!-- Divider -->
+                <div style="display:flex; align-items:center; gap:10px; margin:14px 0 12px;">
+                    <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                    <span style="font-size:11px; color:#94A3B8; font-weight:700;">OR</span>
+                    <div style="flex:1; height:1px; background:#E2E8F0;"></div>
+                </div>
+                <!-- New Workspace Button -->
+                <button type="button" onclick="switchAuthView('view_choice')"
+                    style="width:100%; padding:14px; background:white; color:#1D4ED8; border:2px dashed #BFDBFE; border-radius:14px; font-size:14px; font-weight:800; cursor:pointer; transition:0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span style="font-size:18px;">+</span> Create or Join New Workspace
+                </button>
+            </div>
         </div>
 
     </div> <!-- 🚀 YE HAI WOH MISSING TAG JO AUTH SCREEN KO CLOSE KAREGA -->
@@ -4237,44 +4250,51 @@
         </div>
 
         <!-- 10. Reports & Analytics -->
-        <div id="reports-hub" class="content section">
-
-            <!-- 1. Header with Fixed Alignment -->
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                <button onclick="openTab('erp', document.getElementById('btn-erp'))"
-                    style="background:white; border:1px solid #E2E8F0; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#475569; box-shadow:0 1px 2px rgba(0,0,0,0.05); flex-shrink:0; transition:0.2s;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
-                        fill="none">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                </button>
-                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0F172A; letter-spacing:-0.5px;">Reports
-                    & Analytics</h2>
+        <div id="reports-hub" class="content section" style="padding-bottom:120px;">
+            <style>
+                .rep-hub-header { background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%); margin:-16px -16px 20px -16px; padding:22px 20px 18px; position:relative; overflow:hidden; }
+                .rep-hub-header::after { content:''; position:absolute; top:-30px; right:-30px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.05); }
+                .rep-hub-title { font-size:20px; font-weight:900; color:white; margin:0 0 2px; letter-spacing:-0.5px; }
+                .rep-hub-sub { font-size:11px; color:rgba(255,255,255,0.5); font-weight:500; }
+                
+                .rep-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+                .rep-type-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:white; border:1.5px solid #E8EDF5; border-radius:14px; padding:14px 10px; cursor:pointer; transition:all 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.03); text-align:center; }
+                .rep-type-btn:hover { border-color:#C7D7F0; box-shadow:0 4px 12px rgba(29,78,216,0.08); transform:translateY(-1px); }
+                .rep-type-btn.active-rep { background:linear-gradient(135deg,#1D4ED8,#1E40AF) !important; border-color:transparent !important; box-shadow:0 4px 14px rgba(29,78,216,0.3) !important; transform:translateY(-2px); }
+                .rep-type-btn.active-rep span { color:white !important; }
+                .rep-type-icon { font-size:22px; }
+                .rep-type-label { font-size:10px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.3px; line-height:1.2; }
+                .rep-type-btn.active-rep .rep-type-label { color:rgba(255,255,255,0.85) !important; }
+            </style>
+            
+            <!-- Premium Header -->
+            <div class="rep-hub-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <button onclick="openTab('erp', document.getElementById('btn-erp'))"
+                        style="background:rgba(255,255,255,0.15); border:none; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; flex-shrink:0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    </button>
+                    <div>
+                        <div class="rep-hub-title">📊 Reports & Analytics</div>
+                        <div class="rep-hub-sub">Financial insights & data exports</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- 2. NO-SCROLL Dropdown Selector (New Feature) -->
-            <div
-                style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
-                <label
-                    style="font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Select
-                    Report Type</label>
-                <select id="report_type_selector" class="form-select"
-                    style="font-size: 15px; font-weight: 800; color: #0F172A; padding: 12px 14px; border: 2px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; outline: none; cursor:pointer;"
-                    onchange="switchReportTab(this.value)">
-                    <option value="dash">📊 Dashboard Overview</option>
-                    <option value="pl">📉 Profit & Loss A/c</option>
-                    <option value="bs">⚖️ Balance Sheet</option>
-                    <option value="daybook">📅 Day Book (All Txns)</option>
-                    <option value="ledger">📖 Party Ledger</option>
-                    <option value="bankledger">🏦 Cash/Bank Book</option>
-                    <option value="sales">📄 Sales Report</option>
-                    <option value="purchase">📦 Purchase & Assets Report</option>
-                    <option value="expense">💸 Expense Report</option>
-                    <option value="crm">🎯 CRM Analytics</option>
-                    <option value="inventory">📦 Stock & Valuation Report (Audit)</option>
-                </select>
-            </div> 
+            <!-- Report Type Grid -->
+            <input type="hidden" id="report_type_selector" value="dash">
+            <div class="rep-type-grid">
+                <button class="rep-type-btn active-rep" onclick="selectReportType('dash', this)"><span class="rep-type-icon">📊</span><span class="rep-type-label">Dashboard</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('pl', this)"><span class="rep-type-icon">📉</span><span class="rep-type-label">P&L Account</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('bs', this)"><span class="rep-type-icon">⚖️</span><span class="rep-type-label">Balance Sheet</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('daybook', this)"><span class="rep-type-icon">📅</span><span class="rep-type-label">Day Book</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('ledger', this)"><span class="rep-type-icon">📖</span><span class="rep-type-label">Party Ledger</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('bankledger', this)"><span class="rep-type-icon">🏦</span><span class="rep-type-label">Cash/Bank Book</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('sales', this)"><span class="rep-type-icon">📄</span><span class="rep-type-label">Sales Report</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('expense', this)"><span class="rep-type-icon">💸</span><span class="rep-type-label">Expenses</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('crm', this)"><span class="rep-type-icon">🎯</span><span class="rep-type-label">CRM Analytics</span></button>
+                <button class="rep-type-btn" onclick="selectReportType('inventory', this)"><span class="rep-type-icon">📦</span><span class="rep-type-label">Stock Report</span></button>
+            </div>
 
             <div id="rep-view-dash">
                 <div
@@ -4781,24 +4801,82 @@
             </div>
         </div>
         <!-- 11. Command Center / Tasks -->
-        <div id="tasks" class="content section">
-            <h2 class="section-title">Command Center</h2>
-            
-            <div class="search-container" style="margin-bottom: 15px;">
-                <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" class="search-input" style="border-radius:10px; padding: 10px 14px 10px 34px; font-size:12.5px; background:#F1F5F9; border:1px solid transparent;" placeholder="Search tasks, client or staff name..." oninput="filterSearch('tasks', this.value)">
+        <div id="tasks" class="content section" style="padding-bottom:120px;">
+            <style>
+                .task-hub-header { background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%); margin:-16px -16px 20px -16px; padding:24px 20px 20px; position:relative; overflow:hidden; }
+                .task-hub-header::after { content:''; position:absolute; top:-30px; right:-30px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.05); }
+                .task-hub-title { font-size:20px; font-weight:900; color:white; margin:0 0 2px; letter-spacing:-0.5px; }
+                .task-hub-sub { font-size:11px; color:rgba(255,255,255,0.55); font-weight:500; }
+                .task-stats-row { display:flex; gap:10px; margin-top:14px; }
+                .task-stat-chip { flex:1; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:10px; text-align:center; }
+                .task-stat-num { font-size:20px; font-weight:900; color:white; line-height:1; }
+                .task-stat-lbl { font-size:9px; font-weight:700; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
+                
+                .task-filter-bar { display:flex; gap:6px; overflow-x:auto; padding:0 0 8px; margin-bottom:14px; scrollbar-width:none; }
+                .task-filter-bar::-webkit-scrollbar { display:none; }
+                .task-pill { display:flex; align-items:center; gap:5px; background:white; border:1.5px solid #E2E8F0; padding:8px 16px; border-radius:30px; font-size:12px; font-weight:800; color:#64748B; cursor:pointer; transition:all 0.2s; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.03); }
+                .task-pill:hover { border-color:#94A3B8; color:#0F172A; }
+                .task-pill.active-task-pill { background:linear-gradient(135deg,#1D4ED8,#1E40AF) !important; color:white !important; border-color:transparent !important; box-shadow:0 4px 14px rgba(29,78,216,0.3) !important; transform:translateY(-1px); }
+
+                .task-card { background:white; border:1.5px solid #E8EDF5; border-radius:16px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 2px 8px rgba(15,23,42,0.04); transition:all 0.2s; }
+                .task-card:hover { border-color:#C7D7F0; box-shadow:0 4px 16px rgba(29,78,216,0.08); transform:translateY(-1px); }
+                .task-card.task-done-card { opacity:0.6; background:#FAFBFC; }
+                .task-card.task-overdue { border-color:#FCA5A5; background:linear-gradient(135deg,#FFF5F5,white); }
+                
+                .task-check-wrap { width:22px; height:22px; flex-shrink:0; margin-top:1px; }
+                .task-check-wrap input[type=checkbox] { width:20px; height:20px; accent-color:#059669; cursor:pointer; border-radius:6px; }
+                
+                .task-priority-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:6px; }
+                .task-body { flex:1; min-width:0; }
+                .task-title-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+                .task-text { font-size:14px; font-weight:800; color:#0F172A; line-height:1.3; }
+                .task-text.done { text-decoration:line-through; color:#94A3B8; }
+                .task-meta { font-size:11px; color:#64748B; font-weight:500; margin-top:5px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+                .task-meta-chip { display:inline-flex; align-items:center; gap:3px; background:#F1F5F9; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+                .task-meta-chip.overdue { background:#FEE2E2; color:#DC2626; }
+                .task-meta-chip.event { background:#EFF6FF; color:#1D4ED8; }
+                .task-meta-chip.meeting { background:#FFFBEB; color:#D97706; }
+                .task-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+                .task-act-btn { background:none; border:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; transition:0.15s; }
+                .task-act-btn:hover { background:#F1F5F9; }
+                
+                .task-empty { text-align:center; padding:48px 20px; color:#94A3B8; }
+                .task-empty-icon { font-size:48px; margin-bottom:12px; }
+                .task-empty-text { font-size:15px; font-weight:800; color:#64748B; margin-bottom:6px; }
+                .task-empty-sub { font-size:12px; font-weight:500; }
+                
+                .task-search-wrap { position:relative; margin-bottom:14px; }
+                .task-search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94A3B8; }
+                .task-search-wrap input { width:100%; padding:11px 14px 11px 38px; border-radius:12px; border:1.5px solid #E2E8F0; background:#F8FAFC; font-size:13px; font-weight:600; box-sizing:border-box; transition:0.2s; }
+                .task-search-wrap input:focus { border-color:#1D4ED8; background:white; outline:none; box-shadow:0 0 0 3px rgba(29,78,216,0.1); }
+            </style>
+
+            <!-- Premium Header -->
+            <div class="task-hub-header">
+                <div class="task-hub-title">📋 Task Command Center</div>
+                <div class="task-hub-sub">Track tasks, meetings & deadlines</div>
+                <div class="task-stats-row">
+                    <div class="task-stat-chip"><div class="task-stat-num" id="ts_pending">0</div><div class="task-stat-lbl">Pending</div></div>
+                    <div class="task-stat-chip"><div class="task-stat-num" id="ts_today">0</div><div class="task-stat-lbl">Due Today</div></div>
+                    <div class="task-stat-chip"><div class="task-stat-num" id="ts_meetings">0</div><div class="task-stat-lbl">Meetings</div></div>
+                    <div class="task-stat-chip"><div class="task-stat-num" id="ts_done">0</div><div class="task-stat-lbl">Done</div></div>
+                </div>
             </div>
 
-            <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 6px;">
-                <button class="sales-tab-btn active-sales-tab" id="task-filter-Pending"
-                    onclick="renderTasksDashboard('Pending', this)">Pending</button>
-                <button class="sales-tab-btn" id="task-filter-All" onclick="renderTasksDashboard('All', this)">All
-                    Tasks</button>
-                <button class="sales-tab-btn" id="task-filter-Completed"
-                    onclick="renderTasksDashboard('Completed', this)">Completed</button>
-                <button class="sales-tab-btn" id="task-filter-Meetings"
-                    onclick="renderTasksDashboard('Meetings', this)">Meetings</button>
+            <!-- Search -->
+            <div class="task-search-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" placeholder="Search tasks, events, staff..." oninput="filterSearch('tasks', this.value); renderTasksDashboard();">
             </div>
+
+            <!-- Filter Pills -->
+            <div class="task-filter-bar">
+                <button class="task-pill active-task-pill" id="task-filter-Pending" onclick="renderTasksDashboard('Pending', this)">⏳ Pending</button>
+                <button class="task-pill" id="task-filter-All" onclick="renderTasksDashboard('All', this)">📋 All Tasks</button>
+                <button class="task-pill" id="task-filter-Completed" onclick="renderTasksDashboard('Completed', this)">✅ Completed</button>
+                <button class="task-pill" id="task-filter-Meetings" onclick="renderTasksDashboard('Meetings', this)">🤝 Meetings</button>
+            </div>
+
             <div id="task-dash-container"></div>
         </div>
 
@@ -5270,6 +5348,7 @@
             <!-- 🔷 Tab Pills -->
             <div class="settings-nav-pill">
                 <button class="set-pill active-set-pill" id="pill-bill"  onclick="switchHubTab('hub-bill', this)">📄 Billing</button>
+                <button class="set-pill" id="pill-theme" onclick="switchHubTab('hub-theme', this)">🖨️ Print Themes</button>
                 <button class="set-pill" id="pill-sec"   onclick="switchHubTab('hub-sec', this)">🛡️ Security</button>
                 <button class="set-pill" id="pill-wa"    onclick="switchHubTab('hub-wa', this)">💬 WhatsApp</button>
                 <button class="set-pill" id="pill-ui"    onclick="switchHubTab('hub-ui', this)">🎨 Appearance</button>
@@ -5326,6 +5405,82 @@
                             <div><div class="set-toggle-label">Inventory &amp; Rental Management</div><div class="set-toggle-sub">Enable Godown, Stock &amp; Rental tracking</div></div>
                             <label class="toggle-switch"><input type="checkbox" id="set_manage_inventory"><span class="toggle-slider"></span></label>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════ 🖨️ PRINT THEMES TAB ══════════════════ -->
+                <div id="hub-theme" class="hub-tab-content" style="display:none;">
+                    <style>
+                        .ptheme-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+                        .ptheme-card { background:white; border:2.5px solid #E8EDF5; border-radius:16px; padding:0; cursor:pointer; overflow:hidden; transition:all 0.2s; position:relative; }
+                        .ptheme-card:hover { border-color:#C7D7F0; transform:translateY(-2px); box-shadow:0 6px 18px rgba(29,78,216,0.1); }
+                        .ptheme-card.active-ptheme { border-color:#1D4ED8; box-shadow:0 6px 20px rgba(29,78,216,0.2); }
+                        .ptheme-card.active-ptheme::after { content:'✓'; position:absolute; top:8px; right:8px; width:22px; height:22px; background:#1D4ED8; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; }
+                        .ptheme-preview { height:90px; padding:10px; position:relative; overflow:hidden; }
+                        .ptheme-name { padding:8px 10px; font-size:12px; font-weight:800; color:#0F172A; text-align:center; border-top:1px solid #F1F5F9; }
+                    </style>
+                    <div class="set-bento-card">
+                        <div class="set-badge" style="color:#2563EB; background:#EFF6FF;">🖨️ Choose Your Invoice Style</div>
+                        <p style="font-size:11px; color:var(--text-secondary); margin:0 0 14px; font-weight:500; line-height:1.5;">This theme applies to all printed invoices, quotations & receipts. Tap any card to preview & apply instantly.</p>
+                        <input type="hidden" id="set_print_theme_value" value="classic">
+                        <div class="ptheme-grid">
+                            <!-- Classic -->
+                            <div class="ptheme-card active-ptheme" id="ptheme-classic" onclick="selectPrintTheme('classic')">
+                                <div class="ptheme-preview" style="background:white;">
+                                    <div style="border-bottom:2px solid #0f172a; padding-bottom:4px; margin-bottom:6px; display:flex; justify-content:space-between;">
+                                        <div style="font-size:8px; font-weight:900; color:#0f172a;">COMPANY</div>
+                                        <div style="font-size:7px; font-weight:900; color:#2563eb;">INVOICE</div>
+                                    </div>
+                                    <div style="height:3px; background:#f1f5f9; border-radius:2px; margin-bottom:3px; width:90%;"></div>
+                                    <div style="height:3px; background:#f1f5f9; border-radius:2px; margin-bottom:3px; width:70%;"></div>
+                                    <div style="height:3px; background:#f1f5f9; border-radius:2px; width:80%;"></div>
+                                    <div style="position:absolute; bottom:6px; right:10px; font-size:8px; font-weight:900; color:#2563eb;">₹0</div>
+                                </div>
+                                <div class="ptheme-name">📋 Classic Business</div>
+                            </div>
+                            <!-- Modern Minimal -->
+                            <div class="ptheme-card" id="ptheme-modern" onclick="selectPrintTheme('modern')">
+                                <div class="ptheme-preview" style="background:#fafafa;">
+                                    <div style="margin-bottom:8px;">
+                                        <div style="font-size:9px; font-weight:300; color:#18181b; letter-spacing:1px;">COMPANY</div>
+                                        <div style="height:1.5px; background:#18181b; width:24px; margin-top:3px;"></div>
+                                    </div>
+                                    <div style="height:2px; background:#e4e4e7; margin-bottom:3px; width:85%;"></div>
+                                    <div style="height:2px; background:#e4e4e7; margin-bottom:3px; width:60%;"></div>
+                                    <div style="position:absolute; bottom:6px; right:10px; font-size:7px; font-weight:300; color:#18181b;">₹0</div>
+                                </div>
+                                <div class="ptheme-name">⚪ Modern Minimal</div>
+                            </div>
+                            <!-- Elegant Gold -->
+                            <div class="ptheme-card" id="ptheme-gold" onclick="selectPrintTheme('gold')">
+                                <div class="ptheme-preview" style="background:linear-gradient(135deg,#1c1917,#292524);">
+                                    <div style="border-bottom:1px solid #d4af37; padding-bottom:4px; margin-bottom:6px;">
+                                        <div style="font-size:8px; font-weight:700; color:#d4af37; letter-spacing:1px;">COMPANY</div>
+                                    </div>
+                                    <div style="height:2px; background:#44403c; margin-bottom:3px; width:80%;"></div>
+                                    <div style="height:2px; background:#44403c; margin-bottom:3px; width:65%;"></div>
+                                    <div style="position:absolute; bottom:6px; right:10px; font-size:8px; font-weight:900; color:#d4af37;">₹0</div>
+                                </div>
+                                <div class="ptheme-name">✨ Elegant Gold</div>
+                            </div>
+                            <!-- Bold Corporate -->
+                            <div class="ptheme-card" id="ptheme-bold" onclick="selectPrintTheme('bold')">
+                                <div class="ptheme-preview" style="background:white; padding:0;">
+                                    <div style="background:#0f172a; padding:6px 10px;">
+                                        <div style="font-size:8px; font-weight:900; color:white;">COMPANY</div>
+                                    </div>
+                                    <div style="padding:6px 10px;">
+                                        <div style="height:3px; background:#f1f5f9; margin-bottom:3px; width:85%;"></div>
+                                        <div style="height:3px; background:#f1f5f9; width:65%;"></div>
+                                        <div style="position:absolute; bottom:6px; right:10px; font-size:8px; font-weight:900; color:#0f172a; background:#fbbf24; padding:1px 4px; border-radius:2px;">₹0</div>
+                                    </div>
+                                </div>
+                                <div class="ptheme-name">🏢 Bold Corporate</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="set-bento-card" style="background:#F8FAFC;">
+                        <button class="btn-main" style="background:var(--accent-color); width:100%; height:42px; font-size:13px; font-weight:800;" onclick="previewSelectedPrintTheme()">👁️ Preview Sample Invoice</button>
                     </div>
                 </div>
 
@@ -6879,112 +7034,231 @@
 
     <!-- 🚀 1. TEAM MANAGEMENT MODAL -->
     <div id="teamModal" class="modal-overlay" style="z-index: 8500;">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3>👥 Manage Team & Staff</h3>
-                <button class="modal-close"
-                    onclick="document.getElementById('teamModal').style.display='none'">&times;</button>
+        <div class="modal-content" style="max-width: 520px; padding:0; overflow:hidden; border-radius:20px;">
+            <style>
+                .team-modal-header { background:linear-gradient(135deg,#0F172A,#1E3A8A); padding:20px; color:white; position:relative; overflow:hidden; }
+                .team-modal-header::after { content:''; position:absolute; top:-20px; right:-20px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.05); }
+                .team-modal-title { font-size:18px; font-weight:900; margin:0 0 2px; }
+                .team-modal-sub { font-size:11px; color:rgba(255,255,255,0.55); font-weight:500; }
+                .team-join-box { background:rgba(255,255,255,0.1); border:1px dashed rgba(255,255,255,0.3); border-radius:12px; padding:12px 16px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; }
+                .team-join-label { font-size:9px; font-weight:800; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; }
+                .team-join-code { font-size:26px; font-weight:900; color:white; letter-spacing:6px; }
+                .team-copy-btn { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:white; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; transition:0.2s; }
+                .team-copy-btn:hover { background:rgba(255,255,255,0.25); }
+                .team-modal-body { padding:16px 20px 20px; max-height:60vh; overflow-y:auto; }
+                .team-section-title { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:#64748B; margin:14px 0 8px; padding-bottom:6px; border-bottom:1px solid #F1F5F9; }
+                .team-staff-card { display:flex; align-items:center; gap:12px; background:white; border:1.5px solid #E8EDF5; border-radius:14px; padding:12px 14px; margin-bottom:8px; transition:0.2s; }
+                .team-staff-card:hover { border-color:#C7D7F0; box-shadow:0 2px 12px rgba(29,78,216,0.08); }
+                .team-staff-avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; flex-shrink:0; }
+                .team-staff-info { flex:1; min-width:0; }
+                .team-staff-name { font-size:14px; font-weight:800; color:#0F172A; }
+                .team-staff-email { font-size:11px; color:#64748B; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+                .team-staff-role { font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; }
+                .team-staff-actions { display:flex; gap:6px; }
+                .team-act-btn { border:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; transition:0.15s; }
+                .team-add-fab { position:sticky; bottom:0; background:white; padding:10px 0 0; margin-top:4px; }
+                .team-add-btn { width:100%; padding:13px; background:linear-gradient(135deg,#1D4ED8,#1E40AF); color:white; border:none; border-radius:12px; font-size:14px; font-weight:800; cursor:pointer; transition:0.2s; box-shadow:0 4px 14px rgba(29,78,216,0.3); }
+                .team-add-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(29,78,216,0.4); }
+            </style>
+            
+            <!-- Header -->
+            <div class="team-modal-header">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div class="team-modal-title">👥 Team & Staff</div>
+                        <div class="team-modal-sub">Manage access & permissions</div>
+                    </div>
+                    <button onclick="document.getElementById('teamModal').style.display='none'" style="background:rgba(255,255,255,0.15); border:none; width:32px; height:32px; border-radius:8px; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+                </div>
+                <!-- Join Code Box -->
+                <div class="team-join-box">
+                    <div>
+                        <div class="team-join-label">Company Join Code</div>
+                        <div class="team-join-code" id="team_join_code_display">------</div>
+                    </div>
+                    <button class="team-copy-btn" onclick="let c=document.getElementById('team_join_code_display').textContent; navigator.clipboard?.writeText(c).then(()=>showToast('Join code copied!','success',2000));">📋 Copy</button>
+                </div>
             </div>
-            <button onclick="document.getElementById('addStaffModal').style.display='flex'" 
-                    style="background:var(--accent-color); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; cursor:pointer;"
-                    aria-label="Add New Staff">
-                <span>+ Add New Staff</span>
-            </button>
-            <h4 style="font-size:12px; color:var(--warning); margin: 10px 0; text-transform:uppercase;">⏳ Pending
-                Requests</h4>
-            <div id="team_pending_list"
-                style="margin-bottom: 20px; background:#FFFBEB; padding:10px; border-radius:8px; border:1px solid #FDE68A;">
+            
+            <!-- Body -->
+            <div class="team-modal-body">
+                <div id="team_pending_list"></div>
+                <div id="team_active_list"></div>
+                <div class="team-add-fab">
+                    <button class="team-add-btn" onclick="document.getElementById('addStaffModal').style.display='flex'">+ Add New Staff Member</button>
+                </div>
             </div>
-
-            <h4 style="font-size:12px; color:var(--success); margin: 10px 0; text-transform:uppercase;">✅ Active Staff
-            </h4>
-            <div id="team_active_list"
-                style="background:#F0FDF4; padding:10px; border-radius:8px; border:1px solid #BBF7D0;"></div>
         </div>
     </div>
     <div id="addStaffModal" class="modal-overlay" style="z-index: 9500;">
-        <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3>Add Staff Member</h3>
-                <button class="modal-close" onclick="document.getElementById('addStaffModal').style.display='none';">&times;</button>
+        <div class="modal-content" style="max-width: 400px; padding:0; border-radius:20px; overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#059669,#047857); padding:20px 22px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div style="font-size:17px; font-weight:900; color:white;">➕ Add Staff Member</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-top:2px;">They'll sign in using this email</div>
+                    </div>
+                    <button onclick="document.getElementById('addStaffModal').style.display='none';" style="background:rgba(255,255,255,0.15); border:none; width:30px; height:30px; border-radius:8px; color:white; font-size:18px; cursor:pointer;">&times;</button>
+                </div>
             </div>
-            <form id="addStaffForm" onsubmit="event.preventDefault();">
-                <div class="form-group">
-                    <label class="form-label">Staff Name</label>
-                    <input type="text" id="new_staff_name" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Staff Email Address</label>
-                    <input type="email" id="new_staff_mobile" class="form-input" placeholder="staff@email.com" required>
-                </div>
-                <button type="button" class="btn-main" style="background:var(--success);" onclick="addStaffByOwner()">Add to Team</button>
-            </form>
+            <div style="padding:20px 22px;">
+                <form id="addStaffForm" onsubmit="event.preventDefault();">
+                    <div class="form-group">
+                        <label class="form-label">Staff Full Name</label>
+                        <input type="text" id="new_staff_name" class="form-input" placeholder="e.g. Rahul Sharma" required style="height:42px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:18px;">
+                        <label class="form-label">Staff Email Address</label>
+                        <input type="email" id="new_staff_mobile" class="form-input" placeholder="staff@email.com" required style="height:42px;">
+                        <div style="font-size:10px; color:#94A3B8; margin-top:5px; font-weight:500;">💡 They must sign in with Google using this exact email</div>
+                    </div>
+                    <button type="button" style="width:100%; padding:13px; background:linear-gradient(135deg,#059669,#047857); color:white; border:none; border-radius:12px; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(5,150,105,0.3);" onclick="addStaffByOwner()">Add to Team</button>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- 🚀 2. STAFF PERMISSION MODAL -->
+    <!-- ✅ PREMIUM STAFF PERMISSION MODAL -->
     <div id="permissionModal" class="modal-overlay" style="z-index: 9000;">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header">
-                <h3 id="perm_modal_title">⚙️ Set Permissions</h3>
-                <button class="modal-close"
-                    onclick="document.getElementById('permissionModal').style.display='none'">&times;</button>
+        <div class="modal-content" style="max-width: 460px; padding:0; border-radius:20px; overflow:hidden;">
+            <style>
+                .perm-header { background:linear-gradient(135deg,#1D4ED8,#1E40AF); padding:20px 22px; }
+                .perm-title { font-size:17px; font-weight:900; color:white; margin:0 0 2px; }
+                .perm-sub { font-size:11px; color:rgba(255,255,255,0.6); }
+                .perm-body { padding:18px 20px 20px; max-height:70vh; overflow-y:auto; }
+                .perm-section { margin-bottom:18px; }
+                .perm-section-title { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:1px; color:#64748B; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+                .perm-section-title::after { content:''; flex:1; height:1px; background:#F1F5F9; }
+                
+                .perm-quick-btns { display:flex; gap:6px; margin-bottom:12px; }
+                .perm-quick-btn { flex:1; padding:7px; border-radius:8px; font-size:11px; font-weight:800; border:1.5px solid #E2E8F0; background:white; color:#475569; cursor:pointer; transition:0.15s; }
+                .perm-quick-btn:hover { border-color:#94A3B8; color:#0F172A; }
+                
+                .perm-modules-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+                .perm-toggle-row { display:flex; align-items:center; justify-content:space-between; background:#F8FAFC; border:1.5px solid #E8EDF5; border-radius:12px; padding:10px 12px; transition:0.2s; }
+                .perm-toggle-row.active-perm { background:#EFF6FF; border-color:#BFDBFE; }
+                .perm-toggle-icon { font-size:18px; width:28px; }
+                .perm-toggle-label { font-size:12px; font-weight:700; color:#0F172A; flex:1; padding:0 8px; }
+                .perm-toggle-sub { font-size:10px; color:#94A3B8; font-weight:500; }
+                
+                /* Custom toggle */
+                .ptoggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+                .ptoggle input { opacity:0; width:0; height:0; }
+                .ptoggle-slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#CBD5E1; border-radius:22px; transition:0.3s; }
+                .ptoggle-slider::before { content:''; position:absolute; height:16px; width:16px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+                .ptoggle input:checked + .ptoggle-slider { background:#1D4ED8; }
+                .ptoggle input:checked + .ptoggle-slider::before { transform:translateX(18px); }
+                
+                .perm-actions-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+                .perm-act-card { background:#F8FAFC; border:1.5px solid #E8EDF5; border-radius:12px; padding:12px 8px; text-align:center; cursor:pointer; transition:0.2s; }
+                .perm-act-card.act-add { border-color:#BBF7D0; background:#F0FDF4; }
+                .perm-act-card-icon { font-size:20px; margin-bottom:4px; }
+                .perm-act-card-label { font-size:11px; font-weight:800; color:#0F172A; }
+                .perm-act-card input[type=checkbox] { display:none; }
+            </style>
+            
+            <div class="perm-header">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div class="perm-title" id="perm_modal_title">⚙️ Set Permissions</div>
+                        <div class="perm-sub">Control what this staff member can access</div>
+                    </div>
+                    <button onclick="document.getElementById('permissionModal').style.display='none'" style="background:rgba(255,255,255,0.15); border:none; width:30px; height:30px; border-radius:8px; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+                </div>
             </div>
-
-            <form id="permForm" onsubmit="event.preventDefault();">
-                <input type="hidden" id="perm_staff_mobile">
-
-                <h4 style="font-size:12px; color:var(--accent-color); margin: 0 0 10px 0; text-transform:uppercase;">1.
-                    Module Access (What they can see)</h4>
-                <div
-                    style="background:#F8FAFC; border:1px solid #E2E8F0; padding:12px; border-radius:8px; margin-bottom:15px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_crm" checked
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> CRM / Leads</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_event" checked
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Events</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_sales"
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Sales Hub</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_purch"
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Purchase Hub</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_exp"
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Expenses</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_bank"
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Cash & Bank</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_rep"
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Reports</label>
-                    <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;"><input
-                            type="checkbox" id="perm_mod_inv"
-                            style="width:16px; height:16px; accent-color:var(--accent-color);"> Inventory</label>
-                </div>
-
-                <h4 style="font-size:12px; color:var(--danger); margin: 0 0 10px 0; text-transform:uppercase;">2. Action
-                    Access (What they can do)</h4>
-                <div
-                    style="background:#FEF2F2; border:1px solid #FECACA; padding:12px; border-radius:8px; margin-bottom:20px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                    <label
-                        style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; color:var(--success);"><input
-                            type="checkbox" id="perm_act_add" checked disabled style="width:16px; height:16px;">
-                        Add</label>
-                    <label
-                        style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; color:var(--warning);"><input
-                            type="checkbox" id="perm_act_edit"
-                            style="width:16px; height:16px; accent-color:var(--warning);"> Edit</label>
-                    <label
-                        style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; color:var(--danger);"><input
-                            type="checkbox" id="perm_act_del"
-                            style="width:16px; height:16px; accent-color:var(--danger);"> Delete</label>
-                </div>
-
-                <button type="button" class="btn-main" style="background:var(--success);"
-                    onclick="saveStaffPermissions()">Save Permissions</button>
-            </form>
+            
+            <div class="perm-body">
+                <form id="permForm" onsubmit="event.preventDefault();">
+                    <input type="hidden" id="perm_staff_mobile">
+                    
+                    <!-- Quick Presets -->
+                    <div class="perm-section">
+                        <div class="perm-section-title">⚡ Quick Presets</div>
+                        <div class="perm-quick-btns">
+                            <button type="button" class="perm-quick-btn" onclick="applyPermPreset('full')">✅ Full Access</button>
+                            <button type="button" class="perm-quick-btn" onclick="applyPermPreset('sales')">📄 Sales Only</button>
+                            <button type="button" class="perm-quick-btn" onclick="applyPermPreset('crm')">🎯 CRM Only</button>
+                            <button type="button" class="perm-quick-btn" onclick="applyPermPreset('none')">🚫 Read Only</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Module Access -->
+                    <div class="perm-section">
+                        <div class="perm-section-title">📱 Module Access</div>
+                        <div class="perm-modules-grid">
+                            <div class="perm-toggle-row" id="ptrow_crm">
+                                <div class="perm-toggle-icon">🎯</div>
+                                <div class="perm-toggle-label">CRM / Leads</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_crm" checked onchange="updatePermRow('ptrow_crm',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_event">
+                                <div class="perm-toggle-icon">🎪</div>
+                                <div class="perm-toggle-label">Events</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_event" checked onchange="updatePermRow('ptrow_event',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_sales">
+                                <div class="perm-toggle-icon">📄</div>
+                                <div class="perm-toggle-label">Sales Hub</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_sales" onchange="updatePermRow('ptrow_sales',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_purch">
+                                <div class="perm-toggle-icon">📦</div>
+                                <div class="perm-toggle-label">Purchase</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_purch" onchange="updatePermRow('ptrow_purch',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_exp">
+                                <div class="perm-toggle-icon">💸</div>
+                                <div class="perm-toggle-label">Expenses</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_exp" onchange="updatePermRow('ptrow_exp',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_bank">
+                                <div class="perm-toggle-icon">🏦</div>
+                                <div class="perm-toggle-label">Cash & Bank</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_bank" onchange="updatePermRow('ptrow_bank',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_rep">
+                                <div class="perm-toggle-icon">📊</div>
+                                <div class="perm-toggle-label">Reports</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_rep" onchange="updatePermRow('ptrow_rep',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                            <div class="perm-toggle-row" id="ptrow_inv">
+                                <div class="perm-toggle-icon">🏪</div>
+                                <div class="perm-toggle-label">Inventory</div>
+                                <label class="ptoggle"><input type="checkbox" id="perm_mod_inv" onchange="updatePermRow('ptrow_inv',this)"><span class="ptoggle-slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Permissions -->
+                    <div class="perm-section">
+                        <div class="perm-section-title">⚡ Action Permissions</div>
+                        <div class="perm-actions-row">
+                            <div class="perm-act-card act-add">
+                                <div class="perm-act-card-icon">➕</div>
+                                <input type="checkbox" id="perm_act_add" checked disabled>
+                                <div class="perm-act-card-label" style="color:#059669;">Add</div>
+                                <div style="font-size:9px; color:#94A3B8; margin-top:2px;">Always On</div>
+                            </div>
+                            <div class="perm-act-card" onclick="let c=this.querySelector('input'); c.checked=!c.checked; this.style.borderColor=c.checked?'#FCD34D':'#E8EDF5'; this.style.background=c.checked?'#FFFBEB':'#F8FAFC';">
+                                <div class="perm-act-card-icon">✏️</div>
+                                <input type="checkbox" id="perm_act_edit">
+                                <div class="perm-act-card-label">Edit</div>
+                                <div style="font-size:9px; color:#94A3B8; margin-top:2px;">Modify records</div>
+                            </div>
+                            <div class="perm-act-card" onclick="let c=this.querySelector('input'); c.checked=!c.checked; this.style.borderColor=c.checked?'#FCA5A5':'#E8EDF5'; this.style.background=c.checked?'#FEF2F2':'#F8FAFC';">
+                                <div class="perm-act-card-icon">🗑️</div>
+                                <input type="checkbox" id="perm_act_del">
+                                <div class="perm-act-card-label">Delete</div>
+                                <div style="font-size:9px; color:#94A3B8; margin-top:2px;">Remove records</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" style="width:100%; padding:14px; background:linear-gradient(135deg,#059669,#047857); color:white; border:none; border-radius:12px; font-size:15px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(5,150,105,0.3);" onclick="saveStaffPermissions()">
+                        ✅ Save Permissions
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
     
@@ -7831,8 +8105,35 @@
                 }
                 tempAuthLogo = ""; tempAuthSig = "";
                 hideLoader();
-                alert(`🎉 Workspace Created!\n\n🏢 ${compName}\n🔐 Join Code: ${generatedCode}\n\nShare this code with staff to invite them.`);
-                launchWorkspace(compId);
+                // ✅ Premium popup instead of alert
+                let popHtml = `
+                    <div id="comp_created_popup" style="position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;">
+                        <div style="background:white; border-radius:24px; padding:0; max-width:360px; width:100%; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+                            <div style="background:linear-gradient(135deg,#059669,#047857); padding:28px 24px; text-align:center;">
+                                <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+                                <div style="font-size:20px; font-weight:900; color:white; margin-bottom:4px;">Workspace Created!</div>
+                                <div style="font-size:12px; color:rgba(255,255,255,0.7);">${compName}</div>
+                            </div>
+                            <div style="padding:24px;">
+                                <div style="text-align:center; margin-bottom:20px;">
+                                    <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Your Company Join Code</div>
+                                    <div style="font-size:36px; font-weight:900; letter-spacing:8px; color:#0F172A; background:#F8FAFC; border:2px dashed #CBD5E1; border-radius:14px; padding:14px;">${generatedCode}</div>
+                                    <div style="font-size:11px; color:#94A3B8; margin-top:8px; font-weight:500;">Share this code with your staff to invite them</div>
+                                </div>
+                                <button onclick="navigator.clipboard?.writeText('${generatedCode}'); this.textContent='✅ Copied!'; setTimeout(()=>this.textContent='📋 Copy Code',1500);"
+                                    style="width:100%; padding:12px; background:#EFF6FF; color:#1D4ED8; border:1.5px solid #BFDBFE; border-radius:12px; font-size:14px; font-weight:800; cursor:pointer; margin-bottom:10px;">
+                                    📋 Copy Code
+                                </button>
+                                <button onclick="document.getElementById('comp_created_popup').remove();"
+                                    style="width:100%; padding:13px; background:linear-gradient(135deg,#1D4ED8,#1E40AF); color:white; border:none; border-radius:12px; font-size:14px; font-weight:900; cursor:pointer; box-shadow:0 4px 14px rgba(29,78,216,0.3);">
+                                    🚀 Open Dashboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.insertAdjacentHTML('beforeend', popHtml);
+                // Auto-launch after popup
+                document.querySelector('#comp_created_popup button:last-child').addEventListener('click', () => { launchWorkspace(compId); });
             } catch (error) {
                 hideLoader();
                 console.error("Firebase Company Create Error:", error);
@@ -7843,38 +8144,43 @@
         // 🚀 3. SCREEN PAR COMPANIES KI LIST BANANA
         function renderCompanyList() {
                 let listDiv = document.getElementById('auth_company_list');
-                if(!listDiv) return;
-                
+                if (!listDiv) return;
                 listDiv.innerHTML = "";
                 let user = masterUsersDB[loggedInEmail] || masterUsersDB[loggedInMobile] || { companies: [] };
-                
-                if (user.companies.length === 0) {
-                    listDiv.innerHTML = "<p style='text-align:center; color:#64748B;'>No workspaces found.</p>";
+
+                if (!user.companies || user.companies.length === 0) {
+                    listDiv.innerHTML = `<div style="text-align:center; padding:24px 16px; color:#94A3B8;">
+                        <div style="font-size:36px; margin-bottom:8px;">🏢</div>
+                        <div style="font-size:13px; font-weight:700; color:#64748B;">No workspaces found</div>
+                        <div style="font-size:11px; margin-top:4px;">Create or join one below</div>
+                    </div>`;
                     return;
                 }
 
-                user.companies.forEach(cId => {
+                let avatarColors = ['#1D4ED8','#059669','#7C3AED','#D97706','#DC2626','#0891B2'];
+                user.companies.forEach((cId, idx) => {
                     let comp = masterCompsDB[cId];
-                    if (comp) {
-                        let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
-                        let role = isOwner ? "⭐ Owner" : "👤 Staff";
-                        
-                        // 🚀 NAYA: Sirf Owner ko Delete button dikhega
-                        let deleteBtn = isOwner ? `<button onclick="deleteWorkspaceFromList('${comp.id}', event)" style="background:#FEF2F2; color:var(--danger); border:1px solid #FECACA; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:bold; cursor:pointer; margin-right:10px; box-shadow:var(--shadow-sm);">🗑️ Delete</button>` : '';
-                        
-                        listDiv.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #CBD5E1; border-radius:10px; cursor:pointer; background:#F8FAFC; margin-bottom:10px;" 
-                            onclick="handleWorkspaceClick('${comp.id}')">
-                            <div>
-                                <strong style="color:var(--text-primary); font-size:14px;">${comp.name}</strong><br>
-                                <span style="font-size:11px; color:var(--text-secondary);">${role} | Code: ${comp.joinCode}</span>
-                            </div>
-                            <div style="display:flex; align-items:center;">
-                                ${deleteBtn}
-                                <div style="font-size:20px;">➡️</div>
-                            </div>
-                        </div>`;
-                    }
+                    if (!comp) return;
+                    let isOwner = (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail);
+                    let roleLabel = isOwner ? '⭐ Owner' : '👤 Staff';
+                    let roleColor = isOwner ? '#D97706' : '#64748B';
+                    let initial = (comp.name || '?')[0].toUpperCase();
+                    let avatarColor = avatarColors[idx % avatarColors.length];
+
+                    listDiv.innerHTML += `
+                    <div onclick="handleWorkspaceClick('${comp.id}')" style="display:flex; align-items:center; gap:12px; padding:14px; border:1.5px solid #E8EDF5; border-radius:14px; cursor:pointer; background:white; transition:all 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.03);"
+                        onmouseover="this.style.borderColor='#C7D7F0'; this.style.boxShadow='0 4px 12px rgba(29,78,216,0.1)'"
+                        onmouseout="this.style.borderColor='#E8EDF5'; this.style.boxShadow='0 1px 4px rgba(0,0,0,0.03)'">
+                        <div style="width:44px; height:44px; border-radius:14px; background:${avatarColor}22; color:${avatarColor}; font-size:20px; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${initial}</div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:15px; font-weight:900; color:#0F172A; margin-bottom:2px;">${sanitize(comp.name)}</div>
+                            <div style="font-size:11px; color:${roleColor}; font-weight:700;">${roleLabel}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            ${isOwner ? `<button onclick="deleteWorkspaceFromList('${comp.id}', event)" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:4px 8px; border-radius:8px; font-size:10px; font-weight:800; cursor:pointer;">🗑️</button>` : ''}
+                            <div style="color:#94A3B8; font-size:18px;">›</div>
+                        </div>
+                    </div>`;
                 });
             }
 
@@ -8059,53 +8365,92 @@
             let comp = masterCompsDB[currentWorkspaceId];
             if (!comp) return;
 
+            // Update join code in new header
+            let codeEl = document.getElementById('team_join_code_display');
+            if (codeEl) codeEl.textContent = comp.joinCode || '------';
+
             let pendingDiv = document.getElementById('team_pending_list');
             let activeDiv = document.getElementById('team_active_list');
-            
-            // Join Code aur Heading
-            pendingDiv.innerHTML = `
-                <div style="background:#EFF6FF; padding:15px; border-radius:10px; border:1px dashed var(--accent-color); margin-bottom:15px; text-align:center;">
-                    <span style="font-size:10px; font-weight:800; color:var(--accent-color); text-transform:uppercase;">Company Join Code</span>
-                    <div style="font-size:28px; font-weight:900; letter-spacing:5px; margin-top:5px; color:#0F172A;">${comp.joinCode || "ERROR"}</div>
-                </div>
-                <h4 style="font-size:12px; color:var(--warning); margin: 10px 0; text-transform:uppercase;">⏳ Pending Requests</h4>`;
-                    
-            activeDiv.innerHTML = "";
-            
-            let pendingCount = 0; let activeCount = 0;
-            
+            pendingDiv.innerHTML = '';
+            activeDiv.innerHTML = '';
+
+            let pendingCount = 0;
+            let activeCount = 0;
+            let avatarColors = ['#1D4ED8','#059669','#7C3AED','#D97706','#DC2626','#0891B2'];
+
             if (comp.staff && comp.staff.length > 0) {
-                comp.staff.forEach(s => {
-                    if (s.role === 'Owner') return; // 🚀 MAGIC: Owner ko list mein mat dikhao!
+                comp.staff.forEach((s, idx) => {
+                    if (s.role === 'Owner') return;
+                    let initial = (s.name || '?')[0].toUpperCase();
+                    let avatarColor = avatarColors[idx % avatarColors.length];
+                    let emailDisplay = s.email || s.mobile || '';
                     
                     if (s.status === 'Pending') {
                         pendingCount++;
+                        if (pendingCount === 1) {
+                            pendingDiv.innerHTML = '<div class="team-section-title">⏳ Pending Requests</div>';
+                        }
                         pendingDiv.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:white; border-radius:6px; margin-bottom:8px;">
-                            <div><strong style="font-size:13px;">${s.name}</strong><br><span style="font-size:11px; color:#64748B;">📞 ${s.mobile}</span></div>
-                            <div style="display:flex; gap:6px;">
-                                <button onclick="openPermissionSetup('${s.mobile}', '${s.name}', false)" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:4px; font-size:11px; cursor:pointer;">Approve</button>
-                                <button onclick="rejectOrRemoveStaff('${s.mobile}', 'Reject')" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:4px; font-size:11px; cursor:pointer;">Reject</button>
+                        <div class="team-staff-card" style="border-color:#FDE68A; background:#FFFBEB;">
+                            <div class="team-staff-avatar" style="background:#FEF3C7; color:#D97706;">${initial}</div>
+                            <div class="team-staff-info">
+                                <div class="team-staff-name">${sanitize(s.name)}</div>
+                                <div class="team-staff-email">📧 ${sanitize(emailDisplay)}</div>
+                            </div>
+                            <div class="team-staff-actions">
+                                <button class="team-act-btn" onclick="openPermissionSetup('${s.email || s.mobile}', '${s.name}', false)" style="background:#ECFDF5; color:#059669;" title="Approve">✅</button>
+                                <button class="team-act-btn" onclick="rejectOrRemoveStaff('${s.email || s.mobile}', 'Reject')" style="background:#FEF2F2; color:#DC2626;" title="Reject">✕</button>
                             </div>
                         </div>`;
                     } else if (s.status === 'Approved') {
                         activeCount++;
+                        if (activeCount === 1) {
+                            activeDiv.innerHTML = '<div class="team-section-title">✅ Active Team Members</div>';
+                        }
+                        // Permission summary
+                        let perm = s.permissions;
+                        let modules = perm ? Object.entries(perm.modules || {}).filter(([k,v])=>v).map(([k])=>k.toUpperCase()).join(' · ') : 'All Access';
                         activeDiv.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:white; border-radius:6px; margin-bottom:8px;">
-                            <div><strong style="font-size:13px; color:var(--success);">✅ ${s.name}</strong></div>
-                            <div style="display:flex; gap:6px;">
-                                <button onclick="openPermissionSetup('${s.mobile}', '${s.name}', true)" style="background:#EFF6FF; color:var(--accent-color); border:none; padding:6px; border-radius:4px; font-size:11px; cursor:pointer;">⚙️</button>
-                                <button onclick="rejectOrRemoveStaff('${s.mobile}', 'Remove')" style="background:#FEF2F2; color:var(--danger); border:none; padding:6px; border-radius:4px; font-size:11px; cursor:pointer;">🗑️</button>
+                        <div class="team-staff-card">
+                            <div class="team-staff-avatar" style="background:${avatarColor}22; color:${avatarColor};">${initial}</div>
+                            <div class="team-staff-info">
+                                <div class="team-staff-name">${sanitize(s.name)} <span class="team-staff-role" style="background:#EFF6FF; color:#1D4ED8;">${s.role || 'Staff'}</span></div>
+                                <div class="team-staff-email">📧 ${sanitize(emailDisplay)}</div>
+                                <div style="font-size:9px; color:#94A3B8; font-weight:600; margin-top:3px;">Access: ${modules}</div>
+                            </div>
+                            <div class="team-staff-actions">
+                                <button class="team-act-btn" onclick="openPermissionSetup('${s.email || s.mobile}', '${s.name}', true)" style="background:#EFF6FF; color:#1D4ED8;" title="Edit Permissions">⚙️</button>
+                                <button class="team-act-btn" onclick="rejectOrRemoveStaff('${s.email || s.mobile}', 'Remove')" style="background:#FEF2F2; color:#DC2626;" title="Remove">🗑️</button>
                             </div>
                         </div>`;
                     }
                 });
             }
-            
-            
-            if(pendingCount === 0) pendingDiv.innerHTML += `<p style="font-size:11px; color:#94A3B8;">No pending requests.</p>`;
-            
+
+            if (pendingCount === 0) pendingDiv.innerHTML = '';
+            if (activeCount === 0) activeDiv.innerHTML = '<div class="team-section-title">✅ Active Team Members</div><p style="font-size:12px; color:#94A3B8; font-weight:500; text-align:center; padding:16px 0;">No staff added yet.</p>';
+
             document.getElementById('teamModal').style.display = 'flex';
+        }
+
+        // ✅ Permission UI helpers
+        function updatePermRow(rowId, checkbox) {
+            let row = document.getElementById(rowId);
+            if (row) {
+                if (checkbox.checked) { row.classList.add('active-perm'); }
+                else { row.classList.remove('active-perm'); }
+            }
+        }
+        function applyPermPreset(preset) {
+            let mods = { crm:false, event:false, sales:false, purch:false, exp:false, bank:false, rep:false, inv:false };
+            if (preset === 'full')  { Object.keys(mods).forEach(k => mods[k] = true); }
+            if (preset === 'sales') { mods.crm=true; mods.event=true; mods.sales=true; }
+            if (preset === 'crm')   { mods.crm=true; mods.event=true; }
+            // none = all false
+            Object.keys(mods).forEach(k => {
+                let el = document.getElementById('perm_mod_' + k);
+                if (el) { el.checked = mods[k]; updatePermRow('ptrow_' + k, el); }
+            });
         }
 
         // 4. Open Permission Checkbox Form
@@ -8118,16 +8463,16 @@
 
             if (isEditing && staff.permissions) {
                 let p = staff.permissions;
-                document.getElementById('perm_mod_crm').checked = p.modules.crm;
-                document.getElementById('perm_mod_event').checked = p.modules.event;
-                document.getElementById('perm_mod_sales').checked = p.modules.sales;
-                document.getElementById('perm_mod_purch').checked = p.modules.purch;
-                document.getElementById('perm_mod_exp').checked = p.modules.exp;
-                document.getElementById('perm_mod_bank').checked = p.modules.bank;
-                document.getElementById('perm_mod_rep').checked = p.modules.rep;
-                document.getElementById('perm_mod_inv').checked = p.modules.inv || false;
+                let mods = { crm: p.modules.crm, event: p.modules.event, sales: p.modules.sales, purch: p.modules.purch, exp: p.modules.exp, bank: p.modules.bank, rep: p.modules.rep, inv: p.modules.inv || false };
+                Object.keys(mods).forEach(k => {
+                    let el = document.getElementById('perm_mod_' + k);
+                    if (el) { el.checked = mods[k]; updatePermRow('ptrow_' + k, el); }
+                });
                 document.getElementById('perm_act_edit').checked = p.actions.edit;
                 document.getElementById('perm_act_del').checked = p.actions.del;
+                // Sync action card styles
+                if (p.actions.edit) { let c = document.getElementById('perm_act_edit'); let card = c.closest('.perm-act-card'); if(card) { card.style.borderColor='#FCD34D'; card.style.background='#FFFBEB'; } }
+                if (p.actions.del) { let c = document.getElementById('perm_act_del'); let card = c.closest('.perm-act-card'); if(card) { card.style.borderColor='#FCA5A5'; card.style.background='#FEF2F2'; } }
             } else {
                 document.getElementById('permForm').reset();
             }
@@ -8209,7 +8554,9 @@
                 let id = activeSection.id;
                 if (id === 'crm' && !p.crm) openTab('home', btnHome);
                 if (id === 'events' && !p.event) openTab('home', btnHome);
-                if ((id === 'sales-hub' || id === 'purchase-hub' || id === 'expense-hub' || id === 'bank-hub' || id === 'reports-hub' || id === 'party-master') && !hasAnyErpAccess) {
+                // ✅ Permission-based tab enforcement
+                let isOwnerCheck = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
+                if (!isOwnerCheck && (id === 'sales-hub' || id === 'purchase-hub' || id === 'expense-hub' || id === 'bank-hub' || id === 'reports-hub' || id === 'party-master') && !hasAnyErpAccess) {
                     openTab('home', btnHome);
                 }
             }
@@ -8412,8 +8759,8 @@
 
             localStorage.setItem('utsav_master_comps', JSON.stringify(masterCompsDB));
             document.getElementById('permissionModal').style.display = 'none';
-            openTeamModal(); 
-            alert("✅ Access Granted & Saved to Cloud!");
+            openTeamModal();
+            if (typeof window.showToast === 'function') window.showToast('Access permissions saved!', 'success', 3000);
         }
 
         async function rejectOrRemoveStaff(mobile, action) {
@@ -8442,7 +8789,7 @@
             if (comp.staff.some(s => s.email === staffEmail || s.mobile === staffEmail)) return alert("❌ This email is already in the team!");
 
             comp.staff.push({ email: staffEmail, mobile: staffEmail, name: name, status: 'Approved', role: 'Staff',
-                permissions: { modules: { crm: true, event: true, sales: false, purch: false, exp: false, bank: false, rep: false },
+                permissions: { modules: { crm: true, event: true, sales: false, purch: false, exp: false, bank: false, rep: false, inv: false },
                 actions: { add: true, edit: false, del: false } } });
 
             try { await db.collection("companies").doc(currentWorkspaceId).update({ staff: comp.staff }); } catch(e) { }
@@ -9626,204 +9973,149 @@
 
         window.renderTasksDashboard = function(filter = null, element = null) {
             if (filter) currentTaskFilter = filter;
-            
-            if (element) {
-                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => b.classList.remove('active-sales-tab'));
-                element.classList.add('active-sales-tab');
-            } else {
-                document.querySelectorAll('#tasks .sales-tab-btn').forEach(b => {
-                    if (b.id === 'task-filter-' + currentTaskFilter) b.classList.add('active-sales-tab');
-                    else b.classList.remove('active-sales-tab');
-                });
-            }
+
+            // Update active pill
+            document.querySelectorAll('.task-pill').forEach(b => b.classList.remove('active-task-pill'));
+            let activeBtn = element || document.getElementById('task-filter-' + currentTaskFilter);
+            if (activeBtn) activeBtn.classList.add('active-task-pill');
 
             let container = document.getElementById('task-dash-container');
             if (!container) return;
             container.innerHTML = "";
 
             let searchWord = (searchTerms.tasks || "").toLowerCase();
-            let addedCount = 0;
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
+            let today = new Date().toISOString().split('T')[0];
+            let now = new Date();
 
-            // 1. SCAN GENERAL TASKS & MEETINGS
+            let allTasks = [];
+
+            // 1. GENERAL TASKS & MEETINGS
             Object.values(globalTasksDB || {}).forEach(t => {
-                let isMatch = true;
-                if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
-                if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
-                if (currentTaskFilter === 'Meetings' && t.type !== 'Meeting') isMatch = false;
-
+                if (currentTaskFilter === 'Pending' && t.done) return;
+                if (currentTaskFilter === 'Completed' && !t.done) return;
+                if (currentTaskFilter === 'Meetings' && t.type !== 'Meeting') return;
                 let textStr = (t.text || "").toLowerCase();
                 let personStr = (t.leadName || "").toLowerCase();
-                if (searchWord && !textStr.includes(searchWord) && !personStr.includes(searchWord)) isMatch = false;
-
-                if (isMatch) {
-                    let badge = t.type === 'Meeting' ? '<span class="status-badge badge-meet">Meeting</span>' : '<span class="status-badge badge-other">General</span>';
-                    let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : (t.date ? `📅 ${t.date} ${t.time || ''}` : '');
-                    
-                    // 💬 Smart WhatsApp Routing
-                    let waPhone = t.assignedTo || loggedInMobile || "";
-                    let waMsg = encodeURIComponent(`*📝 UTSAVhq Task Reminder*\n\nTask: ${sanitize(t.text)}\nSchedule: ${t.date || ''} ${t.time || ''}\nStatus: Pending ⏳`);
-                    let waBtn = `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px;" title="Share on WhatsApp">💬</button>`;
-
-                    container.innerHTML += `
-                        <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
-                            <div style="display:flex; align-items:flex-start; gap:10px; flex:1; text-align:left;">
-                                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${t.id}', true)" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
-                                <div>
-                                    <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${sanitize(t.text)} ${badge}</div>
-                                    <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} ${t.leadName ? '• Person: ' + t.leadName : ''}</div>
-                                </div>
-                            </div>
-                            <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
-                                ${waBtn}
-                                <button onclick="window.editTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
-                                <button onclick="deleteTaskItem('${t.id}', true)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
-                            </div>
-                        </div>`;
-                    addedCount++;
-                }
+                if (searchWord && !textStr.includes(searchWord) && !personStr.includes(searchWord)) return;
+                allTasks.push({ ...t, _source: 'global' });
             });
 
-            // 2. SCAN EVENT TASKS
-            Object.values(leadsDB || {}).forEach(lead => {
-                if (lead.tasks && Array.isArray(lead.tasks)) {
+            // 2. EVENT TASKS
+            if (currentTaskFilter !== 'Meetings') {
+                Object.values(leadsDB || {}).forEach(lead => {
+                    if (!lead.tasks || !Array.isArray(lead.tasks)) return;
                     lead.tasks.forEach(t => {
-                        let isMatch = true;
-                        if (currentTaskFilter === 'Pending' && t.done) isMatch = false;
-                        if (currentTaskFilter === 'Completed' && !t.done) isMatch = false;
-                        if (currentTaskFilter === 'Meetings') isMatch = false; 
-
+                        if (currentTaskFilter === 'Pending' && t.done) return;
+                        if (currentTaskFilter === 'Completed' && !t.done) return;
                         let textStr = (t.text || "").toLowerCase();
                         let leadNameStr = (lead.name || "").toLowerCase();
-                        let funcStr = (lead.func || "").toLowerCase();
-                        if (searchWord && !textStr.includes(searchWord) && !leadNameStr.includes(searchWord) && !funcStr.includes(searchWord)) isMatch = false;
-
-                        let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
-                        if (!isOwner && lead.assignedTo !== loggedInMobile && t.assignedTo !== loggedInMobile) isMatch = false;
-
-                        if (isMatch) {
-                            let badge = `<span class="status-badge badge-new" style="font-size:9px;">Event: ${sanitize(lead.func)}</span>`;
-                            let dateInfo = t.deadline ? `⏰ Due: ${new Date(t.deadline).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}` : '';
-                            let taskIdStr = t.id ? t.id : t;
-                            
-                            // 💬 Smart WhatsApp Routing (Staff ko bhejo, nahi toh Client ko!)
-                            let waPhone = t.assignedTo || lead.phone || loggedInMobile || "";
-                            let waMsg = encodeURIComponent(`*🎪 UTSAVhq Event Task Reminder*\n\nEvent: ${sanitize(lead.func)} (${sanitize(lead.name)})\nTask: ${sanitize(t.text)}\nDeadline: ${t.deadline ? new Date(t.deadline).toLocaleString('en-IN') : 'TBD'}`);
-                            let waBtn = `<button onclick="window.open('https://wa.me/91${waPhone}?text=${waMsg}', '_blank')" style="background:none; border:none; cursor:pointer; font-size:16px; padding:0 4px;" title="Share on WhatsApp">💬</button>`;
-
-                            container.innerHTML += `
-                                <div class="task-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">
-                                    <div style="display:flex; align-items:flex-start; gap:10px; flex:1; text-align:left;">
-                                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskStatus('${taskIdStr}', false, '${sanitize(lead.id)}')" style="width:18px; height:18px; margin-top:2px; cursor:pointer; accent-color:var(--success);">
-                                        <div>
-                                            <div class="task-text ${t.done ? 'task-done' : ''}" style="font-size:13.5px; font-weight:700; color:var(--text-primary);">${sanitize(t.text)} ${badge}</div>
-                                            <div class="row-sub" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${dateInfo} • Client: ${sanitize(lead.name)}</div>
-                                        </div>
-                                    </div>
-                                    <div style="display:flex; gap:10px; flex-shrink:0; align-items:center;">
-                                        ${waBtn}
-                                        <button onclick="window.editTaskItem('${taskIdStr}', false, '${sanitize(lead.id)}')" style="background:none; border:none; color:var(--accent-color); cursor:pointer; font-size:14px;">✏️</button>
-                                        <button onclick="deleteTaskItem('${taskIdStr}', false, '${sanitize(lead.id)}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; line-height:1;">&times;</button>
-                                    </div>
-                                </div>`;
-                            addedCount++;
-                        }
+                        if (searchWord && !textStr.includes(searchWord) && !leadNameStr.includes(searchWord)) return;
+                        // ✅ Owner sees all; staff sees only assigned to them
+                        if (!isOwner && t.assignedTo !== loggedInEmail && t.assignedTo !== loggedInMobile && lead.assignedTo !== loggedInEmail) return;
+                        allTasks.push({ ...t, _source: 'event', _leadId: lead.id, _leadName: lead.name, _leadFunc: lead.func });
                     });
-                }
+                });
+            }
+
+            // Sort: overdue first, then by deadline
+            allTasks.sort((a, b) => {
+                let aD = a.deadline ? new Date(a.deadline) : (a.date ? new Date(a.date) : new Date('2099-01-01'));
+                let bD = b.deadline ? new Date(b.deadline) : (b.date ? new Date(b.date) : new Date('2099-01-01'));
+                if (a.done !== b.done) return a.done ? 1 : -1;
+                return aD - bD;
             });
 
-            if (addedCount === 0) {
-                container.innerHTML = `<p style="padding:30px; text-align:center; color:var(--text-secondary); font-weight:600; font-size:13px;">No tasks found in this category.</p>`;
-            }
-        };
+            // Update stats
+            let allGlobal = Object.values(globalTasksDB || {});
+            let allEvent = [];
+            Object.values(leadsDB || {}).forEach(l => { if (l.tasks) allEvent.push(...l.tasks); });
+            let allCombined = [...allGlobal, ...allEvent];
+            let pendingCount = allCombined.filter(t => !t.done).length;
+            let doneCount = allCombined.filter(t => t.done).length;
+            let meetCount = allGlobal.filter(t => t.type === 'Meeting' && !t.done).length;
+            let todayCount = allCombined.filter(t => !t.done && (
+                (t.deadline && t.deadline.startsWith(today)) || (t.date === today)
+            )).length;
+            let s = document.getElementById('ts_pending'); if(s) s.textContent = pendingCount;
+            let sd = document.getElementById('ts_done'); if(sd) sd.textContent = doneCount;
+            let sm = document.getElementById('ts_meetings'); if(sm) sm.textContent = meetCount;
+            let st = document.getElementById('ts_today'); if(st) st.textContent = todayCount;
 
-        // 📝 OPEN MODAL IN ADVANCED EDIT MODE
-        window.editTaskItem = function(id, isGlobal, leadId) {
-            window.editingTaskId = id;
-            window.editingTaskIsGlobal = isGlobal;
-            window.editingTaskLeadId = leadId;
-            if(typeof closeAllMenus === 'function') closeAllMenus();
-            
-            let task = isGlobal ? globalTasksDB[id] : leadsDB[leadId].tasks.find(t => (t.id || t) === id);
-            if (!task) return;
-
-            document.getElementById('quickTaskForm').reset();
-            document.querySelector('#quickTaskModal h3').innerText = "Edit Task Configurations";
-            
-            document.getElementById('qt_text').value = task.text || "";
-            let assignSel = document.getElementById('qt_assign_to');
-            if (assignSel) assignSel.innerHTML = getStaffOptions(task.assignedTo);
-            
-            let typeSel = document.getElementById('qt_type');
-            if (typeSel) {
-                typeSel.value = isGlobal ? 'General' : 'Event';
-                if(typeof toggleTaskLeadSelect === 'function') toggleTaskLeadSelect();
-            }
-            
-            if (!isGlobal && leadId && document.getElementById('qt_lead')) {
-                if(typeof loadEventsIntoSelect === 'function') loadEventsIntoSelect('qt_lead', leadId);
+            if (allTasks.length === 0) {
+                let msgs = { Pending:'No pending tasks! 🎉', Completed:'No completed tasks yet.', Meetings:'No meetings scheduled.', All:'No tasks found.' };
+                container.innerHTML = `<div class="task-empty"><div class="task-empty-icon">${currentTaskFilter === 'Completed' ? '🎯' : '📋'}</div><div class="task-empty-text">${msgs[currentTaskFilter] || 'No tasks found.'}</div><div class="task-empty-sub">Use the + button to add a new task</div></div>`;
+                return;
             }
 
-            if (document.getElementById('qt_deadline')) {
-                document.getElementById('qt_deadline').value = task.deadline || task.date || "";
-            }
+            allTasks.forEach(t => {
+                let isOverdue = !t.done && t.deadline && new Date(t.deadline) < now;
+                let deadlineStr = '';
+                if (t.deadline) {
+                    let dl = new Date(t.deadline);
+                    deadlineStr = dl.toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+                } else if (t.date) {
+                    deadlineStr = t.date + (t.time ? ' ' + t.time : '');
+                }
 
-            document.getElementById('quickTaskModal').style.display = 'flex';
-        };
+                let typeBadge = '';
+                if (t.type === 'Meeting') typeBadge = `<span class="task-meta-chip meeting">🤝 Meeting</span>`;
+                else if (t._source === 'event') typeBadge = `<span class="task-meta-chip event">🎪 ${sanitize(t._leadFunc || 'Event')}</span>`;
+                else typeBadge = `<span class="task-meta-chip">📋 General</span>`;
 
-        // 💾 SAVE MODAL TRANSFERS (ADD + EDIT LOGIC BALANCED)
-        window.saveQuickTask = function() { 
-            let type = document.getElementById('qt_type').value; 
-            let text = document.getElementById('qt_text').value; 
-            let deadline = document.getElementById('qt_deadline').value; 
-            let assignedTo = document.getElementById('qt_assign_to').value; 
-
-            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInMobile);
-            if (!assignedTo && !isOwner) assignedTo = loggedInMobile;
-
-            if (!text) return alert("Task description required!"); 
-            
-            if (window.editingTaskId) {
-                // UPDATE RECORD LOGIC
-                if (window.editingTaskIsGlobal) {
-                    let t = globalTasksDB[window.editingTaskId];
-                    if (t) { t.text = text; t.deadline = deadline; t.assignedTo = assignedTo; if (deadline) t.date = deadline.split('T')[0]; }
-                } else {
-                    let currentLinkedEventId = document.getElementById('qt_lead').value;
-                    let targetEventId = type === 'Event' ? currentLinkedEventId : window.editingTaskLeadId;
-                    if (!targetEventId && type === 'Event') return alert("Select an Event!");
-
-                    if (window.editingTaskLeadId && leadsDB[window.editingTaskLeadId]) {
-                        leadsDB[window.editingTaskLeadId].tasks = leadsDB[window.editingTaskLeadId].tasks.filter(t => (t.id || t) !== window.editingTaskId);
-                    }
-                    
-                    if (type === 'Event') {
-                        if (!leadsDB[targetEventId].tasks) leadsDB[targetEventId].tasks = [];
-                        leadsDB[targetEventId].tasks.push({ id: window.editingTaskId, text: text, done: false, deadline: deadline, assignedTo: assignedTo });
-                    } else {
-                        globalTasksDB[window.editingTaskId] = { id: window.editingTaskId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: deadline ? deadline.split('T')[0] : new Date().toISOString().split('T')[0] };
+                // ✅ Staff name from masterUsersDB; no owner prefix shown
+                let assigneeEmail = t.assignedTo || '';
+                let assigneeName = '';
+                if (assigneeEmail && masterUsersDB[assigneeEmail]) {
+                    assigneeName = masterUsersDB[assigneeEmail].name || assigneeEmail.split('@')[0];
+                } else if (assigneeEmail) {
+                    // Try staff list
+                    let comp = masterCompsDB[currentWorkspaceId];
+                    if (comp && comp.staff) {
+                        let s = comp.staff.find(x => x.email === assigneeEmail || x.mobile === assigneeEmail);
+                        if (s) assigneeName = s.name;
                     }
                 }
-                window.editingTaskId = null; // Reset lock
-            } else {
-                // FRESH ADD RECORD LOGIC
-                let tId = "TSK" + Date.now(); 
-                if (type === 'Event') { 
-                    let lId = document.getElementById('qt_lead').value; 
-                    if (!lId) return alert("Select an Event!"); 
-                    if (!leadsDB[lId].tasks) leadsDB[lId].tasks = [];
-                    leadsDB[lId].tasks.push({ id: tId, text: text, done: false, deadline: deadline, assignedTo: assignedTo }); 
-                } else { 
-                    globalTasksDB[tId] = { id: tId, type: 'General', text: text, done: false, deadline: deadline, assignedTo: assignedTo, date: deadline ? deadline.split('T')[0] : new Date().toISOString().split('T')[0] }; 
-                } 
-            }
-            
-            updateDataAndUI(); 
-            document.getElementById('quickTaskModal').style.display = 'none'; 
-            if(typeof window.renderTasksDashboard === 'function') window.renderTasksDashboard('All', document.getElementById('task-filter-All'));
-            alert("Task Configurations Saved!"); 
+                
+                let assigneeBadge = assigneeName ? `<span class="task-meta-chip">👤 ${sanitize(assigneeName)}</span>` : '';
+                let deadlineBadge = deadlineStr ? `<span class="task-meta-chip ${isOverdue ? 'overdue' : ''}">⏰ ${isOverdue ? 'Overdue: ' : ''}${deadlineStr}</span>` : '';
+                
+                let priorityColor = isOverdue ? '#EF4444' : (t.done ? '#10B981' : '#3B82F6');
+                
+                let toggleFn = t._source === 'event'
+                    ? `toggleTaskStatus('${t.id}', false, '${t._leadId}')`
+                    : `toggleTaskStatus('${t.id}', true)`;
+                let editFn = `window.editTaskItem('${t.id}', ${t._source !== 'event'})`;
+                let delFn = t._source === 'event'
+                    ? `deleteTaskItem('${t.id}', false, '${t._leadId}')`
+                    : `deleteTaskItem('${t.id}', true)`;
+
+                container.innerHTML += `
+                <div class="task-card ${t.done ? 'task-done-card' : ''} ${isOverdue ? 'task-overdue' : ''}">
+                    <div class="task-check-wrap">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="${toggleFn}">
+                    </div>
+                    <div style="width:8px; height:8px; border-radius:50%; background:${priorityColor}; flex-shrink:0; margin-top:5px;"></div>
+                    <div class="task-body">
+                        <div class="task-title-row">
+                            <span class="task-text ${t.done ? 'done' : ''}">${sanitize(t.text)}</span>
+                            ${typeBadge}
+                        </div>
+                        <div class="task-meta">
+                            ${deadlineBadge}
+                            ${assigneeBadge}
+                            ${t._leadName ? `<span class="task-meta-chip">📋 ${sanitize(t._leadName)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="task-act-btn" onclick="${editFn}" title="Edit">✏️</button>
+                        <button class="task-act-btn" onclick="${delFn}" title="Delete" style="color:#94A3B8;">✕</button>
+                    </div>
+                </div>`;
+            });
         };
 
-        function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); document.getElementById('quickMeetingModal').style.display = 'flex'; }
+                function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); document.getElementById('quickMeetingModal').style.display = 'flex'; }
         function saveQuickMeeting() { let personName = document.getElementById('qm_person_name').value; let date = document.getElementById('qm_date').value; let time = document.getElementById('qm_time').value; let agenda = document.getElementById('qm_agenda').value; if (!personName || !date || !time) return alert("Name, Date, and Time required!"); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!"); }
 
         function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; document.getElementById('p_status').value = "Meeting Scheduled"; }
@@ -13247,6 +13539,14 @@
         // ==========================================
         // 🚀 MASTER VOUCHER PRINTING (PREMIUM EVENT FORMAT) - PAGE BREAK & UI FIXED
         // ==========================================
+        // ✅ Print Theme Configurations
+        const PRINT_THEMES = {
+            classic: { font: "'Inter', sans-serif", bg:'#fff', text:'#0f172a', accent:'#2563eb', headerBorder:'3px solid #0f172a', tableHead:'#f1f5f9', tableBorder:'#cbd5e1', totalsBg:'#f8fafc', companyNameCase:'uppercase', companyNameWeight:'900', radius:'4px' },
+            modern: { font:"'Inter', sans-serif", bg:'#fafafa', text:'#18181b', accent:'#18181b', headerBorder:'1.5px solid #18181b', tableHead:'#fafafa', tableBorder:'#e4e4e7', totalsBg:'#ffffff', companyNameCase:'none', companyNameWeight:'300', radius:'0px' },
+            gold: { font:"'Playfair Display', 'Inter', serif", bg:'#1c1917', text:'#e7e5e4', accent:'#d4af37', headerBorder:'1.5px solid #d4af37', tableHead:'#292524', tableBorder:'#44403c', totalsBg:'#292524', companyNameCase:'uppercase', companyNameWeight:'700', radius:'2px', dark:true },
+            bold: { font:"'Inter', sans-serif", bg:'#fff', text:'#0f172a', accent:'#0f172a', headerBorder:'4px solid #fbbf24', tableHead:'#0f172a', tableBorder:'#0f172a', totalsBg:'#0f172a', companyNameCase:'uppercase', companyNameWeight:'900', radius:'0px', boldHeader:true }
+        };
+
         function printVoucher(id, context) {
             let printWin = window.open('', '_blank');
             if (!printWin) return alert("⚠️ Popup Blocked! Please allow popups.");
@@ -13257,6 +13557,10 @@
             else if (context === 'expense') record = expenseDB[id];
 
             if (!record) { printWin.close(); return alert("Record not found!"); }
+
+            // ✅ Resolve active print theme
+            let selectedThemeName = (typeof appSettings !== 'undefined' && appSettings.printTheme) ? appSettings.printTheme : 'classic';
+            let pt = PRINT_THEMES[selectedThemeName] || PRINT_THEMES.classic;
 
             let party = record.partyId ? partiesDB[record.partyId] : null;
             let partyName = party ? party.name : "Unknown/General";
@@ -13277,31 +13581,31 @@
 
             let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${docTitle} - ${id}</title>
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-                body { font-family: 'Inter', sans-serif; padding: 25px; color: #0f172a; background: #fff; margin:0; line-height: 1.4; }
-                .receipt-box { max-width: 800px; margin: auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 4px; position:relative; }
-                .header-flex { display: flex; justify-content: space-between; border-bottom: 3px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; align-items: flex-end; }
-                .comp-name { font-size: 26px; font-weight: 900; color: #0f172a; text-transform: uppercase; margin-bottom: 5px; }
-                .doc-title { font-size: 28px; font-weight: 900; color: #2563eb; text-transform: uppercase; }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:wght@700;900&display=swap');
+                body { font-family: ${pt.font}; padding: 25px; color: ${pt.text}; background: ${pt.dark ? '#0c0a09' : '#f1f5f9'}; margin:0; line-height: 1.4; }
+                .receipt-box { max-width: 800px; margin: auto; background:${pt.bg}; border: 1px solid ${pt.dark ? '#44403c' : '#e2e8f0'}; padding: 30px; border-radius: ${pt.radius}; position:relative; }
+                .header-flex { display: flex; justify-content: space-between; border-bottom: ${pt.headerBorder}; padding-bottom: 15px; margin-bottom: 25px; align-items: flex-end; ${pt.boldHeader ? `background:${pt.tableHead}; margin:-30px -30px 25px -30px; padding:20px 30px 15px; color:white; border-radius:${pt.radius} ${pt.radius} 0 0;` : ''} }
+                .comp-name { font-size: 26px; font-weight: ${pt.companyNameWeight}; color: ${pt.boldHeader ? '#ffffff' : (pt.dark ? pt.accent : pt.text)}; text-transform: ${pt.companyNameCase}; margin-bottom: 5px; letter-spacing: ${pt.companyNameCase === 'uppercase' ? '0.5px' : 'normal'}; }
+                .doc-title { font-size: 28px; font-weight: 900; color: ${pt.boldHeader ? '#fbbf24' : pt.accent}; text-transform: uppercase; }
                 
                 .info-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; margin-bottom: 25px; }
-                .section-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; display: block; }
+                .section-label { font-size: 11px; font-weight: 800; color: ${pt.dark ? '#a8a29e' : '#64748b'}; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid ${pt.tableBorder}; padding-bottom: 4px; display: block; }
                 
                 table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-                th { background: #f1f5f9; font-weight: 800; color: #0f172a; text-transform: uppercase; font-size: 11px; border: 1px solid #cbd5e1; padding: 10px; }
-                td { border: 1px solid #cbd5e1; padding: 10px; }
+                th { background: ${pt.tableHead}; font-weight: 800; color: ${pt.boldHeader ? '#ffffff' : (pt.dark ? '#e7e5e4' : pt.text)}; text-transform: uppercase; font-size: 11px; border: 1px solid ${pt.tableBorder}; padding: 10px; }
+                td { border: 1px solid ${pt.tableBorder}; padding: 10px; color: ${pt.text}; }
                 .right { text-align: right; }
                 .center { text-align: center; }
                 
                 .summary-container { display: flex; justify-content: space-between; margin-top: 10px; gap: 20px; }
                 .history-table { width: 60%; font-size: 11px; }
-                .totals-box { width: 35%; background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 4px; }
-                .grand-total { font-size: 18px; font-weight: 900; border-top: 2px solid #0f172a; padding-top: 8px; margin-top: 8px; color: #2563eb; }
+                .totals-box { width: 35%; background: ${pt.totalsBg}; border: 1px solid ${pt.tableBorder}; padding: 15px; border-radius: ${pt.radius}; }
+                .grand-total { font-size: 18px; font-weight: 900; border-top: 2px solid ${pt.accent}; padding-top: 8px; margin-top: 8px; color: ${pt.accent}; }
                 
                 .status-stamp { position:absolute; top: 150px; right: 50px; font-size: 40px; font-weight: 900; opacity: 0.1; text-transform: uppercase; transform: rotate(-15deg); border: 5px solid; padding: 10px 20px; border-radius: 10px; }
                 .stamp-Paid { color: #166534; border-color: #166534; } .stamp-Partial { color: #b45309; border-color: #b45309; } .stamp-Due { color: #dc2626; border-color: #dc2626; }
 
-                @media print { #mobile-print-btn { display:none !important; } .receipt-box { border:none; box-shadow:none; padding:0; } }
+                @media print { #mobile-print-btn { display:none !important; } body { background:white !important; } .receipt-box { border:none; box-shadow:none; padding:0; } }
             </style></head><body>
             <div class="receipt-box">`;
 
@@ -13652,6 +13956,15 @@
         }
 
         // 🚀 SMART FIX 5: FY Filter in Reports Dashboard
+        // ✅ New grid-based report selector
+        function selectReportType(type, btn) {
+            document.querySelectorAll('.rep-type-btn').forEach(b => b.classList.remove('active-rep'));
+            if (btn) btn.classList.add('active-rep');
+            let sel = document.getElementById('report_type_selector');
+            if (sel) sel.value = type;
+            switchReportTab(type);
+        }
+
         function renderReportsDashboard() {
             let totSales = 0; let totRecv = 0; let totPurch = 0; let totPaid = 0; let totExp = 0;
 
@@ -15943,7 +16256,7 @@
         // 🚀 PHASE 5: MASTER SETTINGS & APP LOCK ENGINE
         // ==========================================
         let appSettings = JSON.parse(localStorage.getItem('utsav_app_settings')) || {
-            invPrefix: 'INV', qtPrefix: 'EST', showBank: true, defGst: 0, appPin: '',
+            invPrefix: 'INV', qtPrefix: 'EST', showBank: true, defGst: 0, appPin: '', printTheme: 'classic',
             tnc: "1. 50% advance payment required to confirm booking.\n2. Advance amount is non-refundable on cancellation.\n3. Damage to property will be charged to the client.\n4. Full payment must be settled before the final function.\n5. Subject to local jurisdiction.",
             waInv: "Hello [Client],\n\nYour Tax Invoice [BillNo] for the event [Event] is generated.\n\nTotal Amount: ₹[Total]\nBalance Due: ₹[Due]\n\nThank you for choosing us!",
             waQt: "Hello [Client],\n\nHere is your requested quotation [BillNo] for the event [Event].\n\nEstimated Total: ₹[Total]\n\nPlease review and confirm.\nThank you!",
@@ -16002,12 +16315,15 @@
             let waPhone        = document.getElementById('set_wa_phone')        ? document.getElementById('set_wa_phone').value           : (appSettings.waPhone || '');
             let manageInventory = document.getElementById('set_manage_inventory') ? document.getElementById('set_manage_inventory').checked : (appSettings.manageInventory || false);
 
+            let printTheme = document.getElementById('set_print_theme_value') ? document.getElementById('set_print_theme_value').value : (appSettings.printTheme || 'classic');
+
             appSettings = {
                 invPrefix, qtPrefix, poPrefix, pbPrefix,
                 defGst: parseInt(defGst) || 0,
                 showBank, showSig, appPin: pin, tnc,
                 waInv, waReview, waRemind, waPhone,
                 manageInventory,
+                printTheme,
                 // Preserve theme settings saved by setAccentTheme / setFontSize
                 accentTheme: appSettings.accentTheme || 'blue',
                 fontSize:    appSettings.fontSize    || 'medium'
@@ -16993,6 +17309,13 @@
                 document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active-fs'));
                 let fBtn = document.getElementById('fs-' + activeFs);
                 if (fBtn) fBtn.classList.add('active-fs');
+
+                // ✅ Restore selected print theme card
+                let activePTheme = s.printTheme || 'classic';
+                if (g('set_print_theme_value')) g('set_print_theme_value').value = activePTheme;
+                document.querySelectorAll('.ptheme-card').forEach(c => c.classList.remove('active-ptheme'));
+                let pThemeCard = document.getElementById('ptheme-' + activePTheme);
+                if (pThemeCard) pThemeCard.classList.add('active-ptheme');
             }
 
             // Always show inventory card
@@ -17074,6 +17397,45 @@
             if (btnEl) btnEl.classList.add('active-fs');
             if (typeof appSettings !== 'undefined') appSettings.fontSize = size;
             if (typeof showToast === 'function') showToast('🔠 Font size updated!', 'success', 1800);
+        }
+
+        // 🔷 Print Theme Selector
+        function selectPrintTheme(themeName) {
+            document.querySelectorAll('.ptheme-card').forEach(c => c.classList.remove('active-ptheme'));
+            let card = document.getElementById('ptheme-' + themeName);
+            if (card) card.classList.add('active-ptheme');
+            let hiddenInput = document.getElementById('set_print_theme_value');
+            if (hiddenInput) hiddenInput.value = themeName;
+            if (typeof appSettings !== 'undefined') appSettings.printTheme = themeName;
+            if (typeof showToast === 'function') showToast('🖨️ Print theme set to ' + themeName.charAt(0).toUpperCase() + themeName.slice(1) + '!', 'success', 1800);
+        }
+
+        function previewSelectedPrintTheme() {
+            let theme = document.getElementById('set_print_theme_value') ? document.getElementById('set_print_theme_value').value : 'classic';
+            // ✅ Temporarily set theme for preview without permanently saving to localStorage
+            let originalTheme = appSettings.printTheme;
+            appSettings.printTheme = theme;
+
+            let sampleRecord = {
+                id: 'SAMPLE-001', type: 'Invoice', date: new Date().toISOString(), status: 'Partial',
+                partyId: '__preview_party__',
+                items: [
+                    { name: 'Sample Item 1', qty: 2, rate: 1500, amount: 3000, unit: 'Pcs' },
+                    { name: 'Sample Item 2', qty: 1, rate: 2000, amount: 2000, unit: 'Pcs' }
+                ],
+                total: 5000, taxAmount: 250, gstPercent: 5, finalTotal: 5250, advance: 2000, balanceDue: 3250
+            };
+            let samplePartyBackup = partiesDB['__preview_party__'];
+            partiesDB['__preview_party__'] = { id: '__preview_party__', name: 'Sample Client', phone: '9876543210', address: 'Sample Address, City' };
+
+            let tempId = '__PREVIEW__';
+            salesDB[tempId] = sampleRecord;
+            printVoucher(tempId, 'sales');
+            delete salesDB[tempId];
+            if (samplePartyBackup) partiesDB['__preview_party__'] = samplePartyBackup; else delete partiesDB['__preview_party__'];
+
+            // Restore original (un-saved) theme setting so Save button is still required to persist
+            appSettings.printTheme = originalTheme;
         }
 
         // 🔷 Hub Tab Switcher
@@ -20145,9 +20507,14 @@
             
             if (!newName) return alert("Item Name is required!");
             
-            // 🚀 EXTRA POINT 1: Case-Insensitive Duplicate Check
-            let existingItem = Object.values(itemsDB).find(i => i.name.toLowerCase() === newName.toLowerCase() && i.name !== oldName);
-            if (existingItem) return alert("An item with this name already exists in your Godown!");
+            // ✅ Strict duplicate check: case-insensitive + trim + normalize spaces
+            let normalizedNew = newName.toLowerCase().replace(/\s+/g, ' ').trim();
+            let existingItem = Object.values(itemsDB).find(i => 
+                i.name.toLowerCase().replace(/\s+/g, ' ').trim() === normalizedNew && i.name !== oldName
+            );
+            if (existingItem) return alert(`⚠️ Item "${existingItem.name}" already exists!
+
+Please use a different name or edit the existing item.`);
             
             if (oldName && oldName !== newName) {
                 // Rename logic
