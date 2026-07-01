@@ -601,6 +601,13 @@
             visibility: visible !important;
         }
 
+        /* Reports hub needs fixed height to clip its two sub-screens */
+        #reports-hub.active-section {
+            display: block !important;
+            height: calc(100vh - 60px); /* full viewport minus nav bar */
+            overflow: hidden;
+        }
+
         @keyframes appTabSwitch {
             0% {
                 opacity: 0;
@@ -4327,126 +4334,187 @@
         </div>
 
         <!-- 10. Reports & Analytics -->
-        <div id="reports-hub" class="content section" style="padding-bottom:120px;">
-            <style>
-                .rep-hub-header { background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%); margin:-16px -16px 20px -16px; padding:22px 20px 18px; position:relative; overflow:hidden; }
-                .rep-hub-header::after { content:''; position:absolute; top:-30px; right:-30px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.05); }
-                .rep-hub-title { font-size:20px; font-weight:900; color:white; margin:0 0 2px; letter-spacing:-0.5px; }
-                .rep-hub-sub { font-size:11px; color:rgba(255,255,255,0.5); font-weight:500; }
-                
-                .rep-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
-                .rep-type-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:white; border:1.5px solid #E8EDF5; border-radius:14px; padding:14px 10px; cursor:pointer; transition:all 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.03); text-align:center; }
-                .rep-type-btn:hover { border-color:#C7D7F0; box-shadow:0 4px 12px rgba(29,78,216,0.08); transform:translateY(-1px); }
-                .rep-type-btn.active-rep { background:linear-gradient(135deg,#1D4ED8,#1E40AF) !important; border-color:transparent !important; box-shadow:0 4px 14px rgba(29,78,216,0.3) !important; transform:translateY(-2px); }
-                .rep-type-btn.active-rep span { color:white !important; }
-                .rep-type-icon { font-size:22px; }
-                .rep-type-label { font-size:10px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.3px; line-height:1.2; }
-                .rep-type-btn.active-rep .rep-type-label { color:rgba(255,255,255,0.85) !important; }
-            </style>
-            
-            <!-- Premium Header -->
-            <div class="rep-hub-header">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <button onclick="openTab('erp', document.getElementById('btn-erp'))"
-                        style="background:rgba(255,255,255,0.15); border:none; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; flex-shrink:0;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                    </button>
-                    <div>
-                        <div class="rep-hub-title">📊 Reports & Analytics</div>
-                        <div class="rep-hub-sub">Financial insights & data exports</div>
-                    </div>
+        <div id="reports-hub" class="content section" style="padding:0; background:#F1F5F9; overflow:hidden;">
+          <style>
+            /* ─────── REPORTS HUB v3 ─────── */
+            #rep-screen-selector,#rep-screen-result{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;transition:transform .32s cubic-bezier(.4,0,.2,1);background:#F1F5F9;}
+            #rep-screen-selector{transform:translateX(0);}
+            #rep-screen-result{transform:translateX(100%);}
+            #reports-hub.rep-result-open #rep-screen-selector{transform:translateX(-100%);}
+            #reports-hub.rep-result-open #rep-screen-result{transform:translateX(0);}
+            #reports-hub{position:relative;}
+
+            .rh-header{background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%);padding:18px 16px 16px;position:relative;overflow:hidden;}
+            .rh-header::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.05);}
+            .rh-header::after{content:'';position:absolute;bottom:-40px;left:30%;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.04);}
+            .rh-header-row{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+            .rh-back-btn{background:rgba(255,255,255,0.15);border:none;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;flex-shrink:0;transition:.2s;}
+            .rh-back-btn:active{background:rgba(255,255,255,0.25);}
+            .rh-title{font-size:18px;font-weight:900;color:white;margin:0;letter-spacing:-.3px;}
+            .rh-sub{font-size:11px;color:rgba(255,255,255,.5);font-weight:500;margin-top:2px;}
+
+            /* FY quick-pills */
+            .rh-fy-row{display:flex;gap:6px;overflow-x:auto;padding:12px 16px 0;scrollbar-width:none;}
+            .rh-fy-row::-webkit-scrollbar{display:none;}
+            .rh-fy-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);padding:5px 12px;border-radius:20px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.2s;}
+            .rh-fy-pill.active-fy{background:white;color:#0F172A;}
+
+            /* KPI strip inside selector */
+            .rh-kpi-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 16px;}
+            .rh-kpi{background:white;border-radius:12px;padding:10px 8px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+            .rh-kpi-val{font-size:15px;font-weight:900;margin-bottom:2px;}
+            .rh-kpi-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#94A3B8;}
+
+            /* Report type grid — 3 cols */
+            .rh-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 16px;}
+            .rh-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:white;border:1.5px solid #E8EDF5;border-radius:14px;padding:12px 6px;cursor:pointer;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.03);min-height:72px;}
+            .rh-btn:hover{border-color:#93C5FD;box-shadow:0 4px 12px rgba(29,78,216,.08);}
+            .rh-btn:active{transform:scale(.96);}
+            .rh-btn.active-rep{background:linear-gradient(135deg,#1D4ED8,#1E40AF);border-color:transparent;box-shadow:0 4px 14px rgba(29,78,216,.3);}
+            .rh-btn.active-rep .rh-icon,.rh-btn.active-rep .rh-lbl{color:white!important;}
+            .rh-icon{font-size:20px;line-height:1;}
+            .rh-lbl{font-size:9.5px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.2px;text-align:center;line-height:1.25;}
+
+            /* Dashboard net profit hero */
+            .rh-np-hero{background:linear-gradient(135deg,#0F172A,#1E293B);color:white;border-radius:14px;padding:18px 16px;text-align:center;margin:0 16px 12px;}
+            .rh-np-label{font-size:10px;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+            .rh-np-val{font-size:28px;font-weight:900;margin:5px 0 3px;letter-spacing:-.5px;}
+            .rh-np-sub{font-size:11px;color:#CBD5E1;font-weight:500;}
+            .rh-4grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 12px;}
+            .rh-card{background:white;border:1.5px solid #E2E8F0;border-radius:12px;padding:12px 10px;text-align:center;}
+            .rh-card-lbl{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#94A3B8;margin-bottom:5px;}
+            .rh-card-val{font-size:17px;font-weight:900;}
+            .rh-exp-box{background:white;border-radius:12px;padding:14px 16px;margin:0 16px 80px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+            .rh-exp-title{font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+
+            /* Result screen */
+            .rh-result-header{background:white;padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #E2E8F0;position:sticky;top:0;z-index:10;}
+            .rh-result-back{background:#F1F5F9;border:none;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#475569;flex-shrink:0;}
+            .rh-result-title{font-size:14px;font-weight:900;color:#0F172A;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+            .rh-filter-card{background:white;border-radius:12px;margin:12px 16px 0;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+            .rh-filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+            .rh-filter-group{flex:1;min-width:110px;display:flex;flex-direction:column;gap:4px;}
+            .rh-filter-label{font-size:9.5px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.3px;}
+            .rh-export-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed #E2E8F0;}
+            .rh-export-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 12px;border-radius:10px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit;transition:.2s;}
+            .rh-output-box{background:white;border-radius:12px;margin:12px 16px 80px;padding:16px;overflow-x:auto;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+            .rh-output-title{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;}
+          </style>
+
+          <input type="hidden" id="report_type_selector" value="dash">
+
+          <!-- ══════════ SCREEN 1: SELECTOR ══════════ -->
+          <div id="rep-screen-selector">
+            <!-- Header -->
+            <div class="rh-header" style="padding-bottom:14px;">
+              <div class="rh-header-row">
+                <button class="rh-back-btn" onclick="openTab('erp',document.getElementById('btn-erp'))">
+                  <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                </button>
+                <div>
+                  <div class="rh-title">Reports &amp; Analytics</div>
+                  <div class="rh-sub">Financial insights · Export data</div>
                 </div>
+              </div>
+              <!-- FY Pills -->
+              <div class="rh-fy-row" style="padding:10px 0 0;">
+                <button class="rh-fy-pill active-fy" id="fy-pill-All" onclick="changeFY('All');updateFYPill('All')">All Time</button>
+                <button class="rh-fy-pill" id="fy-pill-2025-26" onclick="changeFY('2025-26');updateFYPill('2025-26')">FY 25-26</button>
+                <button class="rh-fy-pill" id="fy-pill-2024-25" onclick="changeFY('2024-25');updateFYPill('2024-25')">FY 24-25</button>
+                <button class="rh-fy-pill" id="fy-pill-2023-24" onclick="changeFY('2023-24');updateFYPill('2023-24')">FY 23-24</button>
+              </div>
             </div>
 
-            <!-- Report Type Grid -->
-            <input type="hidden" id="report_type_selector" value="dash">
-            <div class="rep-type-grid">
-                <button class="rep-type-btn active-rep" onclick="selectReportType('dash', this)"><span class="rep-type-icon">📊</span><span class="rep-type-label">Dashboard</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('pl', this)"><span class="rep-type-icon">📉</span><span class="rep-type-label">P&L Account</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('bs', this)"><span class="rep-type-icon">⚖️</span><span class="rep-type-label">Balance Sheet</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('daybook', this)"><span class="rep-type-icon">📅</span><span class="rep-type-label">Day Book</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('ledger', this)"><span class="rep-type-icon">📖</span><span class="rep-type-label">Party Ledger</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('bankledger', this)"><span class="rep-type-icon">🏦</span><span class="rep-type-label">Cash/Bank Book</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('sales', this)"><span class="rep-type-icon">📄</span><span class="rep-type-label">Sales Report</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('expense', this)"><span class="rep-type-icon">💸</span><span class="rep-type-label">Expenses</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('crm', this)"><span class="rep-type-icon">🎯</span><span class="rep-type-label">CRM Analytics</span></button>
-                <button class="rep-type-btn" onclick="selectReportType('inventory', this)"><span class="rep-type-icon">📦</span><span class="rep-type-label">Stock Report</span></button>
+            <!-- KPI Strip -->
+            <div class="rh-kpi-strip">
+              <div class="rh-kpi" style="border:1.5px solid #BBF7D0;">
+                <div class="rh-kpi-val" style="color:#059669;" id="rh_total_sales">₹0</div>
+                <div class="rh-kpi-lbl" style="color:#059669;">Revenue</div>
+              </div>
+              <div class="rh-kpi" style="border:1.5px solid #FECACA;">
+                <div class="rh-kpi-val" style="color:#DC2626;" id="rh_total_expenses">₹0</div>
+                <div class="rh-kpi-lbl" style="color:#DC2626;">Expenses</div>
+              </div>
+              <div class="rh-kpi" style="border:1.5px solid #FDE68A; background:#FFFBEB;">
+                <div class="rh-kpi-val" style="color:#D97706;" id="rh_net_profit">₹0</div>
+                <div class="rh-kpi-lbl" style="color:#D97706;">Net P&amp;L</div>
+              </div>
             </div>
 
-            <div id="rep-view-dash">
-                <div
-                    style="background: linear-gradient(135deg, #0F172A, #1E293B); color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
-                    <div
-                        style="font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; font-weight:700;">
-                        Net Profit (All Time)</div>
-                    <div style="font-size: 28px; font-weight: 800; color: var(--success); margin: 6px 0; letter-spacing:-0.5px;"
-                        id="rh_net_profit">₹0</div>
-                    <div style="font-size: 11px; color: #CBD5E1; font-weight:500;">Total Income minus Total Expenses
-                    </div>
-                </div>
-                <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
-                    <div class="data-card">
-                        <div class="data-card-label">Total Revenue</div>
-                        <div class="data-card-value text-blue" id="rh_total_sales">₹0</div>
-                    </div>
-                    <div class="data-card">
-                        <div class="data-card-label">Total Expenses</div>
-                        <div class="data-card-value text-danger" id="rh_total_expenses">₹0</div>
-                    </div>
-                    <div class="data-card" style="background: #F0FDF4; border-color: #BBF7D0;">
-                        <div class="data-card-label" style="color:var(--success);">Market Receivables</div>
-                        <div class="data-card-value text-green" id="rh_receivables">₹0</div>
-                    </div>
-                    <div class="data-card" style="background: #FEF2F2; border-color: #FCA5A5;">
-                        <div class="data-card-label" style="color:var(--danger);">Market Payables</div>
-                        <div class="data-card-value text-danger" id="rh_payables">₹0</div>
-                    </div>
-                </div>
-                <div
-                    style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow:var(--shadow-sm);">
-                    <h4
-                        style="margin: 0 0 16px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">
-                        Expense Breakdown</h4>
-                    <div id="rh_expense_chart"></div>
-                </div>
+            <!-- Report Type Grid: 3 columns -->
+            <div class="rh-grid">
+              <button class="rh-btn" id="rh-btn-pl"        onclick="selectReportType('pl',this)"><span class="rh-icon">📉</span><span class="rh-lbl">P&amp;L</span></button>
+              <button class="rh-btn" id="rh-btn-bs"        onclick="selectReportType('bs',this)"><span class="rh-icon">⚖️</span><span class="rh-lbl">Balance Sheet</span></button>
+              <button class="rh-btn" id="rh-btn-daybook"   onclick="selectReportType('daybook',this)"><span class="rh-icon">📅</span><span class="rh-lbl">Day Book</span></button>
+              <button class="rh-btn" id="rh-btn-ledger"    onclick="selectReportType('ledger',this)"><span class="rh-icon">📖</span><span class="rh-lbl">Party Ledger</span></button>
+              <button class="rh-btn" id="rh-btn-bankledger" onclick="selectReportType('bankledger',this)"><span class="rh-icon">🏦</span><span class="rh-lbl">Cash/Bank</span></button>
+              <button class="rh-btn" id="rh-btn-sales"     onclick="selectReportType('sales',this)"><span class="rh-icon">📄</span><span class="rh-lbl">Sales</span></button>
+              <button class="rh-btn" id="rh-btn-expense"   onclick="selectReportType('expense',this)"><span class="rh-icon">💸</span><span class="rh-lbl">Expenses</span></button>
+              <button class="rh-btn" id="rh-btn-crm"       onclick="selectReportType('crm',this)"><span class="rh-icon">🎯</span><span class="rh-lbl">CRM</span></button>
+              <button class="rh-btn" id="rh-btn-inventory" onclick="selectReportType('inventory',this)"><span class="rh-icon">📦</span><span class="rh-lbl">Stock</span></button>
             </div>
 
-            <div id="rep-filter-bar"
-                style="display:none; margin-bottom: 20px; background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow:var(--shadow-sm);">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
-                    <div style="flex: 1; min-width: 120px; display:none;" id="ledger_party_group"><label
-                            class="form-label">Select Party</label><select id="rep_party_select"
-                            class="form-select"></select></div>
-                    <div style="flex: 1; min-width: 120px; display:none;" id="ledger_bank_group"><label
-                            class="form-label">Select Account</label><select id="rep_bank_select"
-                            class="form-select"></select></div>
-                    <div style="flex: 1; min-width: 100px;" id="filter_from_group"><label class="form-label">From
-                            Date</label><input type="date" id="rep_from_date" class="form-input"></div>
-                    <div style="flex: 1; min-width: 100px;" id="filter_to_group"><label class="form-label">To
-                            Date</label><input type="date" id="rep_to_date" class="form-input"></div>
-                    <button class="btn-main" style="flex: 1; min-width: 100px; padding: 10px;"
-                        onclick="generateCurrentReport()">Fetch Report</button>
-                </div>
-                <div
-                    style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
-                    <button id="rep_btn_excel" onclick="downloadReportExcel()"
-                        style="background: white; border: 1px solid #10B981; color: #10B981; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition:0.2s;">📊
-                        Export Excel</button>
-                    <button onclick="downloadReportPDF()"
-                        style="background: #EF4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition:0.2s;">🖨️
-                        Save PDF</button>
-                </div>
+            <!-- Expense Breakdown Chart -->
+            <div class="rh-exp-box">
+              <div class="rh-exp-title">Expense Breakdown</div>
+              <div id="rh_expense_chart"></div>
+            </div>
+            <!-- hidden compat IDs for receivables/payables used by renderReportsDashboard -->
+            <span id="rh_receivables" style="display:none"></span>
+            <span id="rh_payables" style="display:none"></span>
+          </div>
+
+          <!-- ══════════ SCREEN 2: RESULT ══════════ -->
+          <div id="rep-screen-result">
+            <!-- Sticky header with back button -->
+            <div class="rh-result-header">
+              <button class="rh-result-back" onclick="closeReportResult()">
+                <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+              <div class="rh-result-title" id="rep-result-screen-title">Report</div>
             </div>
 
-            <div id="printable-report-area"
-                style="display:none; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); overflow-x: auto; box-shadow:var(--shadow-sm);">
-                <div id="report-title-area" style="text-align: center; margin-bottom: 20px;">
-                    <h3 id="report_doc_title"
-                        style="margin: 0; color: var(--text-primary); font-size:18px; font-weight:800;">Report Title
-                    </h3>
+            <!-- Filters -->
+            <div class="rh-filter-card" id="rep-filter-bar">
+              <div class="rh-filter-row">
+                <div class="rh-filter-group" style="display:none;" id="ledger_party_group">
+                  <span class="rh-filter-label">Party</span>
+                  <select id="rep_party_select" class="form-select"></select>
                 </div>
-                <div id="report-table-container"></div>
+                <div class="rh-filter-group" style="display:none;" id="ledger_bank_group">
+                  <span class="rh-filter-label">Account</span>
+                  <select id="rep_bank_select" class="form-select"></select>
+                </div>
+                <div class="rh-filter-group" id="filter_from_group">
+                  <span class="rh-filter-label">From Date</span>
+                  <input type="date" id="rep_from_date" class="form-input" style="height:38px;">
+                </div>
+                <div class="rh-filter-group" id="filter_to_group">
+                  <span class="rh-filter-label">To Date</span>
+                  <input type="date" id="rep_to_date" class="form-input" style="height:38px;">
+                </div>
+                <div class="rh-filter-group" style="flex:0 0 auto;">
+                  <button class="btn-main" style="height:38px;padding:0 16px;font-size:12px;font-weight:800;border-radius:10px;box-shadow:none;white-space:nowrap;" onclick="generateCurrentReport()">🔍 Generate</button>
+                </div>
+              </div>
+              <div class="rh-export-row">
+                <button id="rep_btn_excel" class="rh-export-btn" style="background:#F0FDF4;border:1.5px solid #BBF7D0;color:#059669;" onclick="downloadReportExcel()">📊 Excel</button>
+                <button class="rh-export-btn" style="background:#FEF2F2;border:1.5px solid #FECACA;color:#DC2626;" onclick="downloadReportPDF()">🖨️ PDF</button>
+              </div>
             </div>
+
+            <!-- Output -->
+            <div class="rh-output-box" id="printable-report-area">
+              <div class="rh-output-title">
+                <h3 id="report_doc_title" style="margin:0;font-size:16px;font-weight:900;color:#0F172A;"></h3>
+              </div>
+              <div id="report-table-container">
+                <p style="color:#94A3B8;text-align:center;padding:20px;font-weight:600;font-size:13px;">Choose filters above and tap Generate →</p>
+              </div>
+            </div>
+            <!-- unused compat div kept hidden -->
+            <div id="rep-view-dash" style="display:none;"></div>
+          </div>
         </div>
 
         <div id="inventory-hub" class="content section" style="padding-bottom:120px;">
@@ -7784,13 +7852,12 @@
         function changeFY(val) {
             currentFY = val;
             let dates = getFYDates();
-            // Reports ki dates bhi auto-update kar do
             if (document.getElementById('rep_from_date')) {
                 document.getElementById('rep_from_date').value = dates.start !== '1970-01-01' ? dates.start : '';
-                document.getElementById('rep_to_date').value = dates.end !== '2099-12-31' ? dates.end : '';
+                document.getElementById('rep_to_date').value  = dates.end   !== '2099-12-31' ? dates.end   : '';
             }
             updateDataAndUI();
-            alert(`Dashboard switched to ${val === 'All' ? 'All Time Data' : 'Financial Year ' + val}`);
+            // no alert – pill highlight handled by updateFYPill
         }
 
         function shouldShowInFY(record) {
@@ -14192,20 +14259,30 @@
         // REPORTS HUB
         // ==========================================
         // 🚀 2. UNHIDE DATE FILTERS FOR ALL REPORTS
+        // ── Close result screen and go back to selector ──
+        function closeReportResult() {
+            let hub = document.getElementById('reports-hub');
+            if (hub) hub.classList.remove('rep-result-open');
+            // remove back-nav entry pushed when result was opened
+        }
+
+        // ── Update FY pill highlight without alert ──
+        function updateFYPill(val) {
+            document.querySelectorAll('.rh-fy-pill').forEach(p => p.classList.remove('active-fy'));
+            let el = document.getElementById('fy-pill-' + val);
+            if (el) el.classList.add('active-fy');
+            renderReportsDashboard(); // refresh KPIs instantly
+        }
+
         function switchReportTab(type) {
             currentReportType = type;
             let selector = document.getElementById('report_type_selector');
-            if (selector && selector.value !== type) { selector.value = type; }
+            if (selector) selector.value = type;
 
-            document.getElementById('rep-view-dash').style.display = type === 'dash' ? 'block' : 'none';
-            document.getElementById('rep-filter-bar').style.display = type === 'dash' ? 'none' : 'block';
-            document.getElementById('printable-report-area').style.display = type === 'dash' ? 'none' : 'block';
             document.getElementById('ledger_party_group').style.display = type === 'ledger' ? 'block' : 'none';
-            document.getElementById('ledger_bank_group').style.display = type === 'bankledger' ? 'block' : 'none';
-
-            // 🚀 Ab Date Filter P&L aur BS dono ke liye show hoga
-            document.getElementById('filter_from_group').style.display = 'block';
-            document.getElementById('filter_to_group').style.display = 'block';
+            document.getElementById('ledger_bank_group').style.display  = type === 'bankledger' ? 'block' : 'none';
+            document.getElementById('filter_from_group').style.display  = 'block';
+            document.getElementById('filter_to_group').style.display    = 'block';
 
             if (type === 'ledger') loadPartiesIntoSelect('rep_party_select');
             if (type === 'bankledger') {
@@ -14213,48 +14290,74 @@
                 sel.innerHTML = '<option value="">-- Select Cash/Bank --</option>';
                 Object.values(bankDB).forEach(b => { sel.innerHTML += `<option value="${b.id}">${b.name} (${b.type})</option>`; });
             }
-            if (type === 'dash') {
-                renderReportsDashboard();
-            } else {
-                document.getElementById('report-table-container').innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:20px; font-weight:600;">Click "Fetch Report" to generate the view.</p>';
-                document.getElementById('report_doc_title').innerText = '';
-            }
+            document.getElementById('report-table-container').innerHTML =
+                '<p style="color:#94A3B8;text-align:center;padding:24px;font-weight:600;font-size:13px;">Choose filters above and tap Generate →</p>';
+            document.getElementById('report_doc_title').innerText = '';
         }
 
-        // 🚀 SMART FIX 5: FY Filter in Reports Dashboard
-        // ✅ New grid-based report selector
+        // ── Select report and slide to result screen ──
         function selectReportType(type, btn) {
-            document.querySelectorAll('.rep-type-btn').forEach(b => b.classList.remove('active-rep'));
+            document.querySelectorAll('.rh-btn').forEach(b => b.classList.remove('active-rep'));
             if (btn) btn.classList.add('active-rep');
             let sel = document.getElementById('report_type_selector');
             if (sel) sel.value = type;
+
+            // Update result screen title
+            const titles = {pl:'Profit & Loss',bs:'Balance Sheet',daybook:'Day Book',ledger:'Party Ledger',
+                bankledger:'Cash/Bank Book',sales:'Sales Report',expense:'Expense Report',crm:'CRM Analytics',inventory:'Stock Report'};
+            let titleEl = document.getElementById('rep-result-screen-title');
+            if (titleEl) titleEl.textContent = titles[type] || type;
+
             switchReportTab(type);
+
+            // Slide in result screen
+            let hub = document.getElementById('reports-hub');
+            if (hub) hub.classList.add('rep-result-open');
         }
 
         function renderReportsDashboard() {
-            let totSales = 0; let totRecv = 0; let totPurch = 0; let totPaid = 0; let totExp = 0;
-
-            // 🔥 NAYA: .filter(r => shouldShowInFY(r)) sabme add kiya gaya hai
-            Object.values(salesDB).filter(r => shouldShowInFY(r)).forEach(s => {
-                if (s.type === 'Invoice') totSales += s.finalTotal;
-                if (s.type === 'Receipt') totRecv += s.amount;
-                if (s.type === 'OtherIncome' && !s.isFundAdd) { totSales += s.amount; totRecv += s.amount; }
+            let totSales=0,totRecv=0,totPurch=0,totPaid=0,totExp=0,expBreakdown={};
+            Object.values(salesDB).filter(r=>shouldShowInFY(r)).forEach(s=>{
+                if(s.type==='Invoice') totSales+=s.finalTotal;
+                if(s.type==='Receipt') totRecv+=s.amount;
+                if(s.type==='OtherIncome'&&!s.isFundAdd){totSales+=s.amount;totRecv+=s.amount;}
             });
-            Object.values(purchaseDB).filter(r => shouldShowInFY(r)).forEach(p => { if (p.type === 'PB') totPurch += p.finalTotal; if (p.type === 'PaymentOut') totPaid += p.amount; });
+            Object.values(purchaseDB).filter(r=>shouldShowInFY(r)).forEach(p=>{
+                if(p.type==='PB') totPurch+=p.finalTotal;
+                if(p.type==='PaymentOut') totPaid+=p.amount;
+            });
+            Object.values(expenseDB).filter(r=>shouldShowInFY(r)).forEach(e=>{
+                totExp+=e.amount; expBreakdown[e.cat]=(expBreakdown[e.cat]||0)+e.amount;
+            });
+            let finalExpenses=totPurch+totExp, netProfit=totSales-finalExpenses;
+            let fmt=v=>'₹'+Math.abs(v).toLocaleString('en-IN');
 
-            let expBreakdown = {};
-            Object.values(expenseDB).filter(r => shouldShowInFY(r)).forEach(e => { totExp += e.amount; expBreakdown[e.cat] = (expBreakdown[e.cat] || 0) + e.amount; });
+            // KPI strip
+            let tsEl=document.getElementById('rh_total_sales');
+            let teEl=document.getElementById('rh_total_expenses');
+            let npEl=document.getElementById('rh_net_profit');
+            if(tsEl) tsEl.innerText=fmt(totSales);
+            if(teEl) teEl.innerText=fmt(finalExpenses);
+            if(npEl){ npEl.innerText=fmt(netProfit); npEl.style.color=netProfit>=0?'#059669':'#DC2626'; }
 
-            let finalExpenses = totPurch + totExp; let netProfit = totSales - finalExpenses;
-
-            document.getElementById('rh_total_sales').innerText = "₹" + totSales.toLocaleString('en-IN');
-            document.getElementById('rh_total_expenses').innerText = "₹" + finalExpenses.toLocaleString('en-IN');
-            document.getElementById('rh_receivables').innerText = "₹" + (totSales - totRecv > 0 ? (totSales - totRecv) : 0).toLocaleString('en-IN');
-            document.getElementById('rh_payables').innerText = "₹" + (totPurch - totPaid > 0 ? (totPurch - totPaid) : 0).toLocaleString('en-IN');
-            let npEl = document.getElementById('rh_net_profit'); npEl.innerText = "₹" + Math.abs(netProfit).toLocaleString('en-IN'); npEl.style.color = netProfit >= 0 ? "var(--success)" : "var(--danger)";
-            let chHtml = ""; let maxVal = Math.max(...Object.values(expBreakdown), 1);
-            for (let cat in expBreakdown) { let perc = (expBreakdown[cat] / maxVal) * 100; chHtml += `<div style="margin-bottom:12px;"><div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>${cat}</span><span style="font-weight:bold;">₹${expBreakdown[cat].toLocaleString('en-IN')}</span></div><div class="chart-bar-container"><div class="chart-bar-fill" style="width:${perc}%; background:var(--purple);"></div></div></div>`; }
-            if (chHtml === "") chHtml = "<div style='font-size:12px; color:var(--text-secondary);'>No expenses recorded.</div>"; document.getElementById('rh_expense_chart').innerHTML = chHtml;
+            // Expense breakdown chart
+            let chEl=document.getElementById('rh_expense_chart');
+            if(!chEl) return;
+            let cats=Object.keys(expBreakdown);
+            if(cats.length===0){ chEl.innerHTML="<div style='font-size:12px;color:#94A3B8;padding:8px 0;'>No expenses recorded for this period.</div>"; return; }
+            let maxVal=Math.max(...Object.values(expBreakdown),1);
+            chEl.innerHTML=cats.map(cat=>{
+                let pct=(expBreakdown[cat]/maxVal)*100;
+                return `<div style="margin-bottom:11px;">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;font-weight:700;">
+                    <span style="color:#334155;">${cat}</span>
+                    <span style="color:#0F172A;">₹${expBreakdown[cat].toLocaleString('en-IN')}</span>
+                  </div>
+                  <div style="background:#F1F5F9;border-radius:8px;height:7px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#1D4ED8,#7C3AED);border-radius:8px;transition:.4s;"></div>
+                  </div>
+                </div>`;
+            }).join('');
         }
 
         // 🚀 3. DIRECT/INDIRECT SPLIT & DATE FILTERS FOR P&L AND BS
@@ -16113,89 +16216,111 @@
         function createExpenseFromEvent(leadId) { setTimeout(() => { openExpenseModal(leadId); }, 50); }
         function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } setTimeout(() => { openPaymentModal(partyId); }, 50); }
 
-        // FIX 3: Hardware Back Button Control (Mobile App jaisa experience)
-        history.pushState({ page: 'start' }, document.title, location.href);
-        // ==========================================
-        // 🚀 100% BULLETPROOF MOBILE BACK BUTTON (Hash Trap Logic)
-        // ==========================================
+        // ══════════════════════════════════════════════
+        // 🚀 BULLETPROOF MOBILE BACK BUTTON v2
+        // ══════════════════════════════════════════════
+        let _navStack = []; // internal tab navigation stack
 
-        // App load hote hi URL mein ek dummy hash add kar dete hain taaki trap set ho jaye
-        if (window.location.hash !== "#utsav") {
-            window.location.hash = "utsav";
-        }
+        // Patch openTab to push history so back works tab-by-tab
+        (function() {
+            let _origOpenTab = openTab;
+            openTab = function(tabName, btnElement) {
+                let cur = document.querySelector('.active-section');
+                if (cur && cur.id !== tabName) _navStack.push(cur.id);
+                _origOpenTab(tabName, btnElement);
+                window.history.pushState({ utab: tabName }, '', '#utsav');
+            };
+        })();
 
-        window.addEventListener('popstate', function (event) {
-            
-            
-            if (window.location.hash !== "#utsav") {
+        // Set initial hash trap
+        window.history.replaceState({ utab: 'home' }, '', '#utsav');
 
-                let handled = false;
+        window.addEventListener('popstate', function(e) {
+            // Always re-push so we never truly leave the app
+            window.history.pushState({ utab: 'trap' }, '', '#utsav');
 
-                // 1. Agar koi 3-dot Menu khula hai, toh pehle use band karo
-                let openMenus = document.querySelectorAll('.dropdown-menu.show');
-                if (openMenus.length > 0) { closeAllMenus(); handled = true; }
+            let handled = false;
 
-                // 2. Agar koi Image Full-screen khuli hai, toh use band karo
-                let imgModal = document.getElementById('imgPreviewModal');
-                if (!handled && imgModal && imgModal.style.display === 'flex') { imgModal.style.display = 'none'; handled = true; }
+            // 1. Close any open dropdown menus
+            let openMenus = document.querySelectorAll('.dropdown-menu.show');
+            if (openMenus.length > 0) { closeAllMenus(); handled = true; }
 
-                // 3. Agar koi Form Modal (Popup) khula hai, toh use band karo
-                let openModals = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display === 'flex' || m.style.display === 'block');
-                if (!handled && openModals.length > 0) {
-                    let highest = openModals.reduce((prev, current) => (parseInt(getComputedStyle(prev).zIndex) || 0) > (parseInt(getComputedStyle(current).zIndex) || 0) ? prev : current);
+            // 2. Close image preview
+            if (!handled) {
+                let imgM = document.getElementById('imgPreviewModal');
+                if (imgM && imgM.style.display === 'flex') { imgM.style.display = 'none'; handled = true; }
+            }
 
-                    if (highest.id === 'exitConfirmModal') {
-                        
-                        confirmExitApp();
-                        return;
-                    } else {
-                        highest.style.display = 'none';
-                        if (highest.id === 'partyModal' && typeof activeParentModal !== 'undefined' && activeParentModal) {
-                            let parentEl = document.getElementById(activeParentModal);
-                            if (parentEl) parentEl.style.display = 'flex';
-                            activeParentModal = null;
-                        }
+            // 3. Close highest open modal (skip exitConfirmModal — it's handled below)
+            if (!handled) {
+                let openModals = Array.from(document.querySelectorAll('.modal-overlay'))
+                    .filter(m => (m.style.display==='flex'||m.style.display==='block') && m.id !== 'exitConfirmModal');
+                if (openModals.length > 0) {
+                    let top = openModals.reduce((a,b) => (parseInt(getComputedStyle(a).zIndex)||0) >= (parseInt(getComputedStyle(b).zIndex)||0) ? a : b);
+                    top.style.display = 'none';
+                    if (top.id==='partyModal' && typeof activeParentModal!=='undefined' && activeParentModal) {
+                        let pe = document.getElementById(activeParentModal);
+                        if (pe) pe.style.display='flex';
+                        activeParentModal = null;
                     }
                     handled = true;
                 }
+            }
 
-                // 4. Agar koi Side Panel (Ledger / Workspace) khula hai, toh use band karo
-                let openPanels = Array.from(document.querySelectorAll('.side-panel')).filter(p => p.classList.contains('open'));
-                if (!handled && openPanels.length > 0) {
-                    if (document.getElementById('detailPanel').classList.contains('open') && typeof saveAndClosePanel === 'function') {
-                        saveAndClosePanel();
-                    } else {
-                        closeAllOverlays();
-                    }
+            // 4. Close open side panels
+            if (!handled) {
+                let openPanels = Array.from(document.querySelectorAll('.side-panel')).filter(p=>p.classList.contains('open'));
+                if (openPanels.length > 0) {
+                    let dp = document.getElementById('detailPanel');
+                    if (dp && dp.classList.contains('open') && typeof saveAndClosePanel==='function') saveAndClosePanel();
+                    else if (typeof closeAllOverlays==='function') closeAllOverlays();
                     handled = true;
                 }
+            }
 
-                // 5. Agar kuch close nahi hua (user sidha tab par hai)
-                if (!handled) {
-                    let currentTab = document.querySelector('.active-section');
-
-                    if (currentTab && currentTab.id !== 'home') {
-                        // Kisi aur tab se back dabane par Home par bhejo
-                        openTab('home', document.getElementById('btn-home'));
-                        handled = true;
-                    } else {
-                        // Home par hain, toh Exit modal dikhao
-                        document.getElementById('exitConfirmModal').style.display = 'flex';
-                        handled = true;
-                    }
+            // 5. Close report result screen (slide back to selector)
+            if (!handled) {
+                let hub = document.getElementById('reports-hub');
+                if (hub && hub.classList.contains('rep-result-open')) {
+                    hub.classList.remove('rep-result-open');
+                    handled = true;
                 }
+            }
 
-                // 🚀 SMART TRAP RESTORE: Har back action ke baad, wapas '#utsav' hash set kar do 
-                
-                window.history.pushState(null, null, '#utsav');
+            // 6. Navigate back through tab stack
+            if (!handled) {
+                let cur = document.querySelector('.active-section');
+                if (cur && cur.id !== 'home') {
+                    let prev = _navStack.length > 0 ? _navStack.pop() : 'home';
+                    let prevBtn = document.getElementById('btn-' + prev) || null;
+                    // call original to avoid re-pushing stack infinitely
+                    let origSections = document.getElementsByClassName('section');
+                    for (let s of origSections) s.classList.remove('active-section');
+                    let btns = document.querySelectorAll('.nav-btn');
+                    for (let b of btns) b.classList.remove('active-btn');
+                    let ts = document.getElementById(prev);
+                    if (ts) ts.classList.add('active-section');
+                    if (prevBtn) prevBtn.classList.add('active-btn');
+                    window.scrollTo({top:0,behavior:'smooth'});
+                    handled = true;
+                }
+            }
+
+            // 7. On home with nothing open → show exit confirm
+            if (!handled) {
+                let exitM = document.getElementById('exitConfirmModal');
+                if (exitM) exitM.style.display = 'flex';
             }
         });
 
-        // App ko completely close karne ka function
+        // App exit — never call window.close() in browser; it fails silently or closes tab
         function confirmExitApp() {
-            if (navigator.app) { navigator.app.exitApp(); }
-            else if (navigator.device) { navigator.device.exitApp(); }
-            else { window.close(); window.history.back(); }
+            let exitM = document.getElementById('exitConfirmModal');
+            if (exitM) exitM.style.display = 'none';
+            if (navigator.app && navigator.app.exitApp) { navigator.app.exitApp(); return; }
+            if (navigator.device && navigator.device.exitApp) { navigator.device.exitApp(); return; }
+            // PWA / browser fallback — minimize or go to blank
+            try { window.history.go(-(window.history.length)); } catch(e) {}
         }
         // ==========================================
         // 🚀 PROFILE, LOGO & SIGNATURE LOGIC
