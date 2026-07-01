@@ -101,6 +101,94 @@
                 if (now - lastCall >= limit) { lastCall = now; fn.apply(this, args); }
             };
         }
+
+        // 🚀 SEARCH DEBOUNCE FIX: kuch inputs par pehle seedhe HTML mein
+        // `oninput="debounce(fn, delay)()"` likha hua tha — jo har keystroke
+        // par ek NAYA debounced wrapper banata tha (apne alag "timer" ke saath),
+        // isliye purane keystroke ka pending timer kabhi cancel hi nahi hota tha
+        // aur asli debounce effectively kaam nahi kar raha tha (har keystroke
+        // ke baad ek render chal jaata tha, bas thoda delay ke saath).
+        // Fix: ek hi persistent debounced function banao aur usi ko reuse karo.
+        // Function ko andar se lazily lookup kiya hai (typeof check) kyunki
+        // ye wrapper page-load ke shuru mein banta hai, jabki asli render
+        // function neeche kahin baad mein define hota hai.
+        const debouncedRenderOrderBook = debounce(function () { if (typeof window.renderHubOrderBookList === 'function') window.renderHubOrderBookList(); }, 250);
+        const debouncedRenderInventoryHub = debounce(function () { if (typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList(); }, 250);
+        const debouncedRenderItemMaster = debounce(function () { if (typeof window.renderItemMasterList === 'function') window.renderItemMasterList(); }, 250);
+        const debouncedFilterSelectInventory = debounce(function () { if (typeof window.filterSelectInventory === 'function') window.filterSelectInventory(); }, 200);
+
+        // ==========================================
+        // 🚀 INFINITE SCROLL / LIST PAGE-LIMIT HELPER
+        // ==========================================
+        // 500+ rows ek saath render karna DOM ko slow kar deta hai. Is helper
+        // ke saath har list pehle sirf LIST_PAGE_SIZE (50) rows dikhati hai;
+        // list ke end tak scroll karne par (IntersectionObserver) agla batch
+        // apne aap load ho jaata hai.
+        //
+        // Har list apni "filter signature" (currentFilter/searchTerm/tab/date-range
+        // wagera ka combo, jo bhi us list ke render function mein pass ki jaaye)
+        // track karti hai — agar signature badal jaaye (naya search ya filter
+        // apply hua) toh limit apne aap 50 par reset ho jaata hai; signature same
+        // rehne par (sirf "load more" trigger hua ya data refresh hua) jitni rows
+        // pehle se load thi utni hi bani rehti hain. Isse har filter-change/tab-click
+        // jagah alag se reset call lagane ki zaroorat nahi padi.
+        const LIST_PAGE_SIZE = 50;
+        window._listPaging = window._listPaging || {};
+
+        function getListPageLimit(listKey, signature) {
+            let state = window._listPaging[listKey];
+            if (!state || state.signature !== signature) {
+                state = { limit: LIST_PAGE_SIZE, signature: signature };
+                window._listPaging[listKey] = state;
+            }
+            return state.limit;
+        }
+        function growListPageLimit(listKey) {
+            let state = window._listPaging[listKey];
+            if (state) state.limit += LIST_PAGE_SIZE;
+        }
+
+        // container ke end mein ek chhota sentinel lagata hai jo viewport mein
+        // aate hi agla batch load kar deta hai. rerenderFn wahi list render
+        // function hona chahiye (jaise renderLeadsList) jise usi filter state
+        // ke saath dobara chalaya ja sake.
+        function attachLoadMoreSentinel(container, listKey, totalMatched, rerenderFn) {
+            let state = window._listPaging[listKey];
+            let shown = state ? Math.min(state.limit, totalMatched) : totalMatched;
+            if (shown >= totalMatched) return; // sab dikh chuke — sentinel ki zaroorat nahi
+
+            let sentinel = document.createElement('div');
+            sentinel.className = 'list-load-more-sentinel';
+            sentinel.style.cssText = 'padding:16px; text-align:center; font-size:11.5px; font-weight:700; color:var(--text-secondary);';
+            sentinel.innerText = `⬇️ Showing ${shown} of ${totalMatched} — scroll for more`;
+            container.appendChild(sentinel);
+
+            let observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    observer.disconnect();
+                    growListPageLimit(listKey);
+                    rerenderFn();
+                }
+            }, { rootMargin: '300px', threshold: 0 });
+            observer.observe(sentinel);
+        }
+
+        // ==========================================
+        // 🚀 SERVICE WORKER REGISTRATION (Cache-First static assets)
+        // ==========================================
+        // sw.js is file ke saath, same folder mein deploy honi chahiye
+        // (jaise Firebase Hosting root). 'load' event par register kiya
+        // hai taaki ye initial page load/Firebase init ke aage na aaye.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then((reg) => {
+                    console.log('✅ Service Worker registered:', reg.scope);
+                }).catch((err) => {
+                    console.warn('⚠️ Service Worker registration failed (app chalti rahegi, bas repeat-visit caching nahi milegi):', err);
+                });
+            });
+        }
+
         // Safe element helper
         function el(id) { return document.getElementById(id); }
         function safeText(id, val) { let e = el(id); if (e) e.innerText = val; }
@@ -4604,7 +4692,7 @@
 
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client, event or party..." oninput="debounce(window.renderHubOrderBookList, 250)()">
+                        <input type="text" class="search-input" id="inv_ob_search" placeholder="Search orders by client, event or party..." oninput="debouncedRenderOrderBook()">
                     </div>
                 </div>
                 <div id="orderbook-list-container"></div>
@@ -4639,7 +4727,7 @@
                     <div id="inv-sub-filters" style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px;"></div>
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="debounce(window.renderInventoryHubList, 250)()">
+                        <input type="text" class="search-input" id="inv_hub_search" placeholder="Search by ID, Event, Item or Client..." oninput="debouncedRenderInventoryHub()">
                     </div>
                 </div>
                 <div id="inventory-list-container"></div>
@@ -4649,7 +4737,7 @@
                 <div class="premium-sticky-filters" style="top: 56px;">
                     <div class="search-container" style="margin-bottom:0;">
                         <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="debounce(window.renderItemMasterList, 250)()">
+                        <input type="text" class="search-input" id="inv_master_search" placeholder="Search items by Name or SKU..." oninput="debouncedRenderItemMaster()">
                     </div>
                 </div>
                 <div id="item-master-list-container"></div>
@@ -4914,7 +5002,7 @@
                 </div>
                 <div style="padding: 12px 16px; background: white; border-bottom: 1px solid var(--border-color);">
                     <div class="search-container" style="margin-bottom:0;">
-                        <input type="text" id="inv_select_search" class="search-input" placeholder="🔍 Search items dynamically..." oninput="debounce(window.filterSelectInventory, 200)()">
+                        <input type="text" id="inv_select_search" class="search-input" placeholder="🔍 Search items dynamically..." oninput="debouncedFilterSelectInventory()">
                     </div>
                 </div>
                 <div id="inv_select_grid" style="flex: 1; overflow-y: auto; padding: 16px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px;">
@@ -8863,6 +8951,38 @@
         let unsubscribeWorkspace = null;
         let unsubscribeCompany = null; // 👈 Naya listener Staff ke liye
 
+        // 🚀 READ-SAVER CACHE LAYER (sessionStorage, per browser tab)
+        // ----------------------------------------------------------
+        // Key sirf currentWorkspaceId se bana hai, isliye workspace switch
+        // karne par apne aap sahi jagah cache-miss/hit hota hai.
+        function getSessionCacheKey(workspaceId) {
+            return 'utsav_session_cache_' + workspaceId;
+        }
+
+        // Fetched (ya cached) workspace_data payload ko in-memory DBs mein daalta hai.
+        // loadLocalData() aur saveDataLocally() dono isi function se DB variables
+        // ko sync mein rakhte hain, taaki logic ek hi jagah ho.
+        function applyWorkspaceDataToMemory(data) {
+            if (data) {
+                leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {};
+                purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {};
+                bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {};
+                if (data.orderBook) window.orderBookDB = data.orderBook; // 🚀 FIX: workspace-scoped Order Book cloud sync (skips when field absent so migrated local data isn't wiped)
+                if (data.expenseCats) expenseCats = data.expenseCats;
+                itemsDB = data.items || {};
+                warehousesDB = data.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
+                stockMovementDB = data.stockMovements || {};
+
+                // ☁️ FIREBASE SYNC: Naye 4 variables cloud se load honge
+                if (data.leadSources) leadSources = data.leadSources;
+                if (data.itemUnits) itemUnits = data.itemUnits;
+                if (data.appSettings) appSettings = data.appSettings;
+                if (data.trashDB) trashDB = data.trashDB;
+            }
+            if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true };
+            if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
+        }
+
         function loadLocalData() {
             // 🚀 SMART FIX: Load instantly from Local Storage before Cloud Sync
             let localBackup = JSON.parse(localStorage.getItem('utsav_erp_data_' + currentWorkspaceId)) || {};
@@ -8900,33 +9020,56 @@
             if (unsubscribeWorkspace) unsubscribeWorkspace();
             if (unsubscribeCompany) unsubscribeCompany(); // Purana todo
 
-            console.log("🔄 Connecting Workspace to Real-Time Cloud...");
+            // ==========================================================
+            // 🚀 READ-SAVER: workspace_data ab onSnapshot() (continuous
+            // real-time listener) se load NAHI hota — sirf ek baar .get()
+            // se fetch hota hai aur sessionStorage mein cache ho jaata hai.
+            // Isi tab session ke andar dubara loadLocalData() chale
+            // (workspace switch/back, re-init, etc.) toh Firestore ko
+            // chhua tak nahi jaata, seedha cache se serve hota hai.
+            // Naya browser tab khulte hi — ya tab close karke reopen karne
+            // par — sessionStorage khali milta hai, tabhi ek fresh read
+            // hota hai. (Trade-off: doosre staff member ka change is tab
+            // mein turant nahi dikhega jab tak tab reopen na ho — real-time
+            // collab ki jagah lower read-cost prioritize kiya gaya hai.)
+            // ==========================================================
+            let cacheKey = getSessionCacheKey(currentWorkspaceId);
+            let cachedRaw = null;
+            try { cachedRaw = sessionStorage.getItem(cacheKey); } catch (e) { /* private browsing / storage blocked — treat as cache-miss */ }
 
-            // 1. DATA LISTENER
-            unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId).onSnapshot((doc) => {
-                if (doc.exists) {
-                    let data = doc.data();
-                    leadsDB = data.leads || {}; partiesDB = data.parties || {}; salesDB = data.sales || {}; 
-                    purchaseDB = data.purchase || {}; expenseDB = data.expense || {}; globalTasksDB = data.globalTasks || {}; 
-                    bankDB = data.bank || {}; bankTxDB = data.bankTx || {}; loansDB = data.loans || {}; 
-                    if (data.orderBook) window.orderBookDB = data.orderBook; // 🚀 FIX: workspace-scoped Order Book cloud sync (skips when field absent so migrated local data isn't wiped)
-                    if (data.expenseCats) expenseCats = data.expenseCats;
-                    itemsDB = data.items || {};
-                    warehousesDB = data.warehouses || { 'WH_MAIN': { id: 'WH_MAIN', name: 'Main Godown', address: 'Base Location', isDefault: true } };
-                    stockMovementDB = data.stockMovements || {};
-                    
-                    // ☁️ FIREBASE SYNC: Naye 4 variables cloud se load honge
-                    if (data.leadSources) leadSources = data.leadSources;
-                    if (data.itemUnits) itemUnits = data.itemUnits;
-                    if (data.appSettings) appSettings = data.appSettings;
-                    if (data.trashDB) trashDB = data.trashDB;
-                } 
-                if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true }; 
-                if (!bankDB['ACC_CHEQUE']) bankDB['ACC_CHEQUE'] = { id: 'ACC_CHEQUE', name: 'Cheque in Hand', type: 'Cheque', balance: 0, isDefault: true };
-                updateDataAndUI(true); 
-            }, (error) => { console.error("Cloud Sync Error:", error); });
+            if (cachedRaw) {
+                try {
+                    applyWorkspaceDataToMemory(JSON.parse(cachedRaw));
+                    console.log("📦 Workspace data served from session cache — 0 Firestore reads this load.");
+                    updateDataAndUI(true);
+                } catch (e) {
+                    console.warn("⚠️ Session cache corrupt, falling back to a fresh fetch:", e);
+                    cachedRaw = null;
+                }
+            }
 
-            // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates)
+            if (!cachedRaw) {
+                console.log("🔄 Fresh fetch: Workspace ← Firestore (one-time read, cached for this tab session)...");
+                db.collection("workspace_data").doc(currentWorkspaceId).get().then((doc) => {
+                    let data = doc.exists ? doc.data() : null;
+                    applyWorkspaceDataToMemory(data);
+                    try { sessionStorage.setItem(cacheKey, JSON.stringify(data || {})); } catch (e) { /* quota/private mode — cache is best-effort, app still works */ }
+                    updateDataAndUI(true);
+                }).catch((error) => {
+                    console.error("Cloud Sync Error:", error);
+                    if (typeof window.showToast === 'function') window.showToast("Cloud se data load nahi ho paaya. Connection check karein.", "error", 5000);
+                });
+            }
+
+            // Ab koi live workspace_data listener nahi hai, isliye is variable ko
+            // null hi rakha hai — upar wali `if (unsubscribeWorkspace) unsubscribeWorkspace();`
+            // line backward-compatible reh jaati hai, kabhi crash nahi karegi.
+            unsubscribeWorkspace = null;
+
+            // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates) — ye doc chhota
+            // hai (sirf company/staff/permissions), isliye real-time hi rakha hai taaki
+            // team-join/permission changes turant dikhein. "Poora database" wala bhaari
+            // doc (workspace_data) hi upar cache-first bana diya gaya hai.
             unsubscribeCompany = db.collection("companies").doc(currentWorkspaceId).onSnapshot((doc) => {
                 if (doc.exists) {
                     let compData = doc.data();
@@ -9061,6 +9204,14 @@
                     } catch(e2) { console.warn("LocalStorage full — cloud-only mode active."); }
                 }
             }
+
+            // 3. ⚡ READ-SAVER: is tab ka apna sessionStorage cache bhi turant update kar do,
+            // taaki agar isi tab mein baad mein loadLocalData() dubara chale (workspace
+            // switch → wapas aana, etc.) toh apne hi latest changes ke liye Firestore
+            // se dubara padhna na pade — cache hamesha "self-consistent" rahega.
+            try {
+                sessionStorage.setItem(getSessionCacheKey(currentWorkspaceId), JSON.stringify(dataToSave));
+            } catch (e) { /* quota/private mode — best-effort, memory state already has the truth */ }
         }
 
         function fetchLeadsFromFirestore() {
@@ -9184,6 +9335,11 @@
             let counts = { total: 0, new: 0, active: 0, lost: 0 };
             let fragment = document.createDocumentFragment();
 
+            // 🚀 PAGINATION: 500+ leads ek saath render na ho, isliye pehle sirf
+            // renderLimit tak hi DOM rows banate hain; baaki "load more" scroll par aate hain.
+            let renderLimit = getListPageLimit('crm', currentFilter + '|' + (searchTerms.crm || ''));
+            let renderedCount = 0;
+
             let sortedLeads = Object.values(leadsDB).sort((a, b) => {
                 let dateA = a.date ? new Date(a.date) : new Date('2099-01-01');
                 let dateB = b.date ? new Date(b.date) : new Date('2099-01-01');
@@ -9247,6 +9403,9 @@
 
                 
                 if (show) {
+                    renderedCount++;
+                    if (renderedCount > renderLimit) return; // 🚀 PAGINATION: is batch ki limit se aage row nahi banani
+
                     let badgeClass = "badge-new";
                     if (lead.status === "Hot") badgeClass = "badge-hot";
                     else if (lead.status === "Thinking") badgeClass = "badge-think";
@@ -9321,6 +9480,9 @@
 
             if (crmContainer.innerHTML === "") crmContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary);'>No leads found.</p>";
             if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
+
+            // 🚀 PAGINATION: agar aur bhi matching leads baaki hain toh scroll-triggered "load more" laga do
+            attachLoadMoreSentinel(crmContainer, 'crm', renderedCount, renderLeadsList);
         }
         function actionDelete(id, event) { 
             event.stopPropagation(); event.preventDefault(); closeAllMenus(); 
@@ -10567,6 +10729,11 @@
             document.getElementById('erp-total-receive').innerText = "₹" + totalReceivable.toLocaleString('en-IN');
             document.getElementById('erp-total-pay').innerText = "₹" + totalPayable.toLocaleString('en-IN');
 
+            // 🚀 PAGINATION: 500+ parties ek saath render na ho, isliye pehle sirf
+            // renderLimit tak hi rows banate hain; baaki "load more" scroll par aate hain.
+            let partySignature = currentPartyFilter + '|' + (searchTerms.party || '');
+            let renderLimit = getListPageLimit('party', partySignature);
+
             let visibleCount = 0;
             Object.values(partiesDB).reverse().forEach(party => {
                 if (party.id === 'SYS_OTHER_INCOME') return;
@@ -10578,6 +10745,8 @@
                 if (currentPartyFilter !== 'All' && currentPartyFilter !== 'Loans' && party.type !== currentPartyFilter) return;
 
                 visibleCount++;
+                if (visibleCount > renderLimit) return; // 🚀 PAGINATION: is batch ki limit se aage row nahi banani
+
                 let displayType = party.type;
                 if (party.type === "Vendor" && party.subCategory) displayType = party.subCategory;
 
@@ -10622,6 +10791,9 @@
             });
 
             if (visibleCount === 0) container.innerHTML = "<p style='padding: 15px; color: var(--text-secondary); font-size:13px; font-weight:500;'>No accounts found.</p>";
+
+            // 🚀 PAGINATION: aur bhi matching parties baaki hain toh scroll-triggered "load more" laga do
+            attachLoadMoreSentinel(container, 'party', visibleCount, renderPartiesList);
         }
 
         function actionEditParty(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); openPartyModal(id); }
@@ -11680,6 +11852,11 @@
             // 🚀 Performance: Background memory fragment
             let fragment = document.createDocumentFragment();
 
+            // 🚀 PAGINATION: 500+ invoices ek saath render na ho, isliye pehle sirf
+            // renderLimit tak hi DOM rows banate hain; baaki "load more" scroll par aate hain.
+            let salesSignature = currentSalesTab + '|' + salesSubFilter + '|' + (salesFilterFrom || '') + '|' + (salesFilterTo || '') + '|' + (searchTerms.sales || '');
+            let renderLimit = getListPageLimit('sales', salesSignature);
+
             recordsArray.forEach(r => { // 👈 Yahan 'r' use kiya hai
                 if (r.type !== currentSalesTab) return;
 
@@ -11711,6 +11888,8 @@
                 if (!matchesSearch) return;
 
                 visibleCount++;
+                if (visibleCount > renderLimit) return; // 🚀 PAGINATION: is batch ki limit se aage row nahi banani
+
                 let fDate = r.date ? new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
                 let functionName = r.event || "General Billing";
 
@@ -11768,6 +11947,9 @@
             if (visibleCount === 0) {
                 container.innerHTML = `<div style='padding: 30px 20px; text-align:center; color: #94A3B8; font-size:13px; font-weight:600;'>No records found here.</div>`;
             }
+
+            // 🚀 PAGINATION: aur bhi matching records baaki hain toh scroll-triggered "load more" laga do
+            attachLoadMoreSentinel(container, 'sales', visibleCount, renderSalesList);
         }
         function loadPartiesIntoSelect(selectId, preFillId = null, filterTerm = "") {
             let select = document.getElementById(selectId);
@@ -13475,6 +13657,11 @@
             let vCount = 0;
             let arr = Object.values(purchaseDB).filter(r => shouldShowInFY(r)).sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            // 🚀 PAGINATION: 500+ purchase records ek saath render na ho, isliye pehle
+            // sirf renderLimit tak hi rows banate hain; baaki "load more" scroll par aate hain.
+            let purchaseSignature = currentPurchaseTab + '|' + purchaseSubFilter + '|' + (purchaseFilterFrom || '') + '|' + (purchaseFilterTo || '') + '|' + (searchTerms.purchase || '');
+            let renderLimit = getListPageLimit('purchase', purchaseSignature);
+
             arr.forEach(r => {
                 if (r.type !== currentPurchaseTab) return;
 
@@ -13508,6 +13695,8 @@
                 if (!matchesSearch) return;
 
                 vCount++;
+                if (vCount > renderLimit) return; // 🚀 PAGINATION: is batch ki limit se aage row nahi banani
+
                 let fDate = new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
                 let functionName = r.event || "General Purchase";
@@ -13589,6 +13778,9 @@
             if (vCount === 0) {
                 container.innerHTML = `<div style='padding: 30px 20px; text-align:center; color: #94A3B8; font-size:13px; font-weight:600;'>No ${currentPurchaseTab} records found.</div>`;
             }
+
+            // 🚀 PAGINATION: aur bhi matching records baaki hain toh scroll-triggered "load more" laga do
+            attachLoadMoreSentinel(container, 'purchase', vCount, renderPurchaseList);
         }
 
         // 🚀 PRINT FUNCTION FOR PURCHASE HUB
@@ -15611,6 +15803,11 @@
 
             let arr = Object.values(expenseDB).filter(r => shouldShowInFY(r)).sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            // 🚀 PAGINATION: 500+ expenses ek saath render na ho, isliye pehle sirf
+            // renderLimit tak hi rows banate hain; baaki "load more" scroll par aate hain.
+            let expenseSignature = currentExpenseFilter + '|' + (typeof expenseSubFilter !== 'undefined' ? expenseSubFilter : 'All') + '|' + (searchTerms.expense || '');
+            let renderLimit = getListPageLimit('expense', expenseSignature);
+
             arr.forEach(e => {
                 if (e.type === 'General') totGen += e.amount;
                 if (e.type === 'Event') totEv += e.amount;
@@ -15623,6 +15820,8 @@
                 if (searchTerms.expense && !searchStr.includes(searchTerms.expense)) return;
 
                 vCount++;
+                if (vCount > renderLimit) return; // 🚀 PAGINATION: is batch ki limit se aage row nahi banani
+
                 let fDate = new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
                 let borderColor = e.type === 'Event' ? '#3B82F6' : '#A855F7';
@@ -15684,6 +15883,9 @@
             let elGen = document.getElementById('eh_general'); if (elGen) elGen.innerText = "₹" + totGen.toLocaleString('en-IN');
             let elEv = document.getElementById('eh_event'); if (elEv) elEv.innerText = "₹" + totEv.toLocaleString('en-IN');
             if (vCount === 0) container.innerHTML = `<p style="padding:15px; font-size:13px; color:var(--text-secondary); text-align:center; font-weight:600;">No ${expenseSubFilter !== 'All' ? expenseSubFilter : currentExpenseFilter} expenses found.</p>`;
+
+            // 🚀 PAGINATION: aur bhi matching expenses baaki hain toh scroll-triggered "load more" laga do
+            attachLoadMoreSentinel(container, 'expense', vCount, renderExpenseList);
         }
 
         function promptNewExpenseCategory() {
@@ -19403,11 +19605,15 @@
         // 🚀 FIXED: REAL-TIME SEARCH ENGINE & TASKS DASHBOARD
         // ==========================================
         window.currentTaskFilter = 'Pending';
-        let searchDebounceTimer;
+        // 🚀 FIX: pehle ek hi shared `searchDebounceTimer` tha saare search boxes (crm/
+        // events/party/sales/purchase/expense/tasks) ke liye — matlab agar do alag search
+        // boxes mein jaldi-jaldi type karein, toh ek doosre ka pending debounce cancel kar
+        // sakta tha. Ab har `type` ka apna alag timer hai.
+        let searchDebounceTimers = {};
 
         window.filterSearch = function(type, term) {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
+            clearTimeout(searchDebounceTimers[type]);
+            searchDebounceTimers[type] = setTimeout(() => {
                 searchTerms[type] = term.toLowerCase();
                 if (type === 'crm' && typeof renderLeadsList === 'function') renderLeadsList();
                 if (type === 'events' && typeof renderEventsDashboard === 'function') renderEventsDashboard();
