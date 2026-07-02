@@ -2961,170 +2961,102 @@
         </div>
 
         <!-- 2. CRM (Lead Database) -->
-        <div id="crm" class="content section" style="padding-bottom:120px;">
+        <div id="crm" class="content section" style="padding:0; background:#F1F5F9; overflow-y:auto; padding-bottom:80px;">
             <style>
-                /* 🚀 Premium CRM Specific CSS */
-                #crm-leads-list {
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    padding: 0 2px !important;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-
-                #crm-leads-list .list-row {
-                    background: #FFFFFF !important;
-                    padding: 12px 14px !important;
-                    border-radius: 12px !important;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
-                    border: 1px solid #F1F5F9 !important;
-                    margin-bottom: 0 !important;
-                    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-                }
-
-                #crm-leads-list .list-row:hover {
-                    transform: translateY(-2px) !important;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
-                    border-color: #CBD5E1 !important;
-                }
-
-                .crm-stat-card {
-                    background: white;
-                    border-radius: 10px;
-                    padding: 10px 4px;
-                    border: 1px solid #E2E8F0;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-                    cursor: pointer;
-                    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    text-align: center;
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                }
-
-                .crm-stat-card:hover {
-                    transform: translateY(-2px);
-                    border-color: #CBD5E1;
-                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
-                }
-
-                .crm-stat-card.active-filter {
-                    background: linear-gradient(135deg, #0F172A, #1E293B) !important;
-                    border-color: #0F172A !important;
-                    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2) !important;
-                    transform: translateY(-2px);
-                }
-
-                .crm-stat-card .stat-label {
-                    font-size: 8.5px;
-                    font-weight: 800;
-                    color: var(--text-secondary);
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 2px;
-                    transition: 0.3s;
-                }
-
-                .crm-stat-card .stat-value {
-                    font-size: 16px;
-                    font-weight: 900;
-                    color: var(--text-primary);
-                    transition: 0.3s;
-                    letter-spacing: -0.5px;
-                }
-
-                /* When Active */
-                .crm-stat-card.active-filter .stat-label {
-                    color: #94A3B8 !important;
-                }
-
-                .crm-stat-card.active-filter .stat-value {
-                    color: white !important;
-                }
-
-                .crm-sticky-top {
-                    position: sticky;
-                    top: 56px;
-                    z-index: 100;
-                    background: rgba(248, 250, 252, 0.85);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    padding-top: 8px;
-                    padding-bottom: 8px;
-                    margin-bottom: 12px;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.7);
-                }
+                .crm-hero{background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 60%,#2563EB 100%);padding:18px 16px 0;position:relative;overflow:hidden;}
+                .crm-hero::before{content:'';position:absolute;top:-40px;right:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.05);}
+                .crm-hero-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-bottom:16px;}
+                .crm-hero-title{font-size:20px;font-weight:900;color:white;letter-spacing:-.5px;}
+                .crm-hero-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;font-weight:500;}
+                .crm-hero-btns{display:flex;gap:8px;}
+                .crm-hero-btn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.25);color:white;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.2s;}
+                .crm-hero-btn.add-btn{background:#10B981;border-color:#10B981;box-shadow:0 4px 12px rgba(16,185,129,.3);}
+                .crm-kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 16px 14px;position:relative;z-index:1;}
+                .crm-kpi{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.15);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;transition:.2s;}
+                .crm-kpi.active-kpi{background:white;border-color:white;}
+                .crm-kpi.active-kpi .ck-val{color:#0F172A !important;}
+                .crm-kpi.active-kpi .ck-lbl{color:#64748B;}
+                .ck-val{font-size:16px;font-weight:900;color:white;line-height:1;margin-bottom:3px;}
+                .ck-lbl{font-size:8.5px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.3px;}
+                .crm-search-wrap{background:white;padding:10px 16px;border-bottom:1px solid #E2E8F0;position:sticky;top:56px;z-index:100;}
+                .crm-card-v3{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;overflow:hidden;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+                .crm-card-v3:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
+                .crm-card-v3.hot-card{border-color:#FCA5A5;box-shadow:0 2px 12px rgba(239,68,68,.08);}
+                .crm-card-status-bar{height:4px;width:100%;}
+                .crm-card-body{padding:12px 14px 10px;}
+                .crm-card-top{display:flex;align-items:flex-start;gap:10px;}
+                .crm-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;flex-shrink:0;}
+                .crm-card-name{font-size:14px;font-weight:900;color:#0F172A;line-height:1.2;}
+                .crm-card-func{font-size:11px;color:#64748B;font-weight:600;margin-top:2px;}
+                .crm-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+                .crm-tag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:8px;}
+                .crm-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;}
+                .crm-foot-budget{font-size:12px;font-weight:900;color:#0F172A;}
+                .crm-foot-date{font-size:10px;color:#94A3B8;font-weight:600;}
+                .crm-quick-btns{display:flex;gap:2px;}
+                .crm-qbtn{background:none;border:none;cursor:pointer;font-size:18px;padding:4px 6px;border-radius:8px;transition:.15s;line-height:1;}
+                .crm-qbtn:hover{background:#F1F5F9;}
+                .bar-New{background:#3B82F6;}.bar-Hot{background:#EF4444;}.bar-Thinking{background:#F59E0B;}
+                .bar-Meeting,.bar-Meeting\ Scheduled,.bar-Meeting\ Completed{background:#8B5CF6;}
+                .bar-Won{background:#10B981;}.bar-Lost{background:#94A3B8;}
+                .tag-New{background:#EFF6FF;color:#2563EB;}.tag-Hot{background:#FEF2F2;color:#DC2626;}
+                .tag-Thinking{background:#FFFBEB;color:#D97706;}.tag-Meeting{background:#FAF5FF;color:#7C3AED;}
+                .tag-Won{background:#ECFDF5;color:#059669;}.tag-Lost{background:#F8FAFC;color:#64748B;}
+                .av-New{background:linear-gradient(135deg,#3B82F6,#1D4ED8);}.av-Hot{background:linear-gradient(135deg,#EF4444,#DC2626);}
+                .av-Thinking{background:linear-gradient(135deg,#F59E0B,#D97706);}.av-Meeting{background:linear-gradient(135deg,#8B5CF6,#6D28D9);}
+                .av-Won{background:linear-gradient(135deg,#10B981,#059669);}.av-Lost{background:linear-gradient(135deg,#94A3B8,#64748B);}
             </style>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                <div>
-                    <h2 class="section-title"
-                        style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary);">
-                        CRM & Leads</h2>
-                    <p style="margin: 2px 0 0 0; font-size: 10.5px; font-weight: 600; color: var(--text-secondary);">
-                        Manage inquiries and clients</p>
-                </div>
-
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    
-                    <div class="dropdown-container">
-                        <button class="btn-icon" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; font-size:12px; height:36px; padding:0 12px; border-radius:10px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow: 0 2px 5px rgba(37,99,235,0.1);" onclick="toggleMenu('crm-import', event)">
-                            ⬇️ <span style="display:inline-block; margin-top:1px;">Import</span>
-                        </button>
-                        <div class="dropdown-menu" id="menu-crm-import" style="min-width: 220px; top: calc(100% + 5px); right: 0;">
-                            <div class="dropdown-item" onclick="downloadSampleCSV()">📥 Download Sample Sheet</div>
-                            <div class="dropdown-item text-green" onclick="document.getElementById('crm_csv_upload').click()">📤 Upload Filled Sheet</div>
-                        </div>
+            <div class="crm-hero">
+                <div class="crm-hero-row">
+                    <div>
+                        <div class="crm-hero-title">CRM &amp; Leads</div>
+                        <div class="crm-hero-sub">Pipeline · Follow-ups · Conversions</div>
                     </div>
-                    
-                    <input type="file" id="crm_csv_upload" accept=".csv" style="display:none;" onchange="importLeadsFromCSV(event)">
-
-                    <button onclick="openLeadModal()"
-                        style="background: linear-gradient(135deg, #10B981, #047857); color: white; border: none; padding: 0 14px; height: 36px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); transition: 0.2s; display: flex; align-items: center; gap: 6px;">
-                        ➕ <span style="display:inline-block; margin-top:1px;">Add Lead</span>
-                    </button>
-                    
+                    <div class="crm-hero-btns">
+                        <div class="dropdown-container" style="position:relative;">
+                            <button class="crm-hero-btn" onclick="toggleMenu('crm-import',event)">⬇️ Import</button>
+                            <div class="dropdown-menu" id="menu-crm-import" style="min-width:210px;top:calc(100% + 6px);right:0;left:auto;">
+                                <div class="dropdown-item" onclick="downloadSampleCSV()">📥 Download Sample Sheet</div>
+                                <div class="dropdown-item text-green" onclick="document.getElementById('crm_csv_upload').click()">📤 Upload Filled Sheet</div>
+                            </div>
+                        </div>
+                        <button class="crm-hero-btn add-btn" onclick="openLeadModal()">+ Add Lead</button>
+                    </div>
                 </div>
-            </div>
-            
-
-            <div style="display: flex; gap: 6px; margin-bottom: 12px;">
-                <div class="crm-stat-card filter-box active-filter" onclick="setFilter('All', this)">
-                    <div class="stat-label">Total</div>
-                    <div class="stat-value" id="crm-stat-total">0</div>
-                </div>
-                <div class="crm-stat-card filter-box" onclick="setFilter('New', this)">
-                    <div class="stat-label">New</div>
-                    <div class="stat-value" id="crm-stat-new" style="color: #0284C7;">0</div>
-                </div>
-                <div class="crm-stat-card filter-box" onclick="setFilter('Active', this)">
-                    <div class="stat-label">Active</div>
-                    <div class="stat-value" id="crm-stat-active" style="color: var(--danger);">0</div>
-                </div>
-                <div class="crm-stat-card filter-box" onclick="setFilter('Lost', this)">
-                    <div class="stat-label">Lost</div>
-                    <div class="stat-value" id="crm-stat-lost" style="color: var(--text-secondary);">0</div>
-                </div>
-            </div>
-
-            <div class="crm-sticky-top">
-                <div class="search-container" style="margin-bottom: 0;">
-                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"
-                        style="width:16px; height:16px;">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" class="search-input"
-                        style="border-radius:10px; padding: 10px 14px 10px 34px; font-size:12.5px; background:#F1F5F9; border:1px solid transparent; transition:0.3s;"
-                        placeholder="Search leads by name, phone or category..."
-                        oninput="filterSearch('crm', this.value)">
+                <input type="file" id="crm_csv_upload" accept=".csv" style="display:none;" onchange="importLeadsFromCSV(event)">
+                <div class="crm-kpi-strip">
+                    <div class="crm-kpi active-kpi" id="crm-kpi-All" onclick="crmSetFilter('All',this)">
+                        <div class="ck-val" id="crm-stat-total">0</div><div class="ck-lbl">All</div>
+                    </div>
+                    <div class="crm-kpi" id="crm-kpi-New" onclick="crmSetFilter('New',this)">
+                        <div class="ck-val" id="crm-stat-new" style="color:#93C5FD;">0</div><div class="ck-lbl">New</div>
+                    </div>
+                    <div class="crm-kpi" id="crm-kpi-Hot" onclick="crmSetFilter('Hot',this)">
+                        <div class="ck-val" id="crm-stat-active" style="color:#FCA5A5;">0</div><div class="ck-lbl">Hot</div>
+                    </div>
+                    <div class="crm-kpi" id="crm-kpi-Won" onclick="crmSetFilter('Won',this)">
+                        <div class="ck-val" id="crm-stat-won" style="color:#6EE7B7;">0</div><div class="ck-lbl">Won</div>
+                    </div>
+                    <div class="crm-kpi" id="crm-kpi-Lost" onclick="crmSetFilter('Lost',this)">
+                        <div class="ck-val" id="crm-stat-lost" style="color:#CBD5E1;">0</div><div class="ck-lbl">Lost</div>
+                    </div>
                 </div>
             </div>
 
-            <div id="crm-leads-list"></div>
+            <div class="crm-search-wrap">
+                <div class="search-container" style="margin:0;">
+                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" class="search-input" style="border-radius:10px;padding:9px 14px 9px 34px;font-size:12.5px;background:#F1F5F9;border:1px solid transparent;" placeholder="Search by name, phone, category…" oninput="filterSearch('crm',this.value)">
+                </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 2px;">
+                <div style="font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.4px;" id="crm-list-label">All Leads</div>
+                <div style="font-size:11px;font-weight:800;color:#2563EB;" id="crm-pipeline-val">Pipeline: ₹0</div>
+            </div>
+
+            <div id="crm-leads-list" style="padding-top:6px;"></div>
         </div>
 
         <!-- 3. Events Dashboard -->
@@ -8828,6 +8760,29 @@
                 invCard.style.display = (p.inv && isInvSettingOn) ? 'flex' : 'none';
             }
 
+            // 🔒 BUG FIX: Intercept openTab so staff CAN'T navigate to restricted tabs
+            // even via back-button, URL hash, or any other route
+            let _origOpenTab = typeof openTab === 'function' ? openTab : null;
+            if (_origOpenTab) {
+                openTab = function(tabName, btnElement) {
+                    let isOwnerCheck = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
+                    if (!isOwnerCheck) {
+                        let p2 = currentPermissions.modules || {};
+                        let blocked = false;
+                        if (tabName === 'crm' && !p2.crm) blocked = true;
+                        if (tabName === 'events' && !p2.event) blocked = true;
+                        if (['sales-hub','purchase-hub','expense-hub','bank-hub','reports-hub','party-master'].includes(tabName) && !p2.sales && !p2.purch && !p2.exp && !p2.bank && !p2.rep) blocked = true;
+                        if (tabName === 'inventory-hub' && !p2.inv) blocked = true;
+                        if (blocked) {
+                            if (typeof showToast === 'function') showToast('⛔ Access Denied', 'error', 2000);
+                            else console.warn('Access denied: ' + tabName);
+                            return;
+                        }
+                    }
+                    _origOpenTab(tabName, btnElement);
+                };
+            }
+
             // 🚀 SECURITY: Agar user ne restricted tab pehle se kholi hui hai, toh use forcefully HOME par fenko!
             let activeSection = document.querySelector('.active-section');
             if (activeSection) {
@@ -9240,12 +9195,21 @@
         // ==========================================
         // CRM LEADS LOGIC (THE MISSING PIECE)
         // ==========================================
-        function setFilter(type, element) { currentFilter = type; document.querySelectorAll('#crm .filter-box').forEach(box => { box.classList.remove('active-filter'); }); element.classList.add('active-filter'); renderLeadsList(); }
+        function setFilter(type, element) { currentFilter = type; document.querySelectorAll('#crm .filter-box').forEach(box => { box.classList.remove('active-filter'); }); if(element) element.classList.add('active-filter'); renderLeadsList(); }
+        function crmSetFilter(type, element) {
+            currentFilter = type;
+            document.querySelectorAll('.crm-kpi').forEach(k => k.classList.remove('active-kpi'));
+            if (element) element.classList.add('active-kpi');
+            renderLeadsList();
+        }
         function actionEdit(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); openLeadModal(id); }
         function actionLost(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); leadsDB[id].status = "Lost"; leadsDB[id].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Marked as Lost from quick menu." }); updateDataAndUI(); }
         function openLeadModal(editId = null) {
-            refreshSourceList(); // <--- NAYI LINE
+            refreshSourceList();
             editingLeadId = editId;
+            // ✅ BUG FIX: Populate staff assign dropdown every time modal opens
+            let assignSel = document.getElementById('l_assign_to');
+            if (assignSel) assignSel.innerHTML = getStaffOptions(editId && leadsDB[editId] ? leadsDB[editId].assignedTo : '');
             let statusEl = document.getElementById('l_status');
 
             if (editId) {
@@ -9328,171 +9292,130 @@
             let crmContainer = document.getElementById('crm-leads-list');
             let homeContainer = document.getElementById('home-hot-leads');
             if (!crmContainer) return;
-
             crmContainer.innerHTML = "";
-            if (homeContainer) homeContainer.innerHTML = ""; 
+            if (homeContainer) homeContainer.innerHTML = "";
 
-            let counts = { total: 0, new: 0, active: 0, lost: 0 };
-            let fragment = document.createDocumentFragment();
+            let counts = { total:0, new:0, hot:0, won:0, lost:0 };
+            let pipelineTotal = 0;
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
 
-            // 🚀 PAGINATION: 500+ leads ek saath render na ho, isliye pehle sirf
-            // renderLimit tak hi DOM rows banate hain; baaki "load more" scroll par aate hain.
             let renderLimit = getListPageLimit('crm', currentFilter + '|' + (searchTerms.crm || ''));
-            let renderedCount = 0;
+            let rendered = 0;
 
-            let sortedLeads = Object.values(leadsDB).sort((a, b) => {
-                let dateA = a.date ? new Date(a.date) : new Date('2099-01-01');
-                let dateB = b.date ? new Date(b.date) : new Date('2099-01-01');
-                return dateA - dateB;
+            // status → bar/avatar/tag color class
+            function statusClass(s) {
+                if (s==='New') return 'New';
+                if (s==='Hot') return 'Hot';
+                if (s==='Thinking') return 'Thinking';
+                if (s==='Won') return 'Won';
+                if (s==='Lost') return 'Lost';
+                return 'Meeting'; // Meeting Scheduled / Meeting Completed
+            }
+
+            let allLeads = Object.values(leadsDB || {});
+            // Sort: Hot first, then by date desc
+            allLeads.sort((a,b) => {
+                if (a.status==='Hot' && b.status!=='Hot') return -1;
+                if (b.status==='Hot' && a.status!=='Hot') return 1;
+                return (b.id||'').localeCompare(a.id||'');
             });
 
-            sortedLeads.forEach(lead => {
-                let isOwner = (masterCompsDB[currentWorkspaceId].ownerMob === loggedInMobile);
-                if (!isOwner && lead.assignedTo !== loggedInMobile) return;
-                if (lead.status === "Won") return;
+            allLeads.forEach(lead => {
+                // Staff filter: staff sees only their assigned leads
+                if (!isOwner && String(lead.assignedTo||'').trim() !== String(loggedInMobile||'').trim() && String(lead.assignedTo||'').trim() !== String(loggedInEmail||'').trim()) return;
 
+                // Count all (before filter)
                 counts.total++;
-                if (lead.status === "New") counts.new++;
-                if (["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) counts.active++;
-                if (lead.status === "Lost") counts.lost++;
+                if (lead.status==='New') counts.new++;
+                if (lead.status==='Hot') counts.hot++;
+                if (lead.status==='Won') counts.won++;
+                if (lead.status==='Lost') counts.lost++;
+                if (lead.status !== 'Lost') pipelineTotal += parseFloat(lead.budget||0);
 
-                if (homeContainer && (lead.status === "Hot" || lead.status === "Meeting Scheduled")) {
-                    homeContainer.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #F1F5F9; cursor:pointer;" onclick="openTab('crm', document.getElementById('btn-crm')); setTimeout(()=>openPanel('${sanitize(lead.id)}'), 300);">
+                // Filter
+                let sw = (searchTerms.crm||'').toLowerCase();
+                if (sw && !((lead.name||'').toLowerCase().includes(sw) || (lead.phone||'').includes(sw) || (lead.cat||'').toLowerCase().includes(sw) || (lead.func||'').toLowerCase().includes(sw))) return;
+                if (currentFilter !== 'All' && lead.status !== currentFilter) return;
+                if (rendered >= renderLimit) return;
+                rendered++;
+
+                let sc = statusClass(lead.status);
+                let initials = (lead.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().substring(0,2);
+                let staffKey = String(lead.assignedTo||'').trim();
+                let staffName = '';
+                if (staffKey && masterCompsDB[currentWorkspaceId]?.staff) {
+                    let sr = masterCompsDB[currentWorkspaceId].staff.find(s=>s.mobile===staffKey||s.email===staffKey);
+                    if (sr) staffName = sr.name;
+                }
+                let waPhone = (lead.phone||'').toString().replace(/\D/g,'').slice(-10);
+                let budgetFmt = lead.budget && lead.budget!=='0' ? '₹'+parseFloat(lead.budget).toLocaleString('en-IN') : '';
+                let dateFmt = lead.date ? new Date(lead.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '';
+
+                let staffTag = staffName ? `<span class="crm-tag" style="background:#EFF6FF;color:#2563EB;">👤 ${sanitize(staffName)}</span>` : '';
+                let sourceTag = lead.source ? `<span class="crm-tag" style="background:#F8FAFC;color:#64748B;">📍 ${sanitize(lead.source)}</span>` : '';
+                let taskCount = (lead.tasks||[]).length;
+                let taskTag = taskCount ? `<span class="crm-tag" style="background:#FFF7ED;color:#D97706;">📋 ${taskCount} task${taskCount>1?'s':''}</span>` : '';
+
+                let cardHtml = `
+                <div class="crm-card-v3 ${lead.status==='Hot'?'hot-card':''}" onclick="openLeadDetail('${lead.id}')">
+                    <div class="crm-card-status-bar av-${sc}" style="background:none;" class2="bar-${sc}">
+                        <div style="height:4px; background:${sc==='New'?'#3B82F6':sc==='Hot'?'#EF4444':sc==='Thinking'?'#F59E0B':sc==='Won'?'#10B981':sc==='Lost'?'#94A3B8':'#8B5CF6'};"></div>
+                    </div>
+                    <div class="crm-card-body">
+                        <div class="crm-card-top">
+                            <div class="crm-avatar av-${sc}">${initials}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="crm-card-name">${sanitize(lead.name)}</div>
+                                <div class="crm-card-func">${sanitize(lead.func||'')}${lead.cat?' · '+sanitize(lead.cat):''}</div>
+                            </div>
+                            <span class="crm-tag tag-${sc}" style="flex-shrink:0;margin-top:2px;">${sanitize(lead.status)}</span>
+                        </div>
+                        <div class="crm-card-tags">
+                            ${staffTag}${sourceTag}${taskTag}
+                        </div>
+                    </div>
+                    <div class="crm-card-foot">
                         <div>
-                            <strong style="font-size:13px; color:var(--text-primary);">${sanitize(lead.name)}</strong>
-                            <div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">${sanitize(lead.func)} • ${lead.date || 'TBD'}</div>
+                            <div class="crm-foot-budget">${budgetFmt||'No budget set'}</div>
+                            <div class="crm-foot-date">${dateFmt?'📅 '+dateFmt:''}</div>
                         </div>
-                        <div style="text-align:right;">
-                            <span class="status-badge ${lead.status === 'Hot' ? 'badge-hot' : 'badge-meet'}">${sanitize(lead.status)}</span>
-                            <div style="font-size:11px; font-weight:700; color:var(--success); margin-top:4px;">₹${(parseFloat(lead.budget)||0).toLocaleString('en-IN')}</div>
+                        <div class="crm-quick-btns" onclick="event.stopPropagation()">
+                            <button class="crm-qbtn" title="Call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞</button>
+                            <button class="crm-qbtn" title="WhatsApp" onclick="window.open('https://wa.me/91${waPhone}','_blank')">💬</button>
+                            <button class="crm-qbtn" title="Edit" onclick="openLeadModal('${lead.id}')">✏️</button>
+                            <button class="crm-qbtn" title="Delete" onclick="actionDelete('${lead.id}',event)" style="color:#94A3B8;font-size:20px;font-weight:900;">×</button>
                         </div>
+                    </div>
+                </div>`;
+
+                crmContainer.innerHTML += cardHtml;
+
+                // Hot leads on home
+                if (lead.status==='Hot' && homeContainer) {
+                    homeContainer.innerHTML += `<div class="list-row" style="cursor:pointer;" onclick="openTab('crm',document.getElementById('btn-crm')); setTimeout(()=>openLeadDetail('${lead.id}'),200);">
+                        <div><strong>${sanitize(lead.name)}</strong><br><span style="font-size:11px;color:var(--text-secondary);">${sanitize(lead.func||'')} · ${budgetFmt}</span></div>
+                        <span class="status-badge" style="background:#FEF2F2;color:#DC2626;">🔥 Hot</span>
                     </div>`;
                 }
-
-                let show = true;
-                if (currentFilter === 'New' && lead.status !== 'New') show = false;
-                if (currentFilter === 'Active' && !["Hot", "Thinking", "Meeting Scheduled", "Meeting Completed"].includes(lead.status)) show = false;
-                if (currentFilter === 'Lost' && lead.status !== 'Lost') show = false;
-
-                // 🚀 SMART FIX 1: Search Box Logic (Workspace Staff Check)
-                let searchTerm = (searchTerms.crm || "").toLowerCase();
-                if (searchTerm !== "") {
-                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
-                    
-                    let staffNameForSearch = "";
-                    let comp = masterCompsDB[currentWorkspaceId];
-                    if (staffKey && comp && comp.staff) {
-                        let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
-                        if (staffObj && staffObj.name) staffNameForSearch = staffObj.name.toLowerCase();
-                    } else if (staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
-                        staffNameForSearch = masterUsersDB[staffKey].name.toLowerCase();
-                    }
-
-                    let leadNameForSearch = (lead.name || "").toLowerCase();
-                    let catForSearch = (lead.cat || "").toLowerCase();
-                    let phoneForSearch = String(lead.phone || "").toLowerCase();
-
-                    if (!leadNameForSearch.includes(searchTerm) && 
-                        !staffNameForSearch.includes(searchTerm) && 
-                        !catForSearch.includes(searchTerm) &&
-                        !phoneForSearch.includes(searchTerm)) {
-                        show = false;
-                    }
-                }
-
-                
-                if (show) {
-                    renderedCount++;
-                    if (renderedCount > renderLimit) return; // 🚀 PAGINATION: is batch ki limit se aage row nahi banani
-
-                    let badgeClass = "badge-new";
-                    if (lead.status === "Hot") badgeClass = "badge-hot";
-                    else if (lead.status === "Thinking") badgeClass = "badge-think";
-                    else if (lead.status === "Meeting Scheduled" || lead.status === "Meeting Completed") badgeClass = "badge-meet";
-                    else if (lead.status === "Lost") badgeClass = "badge-lost";
-
-                    // 🚀 SMART FIX 2: UI Name Tag Logic (Number ki jagah proper Name)
-                    let staffKey = lead.assignedTo ? String(lead.assignedTo).trim() : "";
-                    let staffName = "Unassigned";
-                    
-                    if (staffKey) {
-                        staffName = staffKey; // Default to Mobile No
-                        let comp = masterCompsDB[currentWorkspaceId];
-                        
-                        if (comp && comp.staff) {
-                            let staffObj = comp.staff.find(s => String(s.mobile).trim() === staffKey);
-                            if (staffObj && staffObj.name) staffName = staffObj.name.split(' ')[0]; 
-                        } 
-                        
-                        if (staffName === staffKey && masterUsersDB[staffKey] && masterUsersDB[staffKey].name) {
-                            staffName = masterUsersDB[staffKey].name.split(' ')[0];
-                        }
-                    }
-
-                    let assignedTag = staffKey ? `<span style="background:#EFF6FF; color:var(--accent-color); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-top:4px; display:inline-block; border:1px solid #BFDBFE;">👤 ${staffName}</span>` : '';
-
-                    // 🚀 NEW: Avatar initials (colored by name) for a more premium, scannable list
-                    let avatarPalette = ['#2563EB', '#7C3AED', '#DB2777', '#D97706', '#059669', '#0891B2', '#DC2626'];
-                    let nameForAvatar = (lead.name || "?").trim();
-                    let initials = nameForAvatar.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || "?";
-                    let colorIdx = 0; for (let c = 0; c < nameForAvatar.length; c++) colorIdx += nameForAvatar.charCodeAt(c);
-                    let avatarColor = avatarPalette[colorIdx % avatarPalette.length];
-                    let budgetVal = parseFloat(lead.budget) || 0;
-                    let budgetTag = budgetVal > 0 ? `<span style="color:var(--success); font-weight:800;">• ₹${budgetVal.toLocaleString('en-IN')}</span>` : '';
-                    let cleanPhone = String(lead.phone || "").replace(/\D/g, '');
-
-                    let div = document.createElement('div');
-                    div.className = "list-row";
-                    div.id = `row-${sanitize(lead.id)}`;
-                    div.innerHTML = `
-                        <div style="width:34px; height:34px; border-radius:10px; background:${avatarColor}; color:white; font-weight:900; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; align-self:center; margin-right:10px; box-shadow:0 3px 8px rgba(0,0,0,0.12);">${sanitize(initials)}</div>
-                        <div class="clickable-area" onclick="openPanel('${sanitize(lead.id)}')">
-                            <div class="row-main" style="${lead.status === 'Lost' ? 'text-decoration:line-through; color:var(--text-secondary)' : ''}">
-                                ${sanitize(lead.name)} ${assignedTag} 
-                                <span style="font-weight:normal; font-size:12px; color:var(--text-secondary);">(${sanitize(lead.cat)})</span>
-                            </div>
-                            <div class="row-sub">📅 ${lead.date || "TBD"} • ${sanitize(lead.phone)} ${budgetTag}</div>
-                        </div>
-                        <div class="actions-area">
-                            <span class="status-badge ${badgeClass}">${sanitize(lead.status)}</span>
-                            ${cleanPhone ? `<button class="btn-icon" title="Call" onclick="event.stopPropagation(); window.location.href='tel:${cleanPhone}'" style="color:var(--success);">📞</button>
-                            <button class="btn-icon" title="WhatsApp" onclick="event.stopPropagation(); window.open('https://wa.me/91${cleanPhone}','_blank')" style="color:#25D366;">💬</button>` : ''}
-                            <div class="dropdown-container">
-                                <button class="btn-icon" onclick="toggleMenu('${sanitize(lead.id)}', event)">⋮</button>
-                                <div class="dropdown-menu" id="menu-${sanitize(lead.id)}">
-                                    <div class="dropdown-item" onclick="actionEdit('${sanitize(lead.id)}', event)">✏️ Edit Lead</div>
-                                    <div class="dropdown-item" onclick="actionLost('${sanitize(lead.id)}', event)">❌ Mark as Lost</div>
-                                    <div class="dropdown-item text-red" onclick="actionDelete('${sanitize(lead.id)}', event)">🗑️ Delete Lead</div>
-                                </div>
-                            </div>
-                        </div>`;
-                    fragment.appendChild(div);
-                }
             });
 
-            crmContainer.appendChild(fragment);
+            // Update KPI strip counts
+            let tsEl=document.getElementById('crm-stat-total'); if(tsEl) tsEl.textContent=counts.total;
+            let tnEl=document.getElementById('crm-stat-new');   if(tnEl) tnEl.textContent=counts.new;
+            let taEl=document.getElementById('crm-stat-active'); if(taEl) taEl.textContent=counts.hot;
+            let twEl=document.getElementById('crm-stat-won');   if(twEl) twEl.textContent=counts.won;
+            let tlEl=document.getElementById('crm-stat-lost');  if(tlEl) tlEl.textContent=counts.lost;
+            let pvEl=document.getElementById('crm-pipeline-val'); if(pvEl) pvEl.textContent='Pipeline: ₹'+pipelineTotal.toLocaleString('en-IN');
+            let lblEl=document.getElementById('crm-list-label'); if(lblEl) lblEl.textContent=(currentFilter==='All'?'All Leads':currentFilter+' Leads')+' ('+rendered+')';
 
-            document.getElementById('crm-stat-total').innerText = counts.total;
-            document.getElementById('crm-stat-new').innerText = counts.new;
-            document.getElementById('crm-stat-active').innerText = counts.active;
-            document.getElementById('crm-stat-lost').innerText = counts.lost;
-
-            if (crmContainer.innerHTML === "") crmContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary);'>No leads found.</p>";
-            if (homeContainer && homeContainer.innerHTML === "") homeContainer.innerHTML = "<p style='padding:15px; text-align:center; color:var(--text-secondary); font-size:12px;'>No active leads right now.</p>";
-
-            // 🚀 PAGINATION: agar aur bhi matching leads baaki hain toh scroll-triggered "load more" laga do
-            attachLoadMoreSentinel(crmContainer, 'crm', renderedCount, renderLeadsList);
+            if (rendered === 0) {
+                crmContainer.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#94A3B8;">
+                    <div style="font-size:36px;margin-bottom:10px;">🔍</div>
+                    <div style="font-weight:800;font-size:14px;color:#475569;">No ${currentFilter==='All'?'':currentFilter+' '}leads found</div>
+                    <div style="font-size:12px;margin-top:5px;font-weight:500;">Tap "+ Add Lead" to get started</div>
+                </div>`;
+            }
         }
-        function actionDelete(id, event) { 
-            event.stopPropagation(); event.preventDefault(); closeAllMenus(); 
-            if (confirm("Are you sure you want to permanently delete this lead?")) { 
-                delete leadsDB[id]; 
-                updateDataAndUI(); // 👈 Ye cloud par update bhej dega (Workspace vault update)
-            } 
-        }
-
-        // ==========================================
         // NOTES, PHOTOS & WORKSPACE
         // ==========================================
         function addNote() { let text = document.getElementById('p_new_note').value; if (!text || !currentLeadId) return; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), text: text }); document.getElementById('p_new_note').value = ""; renderNotes(); }
@@ -10376,6 +10299,8 @@
                 if (currentTaskFilter === 'Pending' && t.done) return;
                 if (currentTaskFilter === 'Completed' && !t.done) return;
                 if (currentTaskFilter === 'Meetings' && t.type !== 'Meeting') return;
+                // ✅ BUG FIX: staff only sees tasks assigned to them
+                if (!isOwner && t.assignedTo && t.assignedTo !== loggedInEmail && t.assignedTo !== loggedInMobile) return;
                 let textStr = (t.text || "").toLowerCase();
                 let personStr = (t.leadName || "").toLowerCase();
                 if (searchWord && !textStr.includes(searchWord) && !personStr.includes(searchWord)) return;
@@ -10489,6 +10414,7 @@
                         </div>
                     </div>
                     <div class="task-actions">
+                        <button class="task-act-btn" onclick="sendTaskWA('${t.id}','${t._source||'global'}','${t._leadId||''}')" title="WhatsApp" style="color:#25D366;">💬</button>
                         <button class="task-act-btn" onclick="${editFn}" title="Edit">✏️</button>
                         <button class="task-act-btn" onclick="${delFn}" title="Delete" style="color:#94A3B8;">✕</button>
                     </div>
@@ -10496,7 +10422,27 @@
             });
         };
 
-                function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); window.editingTaskId = null; window.editingTaskIsGlobal = false; window.editingTaskLeadId = null; document.getElementById('quickMeetingModal').style.display = 'flex'; }
+                // ✅ Task WhatsApp sender
+        window.sendTaskWA = function(taskId, source, leadId) {
+            let t = source === 'global' ? (globalTasksDB[taskId]||null) : null;
+            if (!t && leadId && leadsDB[leadId]) {
+                t = (leadsDB[leadId].tasks||[]).find(x=>(x.id||x)===taskId) || null;
+            }
+            if (!t) return;
+            let phone = t.assignedTo || loggedInMobile || '';
+            // resolve phone from staff list if it's a mobile key
+            let comp = masterCompsDB[currentWorkspaceId];
+            if (comp && comp.staff) {
+                let sr = comp.staff.find(s=>s.mobile===phone||s.email===phone);
+                if (sr && sr.mobile) phone = sr.mobile;
+            }
+            phone = String(phone).replace(/\D/g,'').slice(-10);
+            let dl = t.deadline ? new Date(t.deadline).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+            let msg = encodeURIComponent(`*📝 UTSAVhq Task*\nTask: ${t.text||''}\n${dl?'⏰ Deadline: '+dl+'\n':''}Status: ${t.done?'✅ Done':'⏳ Pending'}`);
+            window.open('https://wa.me/91'+phone+'?text='+msg, '_blank');
+        };
+
+        function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); window.editingTaskId = null; window.editingTaskIsGlobal = false; window.editingTaskLeadId = null; document.getElementById('quickMeetingModal').style.display = 'flex'; }
 
         // 🚀 FIX: editTaskItem was being called by the ✏️ edit button on the Tasks dashboard but was never defined — adding it now.
         window.editTaskItem = function(taskId, isGlobal) {
@@ -16422,17 +16368,6 @@
         // 🚀 BULLETPROOF MOBILE BACK BUTTON v2
         // ══════════════════════════════════════════════
         let _navStack = []; // internal tab navigation stack
-
-        // Patch openTab to push history so back works tab-by-tab
-        (function() {
-            let _origOpenTab = openTab;
-            openTab = function(tabName, btnElement) {
-                let cur = document.querySelector('.active-section');
-                if (cur && cur.id !== tabName) _navStack.push(cur.id);
-                _origOpenTab(tabName, btnElement);
-                window.history.pushState({ utab: tabName }, '', '#utsav');
-            };
-        })();
 
         // Set initial hash trap
         window.history.replaceState({ utab: 'home' }, '', '#utsav');
