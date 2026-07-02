@@ -1,38 +1,39 @@
 // ==========================================================
 // UTSAVhq — Service Worker
-// Cache-First strategy for STATIC ASSETS ONLY.
+// Network-First for the APP SHELL (index.html), Cache-First
+// for rarely-changing CDN libraries (Firebase SDK, chart.js).
 // ==========================================================
-// ⚠️ IMPORTANT — READ BEFORE YOU DEPLOY A NEW index.html:
-// Cache-first means once a file is cached, it is served WITHOUT
-// checking the network again. So every time you change index.html
-// (or this sw.js file) and re-deploy, you MUST bump the version
-// below (v1 -> v2 -> v3 ...). That is what tells the browser
-// "throw away the old cache, this is a new app version".
-// If you forget this step, users will keep seeing the OLD app
-// until they manually clear site data.
+// 🐛 CHANGED FROM v3: index.html pehle pure Cache-First tha —
+// matlab ek baar cache hone ke baad, naya deploy bhi purana hi
+// dikhata rehta tha jab tak CACHE_NAME manually bump na karo.
+// Abhi app active development mein hai (baar-baar deploy ho raha
+// hai), isliye index.html ko ab NETWORK-FIRST bana diya hai: har
+// baar pehle fresh copy ki koshish karta hai, sirf offline hone
+// par hi cache se serve karta hai. Isse "maine fix kiya but site
+// par purana hi dikh raha hai" wala confusion khatam ho jaata hai.
+//
+// Firebase SDK / chart.js jaise CDN scripts abhi bhi Cache-First
+// hain, kyunki wo rarely change hote hain aur unhe baar-baar
+// (large) download karna faltu hai.
+//
+// ⚠️ Agar future mein app stable ho jaaye aur deploy frequency
+// kam ho jaaye, index.html ko bhi wapas Cache-First kiya ja sakta
+// hai speed ke liye — abhi correctness zyada zaroori hai.
 // ==========================================================
-const CACHE_NAME = 'utsavhq-static-v3';
+const CACHE_NAME = 'utsavhq-static-v4';
 
-// App-shell files we know about up front. Everything else
-// (Firebase SDK scripts, chart.js, etc.) gets cached the first
-// time it's actually requested — see the fetch handler below.
 const PRECACHE_URLS = [
-    './',
-    './index.html',
     './favicon.png'
 ];
 
-// ---------- INSTALL: pre-cache the app shell ----------
+// ---------- INSTALL ----------
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // naya SW turant activate hone ke liye ready ho jaaye
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return Promise.all(
                 PRECACHE_URLS.map((url) =>
-                    cache.add(url).catch((err) => {
-                        // Ek file precache na ho paaye toh poora install fail nahi hona chahiye
-                        console.warn('[SW] Precache skipped for', url, err);
-                    })
+                    cache.add(url).catch((err) => console.warn('[SW] Precache skipped for', url, err))
                 )
             );
         })
@@ -46,14 +47,20 @@ self.addEventListener('activate', (event) => {
             .then((keys) => Promise.all(
                 keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
             ))
-            .then(() => self.clients.claim()) // already-open tabs ko bhi turant control mein le lo
+            .then(() => self.clients.claim())
     );
 });
 
-// ---------- Helper: kaunse requests cache karne hain ----------
-// Firestore / Auth / Storage / Cloudinary jaisi DATA/API calls kabhi
-// cache NAHI honi chahiye — sirf app shell + rarely-changing CDN assets.
-function isCacheableStaticAsset(url) {
+// ---------- Helper: rarely-changing CDN libraries — Cache-First ----------
+function isCacheFirstAsset(url) {
+    if (url.hostname.endsWith('gstatic.com')) return true;   // Firebase SDK CDN
+    if (url.hostname.endsWith('jsdelivr.net')) return true;  // chart.js CDN
+    if (url.origin === self.location.origin && /\.(png|jpg|jpeg|svg|ico|webp)$/i.test(url.pathname)) return true; // images/icons
+    return false;
+}
+
+// Firestore / Auth / Storage / Cloudinary — kabhi cache nahi, hamesha seedha network
+function isNeverCache(url) {
     const neverCacheHosts = [
         'firestore.googleapis.com',
         'identitytoolkit.googleapis.com',
@@ -64,41 +71,47 @@ function isCacheableStaticAsset(url) {
         'api.cloudinary.com',
         'res.cloudinary.com'
     ];
-    if (neverCacheHosts.includes(url.hostname)) return false;
-
-    if (url.origin === self.location.origin) return true;   // index.html, favicon.png, sw.js khud, etc.
-    if (url.hostname.endsWith('gstatic.com')) return true;   // Firebase SDK CDN scripts
-    if (url.hostname.endsWith('jsdelivr.net')) return true;  // chart.js CDN
-
-    return false; // baaki sab (unknown third-party) ko chhedo mat — seedha network
+    return neverCacheHosts.includes(url.hostname);
 }
 
-// ---------- FETCH: Cache-First for static assets ----------
 self.addEventListener('fetch', (event) => {
     const req = event.request;
-    if (req.method !== 'GET') return; // writes/POST ko kabhi intercept mat karo
+    if (req.method !== 'GET') return; // writes/POST kabhi intercept mat karo
 
     let url;
     try { url = new URL(req.url); } catch (e) { return; }
-    if (!isCacheableStaticAsset(url)) return; // Firestore/Cloudinary/etc — seedha network se jaane do
+    if (isNeverCache(url)) return; // Firestore/Cloudinary/etc — seedha network
 
-    event.respondWith(
-        caches.match(req).then((cached) => {
-            if (cached) return cached; // ⚡ instant — cache mein mil gaya, network round-trip hi nahi
-
-            return fetch(req).then((networkResponse) => {
-                // Sirf theek response hi cache karo (opaque = cross-origin no-cors, wo bhi valid hai)
-                if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
-                    let copy = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
-                }
+    // 🔴 APP SHELL (HTML navigation) — NETWORK-FIRST
+    // Har baar pehle latest index.html laane ki koshish; sirf offline
+    // hone par hi last-known cached copy dikhati hai.
+    if (req.mode === 'navigate' || (url.origin === self.location.origin && (url.pathname === '/' || url.pathname.endsWith('index.html')))) {
+        event.respondWith(
+            fetch(req).then((networkResponse) => {
+                let copy = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
                 return networkResponse;
-            }).catch(() => {
-                // Offline ho aur ye specific file kabhi cache hi nahi hui —
-                // page navigation ke liye app-shell dikhane ki koshish karo.
-                if (req.mode === 'navigate') return caches.match('./index.html');
-                return Response.error();
-            });
-        })
-    );
+            }).catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+        );
+        return;
+    }
+
+    // ⚡ CDN libraries / static images — CACHE-FIRST (instant, rarely change)
+    if (isCacheFirstAsset(url)) {
+        event.respondWith(
+            caches.match(req).then((cached) => {
+                if (cached) return cached;
+                return fetch(req).then((networkResponse) => {
+                    if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+                        let copy = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+                    }
+                    return networkResponse;
+                }).catch(() => cached);
+            })
+        );
+        return;
+    }
+
+    // Baaki sab (unknown requests) — chhedo mat, seedha network
 });

@@ -8976,55 +8976,37 @@
             if (unsubscribeCompany) unsubscribeCompany(); // Purana todo
 
             // ==========================================================
-            // 🚀 READ-SAVER: workspace_data ab onSnapshot() (continuous
-            // real-time listener) se load NAHI hota — sirf ek baar .get()
-            // se fetch hota hai aur sessionStorage mein cache ho jaata hai.
-            // Isi tab session ke andar dubara loadLocalData() chale
-            // (workspace switch/back, re-init, etc.) toh Firestore ko
-            // chhua tak nahi jaata, seedha cache se serve hota hai.
-            // Naya browser tab khulte hi — ya tab close karke reopen karne
-            // par — sessionStorage khali milta hai, tabhi ek fresh read
-            // hota hai. (Trade-off: doosre staff member ka change is tab
-            // mein turant nahi dikhega jab tak tab reopen na ho — real-time
-            // collab ki jagah lower read-cost prioritize kiya gaya hai.)
+            // 🔴 REAL-TIME SYNC (restored): pehle isko ek-baar .get() +
+            // sessionStorage cache banaya tha reads bachane ke liye — lekin
+            // usse owner ka assign kiya hua task/lead staff ke phone par
+            // turant nahi dikh raha tha (tab reopen karna padta tha), jo
+            // core workflow tha. Isliye onSnapshot() wapas laga diya hai.
+            //
+            // Session cache ab bhi kaam aata hai — sirf "instant paint"
+            // ke liye (agar cache mein data hai toh turant dikha do jab
+            // tak live connection aake fresh data confirm na kar de);
+            // isse koi extra read nahi lagti, bas blank screen se bachaata hai.
             // ==========================================================
             let cacheKey = getSessionCacheKey(currentWorkspaceId);
-            let cachedRaw = null;
-            try { cachedRaw = sessionStorage.getItem(cacheKey); } catch (e) { /* private browsing / storage blocked — treat as cache-miss */ }
-
-            if (cachedRaw) {
-                try {
+            try {
+                let cachedRaw = sessionStorage.getItem(cacheKey);
+                if (cachedRaw) {
                     applyWorkspaceDataToMemory(JSON.parse(cachedRaw));
-                    console.log("📦 Workspace data served from session cache — 0 Firestore reads this load.");
                     updateDataAndUI(true);
-                } catch (e) {
-                    console.warn("⚠️ Session cache corrupt, falling back to a fresh fetch:", e);
-                    cachedRaw = null;
                 }
-            }
+            } catch (e) { /* private browsing / corrupt cache — ignore, live listener neeche sab theek kar dega */ }
 
-            if (!cachedRaw) {
-                console.log("🔄 Fresh fetch: Workspace ← Firestore (one-time read, cached for this tab session)...");
-                db.collection("workspace_data").doc(currentWorkspaceId).get().then((doc) => {
-                    let data = doc.exists ? doc.data() : null;
-                    applyWorkspaceDataToMemory(data);
-                    try { sessionStorage.setItem(cacheKey, JSON.stringify(data || {})); } catch (e) { /* quota/private mode — cache is best-effort, app still works */ }
-                    updateDataAndUI(true);
-                }).catch((error) => {
-                    console.error("Cloud Sync Error:", error);
-                    if (typeof window.showToast === 'function') window.showToast("Cloud se data load nahi ho paaya. Connection check karein.", "error", 5000);
-                });
-            }
+            unsubscribeWorkspace = db.collection("workspace_data").doc(currentWorkspaceId).onSnapshot((doc) => {
+                let data = doc.exists ? doc.data() : null;
+                applyWorkspaceDataToMemory(data);
+                try { sessionStorage.setItem(cacheKey, JSON.stringify(data || {})); } catch (e) { /* best-effort */ }
+                updateDataAndUI(true);
+            }, (error) => {
+                console.error("Cloud Sync Error:", error);
+                if (typeof window.showToast === 'function') window.showToast("Cloud se data load nahi ho paaya. Connection check karein.", "error", 5000);
+            });
 
-            // Ab koi live workspace_data listener nahi hai, isliye is variable ko
-            // null hi rakha hai — upar wali `if (unsubscribeWorkspace) unsubscribeWorkspace();`
-            // line backward-compatible reh jaati hai, kabhi crash nahi karegi.
-            unsubscribeWorkspace = null;
-
-            // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates) — ye doc chhota
-            // hai (sirf company/staff/permissions), isliye real-time hi rakha hai taaki
-            // team-join/permission changes turant dikhein. "Poora database" wala bhaari
-            // doc (workspace_data) hi upar cache-first bana diya gaya hai.
+            // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates)
             unsubscribeCompany = db.collection("companies").doc(currentWorkspaceId).onSnapshot((doc) => {
                 if (doc.exists) {
                     let compData = doc.data();
@@ -9301,6 +9283,7 @@
 
             let renderLimit = getListPageLimit('crm', currentFilter + '|' + (searchTerms.crm || ''));
             let rendered = 0;
+            let matchedCount = 0; // 🐛 FIX: search/filter ke baad kitne total match hue (renderLimit se independent) — sentinel ke liye zaroori
 
             // status → bar/avatar/tag color class
             function statusClass(s) {
@@ -9336,6 +9319,7 @@
                 let sw = (searchTerms.crm||'').toLowerCase();
                 if (sw && !((lead.name||'').toLowerCase().includes(sw) || (lead.phone||'').includes(sw) || (lead.cat||'').toLowerCase().includes(sw) || (lead.func||'').toLowerCase().includes(sw))) return;
                 if (currentFilter !== 'All' && lead.status !== currentFilter) return;
+                matchedCount++;
                 if (rendered >= renderLimit) return;
                 rendered++;
 
@@ -9406,7 +9390,7 @@
             let twEl=document.getElementById('crm-stat-won');   if(twEl) twEl.textContent=counts.won;
             let tlEl=document.getElementById('crm-stat-lost');  if(tlEl) tlEl.textContent=counts.lost;
             let pvEl=document.getElementById('crm-pipeline-val'); if(pvEl) pvEl.textContent='Pipeline: ₹'+pipelineTotal.toLocaleString('en-IN');
-            let lblEl=document.getElementById('crm-list-label'); if(lblEl) lblEl.textContent=(currentFilter==='All'?'All Leads':currentFilter+' Leads')+' ('+rendered+')';
+            let lblEl=document.getElementById('crm-list-label'); if(lblEl) lblEl.textContent=(currentFilter==='All'?'All Leads':currentFilter+' Leads')+' ('+matchedCount+')';
 
             if (rendered === 0) {
                 crmContainer.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#94A3B8;">
@@ -9415,6 +9399,13 @@
                     <div style="font-size:12px;margin-top:5px;font-weight:500;">Tap "+ Add Lead" to get started</div>
                 </div>`;
             }
+
+            // 🐛 FIX: naya card design likhte waqt "load more" sentinel wapas call
+            // karna reh gaya tha — matlab 50 se zyada leads waale filter mein
+            // baaki leads kabhi load hi nahi ho sakte the (list literally 50 par
+            // hamesha ke liye ruk jaati thi). Wapas laga diya — matchedCount use
+            // kiya hai (counts.total nahi, kyunki wo search/filter se pehle ka hai).
+            attachLoadMoreSentinel(crmContainer, 'crm', matchedCount, renderLeadsList);
         }
         // NOTES, PHOTOS & WORKSPACE
         // ==========================================
@@ -9495,6 +9486,13 @@
                 thumbContainer.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No photos uploaded.</p>";
             }
         }
+
+        // 🐛 FIX: naye CRM card design (crm-card-v3) mein onclick="openLeadDetail(id)"
+        // use hua tha, lekin ye function kahin define hi nahi tha — isliye click karte
+        // hi "openLeadDetail is not defined" console error aa raha tha aur card khulta
+        // nahi tha. Asli detail-panel function neeche wala openPanel(id) hi hai,
+        // isliye seedha usी ko alias kar diya.
+        window.openLeadDetail = function (id) { openPanel(id); };
 
         function openPanel(id) {
             hideNavAndFabs();
@@ -10428,18 +10426,55 @@
             if (!t && leadId && leadsDB[leadId]) {
                 t = (leadsDB[leadId].tasks||[]).find(x=>(x.id||x)===taskId) || null;
             }
-            if (!t) return;
-            let phone = t.assignedTo || loggedInMobile || '';
-            // resolve phone from staff list if it's a mobile key
+            if (!t) { if (typeof showToast === 'function') showToast('Task nahi mila', 'error', 2500); return; }
+
+            let phone = t.assignedTo || '';
             let comp = masterCompsDB[currentWorkspaceId];
             if (comp && comp.staff) {
                 let sr = comp.staff.find(s=>s.mobile===phone||s.email===phone);
                 if (sr && sr.mobile) phone = sr.mobile;
             }
             phone = String(phone).replace(/\D/g,'').slice(-10);
-            let dl = t.deadline ? new Date(t.deadline).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-            let msg = encodeURIComponent(`*📝 UTSAVhq Task*\nTask: ${t.text||''}\n${dl?'⏰ Deadline: '+dl+'\n':''}Status: ${t.done?'✅ Done':'⏳ Pending'}`);
-            window.open('https://wa.me/91'+phone+'?text='+msg, '_blank');
+
+            // 🐛 FIX: pehle assignedTo khaali hone par apne (loggedInMobile) hi
+            // WhatsApp khul jaata tha, jo confusing tha. Ab clear message dikhata hai.
+            if (phone.length !== 10) {
+                if (typeof showToast === 'function') showToast('⚠️ Is task ko koi staff assign nahi hai — pehle "Assign To" set karein', 'error', 4000);
+                else alert('Is task ko koi staff assign nahi hai. Pehle Edit karke "Assign To" set karein.');
+                return;
+            }
+
+            // 🐛 FIX: Meeting-type tasks (Quick Meeting se banaye hue) ke paas
+            // `deadline` field hota hi nahi — wo `date` + `time` alag store karte
+            // hain. Isliye pehle WhatsApp message mein deadline/date line hamesha
+            // khaali reh jaati thi in ke liye — ab dono cases handle kiye hain.
+            let dl = '';
+            if (t.deadline) {
+                dl = new Date(t.deadline).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+            } else if (t.date) {
+                let dObj = new Date(t.date + (t.time ? 'T' + t.time : 'T00:00'));
+                dl = t.time
+                    ? dObj.toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+                    : dObj.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+            }
+
+            let taskDesc = t.text || (t.type === 'Meeting' ? 'Follow-up Meeting' : 'Task');
+            let linkedTo = t.leadName || t._leadName || (leadId && leadsDB[leadId] ? leadsDB[leadId].name : '') || '';
+
+            let lines = [
+                `*📝 UTSAVhq ${t.type === 'Meeting' ? 'Meeting' : 'Task'}*`,
+                `${t.type === 'Meeting' ? 'Agenda' : 'Task'}: ${taskDesc}`,
+                linkedTo ? `Event/Lead: ${linkedTo}` : '',
+                dl ? `⏰ ${t.type === 'Meeting' ? 'When' : 'Deadline'}: ${dl}` : '',
+                `Status: ${t.done ? '✅ Done' : '⏳ Pending'}`
+            ].filter(Boolean);
+            let msg = encodeURIComponent(lines.join('\n'));
+
+            // 🐛 FIX: wa.me shortlink kabhi-kabhi mobile par (especially jab
+            // WhatsApp app link ko intercept karti hai) query text drop kar deta
+            // hai. api.whatsapp.com/send zyada reliably pre-filled text pass
+            // karta hai, isliye usी format par switch kiya hai.
+            window.open('https://api.whatsapp.com/send?phone=91' + phone + '&text=' + msg, '_blank');
         };
 
         function openQuickMeetingModal() { closeAllMenus(); document.getElementById('quickMeetingForm').reset(); window.editingTaskId = null; window.editingTaskIsGlobal = false; window.editingTaskLeadId = null; document.getElementById('quickMeetingModal').style.display = 'flex'; }
