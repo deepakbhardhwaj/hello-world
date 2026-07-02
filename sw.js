@@ -11,7 +11,7 @@
 // If you forget this step, users will keep seeing the OLD app
 // until they manually clear site data.
 // ==========================================================
-const CACHE_NAME = 'utsavhq-static-v1';
+const CACHE_NAME = 'utsavhq-static-v3';
 
 // App-shell files we know about up front. Everything else
 // (Firebase SDK scripts, chart.js, etc.) gets cached the first
