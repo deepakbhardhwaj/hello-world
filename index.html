@@ -174,17 +174,24 @@
         }
 
         // ==========================================
-        // 🚀 SERVICE WORKER REGISTRATION (Cache-First static assets)
+        // 🚀 SERVICE WORKER REGISTRATION
         // ==========================================
         // sw.js is file ke saath, same folder mein deploy honi chahiye
-        // (jaise Firebase Hosting root). 'load' event par register kiya
-        // hai taaki ye initial page load/Firebase init ke aage na aaye.
+        // (jaise Firebase Hosting / Cloudflare Pages root). 'load' event
+        // par register kiya hai taaki ye initial page load/Firebase init
+        // ke aage na aaye.
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then((reg) => {
                     console.log('✅ Service Worker registered:', reg.scope);
+                    // 🚀 FIX: browser apni marzi se kabhi bhi naye sw.js ko check
+                    // karta hai (ghanton baad bhi ho sakta hai) — isse purana SW
+                    // (jo kabhi cache-first tha) kaafi der tak stuck reh sakta
+                    // tha. Ab har page load par turant explicitly update() call
+                    // karte hain, taaki naya SW jitni jaldi ho sake pick ho jaaye.
+                    reg.update();
                 }).catch((err) => {
-                    console.warn('⚠️ Service Worker registration failed (app chalti rahegi, bas repeat-visit caching nahi milegi):', err);
+                    console.warn('⚠️ Service Worker registration failed (app chalti rahegi, bas offline/caching support nahi milega):', err);
                 });
             });
         }
