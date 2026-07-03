@@ -2825,7 +2825,7 @@
                 </button>
             </div>
 
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
                 <select id="top_fy_select" onchange="changeFY(this.value)"
                     style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:12px; padding:6px 10px; font-size:11px; font-weight:800; outline:none; cursor:pointer; box-shadow:var(--shadow-sm);">
                     <option value="All" selected>All Time</option>
@@ -2833,11 +2833,28 @@
                     <option value="2026-2027">FY 26-27</option>
                     <option value="2027-2028">FY 27-28</option>
                 </select>
+                <div style="position:relative;">
+                    <button id="notifBellBtn" onclick="toggleNotificationPanel(event)" title="Notifications"
+                        style="position:relative; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; padding:0;">
+                        🔔
+                        <span id="notifBadge" style="display:none; position:absolute; top:-5px; right:-5px; background:var(--danger); color:white; font-size:9px; font-weight:900; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 3px; border:2px solid white; line-height:1;">0</span>
+                    </button>
+                    <div id="notificationPanel" style="display:none; position:absolute; top:42px; right:0; width:320px; max-width:88vw; max-height:70vh; overflow-y:auto; background:white; border-radius:14px; box-shadow:0 12px 32px rgba(15,23,42,0.18); border:1px solid #E2E8F0; z-index:500;">
+                        <div style="padding:12px 14px; border-bottom:1px solid #F1F5F9; display:flex; align-items:center; justify-content:space-between;">
+                            <strong style="font-size:13px; color:var(--text-primary);">🔔 Notifications</strong>
+                            <button onclick="enableLocalNotifications()" id="notifEnableBtn" style="font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:4px 8px; cursor:pointer; display:none;">🔔 Enable</button>
+                        </div>
+                        <div id="notifListBody" style="padding:6px;"></div>
+                    </div>
+                </div>
                 <div class="user-profile" style="padding: 4px 10px;">
                     <span class="user-name" id="top_user_name" style="font-size: 12px;">User</span>
                 </div>
             </div>
         </div>
+
+        <!-- click-outside-to-close overlay for notification panel -->
+        <div id="notifPanelOverlay" onclick="toggleNotificationPanel(event)" style="display:none; position:fixed; inset:0; z-index:499;"></div>
 
         <!-- 1. Home Dashboard -->
         <div id="home" class="content section active-section" style="padding-bottom:120px;">
@@ -5206,7 +5223,9 @@
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Client Name</label><input type="text"
                                 id="l_name" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label">Mobile Number</label><input type="number"
+                        <div class="form-group"><label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">Mobile Number
+                                <button type="button" class="contact-pick-btn" onclick="pickContactInto('l_phone','l_name')" style="display:none; align-items:center; gap:3px; font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:2px 6px; cursor:pointer;">📇 Contacts</button>
+                            </label><input type="number"
                                 id="l_phone" class="form-input" required></div>
                     </div>
                     <div class="form-row">
@@ -6081,7 +6100,9 @@
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Account Name</label><input type="text"
                                 id="pt_name" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label">Mobile Number</label><input type="number"
+                        <div class="form-group"><label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">Mobile Number
+                                <button type="button" class="contact-pick-btn" onclick="pickContactInto('pt_phone','pt_name')" style="display:none; align-items:center; gap:3px; font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:2px 6px; cursor:pointer;">📇 Contacts</button>
+                            </label><input type="number"
                                 id="pt_phone" class="form-input" required></div>
                     </div>
                     <div class="form-group"><label class="form-label">Full Address / Notes</label><input type="text"
@@ -17591,6 +17612,292 @@
             });
         }
         // 🚀 FIX: SMART UI UPDATER (Infinite Loop Preventer)
+        // ==========================================================
+        // 🔔 NOTIFICATION CENTER (in-app + local OS notifications)
+        // ==========================================================
+        // IMPORTANT — SCOPE OF THIS ENGINE:
+        // Ye engine tab hi chalta hai jab app KHULI ho (ya recently khuli
+        // thi, browser/OS ke hisaab se). Ye asli "push" notification NAHI
+        // hai — matlab agar staff ne app kabhi khola hi nahi ya kai ghante
+        // se band hai, toh isse notification nahi jaayega. Poori tarah
+        // "app band ho tab bhi aaye" wala push ek alag backend piece
+        // (Firebase Cloud Functions) maangta hai — Claude se baat karke
+        // wo alag se set up karwa sakte hain jab chaho.
+        //
+        // Ye abhi jo karta hai (bina kisi extra setup/cost ke):
+        // 1. Bell icon + list — jab bhi app open ho, turant dikhega ki
+        //    kya naya assign hua hai aur kaunse due-dates paas hain.
+        // 2. Agar user "🔔 Enable" dabaye, toh OS-level notification banner
+        //    bhi dikhega (jaise koi native app) — jab tak tab/app kisi
+        //    hadd tak active/recently-active hai.
+
+        function isCurrentUserOwner() {
+            let comp = masterCompsDB[currentWorkspaceId];
+            return !!(comp && (comp.ownerEmail === loggedInEmail || comp.ownerMob === loggedInEmail));
+        }
+
+        function notifSeenKey() { return 'utsav_notif_seen_' + currentWorkspaceId; }
+        function getSeenNotifIds() {
+            try { return new Set(JSON.parse(localStorage.getItem(notifSeenKey())) || []); } catch (e) { return new Set(); }
+        }
+        function markNotifSeen(ids) {
+            try {
+                let seen = getSeenNotifIds();
+                ids.forEach(id => seen.add(id));
+                // purani entries ko haddse zyada badhne se roko (last 500 rakho)
+                let arr = Array.from(seen);
+                if (arr.length > 500) arr = arr.slice(arr.length - 500);
+                localStorage.setItem(notifSeenKey(), JSON.stringify(arr));
+            } catch (e) { /* storage full — notification dobara aa sakti hai, koi crash nahi hoga */ }
+        }
+
+        function daysFromToday(dateStr) {
+            if (!dateStr) return null;
+            let d = new Date(dateStr); d.setHours(0, 0, 0, 0);
+            let today = new Date(); today.setHours(0, 0, 0, 0);
+            return Math.round((d - today) / 86400000);
+        }
+        function dueLabel(diff) {
+            if (diff < 0) return { text: `${Math.abs(diff)}d overdue`, urgent: true };
+            if (diff === 0) return { text: 'Today', urgent: true };
+            if (diff === 1) return { text: 'Tomorrow', urgent: false };
+            return { text: `in ${diff}d`, urgent: false };
+        }
+
+        // Har notification ko ek stable unique id deta hai (date-scoped jahan
+        // zaroori ho), taaki ek hi cheez baar-baar OS-notify na ho jaaye.
+        window.computeNotifications = function () {
+            let isOwner = isCurrentUserOwner();
+            let myId = loggedInEmail;
+            let todayStr = new Date().toISOString().split('T')[0];
+            let notifs = []; // { id, icon, title, sub, urgent, onclick }
+
+            // 1) NAYE ASSIGNED TASKS (global + event-linked) — sirf jo pending hain
+            Object.values(globalTasksDB || {}).forEach(t => {
+                if (t.done) return;
+                if (!isOwner && t.assignedTo !== myId) return;
+                if (isOwner && t.assignedTo && t.assignedTo !== myId) return; // owner ke "assigned to me" section mein sirf khud ke
+                notifs.push({
+                    id: 'task_' + t.id,
+                    icon: '✅', title: 'Task: ' + (t.text || 'Untitled'),
+                    sub: t.leadName ? ('For: ' + t.leadName) : 'Assigned to you',
+                    urgent: false, isNewAssignment: true,
+                    onclick: `openTab('tasks', document.getElementById('btn-tasks'))`
+                });
+                if (t.deadline) {
+                    let diff = daysFromToday(t.deadline);
+                    if (diff !== null && diff <= 3) {
+                        let lbl = dueLabel(diff);
+                        notifs.push({
+                            id: 'taskdue_' + t.id + '_' + todayStr,
+                            icon: '⏰', title: 'Task due: ' + (t.text || 'Untitled'),
+                            sub: lbl.text, urgent: lbl.urgent,
+                            onclick: `openTab('tasks', document.getElementById('btn-tasks'))`
+                        });
+                    }
+                }
+            });
+            Object.values(leadsDB || {}).forEach(lead => {
+                (lead.tasks || []).forEach(t => {
+                    if (t.done) return;
+                    if (!isOwner && t.assignedTo !== myId && lead.assignedTo !== myId) return;
+                    if (t.deadline) {
+                        let diff = daysFromToday(t.deadline);
+                        if (diff !== null && diff <= 3) {
+                            let lbl = dueLabel(diff);
+                            notifs.push({
+                                id: 'evttaskdue_' + t.id + '_' + todayStr,
+                                icon: '⏰', title: 'Task due: ' + (t.text || 'Untitled'),
+                                sub: (lead.name || '') + ' • ' + lbl.text, urgent: lbl.urgent,
+                                onclick: `openPanel('${sanitize(lead.id)}')`
+                            });
+                        }
+                    }
+                });
+
+                // 2) NAYE ASSIGNED LEADS
+                if (!isOwner && lead.assignedTo === myId && lead.status !== 'Won' && lead.status !== 'Lost') {
+                    notifs.push({
+                        id: 'lead_' + lead.id,
+                        icon: '📋', title: 'Lead assigned: ' + (lead.name || 'Untitled'),
+                        sub: (lead.cat || 'Enquiry') + ' • ' + (lead.status || ''),
+                        urgent: false, isNewAssignment: true,
+                        onclick: `openPanel('${sanitize(lead.id)}')`
+                    });
+                }
+
+                // 3) EVENT DATE aa raha hai (Won leads = events)
+                if (lead.status === 'Won' && lead.date && (isOwner || lead.assignedTo === myId)) {
+                    let diff = daysFromToday(lead.date);
+                    if (diff !== null && diff >= 0 && diff <= 3) {
+                        let lbl = dueLabel(diff);
+                        notifs.push({
+                            id: 'eventdate_' + lead.id + '_' + todayStr,
+                            icon: '🎉', title: 'Event: ' + (lead.name || 'Untitled'),
+                            sub: (lead.func || '') + ' • ' + lbl.text, urgent: lbl.urgent,
+                            onclick: `openPanel('${sanitize(lead.id)}')`
+                        });
+                    }
+                }
+            });
+
+            // 4) RENTAL ITEM RETURN DATE paas ya overdue
+            if (isOwner) {
+                Object.values(salesDB || {}).forEach(r => {
+                    if (r.type !== 'Invoice' || r.invoiceType !== 'Rental') return;
+                    if (r.rentalStatus === 'Returned') return;
+                    if (!r.returnDate) return;
+                    let diff = daysFromToday(r.returnDate);
+                    if (diff !== null && diff <= 3) {
+                        let lbl = dueLabel(diff);
+                        let party = partiesDB[r.partyId];
+                        notifs.push({
+                            id: 'return_' + r.id + '_' + todayStr,
+                            icon: '📦', title: 'Item return: ' + r.id,
+                            sub: (party ? party.name : '') + ' • ' + lbl.text, urgent: lbl.urgent,
+                            onclick: `viewDetails('${r.id}', 'sales')`
+                        });
+                    }
+                });
+
+                // 5) PAYMENT REMINDERS — invoice 3+ din purana ho aur balance due ho
+                // (koi alag "payment due date" field nahi hai is app mein, isliye
+                // invoice date se hi umar nikaali hai)
+                Object.values(salesDB || {}).forEach(r => {
+                    if (r.type !== 'Invoice' || !(r.balanceDue > 0)) return;
+                    let ageDays = r.date ? -daysFromToday(r.date) : 0;
+                    if (ageDays >= 3) {
+                        let party = partiesDB[r.partyId];
+                        notifs.push({
+                            id: 'payment_' + r.id + '_' + todayStr,
+                            icon: '💰', title: 'Payment due: ₹' + r.balanceDue.toLocaleString('en-IN'),
+                            sub: (party ? party.name : '') + ' • ' + r.id + ' (' + ageDays + 'd old)',
+                            urgent: ageDays >= 15,
+                            onclick: `viewDetails('${r.id}', 'sales')`
+                        });
+                    }
+                });
+            }
+
+            // Urgent pehle, phir baaki
+            notifs.sort((a, b) => (b.urgent === true) - (a.urgent === true));
+            return notifs;
+        };
+
+        window.renderNotificationPanel = function () {
+            let notifs = window.computeNotifications();
+            let badge = document.getElementById('notifBadge');
+            let body = document.getElementById('notifListBody');
+            if (!badge || !body) return;
+
+            if (notifs.length > 0) {
+                badge.style.display = 'flex';
+                badge.innerText = notifs.length > 99 ? '99+' : notifs.length;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (notifs.length === 0) {
+                body.innerHTML = `<div style="text-align:center; padding:30px 15px; color:#94A3B8; font-size:12.5px; font-weight:600;">Sab clear hai — koi naya update nahi 👍</div>`;
+            } else {
+                body.innerHTML = notifs.map(n => `
+                    <div onclick="toggleNotificationPanel(); ${n.onclick}" style="display:flex; gap:10px; padding:10px; border-radius:10px; cursor:pointer; align-items:flex-start;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
+                        <div style="font-size:18px; flex-shrink:0;">${n.icon}</div>
+                        <div style="min-width:0; flex:1;">
+                            <div style="font-size:12.5px; font-weight:800; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sanitize(n.title)}</div>
+                            <div style="font-size:11px; font-weight:600; color:${n.urgent ? 'var(--danger)' : '#94A3B8'}; margin-top:2px;">${sanitize(n.sub)}</div>
+                        </div>
+                    </div>`).join('');
+            }
+
+            // Naye "assignment" type notifs ke liye OS notification bhejo (agar permission mil chuki hai)
+            let seen = getSeenNotifIds();
+            let toNotify = notifs.filter(n => !seen.has(n.id));
+            if (toNotify.length > 0) {
+                markNotifSeen(toNotify.map(n => n.id));
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    // Pehli baar (cold load) sab kuch ek saath OS-notify karne ke bajaye,
+                    // sirf assignment-type (task/lead) ko turant notify karo — due-date
+                    // reminders sirf list mein dikhte rahenge (kam noisy).
+                    toNotify.filter(n => n.isNewAssignment || n.urgent).slice(0, 5).forEach(n => {
+                        try {
+                            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                                navigator.serviceWorker.ready.then(reg => {
+                                    if (reg && reg.showNotification) reg.showNotification(n.title, { body: n.sub, icon: 'favicon.png', tag: n.id });
+                                });
+                            } else {
+                                new Notification(n.title, { body: n.sub, icon: 'favicon.png', tag: n.id });
+                            }
+                        } catch (e) { /* notification blocked/unsupported — in-app list still shows it */ }
+                    });
+                }
+            }
+        };
+
+        window.toggleNotificationPanel = function (event) {
+            if (event) event.stopPropagation();
+            let panel = document.getElementById('notificationPanel');
+            let overlay = document.getElementById('notifPanelOverlay');
+            if (!panel) return;
+            let opening = panel.style.display === 'none';
+            panel.style.display = opening ? 'block' : 'none';
+            if (overlay) overlay.style.display = opening ? 'block' : 'none';
+            if (opening) window.renderNotificationPanel();
+        };
+
+        // Notification permission — sirf ek clear button-tap par maangte hain
+        // (auto-popup se log usually "Block" dabate hain aur phir kabhi nahi puchta).
+        window.enableLocalNotifications = function () {
+            if (!('Notification' in window)) { if (typeof showToast === 'function') showToast('Ye browser notifications support nahi karta', 'error', 3000); return; }
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') {
+                    if (typeof showToast === 'function') showToast('🔔 Notifications ON!', 'success', 2500);
+                    let btn = document.getElementById('notifEnableBtn'); if (btn) btn.style.display = 'none';
+                } else {
+                    if (typeof showToast === 'function') showToast('Notifications allow nahi kiye — browser settings se badal sakte ho', 'info', 3500);
+                }
+            });
+        };
+
+        function refreshNotifEnableButtonVisibility() {
+            let btn = document.getElementById('notifEnableBtn');
+            if (!btn) return;
+            btn.style.display = ('Notification' in window && Notification.permission === 'default') ? 'inline-block' : 'none';
+        }
+
+        // ==========================================================
+        // 📇 CONTACT PICKER (mobile ke contact list se number uthana)
+        // ==========================================================
+        // Sirf Android Chrome par kaam karta hai abhi (Contact Picker API
+        // still experimental hai) — iOS Safari aur desktop par button hi
+        // nahi dikhega, log seedha type kar sakte hain jaisa pehle karte the.
+        window.pickContactInto = async function (phoneInputId, nameInputId) {
+            if (!('contacts' in navigator && 'ContactsManager' in window)) {
+                if (typeof showToast === 'function') showToast('Ye device/browser contact-picker support nahi karta', 'info', 3000);
+                return;
+            }
+            try {
+                let props = ['tel', 'name'];
+                let contacts = await navigator.contacts.select(props, { multiple: false });
+                if (!contacts || contacts.length === 0) return;
+                let c = contacts[0];
+                let phoneEl = document.getElementById(phoneInputId);
+                if (phoneEl && c.tel && c.tel.length > 0) {
+                    phoneEl.value = String(c.tel[0]).replace(/\D/g, '').slice(-10);
+                }
+                let nameEl = nameInputId ? document.getElementById(nameInputId) : null;
+                if (nameEl && !nameEl.value && c.name && c.name.length > 0) {
+                    nameEl.value = c.name[0];
+                }
+            } catch (e) { /* user cancelled the picker — normal, do nothing */ }
+        };
+
+        // Contact-picker button ko sirf tab dikhata hai jab API support ho
+        function injectContactPickerButtons() {
+            if (!('contacts' in navigator && 'ContactsManager' in window)) return;
+            document.querySelectorAll('.contact-pick-btn').forEach(b => b.style.display = 'inline-flex');
+        }
+
         function updateDataAndUI(fromCloud = false) {
             
             
@@ -17617,6 +17924,11 @@
             
             // 👇 YAHAN INVENTORY LIST RENDER MISSING THA, YE LINE ADD KI HAI 👇
             if (typeof renderInventoryHubList === 'function') renderInventoryHubList();
+
+            // 🔔 Notification badge + due-date/assignment checks — har data update par
+            if (typeof renderNotificationPanel === 'function') renderNotificationPanel();
+            if (typeof refreshNotifEnableButtonVisibility === 'function') refreshNotifEnableButtonVisibility();
+            if (typeof injectContactPickerButtons === 'function') injectContactPickerButtons();
             
             // 🚀 INVENTORY DASHBOARD AUTO-LOAD TRIGGER
             if (typeof renderMainLogisticsHub === 'function') renderMainLogisticsHub();
