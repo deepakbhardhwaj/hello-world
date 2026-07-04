@@ -3111,6 +3111,7 @@
                 .evt-card{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
                 .evt-card:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
                 .evt-card.today-card{border-color:#FCD34D;box-shadow:0 2px 14px rgba(217,119,6,.15);}
+                .evt-card.overdue-card{border-color:#FCA5A5;box-shadow:0 2px 14px rgba(220,38,38,.1);}
                 .evt-status-bar{height:4px;width:100%;border-radius:14px 14px 0 0;}
                 .evt-bar-Upcoming{background:#3B82F6;} .evt-bar-Completed{background:#10B981;} .evt-bar-Cancelled{background:#94A3B8;}
                 .evt-card-body{padding:12px 14px 10px;cursor:pointer;}
@@ -3123,6 +3124,7 @@
                 .evt-countdown.cd-soon{background:#FEF2F2;color:#DC2626;}
                 .evt-countdown.cd-future{background:#EFF6FF;color:#2563EB;}
                 .evt-countdown.cd-past{background:#F0FDF4;color:#059669;}
+                .evt-countdown.cd-overdue{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;}
                 .evt-pay-track{height:5px;border-radius:3px;background:#F1F5F9;overflow:hidden;margin-top:9px;}
                 .evt-pay-fill{height:100%;border-radius:3px;transition:width .4s;}
                 .evt-pay-label{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:#94A3B8;margin-top:3px;}
@@ -8032,6 +8034,8 @@
                 m.classList.remove('show');
                 m.style.top = '';
                 m.style.bottom = '';
+                m.style.left = '';
+                m.style.position = '';
             });
 
             // 🚀 SLUGGISH FIX: Sirf us element ka z-index theek karo jo active mark hua tha
@@ -8067,15 +8071,32 @@
                     row.classList.add('menu-active-row'); // 👈 Mark it so we can find it fast when closing
                 }
 
+                // 🐛 FIX: dropdown pehle position:absolute tha (parent ke relative),
+                // isliye kisi bhi scrollable ancestor ke andar hota (jaise #events ya
+                // #crm section ka apna overflow-y:auto) toh us container ki visible
+                // height se bahar crop ho jaata tha — chahe page/screen mein neeche
+                // aur khaali jagah kyun na ho. Ab position:fixed use karte hain
+                // (poore viewport ke relative), jo kisi bhi scroll container se bahar
+                // nikal ke sahi jagah, poori tarah dikhta hai.
+                menu.style.position = 'fixed';
                 let iconRect = e.currentTarget.getBoundingClientRect();
+                let menuW = menu.offsetWidth || 180;
+                let menuH = menu.offsetHeight || 160;
+
                 let spaceBelow = window.innerHeight - iconRect.bottom;
-                if (spaceBelow < 200) {
-                    menu.style.top = 'auto';
-                    menu.style.bottom = 'calc(100% + 5px)';
-                } else {
-                    menu.style.top = 'calc(100% + 5px)';
+                if (spaceBelow < menuH + 10 && iconRect.top > menuH + 10) {
                     menu.style.bottom = 'auto';
+                    menu.style.top = Math.max(8, iconRect.top - menuH - 5) + 'px';
+                } else {
+                    menu.style.bottom = 'auto';
+                    menu.style.top = (iconRect.bottom + 5) + 'px';
                 }
+
+                let left = iconRect.right - menuW; // button ke right-edge se align
+                if (left < 8) left = 8;
+                if (left + menuW > window.innerWidth - 8) left = window.innerWidth - menuW - 8;
+                menu.style.left = left + 'px';
+                menu.style.right = 'auto';
             }
         }
 
@@ -9713,7 +9734,11 @@
                 let cdClass = 'cd-future', cdText = mainDate !== "TBD" ? new Date(mainDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
                 if (diff !== null) {
                     if (ev.eventStatus === 'Completed') { cdClass = 'cd-past'; cdText = '✅ Done'; }
-                    else if (diff < 0) { cdClass = 'cd-past'; cdText = Math.abs(diff) + 'd ago'; }
+                    // 🐛 FIX: pehle "date beet gayi" har case mein green dikhta tha (jaise
+                    // Completed jaisa hi), chahe event abhi bhi "Upcoming" hi ho — confusing
+                    // tha (theek lagta tha jabki asal mein status update karna baaki hai).
+                    // Ab overdue-but-not-completed events ko alag amber/warning badge milta hai.
+                    else if (diff < 0) { cdClass = 'cd-overdue'; cdText = '⚠️ ' + Math.abs(diff) + 'd overdue'; }
                     else if (diff === 0) { cdClass = 'cd-today'; cdText = '🎉 Today'; }
                     else if (diff <= 7) { cdClass = 'cd-soon'; cdText = 'in ' + diff + 'd'; }
                     else { cdClass = 'cd-future'; cdText = 'in ' + diff + 'd'; }
@@ -9750,7 +9775,7 @@
                 let cleanPhone = String(ev.phone || "").replace(/\D/g, '');
 
                 let card = document.createElement('div');
-                card.className = "evt-card" + (cdClass === 'cd-today' ? ' today-card' : '');
+                card.className = "evt-card" + (cdClass === 'cd-today' ? ' today-card' : '') + (cdClass === 'cd-overdue' ? ' overdue-card' : '');
                 card.id = "row-" + ev.id;
                 card.innerHTML = `
                     <div class="evt-status-bar ${statusBarClass}"></div>
