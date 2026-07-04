@@ -3003,10 +3003,10 @@
                 .ck-val{font-size:16px;font-weight:900;color:white;line-height:1;margin-bottom:3px;}
                 .ck-lbl{font-size:8.5px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.3px;}
                 .crm-search-wrap{background:white;padding:10px 16px;border-bottom:1px solid #E2E8F0;position:sticky;top:56px;z-index:100;}
-                .crm-card-v3{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;overflow:hidden;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+                .crm-card-v3{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
                 .crm-card-v3:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
                 .crm-card-v3.hot-card{border-color:#FCA5A5;box-shadow:0 2px 12px rgba(239,68,68,.08);}
-                .crm-card-status-bar{height:4px;width:100%;}
+                .crm-card-status-bar{height:4px;width:100%;border-radius:14px 14px 0 0;}
                 .crm-card-body{padding:12px 14px 10px;}
                 .crm-card-top{display:flex;align-items:flex-start;gap:10px;}
                 .crm-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;flex-shrink:0;}
@@ -3014,7 +3014,7 @@
                 .crm-card-func{font-size:11px;color:#64748B;font-weight:600;margin-top:2px;}
                 .crm-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
                 .crm-tag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:8px;}
-                .crm-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;}
+                .crm-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-radius:0 0 14px 14px;}
                 .crm-foot-budget{font-size:12px;font-weight:900;color:#0F172A;}
                 .crm-foot-date{font-size:10px;color:#94A3B8;font-weight:600;}
                 .crm-quick-btns{display:flex;gap:2px;}
@@ -3108,10 +3108,10 @@
                 .evt-search-wrap{background:white;padding:10px 16px;border-bottom:1px solid #E2E8F0;position:sticky;top:56px;z-index:100;}
                 .evt-filter-toggle{background:#F1F5F9;border:1px solid #E2E8F0;color:#78350F;width:34px;height:34px;border-radius:10px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
-                .evt-card{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;overflow:hidden;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+                .evt-card{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
                 .evt-card:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
                 .evt-card.today-card{border-color:#FCD34D;box-shadow:0 2px 14px rgba(217,119,6,.15);}
-                .evt-status-bar{height:4px;width:100%;}
+                .evt-status-bar{height:4px;width:100%;border-radius:14px 14px 0 0;}
                 .evt-bar-Upcoming{background:#3B82F6;} .evt-bar-Completed{background:#10B981;} .evt-bar-Cancelled{background:#94A3B8;}
                 .evt-card-body{padding:12px 14px 10px;cursor:pointer;}
                 .evt-card-top{display:flex;align-items:flex-start;gap:10px;}
@@ -3128,7 +3128,7 @@
                 .evt-pay-label{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:#94A3B8;margin-top:3px;}
                 .evt-timeline{margin-top:9px;border-top:1px dashed #E2E8F0;padding-top:8px;}
                 .evt-timeline-row{font-size:10.5px;color:#64748B;margin-bottom:4px;display:flex;justify-content:space-between;font-weight:600;}
-                .evt-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;}
+                .evt-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-radius:0 0 14px 14px;}
                 .evt-foot-budget{font-size:12px;font-weight:900;color:#0F172A;}
                 .evt-foot-date{font-size:10px;color:#94A3B8;font-weight:600;}
                 .evt-quick-btns{display:flex;gap:2px;}
@@ -5197,10 +5197,12 @@
                             <div class="form-row">
                                 <div class="form-group"><label class="form-label">Client Name</label><input type="text"
                                         id="l_name" class="form-input" oninput="updateLeadAvatarPreview()" required></div>
-                                <div class="form-group"><label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">Mobile Number
-                                        <button type="button" class="contact-pick-btn" onclick="pickContactInto('l_phone','l_name'); updateLeadAvatarPreview();" style="display:none; align-items:center; gap:3px; font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:2px 6px; cursor:pointer;">📇 Contacts</button>
-                                    </label><input type="number"
-                                        id="l_phone" class="form-input" required></div>
+                                <div class="form-group"><label class="form-label">Mobile Number</label>
+                                    <div style="display:flex; gap:6px;">
+                                        <input type="number" id="l_phone" class="form-input" required style="flex:1; min-width:0;">
+                                        <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('l_phone','l_name'); updateLeadAvatarPreview();" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">📇</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -6106,10 +6108,12 @@
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Account Name</label><input type="text"
                                 id="pt_name" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">Mobile Number
-                                <button type="button" class="contact-pick-btn" onclick="pickContactInto('pt_phone','pt_name')" style="display:none; align-items:center; gap:3px; font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:2px 6px; cursor:pointer;">📇 Contacts</button>
-                            </label><input type="number"
-                                id="pt_phone" class="form-input" required></div>
+                        <div class="form-group"><label class="form-label">Mobile Number</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="number" id="pt_phone" class="form-input" required style="flex:1; min-width:0;">
+                                <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('pt_phone','pt_name')" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">📇</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group"><label class="form-label">Full Address / Notes</label><input type="text"
                             id="pt_address" class="form-input" placeholder="City, State, Pincode"></div>
@@ -9727,7 +9731,7 @@
                 let avatarColor = avatarPalette[colorIdx % avatarPalette.length];
 
                 let timelineHtml = "";
-                if (ev.dates && ev.dates.length > 1) {
+                if (ev.dates && ev.dates.length > 0) {
                     timelineHtml = `<div class="evt-timeline">`;
                     ev.dates.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => {
                         let isPast = d.date < todayStr; let icon = isPast ? "✅" : "⏳";
