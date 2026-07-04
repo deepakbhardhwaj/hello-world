@@ -3084,175 +3084,116 @@
         </div>
 
         <!-- 3. Events Dashboard -->
-        <div id="events" class="content section" style="padding-bottom:120px;">
+        <div id="events" class="content section" style="padding:0; background:#F1F5F9; overflow-y:auto; padding-bottom:120px;">
             <style>
-                /* 🚀 Premium Events Specific CSS (Compact Version) */
-                #events-list {
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    padding: 0 2px !important;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
+                /* 🚀 Premium Events UI v2 — same system as CRM cards, but its own
+                   festive navy→gold accent (Utsav = celebration) so the two tabs
+                   feel like one family while still being tellable apart at a glance. */
+                .evt-hero{background:linear-gradient(135deg,#0F172A 0%,#78350F 55%,#D97706 100%);padding:18px 16px 0;position:relative;overflow:hidden;}
+                .evt-hero::before{content:'';position:absolute;top:-40px;right:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.06);}
+                .evt-hero-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-bottom:16px;}
+                .evt-hero-title{font-size:20px;font-weight:900;color:white;letter-spacing:-.5px;}
+                .evt-hero-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;font-weight:500;}
+                .evt-hero-btns{display:flex;gap:8px;}
+                .evt-hero-btn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.25);color:white;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.2s;}
+                .evt-hero-btn.add-btn{background:#059669;border-color:#059669;box-shadow:0 4px 12px rgba(5,150,105,.35);}
+                .evt-kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px 14px;position:relative;z-index:1;}
+                .evt-kpi{background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:9px 4px;text-align:center;cursor:pointer;transition:.2s;}
+                .evt-kpi.active-kpi{background:white;border-color:white;}
+                .evt-kpi.active-kpi .ek-val{color:#78350F !important;}
+                .evt-kpi.active-kpi .ek-lbl{color:#92400E;}
+                .ek-val{font-size:17px;font-weight:900;color:white;line-height:1;margin-bottom:3px;}
+                .ek-lbl{font-size:8.5px;font-weight:800;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.3px;}
 
-                #events-list .list-row {
-                    background: #FFFFFF !important;
-                    padding: 12px 14px !important;
-                    border-radius: 12px !important;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
-                    border: 1px solid #F1F5F9 !important;
-                    margin-bottom: 0 !important;
-                    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-                }
+                .evt-search-wrap{background:white;padding:10px 16px;border-bottom:1px solid #E2E8F0;position:sticky;top:56px;z-index:100;}
+                .evt-filter-toggle{background:#F1F5F9;border:1px solid #E2E8F0;color:#78350F;width:34px;height:34px;border-radius:10px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
-                #events-list .list-row:hover {
-                    transform: translateY(-2px) !important;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
-                    border-color: #CBD5E1 !important;
-                }
-
-                .event-stat-card {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 10px 8px;
-                    border: 1px solid #E2E8F0;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-                    cursor: pointer;
-                    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    text-align: center;
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                }
-
-                .event-stat-card:hover {
-                    transform: translateY(-2px);
-                    border-color: #CBD5E1;
-                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
-                }
-
-                .event-stat-card.active-event-card {
-                    background: linear-gradient(135deg, #0F172A, #1E293B);
-                    border-color: #0F172A;
-                    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
-                    transform: translateY(-2px);
-                }
-
-                .event-stat-card .stat-label {
-                    font-size: 9.5px;
-                    font-weight: 800;
-                    color: var(--text-secondary);
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 2px;
-                    transition: 0.3s;
-                }
-
-                .event-stat-card .stat-value {
-                    font-size: 18px;
-                    font-weight: 900;
-                    color: var(--text-primary);
-                    transition: 0.3s;
-                    letter-spacing: -0.5px;
-                }
-
-                /* When Active */
-                .event-stat-card.active-event-card .stat-label {
-                    color: #94A3B8;
-                }
-
-                .event-stat-card.active-event-card .stat-value {
-                    color: white;
-                }
-
-                .events-sticky-top {
-                    position: sticky;
-                    top: 56px;
-                    z-index: 100;
-                    background: rgba(248, 250, 252, 0.85);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    padding-top: 8px;
-                    padding-bottom: 8px;
-                    margin-bottom: 12px;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.7);
-                }
+                .evt-card{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;overflow:hidden;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+                .evt-card:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
+                .evt-card.today-card{border-color:#FCD34D;box-shadow:0 2px 14px rgba(217,119,6,.15);}
+                .evt-status-bar{height:4px;width:100%;}
+                .evt-bar-Upcoming{background:#3B82F6;} .evt-bar-Completed{background:#10B981;} .evt-bar-Cancelled{background:#94A3B8;}
+                .evt-card-body{padding:12px 14px 10px;cursor:pointer;}
+                .evt-card-top{display:flex;align-items:flex-start;gap:10px;}
+                .evt-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;flex-shrink:0;}
+                .evt-card-name{font-size:14px;font-weight:900;color:#0F172A;line-height:1.2;}
+                .evt-card-func{font-size:11px;color:#64748B;font-weight:600;margin-top:2px;}
+                .evt-countdown{font-size:9.5px;font-weight:900;padding:3px 8px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+                .evt-countdown.cd-today{background:#FEF3C7;color:#92400E;}
+                .evt-countdown.cd-soon{background:#FEF2F2;color:#DC2626;}
+                .evt-countdown.cd-future{background:#EFF6FF;color:#2563EB;}
+                .evt-countdown.cd-past{background:#F0FDF4;color:#059669;}
+                .evt-pay-track{height:5px;border-radius:3px;background:#F1F5F9;overflow:hidden;margin-top:9px;}
+                .evt-pay-fill{height:100%;border-radius:3px;transition:width .4s;}
+                .evt-pay-label{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:#94A3B8;margin-top:3px;}
+                .evt-timeline{margin-top:9px;border-top:1px dashed #E2E8F0;padding-top:8px;}
+                .evt-timeline-row{font-size:10.5px;color:#64748B;margin-bottom:4px;display:flex;justify-content:space-between;font-weight:600;}
+                .evt-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;}
+                .evt-foot-budget{font-size:12px;font-weight:900;color:#0F172A;}
+                .evt-foot-date{font-size:10px;color:#94A3B8;font-weight:600;}
+                .evt-quick-btns{display:flex;gap:2px;}
+                .evt-qbtn{background:none;border:none;cursor:pointer;font-size:18px;padding:4px 6px;border-radius:8px;transition:.15s;line-height:1;}
+                .evt-qbtn:hover{background:#F1F5F9;}
+                .evt-tag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:8px;}
             </style>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                <div>
-                    <h2 class="section-title"
-                        style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-primary);">
-                        Events Hub</h2>
-                    <p style="margin: 2px 0 0 0; font-size: 10.5px; font-weight: 600; color: var(--text-secondary);">
-                        Manage your events</p>
+            <div class="evt-hero">
+                <div class="evt-hero-row">
+                    <div>
+                        <div class="evt-hero-title">Events Hub</div>
+                        <div class="evt-hero-sub">Bookings · Timelines · Collections</div>
+                    </div>
+                    <div class="evt-hero-btns">
+                        <button class="evt-hero-btn" onclick="document.getElementById('events_filter_bar').style.display = document.getElementById('events_filter_bar').style.display === 'none' ? 'block' : 'none'">📅 Filter</button>
+                        <button class="evt-hero-btn add-btn" onclick="openDirectEventModal()">+ Add Event</button>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button onclick="openDirectEventModal()"
-                        style="background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 0 14px; height: 36px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3); transition: 0.2s; display: flex; align-items: center; gap: 6px;">
-                        ➕ <span style="display:inline-block; margin-top:1px;">Add Event</span>
-                    </button>
-                    <button class="btn-icon"
-                        style="background:white; color:var(--accent-color); border:1px solid #E2E8F0; font-size:15px; width:36px; height:36px; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: 0.2s; display:flex; align-items:center; justify-content:center; margin:0;"
-                        onclick="document.getElementById('events_filter_bar').style.display = document.getElementById('events_filter_bar').style.display === 'none' ? 'block' : 'none'"
-                        title="Date Filter">📅</button>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <div class="event-stat-card filter-box active-event-card" onclick="setEventTab('Upcoming', this)">
-                    <div class="stat-label">Upcoming</div>
-                    <div class="stat-value" id="ev-stat-upc">0</div>
-                </div>
-                <div class="event-stat-card filter-box" onclick="setEventTab('Completed', this)">
-                    <div class="stat-label">Completed</div>
-                    <div class="stat-value" id="ev-stat-com">0</div>
-                </div>
-                <div class="event-stat-card filter-box" onclick="setEventTab('All', this)">
-                    <div class="stat-label">Total</div>
-                    <div class="stat-value" id="ev-stat-tot">0</div>
+                <div class="evt-kpi-strip">
+                    <div class="evt-kpi active-kpi" id="evt-kpi-Upcoming" onclick="setEventTab('Upcoming', this)">
+                        <div class="ek-val" id="ev-stat-upc">0</div><div class="ek-lbl">Upcoming</div>
+                    </div>
+                    <div class="evt-kpi" id="evt-kpi-Completed" onclick="setEventTab('Completed', this)">
+                        <div class="ek-val" id="ev-stat-com">0</div><div class="ek-lbl">Completed</div>
+                    </div>
+                    <div class="evt-kpi" id="evt-kpi-All" onclick="setEventTab('All', this)">
+                        <div class="ek-val" id="ev-stat-tot">0</div><div class="ek-lbl">Total</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="events-sticky-top">
-                <div id="events_filter_bar"
-                    style="display: none; background: white; padding: 10px; border-radius: 10px; border: 1px solid #E2E8F0; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <div class="evt-search-wrap">
+                <div id="events_filter_bar" style="display: none; background: #F8FAFC; padding: 10px; border-radius: 10px; border: 1px solid #E2E8F0; margin-bottom: 10px;">
                     <div style="display: flex; gap: 10px; align-items: flex-end;">
                         <div style="flex: 1;">
-                            <label
-                                style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">From
-                                Date</label>
+                            <label style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">From Date</label>
                             <input type="date" id="ev_filter_from" class="form-input"
-                                style="padding: 6px 8px; font-size: 11px; background:#F8FAFC; border:1px solid transparent; border-radius:6px; margin-top:2px;"
+                                style="padding: 6px 8px; font-size: 11px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-top:2px;"
                                 onchange="renderEventsDashboard()">
                         </div>
                         <div style="flex: 1;">
-                            <label
-                                style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">To
-                                Date</label>
+                            <label style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">To Date</label>
                             <input type="date" id="ev_filter_to" class="form-input"
-                                style="padding: 6px 8px; font-size: 11px; background:#F8FAFC; border:1px solid transparent; border-radius:6px; margin-top:2px;"
+                                style="padding: 6px 8px; font-size: 11px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-top:2px;"
                                 onchange="renderEventsDashboard()">
                         </div>
                     </div>
                 </div>
-                <div class="search-container" style="margin-bottom: 0;">
-                    <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"
-                        style="width:16px; height:16px;">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" class="search-input"
-                        style="border-radius:10px; padding: 10px 14px 10px 34px; font-size:12.5px; background:#F1F5F9; border:1px solid transparent; transition:0.3s;"
-                        placeholder="Search events by name or function..." oninput="filterSearch('events', this.value)">
+                <div style="display:flex; gap:8px;">
+                    <div class="search-container" style="margin:0; flex:1;">
+                        <svg class="search-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" class="search-input" style="border-radius:10px;padding:9px 14px 9px 34px;font-size:12.5px;background:#F1F5F9;border:1px solid transparent;" placeholder="Search events by name or function…" oninput="filterSearch('events',this.value)">
+                    </div>
                 </div>
             </div>
 
-            <div id="events-list"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 2px;">
+                <div style="font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.4px;" id="evt-list-label">Upcoming Events</div>
+                <div style="font-size:11px;font-weight:800;color:#D97706;" id="evt-collection-val">Collected: ₹0</div>
+            </div>
+
+            <div id="events-list" style="padding-top:6px;"></div>
         </div>
+
 
         <!-- 4. ERP & Accounts Main Menu -->
         <div id="erp" class="content section" style="padding-bottom:120px;">
@@ -5214,69 +5155,134 @@
         </div>
 
         <div id="leadModal" class="modal-overlay">
+            <style>
+                #leadModal .modal-content{max-width:520px;padding:0 0 24px 0;}
+                #leadModal .modal-header{padding:14px 16px 12px;margin-bottom:0;top:0;}
+                #leadModal .lf-body{padding:2px 16px 0;}
+                .lf-avatar-preview{width:44px;height:44px;border-radius:13px;background:#CBD5E1;color:white;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.25s;box-shadow:0 4px 10px rgba(0,0,0,.12);}
+                .lf-section{background:#F8FAFC;border:1px solid #EEF2F7;border-radius:14px;padding:14px;margin-bottom:12px;}
+                .lf-section-label{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:var(--accent-color);text-transform:uppercase;letter-spacing:.4px;background:#EFF6FF;padding:4px 10px;border-radius:20px;margin-bottom:12px;}
+                .lf-section .form-group,.lf-section .form-row{margin-bottom:10px;}
+                .lf-section .form-row:last-child,.lf-section .form-group:last-child{margin-bottom:0;}
+                .lf-section .form-input,.lf-section .form-select{background:white;}
+                .lf-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+                .lf-chip{background:white;border:1.5px solid #E2E8F0;color:#475569;padding:6px 11px;border-radius:20px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s;}
+                .lf-chip:hover{border-color:#CBD5E1;}
+                .lf-chip.active{border-color:transparent;color:white;}
+                .lf-chip[data-val="Birthday"].active,.lf-chip[data-val="Baby Shower"].active,.lf-chip[data-val="Welcome Baby"].active{background:linear-gradient(135deg,#3B82F6,#1D4ED8);}
+                .lf-chip[data-val="Wedding"].active,.lf-chip[data-val="Anniversary"].active{background:linear-gradient(135deg,#DB2777,#9D174D);}
+                .lf-chip[data-val="Shop Opening"].active{background:linear-gradient(135deg,#D97706,#92400E);}
+                .lf-chip[data-val="Other"].active{background:linear-gradient(135deg,#64748B,#475569);}
+                .lf-chip[data-status="New"].active{background:linear-gradient(135deg,#3B82F6,#1D4ED8);}
+                .lf-chip[data-status="Hot"].active{background:linear-gradient(135deg,#EF4444,#DC2626);}
+                .lf-chip[data-status="Thinking"].active{background:linear-gradient(135deg,#F59E0B,#D97706);}
+                .lf-chip[data-status="Meeting Scheduled"].active,.lf-chip[data-status="Meeting Completed"].active{background:linear-gradient(135deg,#8B5CF6,#6D28D9);}
+                .lf-chip[data-status="Lost"].active{background:linear-gradient(135deg,#94A3B8,#64748B);}
+                .lf-chip.disabled{opacity:.5;cursor:not-allowed;pointer-events:none;}
+                .lf-save-btn{width:calc(100% - 32px);margin:14px 16px 0;background:linear-gradient(135deg,#2563EB,#1D4ED8);box-shadow:0 6px 16px rgba(37,99,235,.3);border-radius:12px;padding:13px;font-size:13.5px;letter-spacing:.2px;}
+            </style>
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="modal-title">Add New Lead</h3><button class="modal-close"
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="lf-avatar-preview" id="lf_avatar_preview">?</div>
+                        <h3 id="modal-title">Add New Lead</h3>
+                    </div>
+                    <button class="modal-close"
                         onclick="document.getElementById('leadModal').style.display='none'; editingLeadId=null;">&times;</button>
                 </div>
-                <form id="leadForm" onsubmit="event.preventDefault();" novalidate>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Client Name</label><input type="text"
-                                id="l_name" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">Mobile Number
-                                <button type="button" class="contact-pick-btn" onclick="pickContactInto('l_phone','l_name')" style="display:none; align-items:center; gap:3px; font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:2px 6px; cursor:pointer;">📇 Contacts</button>
-                            </label><input type="number"
-                                id="l_phone" class="form-input" required></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Function Name</label><input type="text"
-                                id="l_function" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label">Event Date</label><input type="date"
-                                id="l_date" class="form-input" required></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Category</label><select id="l_category"
-                                class="form-select">
-                                <option>Birthday</option>
-                                <option>Baby Shower</option>
-                                <option>Welcome Baby</option>
-                                <option>Shop Opening</option>
-                                <option>Anniversary</option>
-                                <option>Wedding</option>
-                                <option>Other</option>
-                            </select></div>
-                        <div class="form-group"><label class="form-label">Est. Budget (₹)</label><input type="number"
-                                id="l_budget" class="form-input" placeholder="e.g. 50000"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Status</label><select id="l_status"
-                                class="form-select">
-                                <option value="New">New Inquiry</option>
-                                <option value="Hot">Interested (Hot)</option>
-                                <option value="Thinking">Thinking / Follow-up</option>
-                                <option value="Meeting Scheduled">Meeting Scheduled</option>
-                                <option value="Meeting Completed">Meeting Completed</option>
-                                <option value="Lost">Not Interested (Lost)</option>
-                            </select></div>
-                        <div class="form-group"><label class="form-label">Venue</label><input type="text" id="l_venue"
-                                class="form-input"></div>
-                    </div>
-                    <div class="form-group">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0;">Lead Source</label>
-                            <div style="display:flex; align-items:center;"><button type="button" class="link-btn"
-                                    style="color:var(--accent-color); font-weight:700; font-size:11px; margin-right:10px;"
-                                    onclick="addPermanentSource()">+ Add</button><button type="button" class="link-btn"
-                                    style="color:var(--text-secondary); font-weight:700; font-size:11px;"
-                                    onclick="openManageSourceModal()">⚙️ Manage</button></div>
-                        </div><select id="l_source" class="form-select"></select>
-                    </div>
-                    <div class="form-group" style="margin-top: 10px;"><label class="form-label"
-                            style="color:var(--accent-color);">Assign Lead To (Staff)</label><select id="l_assign_to"
-                            class="form-select"></select></div><button type="button" id="modal-save-btn"
-                        class="btn-main" onclick="saveLeadData()">Save Lead</button>
-                </form>
+                <div class="lf-body">
+                    <form id="leadForm" onsubmit="event.preventDefault();" novalidate>
+                        <div class="lf-section">
+                            <span class="lf-section-label">👤 Client Details</span>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Client Name</label><input type="text"
+                                        id="l_name" class="form-input" oninput="updateLeadAvatarPreview()" required></div>
+                                <div class="form-group"><label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">Mobile Number
+                                        <button type="button" class="contact-pick-btn" onclick="pickContactInto('l_phone','l_name'); updateLeadAvatarPreview();" style="display:none; align-items:center; gap:3px; font-size:10px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:2px 6px; cursor:pointer;">📇 Contacts</button>
+                                    </label><input type="number"
+                                        id="l_phone" class="form-input" required></div>
+                            </div>
+                        </div>
+
+                        <div class="lf-section">
+                            <span class="lf-section-label">🎉 Event Details</span>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Function Name</label><input type="text"
+                                        id="l_function" class="form-input" required></div>
+                                <div class="form-group"><label class="form-label">Event Date</label><input type="date"
+                                        id="l_date" class="form-input" required></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <div class="lf-chip-row" id="l_category_chips">
+                                    <button type="button" class="lf-chip" data-val="Birthday" onclick="setCategoryChip('Birthday')">🎂 Birthday</button>
+                                    <button type="button" class="lf-chip" data-val="Baby Shower" onclick="setCategoryChip('Baby Shower')">👶 Baby Shower</button>
+                                    <button type="button" class="lf-chip" data-val="Welcome Baby" onclick="setCategoryChip('Welcome Baby')">🍼 Welcome Baby</button>
+                                    <button type="button" class="lf-chip" data-val="Shop Opening" onclick="setCategoryChip('Shop Opening')">🏪 Shop Opening</button>
+                                    <button type="button" class="lf-chip" data-val="Anniversary" onclick="setCategoryChip('Anniversary')">💍 Anniversary</button>
+                                    <button type="button" class="lf-chip" data-val="Wedding" onclick="setCategoryChip('Wedding')">👰 Wedding</button>
+                                    <button type="button" class="lf-chip" data-val="Other" onclick="setCategoryChip('Other')">✨ Other</button>
+                                </div>
+                                <select id="l_category" class="form-select" style="display:none;" onchange="syncCategoryChips()">
+                                    <option>Birthday</option>
+                                    <option>Baby Shower</option>
+                                    <option>Welcome Baby</option>
+                                    <option>Shop Opening</option>
+                                    <option>Anniversary</option>
+                                    <option>Wedding</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Est. Budget (₹)</label><input type="number"
+                                        id="l_budget" class="form-input" placeholder="e.g. 50000"></div>
+                                <div class="form-group"><label class="form-label">Venue</label><input type="text" id="l_venue"
+                                        class="form-input"></div>
+                            </div>
+                        </div>
+
+                        <div class="lf-section">
+                            <span class="lf-section-label">📊 Pipeline Status</span>
+                            <div class="form-group">
+                                <div class="lf-chip-row" id="l_status_chips">
+                                    <button type="button" class="lf-chip" data-status="New" onclick="setStatusChip('New')">🆕 New</button>
+                                    <button type="button" class="lf-chip" data-status="Hot" onclick="setStatusChip('Hot')">🔥 Hot</button>
+                                    <button type="button" class="lf-chip" data-status="Thinking" onclick="setStatusChip('Thinking')">🤔 Thinking</button>
+                                    <button type="button" class="lf-chip" data-status="Meeting Scheduled" onclick="setStatusChip('Meeting Scheduled')">📅 Meeting Set</button>
+                                    <button type="button" class="lf-chip" data-status="Meeting Completed" onclick="setStatusChip('Meeting Completed')">✅ Met</button>
+                                    <button type="button" class="lf-chip" data-status="Lost" onclick="setStatusChip('Lost')">❌ Lost</button>
+                                </div>
+                                <select id="l_status" class="form-select" style="display:none;" onchange="syncStatusChips()">
+                                    <option value="New">New Inquiry</option>
+                                    <option value="Hot">Interested (Hot)</option>
+                                    <option value="Thinking">Thinking / Follow-up</option>
+                                    <option value="Meeting Scheduled">Meeting Scheduled</option>
+                                    <option value="Meeting Completed">Meeting Completed</option>
+                                    <option value="Lost">Not Interested (Lost)</option>
+                                </select>
+                                <div id="l_status_locked_note" style="display:none; font-size:10.5px; font-weight:700; color:#94A3B8; margin-top:8px;">🔒 This lead has become an Event — status is locked. Manage it from the Events Hub.</div>
+                            </div>
+                        </div>
+
+                        <div class="lf-section">
+                            <span class="lf-section-label">🔗 Source &amp; Assignment</span>
+                            <div class="form-group">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label class="form-label" style="margin:0;">Lead Source</label>
+                                    <div style="display:flex; align-items:center;"><button type="button" class="link-btn"
+                                            style="color:var(--accent-color); font-weight:700; font-size:11px; margin-right:10px;"
+                                            onclick="addPermanentSource()">+ Add</button><button type="button" class="link-btn"
+                                            style="color:var(--text-secondary); font-weight:700; font-size:11px;"
+                                            onclick="openManageSourceModal()">⚙️ Manage</button></div>
+                                </div><select id="l_source" class="form-select"></select>
+                            </div>
+                            <div class="form-group" style="margin-top: 10px;"><label class="form-label"
+                                    style="color:var(--accent-color);">Assign Lead To (Staff)</label><select id="l_assign_to"
+                                    class="form-select"></select></div>
+                        </div>
+                    </form>
+                </div>
+                <button type="button" id="modal-save-btn" class="btn-main lf-save-btn" onclick="saveLeadData()">Save Lead</button>
             </div>
         </div>
 
@@ -8959,7 +8965,13 @@
                 // ☁️ FIREBASE SYNC: Naye 4 variables cloud se load honge
                 if (data.leadSources) leadSources = data.leadSources;
                 if (data.itemUnits) itemUnits = data.itemUnits;
-                if (data.appSettings) appSettings = data.appSettings;
+                // 🐛 FIX: pehle seedha overwrite hota tha (appSettings = data.appSettings),
+                // isliye purane workspaces jinki settings naye fields (waQt/waInv/waReview
+                // wagera) aane se pehle save hui thi, unme wo fields hamesha ke liye
+                // undefined reh jaate the — jahan bhi use hote, crash hota tha. Ab
+                // default template ke saath merge karte hain, taaki missing fields
+                // apne aap sensible default se bhar jaayein.
+                if (data.appSettings) appSettings = Object.assign({}, appSettings, data.appSettings);
                 if (data.trashDB) trashDB = data.trashDB;
             }
             if (!bankDB['ACC_CASH']) bankDB['ACC_CASH'] = { id: 'ACC_CASH', name: 'Cash', type: 'Cash', balance: 0, isDefault: true };
@@ -9251,7 +9263,54 @@
                 statusEl.removeAttribute('disabled');
                 statusEl.style.background = 'white';
             }
+            // 🚀 Premium form UI sync: chips + avatar preview reflect whatever the
+            // (still-authoritative) hidden <select> values are, in both Add/Edit cases.
+            updateLeadAvatarPreview();
+            syncCategoryChips();
+            syncStatusChips();
             document.getElementById('leadModal').style.display = 'flex';
+        }
+
+        // 🚀 PREMIUM LEAD FORM — chip pickers + avatar preview
+        // Chips are a visual layer only; the real <select id="l_category">/<select
+        // id="l_status"> stay the source of truth so saveLeadData() and edit-population
+        // above needed zero changes.
+        function updateLeadAvatarPreview() {
+            let name = (document.getElementById('l_name').value || '').trim();
+            let initials = name ? (name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?') : '?';
+            let palette = ['#2563EB', '#7C3AED', '#DB2777', '#D97706', '#059669', '#0891B2', '#DC2626'];
+            let idx = 0; for (let c = 0; c < name.length; c++) idx += name.charCodeAt(c);
+            let color = name ? palette[idx % palette.length] : '#CBD5E1';
+            let el = document.getElementById('lf_avatar_preview');
+            if (el) { el.style.background = color; el.innerText = initials; }
+        }
+        function setCategoryChip(val) {
+            let sel = document.getElementById('l_category');
+            sel.value = val;
+            syncCategoryChips();
+        }
+        function syncCategoryChips() {
+            let val = document.getElementById('l_category').value;
+            document.querySelectorAll('#l_category_chips .lf-chip').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-val') === val);
+            });
+        }
+        function setStatusChip(val) {
+            let sel = document.getElementById('l_status');
+            if (sel.disabled) return; // Won leads — status locked, chips shouldn't override
+            sel.value = val;
+            syncStatusChips();
+        }
+        function syncStatusChips() {
+            let sel = document.getElementById('l_status');
+            let val = sel.value;
+            let locked = sel.disabled;
+            document.querySelectorAll('#l_status_chips .lf-chip').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-status') === val);
+                c.classList.toggle('disabled', locked);
+            });
+            let note = document.getElementById('l_status_locked_note');
+            if (note) note.style.display = locked ? 'block' : 'none';
         }
 
         async function saveLeadData() {
@@ -9611,31 +9670,143 @@
         // EVENTS DASHBOARD & WORKSPACE
         // ==========================================
         function renderEventsDashboard() {
-            let container = document.getElementById('events-list'); container.innerHTML = ""; let counts = { tot: 0, upc: 0, com: 0 }; let from = document.getElementById('ev_filter_from').value || "2000-01-01"; let to = document.getElementById('ev_filter_to').value || "2099-12-31"; let allEvents = Object.values(leadsDB).filter(l => l.status === "Won");
-            allEvents.sort((a, b) => { let da = a.dates && a.dates[0] ? new Date(a.dates[0].date) : new Date(a.date || '2099-01-01'); let db = b.dates && b.dates[0] ? new Date(b.dates[0].date) : new Date(b.date || '2099-01-01'); return da - db; }); let todayStr = new Date().toISOString().split('T')[0];
+            let container = document.getElementById('events-list'); if (!container) return;
+            container.innerHTML = "";
+            let counts = { tot: 0, upc: 0, com: 0 };
+            let from = document.getElementById('ev_filter_from').value || "2000-01-01";
+            let to = document.getElementById('ev_filter_to').value || "2099-12-31";
+            let allEvents = Object.values(leadsDB).filter(l => l.status === "Won");
+            allEvents.sort((a, b) => { let da = a.dates && a.dates[0] ? new Date(a.dates[0].date) : new Date(a.date || '2099-01-01'); let db = b.dates && b.dates[0] ? new Date(b.dates[0].date) : new Date(b.date || '2099-01-01'); return da - db; });
+            let todayStr = new Date().toISOString().split('T')[0];
+
+            // 🚀 PAGINATION: consistent with Leads/Sales/Party/Purchase/Expense
+            let evtSignature = currentEventTab + '|' + (searchTerms.events || '') + '|' + from + '|' + to;
+            let renderLimit = getListPageLimit('events', evtSignature);
+            let matchedCount = 0;
+            let totalCollected = 0;
+            let fragment = document.createDocumentFragment();
 
             allEvents.forEach(ev => {
-                let lastDate = "1900-01-01"; if (ev.dates && ev.dates.length > 0) { ev.dates.forEach(d => { if (d.date > lastDate) lastDate = d.date; }); } else { lastDate = ev.date || "TBD"; }
+                let funcCount = ev.dates && ev.dates.length > 0 ? ev.dates.length : 1;
+                counts.tot += funcCount; if (ev.eventStatus === 'Completed') counts.com += funcCount; else if (ev.eventStatus !== 'Cancelled') counts.upc += funcCount;
+                let mainDate = ev.dates && ev.dates[0] ? ev.dates[0].date : (ev.date || "TBD");
+                if (mainDate !== "TBD" && (mainDate < from || mainDate > to)) return;
+                if (currentEventTab !== 'All' && ev.eventStatus !== currentEventTab) return;
+                if (!ev.name.toLowerCase().includes(searchTerms.events) && !ev.func.toLowerCase().includes(searchTerms.events)) return;
 
-                let funcCount = ev.dates && ev.dates.length > 0 ? ev.dates.length : 1; counts.tot += funcCount; if (ev.eventStatus === 'Completed') counts.com += funcCount; else if (ev.eventStatus !== 'Cancelled') counts.upc += funcCount;
-                let mainDate = ev.dates && ev.dates[0] ? ev.dates[0].date : (ev.date || "TBD"); if (mainDate !== "TBD" && (mainDate < from || mainDate > to)) return; if (currentEventTab !== 'All' && ev.eventStatus !== currentEventTab) return; if (!ev.name.toLowerCase().includes(searchTerms.events) && !ev.func.toLowerCase().includes(searchTerms.events)) return;
+                // 💰 Payment health — linked invoices ke through
+                let linkedInvoices = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.eventId === ev.id);
+                let evTotal = 0, evCollected = 0;
+                linkedInvoices.forEach(inv => { evTotal += (inv.finalTotal || 0); evCollected += (inv.advance || 0); });
+                let payPct = evTotal > 0 ? Math.round((evCollected / evTotal) * 100) : 0;
+                totalCollected += evCollected;
 
-                let dStr = mainDate !== "TBD" ? new Date(mainDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : "TBD"; let badge = `<span class="status-badge badge-new">Upcoming</span>`; let rowStyle = ""; if (ev.eventStatus === 'Completed') badge = `<span class="status-badge badge-won">Completed</span>`; if (ev.eventStatus === 'Cancelled') { badge = `<span class="status-badge badge-lost">Cancelled</span>`; rowStyle = "opacity: 0.6;"; }
-                let multiBadge = funcCount > 1 ? `<span class="status-badge badge-think" style="margin-left: 5px;">[${funcCount} Func]</span>` : ''; let timelineHtml = "";
-                if (ev.dates && ev.dates.length > 0) { timelineHtml = `<div style="margin-top: 8px; border-top: 1px dashed var(--border-color); padding-top: 8px;">`; ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { let isPast = d.date < todayStr; let icon = isPast ? "✅" : "⏳"; let color = isPast ? "var(--success)" : "var(--text-secondary)"; let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); timelineHtml += `<div style="font-size: 11px; color: ${color}; margin-bottom: 4px; display: flex; justify-content: space-between;"><span>↳ ${fDate} - <strong style="color:var(--text-primary);">${d.name}</strong></span> <span>${d.time || 'Time TBD'} ${icon}</span></div>`; }); timelineHtml += `</div>`; }
+                matchedCount++;
+                if (matchedCount > renderLimit) return; // 🚀 PAGINATION gate
 
-                let extraMenu = "";
-                if (ev.eventStatus === 'Completed' || ev.eventStatus === 'Cancelled') {
-                    extraMenu = `<div class="dropdown-item" onclick="actionRevertToUpcoming('${ev.id}', event)">🔄 Revert to Upcoming</div>`;
+                // 🗓 Countdown badge
+                let diff = mainDate !== "TBD" ? Math.round((new Date(mainDate) - new Date(todayStr)) / 86400000) : null;
+                let cdClass = 'cd-future', cdText = mainDate !== "TBD" ? new Date(mainDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'TBD';
+                if (diff !== null) {
+                    if (ev.eventStatus === 'Completed') { cdClass = 'cd-past'; cdText = '✅ Done'; }
+                    else if (diff < 0) { cdClass = 'cd-past'; cdText = Math.abs(diff) + 'd ago'; }
+                    else if (diff === 0) { cdClass = 'cd-today'; cdText = '🎉 Today'; }
+                    else if (diff <= 7) { cdClass = 'cd-soon'; cdText = 'in ' + diff + 'd'; }
+                    else { cdClass = 'cd-future'; cdText = 'in ' + diff + 'd'; }
                 }
 
-                container.innerHTML += `<div class="list-row" id="row-${ev.id}"><div class="clickable-area" onclick="openPanel('${ev.id}')" style="${rowStyle}"><div class="row-main">${ev.func} ${badge} ${multiBadge}</div><div class="row-sub">👤 ${ev.name} • 📞 +91 ${ev.phone} <br> ${timelineHtml}</div></div><div class="actions-area"><div class="dropdown-container"><button class="btn-icon" onclick="toggleMenu('${ev.id}', event)">⋮</button><div class="dropdown-menu" id="menu-${ev.id}"><div class="dropdown-item" onclick="actionEdit('${ev.id}', event)">✏️ Edit Details</div><div class="dropdown-item" onclick="openMultiDateModal('${ev.id}', event)">📅 Manage Dates</div>${extraMenu}<div class="dropdown-item" onclick="actionUndoToCRM('${ev.id}', event)">↩️ Undo to CRM</div><div class="dropdown-item" onclick="actionCancelEvent('${ev.id}', event)">🚫 Cancel Event</div><div class="dropdown-item text-red" onclick="actionDeleteEvent('${ev.id}', event)">🗑️ Delete Event</div></div></div></div></div>`;
+                let statusBarClass = 'evt-bar-' + (ev.eventStatus || 'Upcoming');
+                let multiTag = funcCount > 1 ? `<span class="evt-tag" style="background:#FAF5FF;color:#7C3AED;">${funcCount} Functions</span>` : '';
+                let cancelledTag = ev.eventStatus === 'Cancelled' ? `<span class="evt-tag" style="background:#F8FAFC;color:#64748B;">Cancelled</span>` : '';
+
+                // Avatar (same hashing logic as CRM cards, for visual family resemblance)
+                let avatarPalette = ['#2563EB', '#7C3AED', '#DB2777', '#D97706', '#059669', '#0891B2', '#DC2626'];
+                let nameForAvatar = (ev.name || "?").trim();
+                let initials = nameForAvatar.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || "?";
+                let colorIdx = 0; for (let c = 0; c < nameForAvatar.length; c++) colorIdx += nameForAvatar.charCodeAt(c);
+                let avatarColor = avatarPalette[colorIdx % avatarPalette.length];
+
+                let timelineHtml = "";
+                if (ev.dates && ev.dates.length > 1) {
+                    timelineHtml = `<div class="evt-timeline">`;
+                    ev.dates.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => {
+                        let isPast = d.date < todayStr; let icon = isPast ? "✅" : "⏳";
+                        let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                        timelineHtml += `<div class="evt-timeline-row"><span>↳ ${fDate} · ${sanitize(d.name)}</span><span>${d.time || 'TBD'} ${icon}</span></div>`;
+                    });
+                    timelineHtml += `</div>`;
+                }
+
+                let payHtml = evTotal > 0 ? `
+                    <div class="evt-pay-track"><div class="evt-pay-fill" style="width:${payPct}%; background:${payPct >= 100 ? '#10B981' : (payPct > 0 ? '#F59E0B' : '#EF4444')};"></div></div>
+                    <div class="evt-pay-label"><span>₹${evCollected.toLocaleString('en-IN')} collected</span><span>${payPct}% of ₹${evTotal.toLocaleString('en-IN')}</span></div>` : `
+                    <div class="evt-pay-label" style="margin-top:9px;"><span>No invoice billed yet</span></div>`;
+
+                let extraMenu = (ev.eventStatus === 'Completed' || ev.eventStatus === 'Cancelled') ? `<div class="dropdown-item" onclick="actionRevertToUpcoming('${ev.id}', event)">🔄 Revert to Upcoming</div>` : '';
+                let cleanPhone = String(ev.phone || "").replace(/\D/g, '');
+
+                let card = document.createElement('div');
+                card.className = "evt-card" + (cdClass === 'cd-today' ? ' today-card' : '');
+                card.id = "row-" + ev.id;
+                card.innerHTML = `
+                    <div class="evt-status-bar ${statusBarClass}"></div>
+                    <div class="evt-card-body" onclick="openPanel('${sanitize(ev.id)}')">
+                        <div class="evt-card-top">
+                            <div class="evt-avatar" style="background:${avatarColor};">${sanitize(initials)}</div>
+                            <div style="flex:1; min-width:0;">
+                                <div class="evt-card-name">${sanitize(ev.name)}</div>
+                                <div class="evt-card-func">${sanitize(ev.func)} ${cleanPhone ? '• +91 ' + sanitize(ev.phone) : ''}</div>
+                                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;">${multiTag}${cancelledTag}</div>
+                            </div>
+                            <span class="evt-countdown ${cdClass}">${cdText}</span>
+                        </div>
+                        ${payHtml}
+                        ${timelineHtml}
+                    </div>
+                    <div class="evt-card-foot">
+                        <div>
+                            <div class="evt-foot-budget">₹${(parseFloat(ev.budget) || 0).toLocaleString('en-IN')}</div>
+                            <div class="evt-foot-date">Est. Budget</div>
+                        </div>
+                        <div class="evt-quick-btns">
+                            ${cleanPhone ? `<button class="evt-qbtn" title="Call" onclick="event.stopPropagation(); window.location.href='tel:${cleanPhone}'" style="color:var(--success);">📞</button>
+                            <button class="evt-qbtn" title="WhatsApp" onclick="event.stopPropagation(); window.open('https://wa.me/91${cleanPhone}','_blank')" style="color:#25D366;">💬</button>` : ''}
+                            <div class="dropdown-container">
+                                <button class="evt-qbtn" onclick="toggleMenu('${sanitize(ev.id)}', event)">⋮</button>
+                                <div class="dropdown-menu" id="menu-${sanitize(ev.id)}">
+                                    <div class="dropdown-item" onclick="actionEdit('${sanitize(ev.id)}', event)">✏️ Edit Details</div>
+                                    <div class="dropdown-item" onclick="openMultiDateModal('${sanitize(ev.id)}', event)">📅 Manage Dates</div>
+                                    ${extraMenu}
+                                    <div class="dropdown-item" onclick="actionUndoToCRM('${sanitize(ev.id)}', event)">↩️ Undo to CRM</div>
+                                    <div class="dropdown-item" onclick="actionCancelEvent('${sanitize(ev.id)}', event)">🚫 Cancel Event</div>
+                                    <div class="dropdown-item text-red" onclick="actionDeleteEvent('${sanitize(ev.id)}', event)">🗑️ Delete Event</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                fragment.appendChild(card);
             });
 
-            document.getElementById('ev-stat-tot').innerText = counts.tot; document.getElementById('ev-stat-upc').innerText = counts.upc; document.getElementById('ev-stat-com').innerText = counts.com; document.getElementById('dash-active-events').innerText = counts.upc;
-            if (container.innerHTML === "") container.innerHTML = `<p style="padding:15px; font-size:13px; color:var(--text-secondary);">No events found.</p>`;
+            container.appendChild(fragment);
+            document.getElementById('ev-stat-tot').innerText = counts.tot;
+            document.getElementById('ev-stat-upc').innerText = counts.upc;
+            document.getElementById('ev-stat-com').innerText = counts.com;
+            let dashActiveEl = document.getElementById('dash-active-events'); if (dashActiveEl) dashActiveEl.innerText = counts.upc;
+            let labelEl = document.getElementById('evt-list-label'); if (labelEl) labelEl.textContent = (currentEventTab === 'All' ? 'All Events' : currentEventTab + ' Events') + ' (' + matchedCount + ')';
+            let collEl = document.getElementById('evt-collection-val'); if (collEl) collEl.textContent = 'Collected: ₹' + totalCollected.toLocaleString('en-IN');
+
+            if (matchedCount === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#94A3B8;">
+                    <div style="font-size:36px;margin-bottom:10px;">🎉</div>
+                    <div style="font-weight:800;font-size:14px;color:#475569;">No events found</div>
+                    <div style="font-size:12px;margin-top:5px;font-weight:500;">Won leads or "+ Add Event" show up here</div>
+                </div>`;
+            }
+
+            // 🚀 PAGINATION: scroll-triggered load more
+            attachLoadMoreSentinel(container, 'events', matchedCount, renderEventsDashboard);
         }
-        function setEventTab(tab, btnElement) { currentEventTab = tab; document.querySelectorAll('#events .filter-box').forEach(b => b.classList.remove('active-event-card')); btnElement.classList.add('active-event-card'); renderEventsDashboard(); }
+        function setEventTab(tab, btnElement) { currentEventTab = tab; document.querySelectorAll('#events .evt-kpi').forEach(b => b.classList.remove('active-kpi')); btnElement.classList.add('active-kpi'); renderEventsDashboard(); }
 
         function openDirectEventModal() { refreshSourceList(); closeAllMenus(); let form = document.getElementById('deForm'); if (form) form.reset(); let dateCont = document.getElementById('de_dates_container'); if (dateCont) { dateCont.innerHTML = ''; addFunctionDateRow('de_dates_container'); } document.getElementById('directEventModal').style.display = 'flex'; }
         // 🚀 SAVE DIRECT EVENT (Now saves venue inside dates)
@@ -13861,11 +14032,20 @@
             let mainActionHtml = "";
 
             let waMsg = "";
+            // 🐛 FIX: appSettings.waQt/waInv undefined hone par crash ho raha tha
+            // ("Cannot read properties of undefined, reading 'replace'"). Ye purane
+            // workspaces mein hota hai jinki settings WhatsApp-template feature aane
+            // se PEHLE save hui thi — localStorage/cloud mein saved object mein ye
+            // fields hi nahi hain, isliye default fallback (jo appSettings declare
+            // karte waqt use hota hai) kabhi apply hi nahi hota tha. Ab yahan bhi
+            // wahi default use kiya hai jab field missing ho.
+            let defaultWaQt = "Hello [Client],\n\nHere is your requested quotation [BillNo] for the event [Event].\n\nEstimated Total: ₹[Total]\n\nPlease review and confirm.\nThank you!";
+            let defaultWaInv = "Hello [Client],\n\nYour Tax Invoice [BillNo] for the event [Event] is generated.\n\nTotal Amount: ₹[Total]\nBalance Due: ₹[Due]\n\nThank you for choosing us!";
             if (record.type === 'Quotation') {
-                waMsg = appSettings.waQt.replace(/\[Client\]/g, partyName).replace(/\[Event\]/g, record.event || 'General').replace(/\[BillNo\]/g, record.id).replace(/\[Total\]/g, record.total.toLocaleString('en-IN'));
+                waMsg = (appSettings.waQt || defaultWaQt).replace(/\[Client\]/g, partyName).replace(/\[Event\]/g, record.event || 'General').replace(/\[BillNo\]/g, record.id).replace(/\[Total\]/g, record.total.toLocaleString('en-IN'));
             }
             else if (record.type === 'Invoice') {
-                waMsg = appSettings.waInv.replace(/\[Client\]/g, partyName).replace(/\[Event\]/g, record.event || 'General').replace(/\[BillNo\]/g, record.id).replace(/\[Total\]/g, record.finalTotal.toLocaleString('en-IN')).replace(/\[Due\]/g, record.balanceDue.toLocaleString('en-IN'));
+                waMsg = (appSettings.waInv || defaultWaInv).replace(/\[Client\]/g, partyName).replace(/\[Event\]/g, record.event || 'General').replace(/\[BillNo\]/g, record.id).replace(/\[Total\]/g, record.finalTotal.toLocaleString('en-IN')).replace(/\[Due\]/g, record.balanceDue.toLocaleString('en-IN'));
             }
 
             let waBtnHtml = "";
