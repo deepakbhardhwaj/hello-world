@@ -3004,7 +3004,7 @@
                 .ck-lbl{font-size:8.5px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.3px;}
                 .crm-search-wrap{background:white;padding:10px 16px;border-bottom:1px solid #E2E8F0;position:sticky;top:56px;z-index:100;}
                 .crm-card-v3{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
-                .crm-card-v3:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
+                .crm-card-v3:hover{border-color:#CBD5E1;box-shadow:0 8px 24px rgba(0,0,0,.09);}
                 .crm-card-v3.hot-card{border-color:#FCA5A5;box-shadow:0 2px 12px rgba(239,68,68,.08);}
                 .crm-card-status-bar{height:4px;width:100%;border-radius:14px 14px 0 0;}
                 .crm-card-body{padding:12px 14px 10px;}
@@ -3109,7 +3109,7 @@
                 .evt-filter-toggle{background:#F1F5F9;border:1px solid #E2E8F0;color:#78350F;width:34px;height:34px;border-radius:10px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
                 .evt-card{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
-                .evt-card:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-1px);}
+                .evt-card:hover{border-color:#CBD5E1;box-shadow:0 8px 24px rgba(0,0,0,.09);}
                 .evt-card.today-card{border-color:#FCD34D;box-shadow:0 2px 14px rgba(217,119,6,.15);}
                 .evt-card.overdue-card{border-color:#FCA5A5;box-shadow:0 2px 14px rgba(220,38,38,.1);}
                 .evt-status-bar{height:4px;width:100%;border-radius:14px 14px 0 0;}
@@ -8036,6 +8036,17 @@
                 m.style.bottom = '';
                 m.style.left = '';
                 m.style.position = '';
+                // 🐛 FIX: open hote waqt menu ko <body> mein move kiya tha (neeche
+                // dekhein) — band hote hi wapas apni asli jagah rakh do, taaki DOM
+                // structure/IDs sab kuch pehle jaisa hi rahe.
+                if (m._origParent) {
+                    if (m._origNext && m._origNext.parentNode === m._origParent) {
+                        m._origParent.insertBefore(m, m._origNext);
+                    } else {
+                        m._origParent.appendChild(m);
+                    }
+                    m._origParent = null; m._origNext = null;
+                }
             });
 
             // 🚀 SLUGGISH FIX: Sirf us element ka z-index theek karo jo active mark hua tha
@@ -8063,6 +8074,20 @@
             closeAllMenus();
 
             if (!isShowing) {
+                // 🐛 FIX: koi bhi ancestor (card ka hover-transform, ya future mein
+                // koi aur transform/filter) position:fixed dropdown ke liye viewport
+                // ki jagah khud "containing block" ban sakta hai — jisse hamari
+                // position calculation galat ho jaati hai (tab hi menu "crop"/galat
+                // jagah dikhta hai). Sabse pakka fix: menu ko khulte hi seedha
+                // <body> ke andar move kar do — ab koi bhi card/section CSS isse
+                // kabhi touch hi nahi karega. Band hote hi (closeAllMenus) wapas
+                // apni asli jagah chala jaata hai.
+                if (menu.parentElement !== document.body) {
+                    menu._origParent = menu.parentElement;
+                    menu._origNext = menu.nextSibling;
+                    document.body.appendChild(menu);
+                }
+
                 menu.classList.add("show");
 
                 if (row) {
@@ -8071,13 +8096,6 @@
                     row.classList.add('menu-active-row'); // 👈 Mark it so we can find it fast when closing
                 }
 
-                // 🐛 FIX: dropdown pehle position:absolute tha (parent ke relative),
-                // isliye kisi bhi scrollable ancestor ke andar hota (jaise #events ya
-                // #crm section ka apna overflow-y:auto) toh us container ki visible
-                // height se bahar crop ho jaata tha — chahe page/screen mein neeche
-                // aur khaali jagah kyun na ho. Ab position:fixed use karte hain
-                // (poore viewport ke relative), jo kisi bhi scroll container se bahar
-                // nikal ke sahi jagah, poori tarah dikhta hai.
                 menu.style.position = 'fixed';
                 let iconRect = e.currentTarget.getBoundingClientRect();
                 let menuW = menu.offsetWidth || 180;
