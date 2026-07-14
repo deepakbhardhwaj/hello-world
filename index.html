@@ -21,7 +21,7 @@
     <meta name="referrer" content="no-referrer">
     
     <!-- 📱 PWA Manifest (inline) -->
-    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22UTSAVhq%20Enterprise%20ERP%22%2C%22short_name%22%3A%22UTSAVhq%22%2C%22description%22%3A%22Secure%20Cloud-Based%20Business%20ERP%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F1F5F9%22%2C%22theme_color%22%3A%22%231D4ED8%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22favicon.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22UTSAVhq%20Enterprise%20ERP%22%2C%22short_name%22%3A%22UTSAVhq%22%2C%22description%22%3A%22Secure%20Cloud-Based%20Business%20ERP%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F1F5F9%22%2C%22theme_color%22%3A%22%231D4ED8%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22favicon.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22favicon.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%5D%7D">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -195,6 +195,82 @@
                 });
             });
         }
+
+        // ==========================================
+        // 📲 DOWNLOAD / INSTALL APP
+        // ==========================================
+        // Chrome/Edge/Android: browser 'beforeinstallprompt' event deta hai jab
+        // app installable hoti hai — us event ko pakad ke rakh lete hain, aur
+        // apna khud ka "Download App" button dikhate hain (jo click karne par
+        // usi native install-dialog ko trigger karta hai).
+        // iOS Safari: ye event hai hi nahi (Apple support nahi karta) — wahan
+        // sirf Share → "Add to Home Screen" se hi install hota hai, isliye
+        // uske liye seedha step-by-step instructions dikhate hain.
+        // Already installed ho chuka ho toh button apne aap chhup jaata hai.
+        window.deferredInstallPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredInstallPrompt = e;
+            updateInstallUI();
+        });
+        window.addEventListener('appinstalled', () => {
+            window.deferredInstallPrompt = null;
+            if (typeof showToast === 'function') showToast('✅ App installed!', 'success', 3000);
+            updateInstallUI();
+        });
+
+        function isRunningStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+        function isIOSDevice() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        function updateInstallUI() {
+            let sidebarBtn = document.getElementById('sb_install_app_btn');
+            let sidebarLabel = document.getElementById('sb_install_app_label');
+            let aboutBtn = document.getElementById('about_install_app_btn');
+
+            if (isRunningStandalone()) {
+                // Pehle se installed hai — install prompt dikhane ki zaroorat nahi
+                if (sidebarBtn) sidebarBtn.style.display = 'none';
+                if (aboutBtn) aboutBtn.style.display = 'none';
+                return;
+            }
+
+            if (window.deferredInstallPrompt) {
+                if (sidebarBtn) { sidebarBtn.style.display = 'flex'; }
+                if (sidebarLabel) sidebarLabel.innerText = '📲 Download App';
+                if (aboutBtn) { aboutBtn.style.display = 'inline-flex'; aboutBtn.innerText = '📲 Download App'; }
+            } else if (isIOSDevice()) {
+                if (sidebarBtn) { sidebarBtn.style.display = 'flex'; }
+                if (sidebarLabel) sidebarLabel.innerText = '📲 Add to Home Screen';
+                if (aboutBtn) { aboutBtn.style.display = 'inline-flex'; aboutBtn.innerText = '📲 Add to Home Screen'; }
+            } else {
+                // Desktop browser jo install support nahi karta (jaise Firefox) — chhupa do
+                if (sidebarBtn) sidebarBtn.style.display = 'none';
+                if (aboutBtn) aboutBtn.style.display = 'none';
+            }
+        }
+
+        window.triggerAppInstall = function () {
+            if (window.deferredInstallPrompt) {
+                window.deferredInstallPrompt.prompt();
+                window.deferredInstallPrompt.userChoice.then(() => {
+                    window.deferredInstallPrompt = null;
+                    updateInstallUI();
+                });
+            } else if (isIOSDevice()) {
+                let modal = document.getElementById('iosInstallModal');
+                if (modal) modal.style.display = 'flex';
+            } else {
+                if (typeof showToast === 'function') showToast('Is browser mein direct install available nahi hai. Chrome ya Edge try karein.', 'info', 4000);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', updateInstallUI);
+        window.addEventListener('load', updateInstallUI);
 
         // Safe element helper
         function el(id) { return document.getElementById(id); }
@@ -2806,6 +2882,7 @@
             <a href="javascript:void(0);" class="nav-link" onclick="openTab('inventory-hub', this); closeNav();">📦 Inventory & Godown</a>
             <a href="javascript:void(0);" class="nav-link" onclick="openTab('settings-hub', this); closeNav();">⚙️ App
                 Settings</a>
+            <a href="javascript:void(0);" class="nav-link" id="sb_install_app_btn" style="display:none; color:#059669; border-color:#A7F3D0; background:#F0FDF4;" onclick="triggerAppInstall(); closeNav();"><span id="sb_install_app_label">📲 Download App</span></a>
             <a href="javascript:void(0);" class="nav-link nav-link-cta"
                 style="color: var(--accent-color); border-color: #BFDBFE; background: #EFF6FF; justify-content: center; margin-top:20px;"
                 onclick="openCompanySelector()">🔄 Switch Workspace</a>
@@ -2855,6 +2932,32 @@
 
         <!-- click-outside-to-close overlay for notification panel -->
         <div id="notifPanelOverlay" onclick="toggleNotificationPanel(event)" style="display:none; position:fixed; inset:0; z-index:499;"></div>
+
+        <!-- 📲 iOS install instructions (Safari doesn't support the native install prompt) -->
+        <div id="iosInstallModal" class="modal-overlay" style="display:none; z-index:9500;">
+            <div class="modal-content" style="max-width:360px; text-align:center; padding-bottom:22px;">
+                <div class="modal-header" style="justify-content:center; position:relative;">
+                    <h3>📲 Add to Home Screen</h3>
+                    <button class="modal-close" style="position:absolute; right:16px;"
+                        onclick="document.getElementById('iosInstallModal').style.display='none';">&times;</button>
+                </div>
+                <div style="padding:4px 20px 0;">
+                    <div style="display:flex; align-items:center; gap:12px; text-align:left; margin-bottom:12px; background:#F8FAFC; padding:12px; border-radius:12px;">
+                        <div style="font-size:22px; flex-shrink:0;">1️⃣</div>
+                        <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">Neeche Safari ke <strong>Share</strong> button (⬆️) par tap karein</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; text-align:left; margin-bottom:12px; background:#F8FAFC; padding:12px; border-radius:12px;">
+                        <div style="font-size:22px; flex-shrink:0;">2️⃣</div>
+                        <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">List mein scroll karke <strong>"Add to Home Screen"</strong> select karein</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; text-align:left; margin-bottom:4px; background:#F8FAFC; padding:12px; border-radius:12px;">
+                        <div style="font-size:22px; flex-shrink:0;">3️⃣</div>
+                        <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">Top-right mein <strong>"Add"</strong> par tap karein</div>
+                    </div>
+                    <div style="font-size:10.5px; color:var(--text-secondary); margin-top:12px;">App ab home screen par ek icon ki tarah aa jaayegi — bilkul native app jaisa experience! 🎉</div>
+                </div>
+            </div>
+        </div>
 
         <!-- 1. Home Dashboard -->
         <div id="home" class="content section active-section" style="padding-bottom:120px;">
@@ -5814,9 +5917,10 @@
                             <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-top:3px;">Powered by Firebase &amp; Cloudinary</div>
                         </div>
                         <div style="margin-top:12px; display:flex; gap:10px; justify-content:center;">
-                            <div style="background:rgba(255,255,255,0.12); border-radius:8px; padding:8px 14px; font-size:11px; font-weight:700;">📱 PWA Installable</div>
+                            <div style="background:rgba(255,255,255,0.12); border-radius:8px; padding:8px 14px; font-size:11px; font-weight:700;">📱 PWA Ready</div>
                             <div style="background:rgba(255,255,255,0.12); border-radius:8px; padding:8px 14px; font-size:11px; font-weight:700;">🔒 Firebase Secure</div>
                         </div>
+                        <button id="about_install_app_btn" onclick="triggerAppInstall()" style="display:none; margin-top:14px; background:#059669; color:white; border:none; padding:11px 20px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(5,150,105,.35);">📲 Download App</button>
                     </div>
 
                     <div class="set-bento-card">
@@ -9254,7 +9358,7 @@
                 console.error("❌ Sync Error:", error);
             });
         }
-        function updateDynamicPayModes() { let options = ''; Object.values(bankDB).forEach(b => { options += `<option value="${b.id}">${b.name}</option>`; }); document.querySelectorAll('.dynamic-pay-mode').forEach(sel => { let currentVal = sel.value; sel.innerHTML = options; if (currentVal && bankDB[currentVal]) sel.value = currentVal; }); }
+        function updateDynamicPayModes() { let options = ''; Object.values(bankDB).forEach(b => { options += `<option value="${b.id}">${sanitize(b.name)}</option>`; }); document.querySelectorAll('.dynamic-pay-mode').forEach(sel => { let currentVal = sel.value; sel.innerHTML = options; if (currentVal && bankDB[currentVal]) sel.value = currentVal; }); }
         function logBankTransaction(accountId, amount, type, desc, refId, date) { let id = generateDocId('BankTx'); bankTxDB[id] = { id, accountId, amount, type, desc, refId, date }; if (type === 'IN') bankDB[accountId].balance += amount; else if (type === 'OUT') bankDB[accountId].balance -= amount; }
 
         // ==========================================
@@ -9269,6 +9373,21 @@
         }
         function actionEdit(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); openLeadModal(id); }
         function actionLost(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); leadsDB[id].status = "Lost"; leadsDB[id].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Marked as Lost from quick menu." }); updateDataAndUI(); }
+        // 🐛 AUDIT FIX: CRM card ke "×" quick-delete button mein onclick="actionDelete(...)"
+        // reference tha, lekin ye function POORI codebase mein kahin define hi nahi tha —
+        // matlab regular (non-Won) leads ka delete button click karte hi crash ho jaata
+        // tha aur kabhi kaam hi nahi karta tha. Naya function banaya, actionDeleteEvent/
+        // actionDeleteParty jaisa hi pattern (confirm → delete → refresh UI).
+        function actionDelete(id, event) {
+            if (event) { event.stopPropagation(); event.preventDefault(); }
+            closeAllMenus();
+            let lead = leadsDB[id];
+            if (!lead) return;
+            if (confirm("Are you sure you want to delete the lead '" + lead.name + "'? This cannot be undone!")) {
+                delete leadsDB[id];
+                updateDataAndUI();
+            }
+        }
         function openLeadModal(editId = null) {
             refreshSourceList();
             editingLeadId = editId;
@@ -9540,7 +9659,7 @@
         // NOTES, PHOTOS & WORKSPACE
         // ==========================================
         function addNote() { let text = document.getElementById('p_new_note').value; if (!text || !currentLeadId) return; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), text: text }); document.getElementById('p_new_note').value = ""; renderNotes(); }
-        function renderNotes() { let container = document.getElementById('p_notes_list'); container.innerHTML = ""; let notes = leadsDB[currentLeadId].notes || []; if (notes.length === 0) { container.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No notes yet.</p>"; return; } [...notes].reverse().forEach(note => { container.innerHTML += `<div class="note-item"><div class="note-time">${note.time}</div><div class="note-text">${note.text}</div></div>`; }); }
+        function renderNotes() { let container = document.getElementById('p_notes_list'); container.innerHTML = ""; let notes = leadsDB[currentLeadId].notes || []; if (notes.length === 0) { container.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No notes yet.</p>"; return; } [...notes].reverse().forEach(note => { container.innerHTML += `<div class="note-item"><div class="note-time">${note.time}</div><div class="note-text">${sanitize(note.text)}</div></div>`; }); }
         function openImgPreview(url, event) { if (event) { event.stopPropagation(); } document.getElementById('fullSizeImg').src = url; document.getElementById('imgPreviewModal').style.display = 'flex'; }
         async function handlePhotoUpload(event) {
             let files = event.target.files;
@@ -9663,7 +9782,7 @@
             if (currentWorkspaceId && masterCompsDB[currentWorkspaceId]) {
                 const approvedStaff = masterCompsDB[currentWorkspaceId].staff.filter(s => s.status === 'Approved');
                 approvedStaff.forEach(s => {
-                    html += `<option value="${s.mobile}" ${s.mobile === selectedMobile ? 'selected' : ''}>${s.name}</option>`;
+                    html += `<option value="${s.mobile}" ${s.mobile === selectedMobile ? 'selected' : ''}>${sanitize(s.name)}</option>`;
                 });
             }
             return html;
@@ -10100,7 +10219,7 @@
                     let icon = isPast ? "✅" : "⏳"; 
                     let color = isPast ? "var(--success)" : "var(--text-primary)"; 
                     let timeText = d.time ? ' | ' + d.time : '';
-                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${d.name}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr}${timeText}</span></div>`; 
+                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${sanitize(d.name)}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr}${timeText}</span></div>`; 
                 }); 
             } else { 
                 tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
@@ -10176,7 +10295,7 @@
             let vendorList = document.getElementById('fb_vendor_list'); vendorList.innerHTML = "";
             let pbs = Object.values(purchaseDB).filter(p => p.type === 'PB' && p.eventId === evId);
             let uniqueVendors = [...new Set(pbs.map(p => p.partyId))];
-            if (uniqueVendors.length === 0) { vendorList.innerHTML = "<p style='font-size:13px; font-weight:500; color:var(--text-secondary);'>No vendor bills linked to this event yet.</p>"; } else { uniqueVendors.forEach(vId => { let v = partiesDB[vId]; if (v) { let prevRating = 5; if (ev.feedback && ev.feedback.vendors) { let oldFb = ev.feedback.vendors.find(x => x.vid === v.id); if (oldFb) prevRating = parseInt(oldFb.rating) || 5; } vendorList.innerHTML += `<div class="fb-vendor-item" data-vid="${v.id}" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border-color);"><div style="font-weight:700; font-size:14px;">${v.name} <span style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-top:2px;">${v.subCategory || 'Vendor'}</span></div><div>${generateStarHTML(prevRating)}</div></div>`; } }); }
+            if (uniqueVendors.length === 0) { vendorList.innerHTML = "<p style='font-size:13px; font-weight:500; color:var(--text-secondary);'>No vendor bills linked to this event yet.</p>"; } else { uniqueVendors.forEach(vId => { let v = partiesDB[vId]; if (v) { let prevRating = 5; if (ev.feedback && ev.feedback.vendors) { let oldFb = ev.feedback.vendors.find(x => x.vid === v.id); if (oldFb) prevRating = parseInt(oldFb.rating) || 5; } vendorList.innerHTML += `<div class="fb-vendor-item" data-vid="${v.id}" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border-color);"><div style="font-weight:700; font-size:14px;">${sanitize(v.name)} <span style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-top:2px;">${v.subCategory || 'Vendor'}</span></div><div>${generateStarHTML(prevRating)}</div></div>`; } }); }
             let staffList = document.getElementById('fb_staff_list'); staffList.innerHTML = "";
             if (ev.feedback && ev.feedback.staff && ev.feedback.staff.length > 0) { ev.feedback.staff.forEach(s => { addStaffFbRow(s.name, s.rating); }); } else { addStaffFbRow(); }
 
@@ -10399,8 +10518,8 @@
             if (ev.feedback) {
                 let cRate = parseInt(ev.feedback.client.rating) || 0;
                 fbHtml = `<div style="margin-top:30px; border-top:2px solid #000; padding-top:15px;"><h3 style="color:#2563EB; font-size:15px;">Event Feedback</h3><div style="margin-bottom:15px; font-size:12px;"><strong>Client Rating:</strong> ${'★'.repeat(cRate)}${'☆'.repeat(5 - cRate)}<br><strong>Client Review:</strong> <i>"${ev.feedback.client.review || 'No written review'}"</i></div>`;
-                if (ev.feedback.vendors && ev.feedback.vendors.length > 0) { fbHtml += `<h4 style="font-size:13px;">Vendor Performance</h4><ul style="font-size:12px; padding-left:20px;">`; ev.feedback.vendors.forEach(v => { let vRate = parseInt(v.rating) || 0; fbHtml += `<li style="margin-bottom:4px;"><b>${v.name}:</b> ${'★'.repeat(vRate)}${'☆'.repeat(5 - vRate)}</li>`; }); fbHtml += `</ul>`; }
-                if (ev.feedback.staff && ev.feedback.staff.length > 0) { fbHtml += `<h4 style="font-size:13px;">Staff Performance</h4><ul style="font-size:12px; padding-left:20px;">`; ev.feedback.staff.forEach(s => { let sRate = parseInt(s.rating) || 0; fbHtml += `<li style="margin-bottom:4px;"><b>${s.name}:</b> ${'★'.repeat(sRate)}${'☆'.repeat(5 - sRate)}</li>`; }); fbHtml += `</ul>`; }
+                if (ev.feedback.vendors && ev.feedback.vendors.length > 0) { fbHtml += `<h4 style="font-size:13px;">Vendor Performance</h4><ul style="font-size:12px; padding-left:20px;">`; ev.feedback.vendors.forEach(v => { let vRate = parseInt(v.rating) || 0; fbHtml += `<li style="margin-bottom:4px;"><b>${sanitize(v.name)}:</b> ${'★'.repeat(vRate)}${'☆'.repeat(5 - vRate)}</li>`; }); fbHtml += `</ul>`; }
+                if (ev.feedback.staff && ev.feedback.staff.length > 0) { fbHtml += `<h4 style="font-size:13px;">Staff Performance</h4><ul style="font-size:12px; padding-left:20px;">`; ev.feedback.staff.forEach(s => { let sRate = parseInt(s.rating) || 0; fbHtml += `<li style="margin-bottom:4px;"><b>${sanitize(s.name)}:</b> ${'★'.repeat(sRate)}${'☆'.repeat(5 - sRate)}</li>`; }); fbHtml += `</ul>`; }
 
                 if (ev.feedback.photos && ev.feedback.photos.length > 0) {
                     let chunks = [];
@@ -10439,7 +10558,7 @@
             if (!printWindow) return alert("⚠️ Popup Blocked! Please allow popups.");
 
             // Core CSS injection to make sure variables like var(--success) render correctly in PDF
-            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Event_Balance_Sheet_${ev.func}</title>
+            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Event_Balance_Sheet_${sanitize(ev.func)}</title>
             <style>
                 :root {
                     --text-primary: #0f172a; --text-secondary: #64748b;
@@ -10862,10 +10981,10 @@
         function selectCalDate(dStr, el) { document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected')); el.classList.add('selected'); showCalendarDetails(dStr); }
         function showCalendarDetails(dStr) {
             let details = document.getElementById('cal-details'); details.innerHTML = `<div style="font-weight:800; font-size:14px; margin-bottom:12px; color:var(--accent-color);">${new Date(dStr).toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long' })}</div>`; let found = 0;
-            Object.values(globalTasksDB).filter(t => t.type === 'Meeting' && t.date === dStr).forEach(m => { found++; let leadName = m.leadName || (leadsDB[m.leadId] ? leadsDB[m.leadId].name : "Lead"); details.innerHTML += `<div style="display:flex; gap:12px; margin-bottom:10px; align-items:center;"><div style="font-weight:800; font-size:14px; color:var(--meet-color); width:60px;">${m.time || 'TBD'}</div><div style="flex:1; background:#FFFBEB; padding:12px; border-radius:10px; border-left:4px solid var(--meet-color);">🤝 Meeting: ${leadName}<br><span style="font-size:12px; font-weight:500; color:var(--text-secondary); display:block; margin-top:4px;">${m.text}</span></div></div>`; });
+            Object.values(globalTasksDB).filter(t => t.type === 'Meeting' && t.date === dStr).forEach(m => { found++; let leadName = m.leadName || (leadsDB[m.leadId] ? leadsDB[m.leadId].name : "Lead"); details.innerHTML += `<div style="display:flex; gap:12px; margin-bottom:10px; align-items:center;"><div style="font-weight:800; font-size:14px; color:var(--meet-color); width:60px;">${m.time || 'TBD'}</div><div style="flex:1; background:#FFFBEB; padding:12px; border-radius:10px; border-left:4px solid var(--meet-color);">🤝 Meeting: ${leadName}<br><span style="font-size:12px; font-weight:500; color:var(--text-secondary); display:block; margin-top:4px;">${sanitize(m.text)}</span></div></div>`; });
             Object.values(leadsDB).filter(l => l.status === 'Won').forEach(ev => {
                 let funcMatched = ev.dates ? ev.dates.filter(x => x.date === dStr) : (ev.date === dStr ? [{ name: "Main Event", time: "" }] : []);
-                funcMatched.forEach(f => { found++; details.innerHTML += `<div style="display:flex; gap:12px; margin-bottom:10px; align-items:center;" onclick="openPanel('${ev.id}')"><div style="font-weight:800; font-size:14px; color:var(--accent-color); width:60px;">${f.time || 'TBD'}</div><div style="flex:1; background:#EFF6FF; padding:12px; border-radius:10px; border-left:4px solid var(--accent-color); cursor:pointer;">🎪 ${ev.name}<br><span style="font-size:12px; font-weight:500; color:var(--text-secondary); display:block; margin-top:4px;">${f.name}</span></div></div>`; });
+                funcMatched.forEach(f => { found++; details.innerHTML += `<div style="display:flex; gap:12px; margin-bottom:10px; align-items:center;" onclick="openPanel('${ev.id}')"><div style="font-weight:800; font-size:14px; color:var(--accent-color); width:60px;">${f.time || 'TBD'}</div><div style="flex:1; background:#EFF6FF; padding:12px; border-radius:10px; border-left:4px solid var(--accent-color); cursor:pointer;">🎪 ${sanitize(ev.name)}<br><span style="font-size:12px; font-weight:500; color:var(--text-secondary); display:block; margin-top:4px;">${sanitize(f.name)}</span></div></div>`; });
             }); if (found === 0) details.innerHTML += `<p style="color:var(--text-secondary); font-weight:500;">No events or meetings scheduled.</p>`;
         }
         // ==========================================
@@ -11783,7 +11902,7 @@
 
             let totalIn = 0; let totalOut = 0;
 
-            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Bank Statement - ${b.name}</title><style>body{font-family:'Segoe UI',sans-serif; padding:20px; color:#111; margin:0;} table{width:100%; border-collapse:collapse; margin-top:20px; font-size:11px;} th,td{border:1px solid #CBD5E1; padding:8px 4px; text-align:left;} th{background:#F1F5F9; -webkit-print-color-adjust: exact;} .right{text-align:right;} .text-red{color:#DC2626;} .text-green{color:#059669;} .header-box{border:1px solid #CBD5E1; padding:12px; border-radius:8px; background:#F8FAFC; margin-bottom:20px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:12px; -webkit-print-color-adjust: exact;} @media print { #mobile-print-btn { display:none !important; } body{padding:10px;} }</style></head><body>`;
+            let html = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Bank Statement - ${sanitize(b.name)}</title><style>body{font-family:'Segoe UI',sans-serif; padding:20px; color:#111; margin:0;} table{width:100%; border-collapse:collapse; margin-top:20px; font-size:11px;} th,td{border:1px solid #CBD5E1; padding:8px 4px; text-align:left;} th{background:#F1F5F9; -webkit-print-color-adjust: exact;} .right{text-align:right;} .text-red{color:#DC2626;} .text-green{color:#059669;} .header-box{border:1px solid #CBD5E1; padding:12px; border-radius:8px; background:#F8FAFC; margin-bottom:20px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:12px; -webkit-print-color-adjust: exact;} @media print { #mobile-print-btn { display:none !important; } body{padding:10px;} }</style></head><body>`;
 
             let cName = currentUser ? currentUser.company : "UTSAVhq ERP";
             html += `<h2 style="text-align:center; margin-bottom:5px; color:#1E293B; text-transform:uppercase; font-size:18px;">${cName}</h2>`;
@@ -11791,7 +11910,7 @@
             html += `<h3 style="text-align:center; margin-top:0; color:#64748B; text-transform:uppercase; font-size:13px;">BANK / CASH STATEMENT ${dateRangeText}</h3>`;
 
             let extraDetails = b.type === 'Bank' ? `<br><strong>A/C No:</strong> ${b.accNo || '-'} | <strong>IFSC:</strong> ${b.ifsc || '-'}` : '';
-            html += `<div class="header-box"><div style="flex:1; min-width:150px;"><strong>Account Name:</strong> ${b.name}<br><strong>Account Type:</strong> ${b.type} ${extraDetails}</div><div style="flex:1; text-align:right; font-size:14px; min-width:120px;"><strong>Closing Balance:</strong><br><span style="color:${(b.balance || 0) >= 0 ? '#059669' : '#DC2626'}; font-weight:900;">${(b.balance || 0) < 0 ? '-' : ''}₹${Math.abs(b.balance || 0).toLocaleString('en-IN')} ${(b.balance || 0) >= 0 ? 'Dr' : 'Cr'}</span></div></div>`;
+            html += `<div class="header-box"><div style="flex:1; min-width:150px;"><strong>Account Name:</strong> ${sanitize(b.name)}<br><strong>Account Type:</strong> ${b.type} ${extraDetails}</div><div style="flex:1; text-align:right; font-size:14px; min-width:120px;"><strong>Closing Balance:</strong><br><span style="color:${(b.balance || 0) >= 0 ? '#059669' : '#DC2626'}; font-weight:900;">${(b.balance || 0) < 0 ? '-' : ''}₹${Math.abs(b.balance || 0).toLocaleString('en-IN')} ${(b.balance || 0) >= 0 ? 'Dr' : 'Cr'}</span></div></div>`;
 
             html += `<table><tr><th style="width:12%;">Date</th><th style="width:35%;">Particulars / Description</th><th style="width:13%;">Ref No.</th><th class="right" style="width:13%;">Debit (IN)</th><th class="right" style="width:13%;">Credit (OUT)</th><th class="right" style="width:14%;">Balance</th></tr>`;
 
@@ -12134,7 +12253,7 @@
                 let innerHtml = "";
                 if (r.type === 'OtherIncome') {
                     let modeName = bankDB[r.mode] ? bankDB[r.mode].name : r.mode;
-                    innerHtml = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%;"><div style="flex-grow:1; cursor:pointer; line-height: 1.3; padding-right:8px;" onclick="viewDetails('${r.id}', 'sales')"><div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="font-family:monospace; font-size:11px; font-weight:800; color:#475569;">${r.id}</span><span style="font-size:10px; font-weight:600; color:#94A3B8;">• ${fDate}</span></div><div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">${r.source}</div><div style="font-size:11px; color:#64748B;">Mode: ${modeName}</div></div><div style="display:flex; align-items:center; gap:10px; flex-shrink:0;"><div style="font-size:13.5px; font-weight:800; color:var(--success); text-align:right;">+ ₹${r.amount.toLocaleString('en-IN')}</div><div class="dropdown-container"><button class="btn-icon" onclick="toggleMenu('${r.id}', event)">⋮</button><div class="dropdown-menu" id="menu-${r.id}"><div class="dropdown-item" onclick="editOtherIncome('${r.id}', event)">✏️ Edit</div><div class="dropdown-item text-red" onclick="deleteOtherIncome('${r.id}', event)">🗑️ Delete</div></div></div></div></div>`;
+                    innerHtml = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%;"><div style="flex-grow:1; cursor:pointer; line-height: 1.3; padding-right:8px;" onclick="viewDetails('${r.id}', 'sales')"><div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="font-family:monospace; font-size:11px; font-weight:800; color:#475569;">${r.id}</span><span style="font-size:10px; font-weight:600; color:#94A3B8;">• ${fDate}</span></div><div style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-bottom:2px;">${sanitize(r.source)}</div><div style="font-size:11px; color:#64748B;">Mode: ${modeName}</div></div><div style="display:flex; align-items:center; gap:10px; flex-shrink:0;"><div style="font-size:13.5px; font-weight:800; color:var(--success); text-align:right;">+ ₹${r.amount.toLocaleString('en-IN')}</div><div class="dropdown-container"><button class="btn-icon" onclick="toggleMenu('${r.id}', event)">⋮</button><div class="dropdown-menu" id="menu-${r.id}"><div class="dropdown-item" onclick="editOtherIncome('${r.id}', event)">✏️ Edit</div><div class="dropdown-item text-red" onclick="deleteOtherIncome('${r.id}', event)">🗑️ Delete</div></div></div></div></div>`;
                 } else {
                     let badgeHtml = ""; let amountDetailsHtml = ""; let menuOptionsHtml = "";
                     if (r.type === 'Quotation') {
@@ -12355,7 +12474,7 @@
             let badge = document.getElementById('di_autopilot_badge'); 
             if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
                 badge.style.display = 'flex'; 
-                badge.innerHTML = `🔗 Auto-Linked to Event: <b>${leadsDB[tempEventIdForInvoice].name} - ${leadsDB[tempEventIdForInvoice].func}</b>`; 
+                badge.innerHTML = `🔗 Auto-Linked to Event: <b>${sanitize(leadsDB[tempEventIdForInvoice].name)} - ${sanitize(leadsDB[tempEventIdForInvoice].func)}</b>`; 
             } else { 
                 badge.style.display = 'none'; 
             } 
@@ -12959,7 +13078,7 @@
         var saveDirectInvoiceData = window.saveDirectInvoiceData;
 
         function unlinkInvoice(id) { if (confirm("🚨 Detach this invoice from its Event Dashboard?\nIt will become a standalone general bill.")) { let record = salesDB[id]; record.eventId = null; let newId = generateDocId('Invoice', null); changeSalesId(id, newId); updateDataAndUI(); document.getElementById('quoteViewModal').style.display = 'none'; viewDetails(newId, 'sales'); } }
-        function openAttachEventModal(invId) { targetInvoiceToAttach = invId; let sel = document.getElementById('ae_event_select'); sel.innerHTML = '<option value="">-- Select Event --</option>'; Object.values(leadsDB).filter(l => l.status === 'Won').forEach(ev => { sel.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`; }); document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('attachEventModal').style.display = 'flex'; }
+        function openAttachEventModal(invId) { targetInvoiceToAttach = invId; let sel = document.getElementById('ae_event_select'); sel.innerHTML = '<option value="">-- Select Event --</option>'; Object.values(leadsDB).filter(l => l.status === 'Won').forEach(ev => { sel.innerHTML += `<option value="${ev.id}">${sanitize(ev.func)} (${sanitize(ev.name)})</option>`; }); document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('attachEventModal').style.display = 'flex'; }
         function loadEventsForAttach(term) {
             let sel = document.getElementById('ae_event_select');
             sel.innerHTML = '<option value="">-- Select Event --</option>';
@@ -12968,7 +13087,7 @@
                 if (t && !ev.name.toLowerCase().includes(t) && !ev.func.toLowerCase().includes(t)) return;
                 let dateStr = (ev.dates && ev.dates.length > 0) ? ev.dates[0].date : ev.date;
                 let formattedDate = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : 'TBD';
-                sel.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name}) - 📅 ${formattedDate}</option>`;
+                sel.innerHTML += `<option value="${ev.id}">${sanitize(ev.func)} (${sanitize(ev.name)}) - 📅 ${formattedDate}</option>`;
             });
         }
         function loadEventsIntoSelect(selectId, term = "") {
@@ -12980,7 +13099,7 @@
                 if (t && !ev.name.toLowerCase().includes(t) && !ev.func.toLowerCase().includes(t)) return;
                 let dateStr = (ev.dates && ev.dates.length > 0) ? ev.dates[0].date : ev.date;
                 let formattedDate = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : 'TBD';
-                select.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name}) - 📅 ${formattedDate}</option>`;
+                select.innerHTML += `<option value="${ev.id}">${sanitize(ev.func)} (${sanitize(ev.name)}) - 📅 ${formattedDate}</option>`;
             });
         }
         function confirmAttachEvent() { let evId = document.getElementById('ae_event_select').value; if (!evId) return alert("Select an event!"); let invId = targetInvoiceToAttach; let ev = leadsDB[evId]; salesDB[invId].eventId = evId; let codeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); let newId = generateDocId('Invoice', codeStr); changeSalesId(invId, newId); updateDataAndUI(); document.getElementById('attachEventModal').style.display = 'none'; viewDetails(newId, 'sales'); alert("Attached Successfully!"); }
@@ -13153,7 +13272,7 @@
                 let dateStr = (ev.dates && ev.dates.length > 0) ? ev.dates[0].date : ev.date;
                 let formattedDate = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : 'TBD';
                 let selected = (ev.id === preFillId) ? "selected" : "";
-                select.innerHTML += `<option value="${ev.id}" ${selected}>${ev.func} (${ev.name}) - 📅 ${formattedDate}</option>`;
+                select.innerHTML += `<option value="${ev.id}" ${selected}>${sanitize(ev.func)} (${sanitize(ev.name)}) - 📅 ${formattedDate}</option>`;
             });
         }
 
@@ -13316,7 +13435,7 @@
                 if (godownSelect && godownSelect.options.length === 0) {
                     godownSelect.innerHTML = '';
                     for(let g in warehousesDB) {
-                        godownSelect.innerHTML += `<option value="${g}">📍 ${warehousesDB[g].name}</option>`;
+                        godownSelect.innerHTML += `<option value="${g}">📍 ${sanitize(warehousesDB[g].name)}</option>`;
                     }
                 }
             } else {
@@ -14594,7 +14713,12 @@
                 }
 
                 // 🚀 SMART FIX: Custom T&C from settings
-                let tncFormatted = appSettings.tnc.replace(/\n/g, '<br>');
+                // 🐛 AUDIT FIX: same crash class as appSettings.waQt/waInv earlier —
+                // purane workspaces (jinki settings T&C field aane se pehle save hui
+                // thi) mein appSettings.tnc undefined ho sakta hai, jisse invoice print
+                // karte hi crash hota. Ab default fallback lagaya hai.
+                let defaultTnc = "1. 50% advance payment required to confirm booking.\n2. Advance amount is non-refundable on cancellation.\n3. Damage to property will be charged to the client.\n4. Full payment must be settled before the final function.\n5. Subject to local jurisdiction.";
+                let tncFormatted = (appSettings.tnc || defaultTnc).replace(/\n/g, '<br>');
                 html += `<div class="tc-box" style="font-size: 9px; color: #64748b; line-height: 1.4;">
                     <strong style="color:#475569;">Terms & Conditions:</strong><br>
                     ${tncFormatted}
@@ -14716,7 +14840,7 @@
             if (type === 'bankledger') {
                 let sel = document.getElementById('rep_bank_select');
                 sel.innerHTML = '<option value="">-- Select Cash/Bank --</option>';
-                Object.values(bankDB).forEach(b => { sel.innerHTML += `<option value="${b.id}">${b.name} (${b.type})</option>`; });
+                Object.values(bankDB).forEach(b => { sel.innerHTML += `<option value="${b.id}">${sanitize(b.name)} (${b.type})</option>`; });
             }
             document.getElementById('report-table-container').innerHTML =
                 '<p style="color:#94A3B8;text-align:center;padding:24px;font-weight:600;font-size:13px;">Choose filters above and tap Generate →</p>';
@@ -15098,7 +15222,7 @@
 
                 records.forEach(r => {
                     let pName = r.partyId && partiesDB[r.partyId] ? partiesDB[r.partyId].name : "General (No Ledger)";
-                    let notesHtml = r.notes ? ` <span style="font-size:10px; color:#64748B;"><i>(${r.notes})</i></span>` : "";
+                    let notesHtml = r.notes ? ` <span style="font-size:10px; color:#64748B;"><i>(${sanitize(r.notes)})</i></span>` : "";
 
                     let t = parseFloat(r.amount) || 0;
                     let p = parseFloat(r.paid !== undefined ? r.paid : r.amount) || 0;
@@ -15196,7 +15320,7 @@
                 html += `<tr style="background: #F1F5F9; border-bottom: 2px solid #CBD5E1;"><th style="padding:8px;">Event Date</th><th style="padding:8px;">Client Name</th><th style="padding:8px;">Event Type</th><th style="padding:8px;">Source</th><th style="padding:8px;">Status</th><th style="padding:8px; text-align:right;">Expected Budget (₹)</th></tr>`;
                 let rLeads = Object.values(leadsDB).filter(l => { let d = l.date || "2099-12-31"; return d >= fromD && d <= toD; }).sort((a, b) => new Date(a.date) - new Date(b.date));
                 let totWon = 0; let totLost = 0; let totActive = 0; let valWon = 0;
-                rLeads.forEach(l => { let bVal = parseFloat(l.budget) || 0; if (l.status === 'Won') { totWon++; valWon += bVal; } else if (l.status === 'Lost') totLost++; else totActive++; let stColor = l.status === 'Won' ? 'color:var(--success)' : (l.status === 'Lost' ? 'color:var(--text-secondary); text-decoration:line-through;' : 'color:var(--warning)'); html += `<tr style="border-bottom: 1px solid #E2E8F0;"><td style="padding:8px;">${l.date ? new Date(l.date).toLocaleDateString('en-IN') : 'TBD'}</td><td style="padding:8px;">${l.name}</td><td style="padding:8px;">${l.func}</td><td style="padding:8px;">${l.source || 'Direct'}</td><td style="padding:8px; font-weight:bold; ${stColor}">${l.status}</td><td style="padding:8px; text-align:right;">${bVal.toLocaleString('en-IN')}</td></tr>`; });
+                rLeads.forEach(l => { let bVal = parseFloat(l.budget) || 0; if (l.status === 'Won') { totWon++; valWon += bVal; } else if (l.status === 'Lost') totLost++; else totActive++; let stColor = l.status === 'Won' ? 'color:var(--success)' : (l.status === 'Lost' ? 'color:var(--text-secondary); text-decoration:line-through;' : 'color:var(--warning)'); html += `<tr style="border-bottom: 1px solid #E2E8F0;"><td style="padding:8px;">${l.date ? new Date(l.date).toLocaleDateString('en-IN') : 'TBD'}</td><td style="padding:8px;">${sanitize(l.name)}</td><td style="padding:8px;">${sanitize(l.func)}</td><td style="padding:8px;">${l.source || 'Direct'}</td><td style="padding:8px; font-weight:bold; ${stColor}">${l.status}</td><td style="padding:8px; text-align:right;">${bVal.toLocaleString('en-IN')}</td></tr>`; });
                 html += `<tr style="background: #E2E8F0; font-weight:bold;"><td colspan="6" style="padding:8px; text-align:center; font-size:14px; color:#0F172A;">📊 SUMMARY: Total Leads: ${rLeads.length} | Won: ${totWon} (₹${valWon.toLocaleString('en-IN')}) | Active: ${totActive} | Lost: ${totLost}</td></tr>`;
             }
             html += `</table>`; tCont.innerHTML = html;
@@ -15450,7 +15574,7 @@
                 else if (type === 'CLEAR') document.getElementById('ba_contra_label').innerText = "Deposit To Bank";
 
                 Object.values(bankDB).forEach(b => {
-                    if (b.id !== accountId && b.type !== 'Cheque') cSel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                    if (b.id !== accountId && b.type !== 'Cheque') cSel.innerHTML += `<option value="${b.id}">${sanitize(b.name)}</option>`;
                 });
             }
 
@@ -16024,7 +16148,7 @@
             Object.values(partiesDB).forEach(p => {
                 if (p.type === 'Vendor' || p.type === 'Staff' || p.type === 'Other') {
                     let selected = p.id === preFillId ? "selected" : "";
-                    sel.innerHTML += `<option value="${p.id}" ${selected}>${p.name} (${p.type})</option>`;
+                    sel.innerHTML += `<option value="${p.id}" ${selected}>${sanitize(p.name)} (${p.type})</option>`;
                 }
             });
         }
@@ -16072,7 +16196,7 @@
                 }
 
                 let subText = `${catInSub}${e.notes || 'No notes'}`;
-                if (e.eventId && leadsDB[e.eventId]) subText += ` • ${leadsDB[e.eventId].func}`;
+                if (e.eventId && leadsDB[e.eventId]) subText += ` • ${sanitize(leadsDB[e.eventId].func)}`;
 
                 let amountDetailsHtml = `
                     <div style="text-align:right;">
@@ -17088,7 +17212,7 @@
             document.getElementById('set_prefix_qt').value = appSettings.qtPrefix;
             document.getElementById('set_def_gst').value = appSettings.defGst;
             document.getElementById('set_show_bank').checked = appSettings.showBank;
-            document.getElementById('set_tnc').value = appSettings.tnc;
+            document.getElementById('set_tnc').value = appSettings.tnc || '';
             document.getElementById('set_app_pin').value = appSettings.appPin || "";
             document.getElementById('set_wa_inv').value = appSettings.waInv || "";
             document.getElementById('set_wa_qt').value = appSettings.waQt || "";
@@ -17420,7 +17544,7 @@
             let targetBankSel = document.getElementById('clear_cheque_target_bank');
             targetBankSel.innerHTML = '<option value="">-- Select Target Bank --</option>';
             Object.values(bankDB).forEach(b => {
-                if (b.type === 'Bank') targetBankSel.innerHTML += `<option value="${b.id}">${b.name} (${b.accNo || ''})</option>`;
+                if (b.type === 'Bank') targetBankSel.innerHTML += `<option value="${b.id}">${sanitize(b.name)} (${b.accNo || ''})</option>`;
             });
 
             let listDiv = document.getElementById('uncleared_cheques_list');
@@ -17766,7 +17890,7 @@
                 let listHtml = '';
                 pendingBills.forEach(bill => {
                     let date = new Date(bill.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                    listHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border-color); border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);"><div><div style="font-weight:800; font-size:15px; color:var(--danger);">Due: ₹${bill.due.toLocaleString('en-IN')}</div><div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-top:6px;">${bill.type}: ${bill.title} • ${date}</div></div><input type="checkbox" class="bill-checkbox" value="${bill.id}" data-type="${bill.type}" style="width:24px; height:24px; cursor:pointer; accent-color:var(--success);"></div>`;
+                    listHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border-color); border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);"><div><div style="font-weight:800; font-size:15px; color:var(--danger);">Due: ₹${bill.due.toLocaleString('en-IN')}</div><div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-top:6px;">${bill.type}: ${sanitize(bill.title)} • ${date}</div></div><input type="checkbox" class="bill-checkbox" value="${bill.id}" data-type="${bill.type}" style="width:24px; height:24px; cursor:pointer; accent-color:var(--success);"></div>`;
                 });
                 body.innerHTML += listHtml;
                 document.getElementById('ab_save_btn').style.display = 'block';
@@ -18633,53 +18757,7 @@
         // ==============================================================
 
         // 3. Invoice Form UI Upgrade (Hide Event, Hide Manual Add, Change T&C)
-        window.toggleInvoiceType = function() {
-            let type = document.getElementById('di_invoice_type');
-            let btnGodown = document.getElementById('btn_fetch_godown');
-            let rentalFields = document.getElementById('di_rental_fields');
-            let eventLinkGroup = document.getElementById('di_event_group');
-            let tncBox = document.getElementById('di_tnc');
-            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]');
-            let itemsContainer = document.getElementById('inv_items_container');
-
-            if (type && type.value === 'Rental') {
-                if (btnGodown) btnGodown.style.display = 'block';
-                if (rentalFields) rentalFields.style.display = 'flex';
-                if (eventLinkGroup) eventLinkGroup.style.display = 'none'; 
-                if (manualAddBtn) manualAddBtn.style.display = 'none'; // Manual add button hide
-                if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
-                
-                // 🚀 RENTAL SELECT KARTE HI MANUAL ENTRY BOX CLEAR HO JAYEGA
-                if (itemsContainer) itemsContainer.innerHTML = '';
-                
-                if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
-            } else {
-                if (btnGodown) btnGodown.style.display = 'none';
-                if (rentalFields) rentalFields.style.display = 'none';
-                if (eventLinkGroup) eventLinkGroup.style.display = 'block'; 
-                if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; 
-                if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
-
-                // 🚀 EVENT SELECT KARNE PAR WAPAS 1 EMPTY ROW AA JAYEGI
-                if (itemsContainer && itemsContainer.innerHTML.trim() === '') {
-                    if(typeof addInvoiceItem === 'function') addInvoiceItem();
-                }
-            }
-        };
-        var toggleInvoiceType = window.toggleInvoiceType;
-
         // 2. Rent Invoice Button Fix
-        window.openRentInvoice = function() {
-            // 🚀 SMART NAVIGATION: Ab ye tab change nahi karega, wahi Modal khol dega!
-            if(typeof openDirectInvoiceModal === 'function') openDirectInvoiceModal();
-            let typeSel = document.getElementById('di_invoice_type');
-            if(typeSel) { 
-                typeSel.value = 'Rental'; 
-                typeSel.dispatchEvent(new Event('change')); 
-            }
-        };
-        var openRentInvoice = window.openRentInvoice;
-
         // 🛠️ 4. INVENTORY FILTERS & LIST VIEW (NO SCROLL, PREVIEW MODAL)
         window.invFilterFrom = null; window.invFilterTo = null; window.invSubFilter = 'All';
         // 🚀 LIVE FILTER ENGINE FOR INVENTORY
@@ -18696,31 +18774,6 @@
         };
 
         // 🚀 DELETE DIRECT STOCK LOGIC
-        window.deleteLogisticsRecord = function(id, logType, event) {
-            if (event) { event.stopPropagation(); event.preventDefault(); }
-            closeAllMenus();
-            if (!confirm("🚨 Are you sure you want to delete this record? Stock will be reversed.")) return;
-            
-            let record = stockMovementDB[id];
-            if (!record) return;
-
-            
-            if (record.type === 'DirectStock' || logType === 'Direct Stock') {
-                record.items.forEach(item => {
-                    if (itemsDB[item.name]) {
-                        itemsDB[item.name].totalStock -= item.qty;
-                        if (itemsDB[item.name].godowns[record.godownId]) {
-                            itemsDB[item.name].godowns[record.godownId] -= item.qty;
-                        }
-                    }
-                });
-            }
-            
-            delete stockMovementDB[id];
-            updateDataAndUI();
-            window.renderInventoryHubList();
-            alert("✅ Record deleted and stock reversed.");
-        };
         window.setInvSubFilter = function(filter, btn) { window.invSubFilter = filter; document.querySelectorAll('#inv-sub-filters .sales-tab-btn').forEach(b => { b.classList.remove('active-sales-tab'); b.style.background = '#F1F5F9'; b.style.color = '#64748B'; }); btn.classList.add('active-sales-tab'); btn.style.background = '#0F172A'; btn.style.color = 'white'; window.renderInventoryHubList(); };
 
         window.renderInventoryHubList = function() {
@@ -18842,52 +18895,7 @@
         };
 
         // 5. EDIT RECORD LOGIC (NO MORE COMING SOON)
-        window.editLogisticsRecord = function(id, logType) {
-            closeAllMenus();
-            if(document.getElementById('logPreviewModal')) document.getElementById('logPreviewModal').style.display = 'none';
-            
-            if(logType === 'Rental Invoice') {
-                if(typeof editSalesRecord === 'function') {
-                    editSalesRecord(id);
-                    window.openTab('sales-hub', document.getElementById('btn-erp')); // Redirect to form
-                }
-                return;
-            }
-            
-            // Edit Outward
-            let record = stockMovementDB[id]; if(!record) return;
-            window.openOutwardChallanModal();
-            document.getElementById('outwardChallanModal').dataset.editId = id;
-            document.getElementById('out_event').value = record.eventId;
-            window.handleOutwardEventChange();
-            
-            // 🚀 FIX: was referencing the dead <select id="out_function_select">; now re-checks the actual checkboxes
-            if(record.funcIndexes && record.funcIndexes.length) {
-                record.funcIndexes.forEach(idx => { let cb = document.querySelector(`.out-func-cb[value="${idx}"]`); if(cb) cb.checked = true; });
-            }
-            
-            document.getElementById('out_godown_select').value = record.godownId || 'WH_MAIN';
-            document.getElementById('out_date').value = record.date;
-            document.getElementById('out_vehicle').value = record.vehicle || '';
-            if(document.getElementById('out_note')) document.getElementById('out_note').value = record.note || '';
-            
-            document.getElementById('out_items_container').innerHTML = '';
-            record.items.forEach(item => {
-                window.addOutwardItemRow(item.name);
-                let rows = document.querySelectorAll('#out_items_container .outward-item-row');
-                rows[rows.length - 1].querySelector('.o-item-qty').value = item.qty;
-            });
-        };
-
         // 1. Audit Modal Fix
-        window.openStockAuditModal = function() {
-            let sel = document.getElementById('audit_item'); if(!sel) return;
-            sel.innerHTML = '<option value="">-- Select Item to Audit --</option>'; Object.values(itemsDB).forEach(item => { sel.innerHTML += `<option value="${sanitize(item.name)}">${sanitize(item.name)}</option>`; });
-            let gSel = document.getElementById('audit_godown'); gSel.innerHTML = ''; Object.values(warehousesDB).forEach(w => { gSel.innerHTML += `<option value="${w.id}">${w.name}</option>`; });
-            document.getElementById('audit_details').style.display = 'none'; document.getElementById('audit_input_group').style.display = 'none'; document.getElementById('stockAuditModal').style.display = 'flex';
-        };
-        var openStockAuditModal = window.openStockAuditModal;
-
         // ==============================================================
     // ==============================================================
         // 🚀 THE FINAL CLEAN INVENTORY & UI ENGINE (ZERO DUPLICATES)
@@ -19025,7 +19033,7 @@
             let dsSelect = document.getElementById('ds_godown'); // 👈 Direct Stock wala missing tha, add kar diya
 
             let html = '<option value="">-- Select Godown --</option>';
-            Object.values(warehousesDB || {}).forEach(w => { html += `<option value="${w.id}">${w.name}</option>`; });
+            Object.values(warehousesDB || {}).forEach(w => { html += `<option value="${w.id}">${sanitize(w.name)}</option>`; });
             
             if(outSelect) outSelect.innerHTML = html;
             if(astSelect) astSelect.innerHTML = html;
@@ -19055,7 +19063,7 @@
             evSelect.innerHTML = '<option value="">-- Select Upcoming Event --</option>';
             Object.values(leadsDB || {}).forEach(ev => {
                 if (ev.status === 'Won' && ev.eventStatus !== 'Completed' && ev.eventStatus !== 'Cancelled') {
-                    evSelect.innerHTML += `<option value="${ev.id}">${ev.func} (${ev.name})</option>`;
+                    evSelect.innerHTML += `<option value="${ev.id}">${sanitize(ev.func)} (${sanitize(ev.name)})</option>`;
                 }
             });
             let fGroup = document.getElementById('out_function_group');
@@ -19511,7 +19519,7 @@
             <select id="return_global_godown" class="form-input" style="width:100%; max-width:300px; font-weight:bold; color:#2563EB; padding:10px; border-radius:6px; border:1px solid #94A3B8; text-align:center; font-size:14px; cursor:pointer;">`;
             for(let g in warehousesDB) {
                 let isSel = (g === defaultGId) ? 'selected' : '';
-                selectHtml += `<option value="${g}" ${isSel}>📍 ${warehousesDB[g].name}</option>`;
+                selectHtml += `<option value="${g}" ${isSel}>📍 ${sanitize(warehousesDB[g].name)}</option>`;
             }
             selectHtml += `</select>`;
             destDiv.innerHTML = selectHtml;
@@ -19647,14 +19655,6 @@
 
 
         window.calcReturnLoss = function() { let hasLost = false; document.querySelectorAll('#return_items_body tr').forEach(row => { let lost = parseInt(row.querySelector('.ret-item-lost').value) || 0; if(lost > 0) hasLost = true; }); document.getElementById('return_loss_group').style.display = hasLost ? 'block' : 'none'; };
-
-        window.deleteLogisticsRecord = function(id, logType, e) {
-            e.stopPropagation(); closeAllMenus(); if(!confirm(`🚨 WARNING!\nAre you sure you want to delete this ${logType}?\nThe stock will be reversed to your Godown.`)) return;
-            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id];
-            if((record.rentalStatus !== 'Returned' && record.status !== 'Returned') && record.items) { record.items.forEach(item => { if(itemsDB[item.name]) { let gId = record.godownId || 'WH_MAIN'; if(!itemsDB[item.name].godowns[gId]) itemsDB[item.name].godowns[gId] = 0; itemsDB[item.name].godowns[gId] += parseInt(item.qty) || 0; } }); }
-            if(logType === 'Rental Invoice') delete salesDB[id]; else delete stockMovementDB[id];
-            if(typeof updateDataAndUI === 'function') updateDataAndUI(); window.renderInventoryHubList(); alert("Record deleted & stock reverted successfully!");
-        };
 
         // --------------------------------------------------------------
         // 6. STOCK AUDIT ENGINE (Form in Modal Fix)
@@ -20597,9 +20597,9 @@
             if(!name || !itemsDB[name]) return;
             let item = itemsDB[name];
             Object.values(warehousesDB).forEach(w => {
-                toSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                toSel.innerHTML += `<option value="${w.id}">${sanitize(w.name)}</option>`;
                 if(item.godowns[w.id] > 0) {
-                    fromSel.innerHTML += `<option value="${w.id}">${w.name} (Qty: ${item.godowns[w.id]})</option>`;
+                    fromSel.innerHTML += `<option value="${w.id}">${sanitize(w.name)} (Qty: ${item.godowns[w.id]})</option>`;
                 }
             });
         };
@@ -20646,7 +20646,7 @@
             html += `<h2 style="text-align:center; margin-bottom:5px;">${cName}</h2><h3 style="text-align:center; color:#64748b; margin-top:0;">Complete Stock Master</h3>`;
             
             let whHeaders = ""; let gIds = Object.keys(warehousesDB);
-            gIds.forEach(id => whHeaders += `<th>${warehousesDB[id].name}</th>`);
+            gIds.forEach(id => whHeaders += `<th>${sanitize(warehousesDB[id].name)}</th>`);
             
             html += `<table><tr><th class="left">Item Name</th><th>SKU</th><th>Purchased</th><th>On Rent</th><th>Lost</th>${whHeaders}</tr>`;
             
@@ -20671,7 +20671,7 @@
                 if(!document.getElementById('rep_godown_group')) {
                     let html = `<div id="rep_godown_group" style="flex: 1; min-width: 120px;"><label class="form-label" style="color:var(--accent-color);">Select Godown</label><select id="rep_godown_select" class="form-select" onchange="window.generateCurrentReport()"><option value="ALL">All Godowns</option></select></div>`;
                     let fromGrp = document.getElementById('filter_from_group'); if(fromGrp) fromGrp.insertAdjacentHTML('beforebegin', html);
-                    Object.values(warehousesDB).forEach(w => { document.getElementById('rep_godown_select').innerHTML += `<option value="${w.id}">${w.name}</option>`; });
+                    Object.values(warehousesDB).forEach(w => { document.getElementById('rep_godown_select').innerHTML += `<option value="${w.id}">${sanitize(w.name)}</option>`; });
                 } else { document.getElementById('rep_godown_group').style.display = 'block'; }
                 if(document.getElementById('filter_from_group')) document.getElementById('filter_from_group').style.display = 'none';
                 if(document.getElementById('filter_to_group')) document.getElementById('filter_to_group').style.display = 'none';
@@ -20820,28 +20820,75 @@
             if (printWin) { printWin.document.open(); printWin.document.write(html); printWin.document.close(); }
         };
 
-        let oldDeleteLogisticsRecord = window.deleteLogisticsRecord;
+        // 🐛 AUDIT FIX: deleteLogisticsRecord pehle 3 baar alag-alag define hua tha
+        // (JS mein sirf LAST wala hi actually chalta hai, purane 2 dead code the).
+        // Har version ka apna zaroori case tha jo doosron mein nahi tha:
+        //  - Direct Stock: delete karne par total+godown stock GHATAO (ek addition undo karna)
+        //  - Stock Transfer: delete karne par from-godown mein WAPAS JODO, to-godown se GHATAO
+        //  - Rental/baaki sab: delete karne par godown stock BADHAO (ek dispatch/rental undo karna)
+        // Ab teeno branches isi ek function mein hain, koi dead code nahi.
         window.deleteLogisticsRecord = function(id, logType, e) {
+            // Branch 1: Stock Transfer — reverse the from/to godown movement
             if (logType === 'Stock Transfer') {
-                if(e) { e.stopPropagation(); closeAllMenus(); }
-                if(!confirm(`🚨 WARNING!\nAre you sure you want to delete this Transfer Entry?\nThe stock will be reversed to the original Godowns.`)) return;
+                if (e) { e.stopPropagation(); closeAllMenus(); }
+                if (!confirm(`🚨 WARNING!\nAre you sure you want to delete this Transfer Entry?\nThe stock will be reversed to the original Godowns.`)) return;
                 let record = stockMovementDB[id];
-                if(record && record.items) {
+                if (record && record.items) {
                     record.items.forEach(item => {
-                        if(itemsDB[item.name]) {
-                            if(itemsDB[item.name].godowns[record.fromGodown] !== undefined) itemsDB[item.name].godowns[record.fromGodown] += parseInt(item.qty);
-                            if(itemsDB[item.name].godowns[record.toGodown] !== undefined) itemsDB[item.name].godowns[record.toGodown] -= parseInt(item.qty);
+                        if (itemsDB[item.name]) {
+                            if (itemsDB[item.name].godowns[record.fromGodown] !== undefined) itemsDB[item.name].godowns[record.fromGodown] += parseInt(item.qty);
+                            if (itemsDB[item.name].godowns[record.toGodown] !== undefined) itemsDB[item.name].godowns[record.toGodown] -= parseInt(item.qty);
                         }
                     });
                 }
                 delete stockMovementDB[id];
-                if(typeof updateDataAndUI === 'function') updateDataAndUI();
-                if(typeof renderInventoryHubList === 'function') renderInventoryHubList();
-                if(typeof renderItemMasterList === 'function') renderItemMasterList();
+                if (typeof updateDataAndUI === 'function') updateDataAndUI();
+                if (typeof renderInventoryHubList === 'function') renderInventoryHubList();
+                if (typeof renderItemMasterList === 'function') renderItemMasterList();
                 alert("Transfer deleted & stock reverted successfully!");
                 return;
             }
-            oldDeleteLogisticsRecord(id, logType, e);
+
+            // Branch 2: Direct Stock entries — undo an ADDITION (decrement total + godown)
+            let directRecord = stockMovementDB[id];
+            if (directRecord && (directRecord.type === 'DirectStock' || logType === 'Direct Stock')) {
+                if (e) { e.stopPropagation(); e.preventDefault(); }
+                closeAllMenus();
+                if (!confirm("🚨 Are you sure you want to delete this record? Stock will be reversed.")) return;
+                directRecord.items.forEach(item => {
+                    if (itemsDB[item.name]) {
+                        itemsDB[item.name].totalStock -= item.qty;
+                        if (itemsDB[item.name].godowns[directRecord.godownId]) {
+                            itemsDB[item.name].godowns[directRecord.godownId] -= item.qty;
+                        }
+                    }
+                });
+                delete stockMovementDB[id];
+                updateDataAndUI();
+                window.renderInventoryHubList();
+                alert("✅ Record deleted and stock reversed.");
+                return;
+            }
+
+            // Branch 3: everything else (Rental Invoice, dispatch, etc.) — undo a DISPATCH (add back to godown)
+            if (e) e.stopPropagation();
+            closeAllMenus();
+            if (!confirm(`🚨 WARNING!\nAre you sure you want to delete this ${logType}?\nThe stock will be reversed to your Godown.`)) return;
+            let record = (logType === 'Rental Invoice') ? salesDB[id] : stockMovementDB[id];
+            if (!record) return;
+            if ((record.rentalStatus !== 'Returned' && record.status !== 'Returned') && record.items) {
+                record.items.forEach(item => {
+                    if (itemsDB[item.name]) {
+                        let gId = record.godownId || 'WH_MAIN';
+                        if (!itemsDB[item.name].godowns[gId]) itemsDB[item.name].godowns[gId] = 0;
+                        itemsDB[item.name].godowns[gId] += parseInt(item.qty) || 0;
+                    }
+                });
+            }
+            if (logType === 'Rental Invoice') delete salesDB[id]; else delete stockMovementDB[id];
+            if (typeof updateDataAndUI === 'function') updateDataAndUI();
+            window.renderInventoryHubList();
+            alert("Record deleted & stock reverted successfully!");
         };
         // ==============================================================
         // 🚀 MASTER LOGISTICS & INVENTORY HUB ENGINE (100% CLEAN & MERGED)
@@ -21112,11 +21159,11 @@
             
             let leadSel = document.getElementById('ob_lead_select');
             if(leadSel && typeof leadsDB !== 'undefined') {
-                leadSel.innerHTML = `<option value="">-- Select Event --</option>` + Object.values(leadsDB).filter(l => l.status === 'Won' && l.eventStatus !== 'Completed').map(l => `<option value="${l.id}">${l.name} (${l.func || 'Event'}) - ${l.date || ''}</option>`).join("");
+                leadSel.innerHTML = `<option value="">-- Select Event --</option>` + Object.values(leadsDB).filter(l => l.status === 'Won' && l.eventStatus !== 'Completed').map(l => `<option value="${l.id}">${sanitize(l.name)} (${l.func || 'Event'}) - ${l.date || ''}</option>`).join("");
             }
             let partySel = document.getElementById('ob_party_select');
             if(partySel && typeof partiesDB !== 'undefined') {
-                partySel.innerHTML = `<option value="">-- Select Party / Account --</option>` + Object.values(partiesDB).filter(p => p.type === 'Customer').map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+                partySel.innerHTML = `<option value="">-- Select Party / Account --</option>` + Object.values(partiesDB).filter(p => p.type === 'Customer').map(p => `<option value="${p.id}">${sanitize(p.name)}</option>`).join("");
             }
             
             document.getElementById('ob_items_container').innerHTML = "";
@@ -21285,7 +21332,7 @@
                 Object.values(itemsDB).forEach(i => {
                     let r = i.rentPrice || 0;
                     let sel = (i.name === name) ? 'selected' : '';
-                    options += `<option value="${i.name}" data-rent="${r}" ${sel}>${i.name}</option>`;
+                    options += `<option value="${sanitize(i.name)}" data-rent="${r}" ${sel}>${sanitize(i.name)}</option>`;
                 });
             }
 
