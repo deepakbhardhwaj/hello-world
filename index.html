@@ -116,6 +116,12 @@
         const debouncedRenderInventoryHub = debounce(function () { if (typeof window.renderInventoryHubList === 'function') window.renderInventoryHubList(); }, 250);
         const debouncedRenderItemMaster = debounce(function () { if (typeof window.renderItemMasterList === 'function') window.renderItemMasterList(); }, 250);
         const debouncedFilterSelectInventory = debounce(function () { if (typeof window.filterSelectInventory === 'function') window.filterSelectInventory(); }, 200);
+        // 🐛 PERF FIX: real-time sync ke saath updateDataAndUI() ab bahut frequently
+        // chalta hai (jab bhi koi bhi staff kuch save kare). Notification list ko
+        // millisecond-precision fresh rakhne ki zaroorat nahi — isliye ise thoda
+        // debounce kar diya, taaki rapid-fire updates ke burst mein ye baar-baar
+        // (poori leadsDB/salesDB scan karke) na chale, sirf settle hone ke baad ek baar.
+        const debouncedRenderNotificationPanel = debounce(function () { if (typeof renderNotificationPanel === 'function') renderNotificationPanel(); }, 400);
 
         // ==========================================
         // 🚀 INFINITE SCROLL / LIST PAGE-LIMIT HELPER
@@ -18092,40 +18098,44 @@
                 }
             });
 
-            // 4) RENTAL ITEM RETURN DATE paas ya overdue
+            // 🐛 PERF FIX: pehle salesDB par 2 alag-alag baar poora loop chalta tha
+            // (ek rental-return ke liye, ek payment-reminder ke liye) — bade
+            // workspace (1000+ invoices) mein ye har single real-time update par
+            // double kaam tha. Ab ek hi pass mein dono check ho jaate hain.
+            // 4) RENTAL ITEM RETURN DATE paas ya overdue + 5) PAYMENT REMINDERS
             if (isOwner) {
                 Object.values(salesDB || {}).forEach(r => {
-                    if (r.type !== 'Invoice' || r.invoiceType !== 'Rental') return;
-                    if (r.rentalStatus === 'Returned') return;
-                    if (!r.returnDate) return;
-                    let diff = daysFromToday(r.returnDate);
-                    if (diff !== null && diff <= 3) {
-                        let lbl = dueLabel(diff);
-                        let party = partiesDB[r.partyId];
-                        notifs.push({
-                            id: 'return_' + r.id + '_' + todayStr,
-                            icon: '📦', title: 'Item return: ' + r.id,
-                            sub: (party ? party.name : '') + ' • ' + lbl.text, urgent: lbl.urgent,
-                            onclick: `viewDetails('${r.id}', 'sales')`
-                        });
-                    }
-                });
+                    if (r.type !== 'Invoice') return;
+                    let party = null; // lazily resolved only if actually needed below
 
-                // 5) PAYMENT REMINDERS — invoice 3+ din purana ho aur balance due ho
-                // (koi alag "payment due date" field nahi hai is app mein, isliye
-                // invoice date se hi umar nikaali hai)
-                Object.values(salesDB || {}).forEach(r => {
-                    if (r.type !== 'Invoice' || !(r.balanceDue > 0)) return;
-                    let ageDays = r.date ? -daysFromToday(r.date) : 0;
-                    if (ageDays >= 3) {
-                        let party = partiesDB[r.partyId];
-                        notifs.push({
-                            id: 'payment_' + r.id + '_' + todayStr,
-                            icon: '💰', title: 'Payment due: ₹' + r.balanceDue.toLocaleString('en-IN'),
-                            sub: (party ? party.name : '') + ' • ' + r.id + ' (' + ageDays + 'd old)',
-                            urgent: ageDays >= 15,
-                            onclick: `viewDetails('${r.id}', 'sales')`
-                        });
+                    if (r.invoiceType === 'Rental' && r.rentalStatus !== 'Returned' && r.returnDate) {
+                        let diff = daysFromToday(r.returnDate);
+                        if (diff !== null && diff <= 3) {
+                            let lbl = dueLabel(diff);
+                            party = partiesDB[r.partyId];
+                            notifs.push({
+                                id: 'return_' + r.id + '_' + todayStr,
+                                icon: '📦', title: 'Item return: ' + r.id,
+                                sub: (party ? party.name : '') + ' • ' + lbl.text, urgent: lbl.urgent,
+                                onclick: `viewDetails('${r.id}', 'sales')`
+                            });
+                        }
+                    }
+
+                    // Koi alag "payment due date" field nahi hai is app mein,
+                    // isliye invoice date se hi umar nikaali hai.
+                    if (r.balanceDue > 0) {
+                        let ageDays = r.date ? -daysFromToday(r.date) : 0;
+                        if (ageDays >= 3) {
+                            if (!party) party = partiesDB[r.partyId];
+                            notifs.push({
+                                id: 'payment_' + r.id + '_' + todayStr,
+                                icon: '💰', title: 'Payment due: ₹' + r.balanceDue.toLocaleString('en-IN'),
+                                sub: (party ? party.name : '') + ' • ' + r.id + ' (' + ageDays + 'd old)',
+                                urgent: ageDays >= 15,
+                                onclick: `viewDetails('${r.id}', 'sales')`
+                            });
+                        }
                     }
                 });
             }
@@ -18243,14 +18253,32 @@
             } catch (e) { /* user cancelled the picker — normal, do nothing */ }
         };
 
-        // Contact-picker button ko sirf tab dikhata hai jab API support ho
+        // 🐛 PERF FIX: pehle ye function har single updateDataAndUI() call par
+        // (matlab har real-time data change par, jo ab bahut frequent hai) poore
+        // page mein '.contact-pick-btn' dhoondh ke loop chalata tha — jabki
+        // browser ka contact-picker support kabhi session ke beech mein badalta
+        // hi nahi hai. Ab sirf EK baar (pehli baar) actual kaam karta hai, uske
+        // baad turant return ho jaata hai — zero wasted work.
+        let _contactPickerAlreadyInjected = false;
         function injectContactPickerButtons() {
-            if (!('contacts' in navigator && 'ContactsManager' in window)) return;
+            if (_contactPickerAlreadyInjected) return;
+            if (!('contacts' in navigator && 'ContactsManager' in window)) { _contactPickerAlreadyInjected = true; return; }
             document.querySelectorAll('.contact-pick-btn').forEach(b => b.style.display = 'inline-flex');
+            _contactPickerAlreadyInjected = true;
         }
 
         function updateDataAndUI(fromCloud = false) {
             
+            // 🐛 PERF/GLITCH FIX: dropdown menus khulte waqt <body> mein temporarily
+            // move ho jaate hain (positioning fix ke liye). Agar isi waqt real-time
+            // data update aa jaaye (koi aur staff kuch save kare), toh neeche wali
+            // list-render functions apna container innerHTML="" kar dete hain —
+            // jisse dropdown ki ASLI jagah (row) hi delete ho jaati hai, aur wo
+            // <body> ke end mein hamesha ke liye "orphan" ban ke reh jaata hai
+            // (na dikhta hai theek se, na hi saaf hota hai — waqt ke saath DOM
+            // bhaari hota jaata hai aur yahi-wahi glitch dikhta hai). Fix: neeche
+            // koi bhi render chalne se PEHLE hi khula dropdown band + restore kar do.
+            if (typeof closeAllMenus === 'function') closeAllMenus();
             
             if (!fromCloud) {
                 saveDataLocally(); 
@@ -18277,7 +18305,7 @@
             if (typeof renderInventoryHubList === 'function') renderInventoryHubList();
 
             // 🔔 Notification badge + due-date/assignment checks — har data update par
-            if (typeof renderNotificationPanel === 'function') renderNotificationPanel();
+            if (typeof debouncedRenderNotificationPanel === 'function') debouncedRenderNotificationPanel();
             if (typeof refreshNotifEnableButtonVisibility === 'function') refreshNotifEnableButtonVisibility();
             if (typeof injectContactPickerButtons === 'function') injectContactPickerButtons();
             
