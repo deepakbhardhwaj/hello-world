@@ -3219,10 +3219,13 @@
 
                 .evt-card{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
                 .evt-card:hover{border-color:#CBD5E1;box-shadow:0 8px 24px rgba(0,0,0,.09);}
-                .evt-card.today-card{border-color:#FCD34D;box-shadow:0 2px 14px rgba(217,119,6,.15);}
-                .evt-card.overdue-card{border-color:#FCA5A5;box-shadow:0 2px 14px rgba(220,38,38,.1);}
                 .evt-status-bar{height:4px;width:100%;border-radius:14px 14px 0 0;}
                 .evt-bar-Upcoming{background:#3B82F6;} .evt-bar-Completed{background:#10B981;} .evt-bar-Cancelled{background:#94A3B8;}
+                /* 🐛 FIX: pehle overdue/today hone par card ke poore border ka color BHI
+                   badal jaata tha (status-bar ke color ke saath), jisse do alag-alag
+                   colors ek saath dikh ke card messy/broken lagta tha. Ab sirf TOP BAR
+                   hi urgency dikhata hai — ek hi clear signal, card border hamesha neutral. */
+                .evt-bar-today{background:#D97706;} .evt-bar-overdue{background:#DC2626;}
                 .evt-card-body{padding:12px 14px 10px;cursor:pointer;}
                 .evt-card-top{display:flex;align-items:flex-start;gap:10px;}
                 .evt-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:white;flex-shrink:0;}
@@ -9887,7 +9890,13 @@
                     else { cdClass = 'cd-future'; cdText = 'in ' + diff + 'd'; }
                 }
 
+                // 🐛 FIX: overdue/today hone par ab TOP BAR khud hi red/amber ho jaata
+                // hai (status ke normal color ki jagah) — ek hi jagah, ek hi clear
+                // signal. Card ka border kabhi nahi badalta, isliye "do colors ek
+                // saath" wala messy look ab nahi aata.
                 let statusBarClass = 'evt-bar-' + (ev.eventStatus || 'Upcoming');
+                if (cdClass === 'cd-overdue') statusBarClass = 'evt-bar-overdue';
+                else if (cdClass === 'cd-today') statusBarClass = 'evt-bar-today';
                 let multiTag = funcCount > 1 ? `<span class="evt-tag" style="background:#FAF5FF;color:#7C3AED;">${funcCount} Functions</span>` : '';
                 let cancelledTag = ev.eventStatus === 'Cancelled' ? `<span class="evt-tag" style="background:#F8FAFC;color:#64748B;">Cancelled</span>` : '';
 
@@ -9918,7 +9927,7 @@
                 let cleanPhone = String(ev.phone || "").replace(/\D/g, '');
 
                 let card = document.createElement('div');
-                card.className = "evt-card" + (cdClass === 'cd-today' ? ' today-card' : '') + (cdClass === 'cd-overdue' ? ' overdue-card' : '');
+                card.className = "evt-card";
                 card.id = "row-" + ev.id;
                 card.innerHTML = `
                     <div class="evt-status-bar ${statusBarClass}"></div>
