@@ -9533,6 +9533,22 @@
                 return;
             }
 
+            // 🐛 FIX: same number se leads add karte waqt pehle koi heads-up nahi
+            // milta tha — agar staff ko pata hi nahi ki ye number pehle se system
+            // mein hai, wahi enquiry galti se dobara ban sakti thi. Note: leads ke
+            // case mein same number dobara aana galti NAHI bhi ho sakta (wahi client
+            // naya function book karne aaya ho) — isliye ye sirf ek heads-up hai,
+            // party wale check jitna strict nahi.
+            let normalizedLeadPhone = String(phone).replace(/\D/g, '').slice(-10);
+            let existingLeadDup = normalizedLeadPhone ? Object.values(leadsDB).find(l =>
+                l.id !== editingLeadId &&
+                String(l.phone || '').replace(/\D/g, '').slice(-10) === normalizedLeadPhone
+            ) : null;
+            if (existingLeadDup) {
+                let proceed = confirm(`ℹ️ Is number (${normalizedLeadPhone}) se pehle se ek lead maujood hai: "${existingLeadDup.name}" (${existingLeadDup.status}).\n\nAgar ye wahi purani enquiry hai, toh "Cancel" dabakar us lead ko edit karein.\n\nAgar ye isi client ki NAYI enquiry hai (jaise doosra function), toh "OK" dabakar naya lead banayein — ye theek hai.`);
+                if (!proceed) return;
+            }
+
             // 🚀 FIX: Auto-Assign to Staff if they created it
             let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
             let dropdownAssign = document.getElementById('l_assign_to').value;
@@ -11082,6 +11098,22 @@
             if (!name || !phone) { alert("Party Name and Mobile Number are required!"); return; }
             let pType = document.getElementById('pt_type').value; let subCat = "";
             if (pType === "Vendor") { subCat = document.getElementById('pt_sub_cat').value; if (subCat === "Custom") { subCat = document.getElementById('pt_custom_sub').value || "Vendor"; } }
+
+            // 🐛 FIX: same mobile number se unlimited duplicate parties ban sakte the
+            // (koi check hi nahi tha) — isse ek hi insaan/business ke transactions
+            // do-teen alag party records mein bat jaate the, ledger aur reports
+            // dono confuse ho jaate the. Ab save karne se pehle existing parties
+            // mein yahi number check karte hain (edit karte waqt khud ko exclude
+            // karke, taaki apni hi party edit karna blocked na ho).
+            let normalizedPhone = String(phone).replace(/\D/g, '').slice(-10);
+            let existingDup = normalizedPhone ? Object.values(partiesDB).find(p =>
+                p.id !== editingPartyId &&
+                String(p.phone || '').replace(/\D/g, '').slice(-10) === normalizedPhone
+            ) : null;
+            if (existingDup) {
+                let proceed = confirm(`⚠️ Is mobile number (${normalizedPhone}) se pehle se ek party maujood hai: "${existingDup.name}" (${existingDup.type}).\n\nAgar ye wahi party hai, toh "Cancel" dabakar us purani party ko hi edit karein — naya duplicate na banayein.\n\nAgar ye genuinely ek alag insaan/business hai (jaise shared family/shop number), toh "OK" dabakar aage badhein.`);
+                if (!proceed) return;
+            }
 
             let newId = null;
             if (editingPartyId) {
