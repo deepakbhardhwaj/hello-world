@@ -271,7 +271,7 @@
                 let modal = document.getElementById('iosInstallModal');
                 if (modal) modal.style.display = 'flex';
             } else {
-                if (typeof showToast === 'function') showToast('Is browser mein direct install available nahi hai. Chrome ya Edge try karein.', 'info', 4000);
+                if (typeof showToast === 'function') showToast('Direct install is not available in this browser. Please try Chrome or Edge.', 'info', 4000);
             }
         };
 
@@ -8500,7 +8500,7 @@
                 hideLoader();
                 if (!dupCheck.empty) {
                     let existingCompName = dupCheck.docs[0].data().name || "another business";
-                    let proceed = confirm(`⚠️ Is mobile number (${normalizedPhone1}) se pehle se ek workspace ("${existingCompName}") register hai.\n\nAgar ye galti se dobara ban raha hai, toh "Cancel" dabakar apne purane workspace mein wapas jaayein.\n\nAgar ye genuinely ek alag/nayi business hai (jaise dusra branch), toh "OK" dabakar aage badhein.`);
+                    let proceed = confirm(`⚠️ A workspace ("${existingCompName}") is already registered with this mobile number (${normalizedPhone1}).\n\nIf this is being created by mistake, click "Cancel" and go back to your existing workspace.\n\nIf this is genuinely a different/new business (e.g. another branch), click "OK" to continue.`);
                     if (!proceed) return;
                 }
             } catch (e) {
@@ -9238,7 +9238,7 @@
                 updateDataAndUI(true);
             }, (error) => {
                 console.error("Cloud Sync Error:", error);
-                if (typeof window.showToast === 'function') window.showToast("Cloud se data load nahi ho paaya. Connection check karein.", "error", 5000);
+                if (typeof window.showToast === 'function') window.showToast("Could not load data from the cloud. Please check your connection.", "error", 5000);
             });
 
             // ☁️ 2. COMPANY & STAFF LISTENER (Real-time Team updates)
@@ -9545,7 +9545,7 @@
                 String(l.phone || '').replace(/\D/g, '').slice(-10) === normalizedLeadPhone
             ) : null;
             if (existingLeadDup) {
-                let proceed = confirm(`ℹ️ Is number (${normalizedLeadPhone}) se pehle se ek lead maujood hai: "${existingLeadDup.name}" (${existingLeadDup.status}).\n\nAgar ye wahi purani enquiry hai, toh "Cancel" dabakar us lead ko edit karein.\n\nAgar ye isi client ki NAYI enquiry hai (jaise doosra function), toh "OK" dabakar naya lead banayein — ye theek hai.`);
+                let proceed = confirm(`ℹ️ A lead already exists with this number (${normalizedLeadPhone}): "${existingLeadDup.name}" (${existingLeadDup.status}).\n\nIf this is the same old enquiry, click "Cancel" and edit that lead instead.\n\nIf this is a NEW enquiry from the same client (e.g. a different function), click "OK" to create a new lead — that's fine.`);
                 if (!proceed) return;
             }
 
@@ -9742,7 +9742,7 @@
                         console.log("Upload Success, URL:", uploadedUrl);
                         leadsDB[currentLeadId].photos.push({ url: uploadedUrl, label: '' });
                     } else {
-                        alert("Cloudinary ne URL nahi diya!");
+                        alert("Cloudinary did not return a URL!");
                     }
                 } catch (e) {
                     console.error("Upload Error:", e);
@@ -10861,7 +10861,7 @@
             if (!t && leadId && leadsDB[leadId]) {
                 t = (leadsDB[leadId].tasks||[]).find(x=>(x.id||x)===taskId) || null;
             }
-            if (!t) { if (typeof showToast === 'function') showToast('Task nahi mila', 'error', 2500); return; }
+            if (!t) { if (typeof showToast === 'function') showToast('Task not found', 'error', 2500); return; }
 
             let phone = t.assignedTo || '';
             let comp = masterCompsDB[currentWorkspaceId];
@@ -10874,8 +10874,8 @@
             // 🐛 FIX: pehle assignedTo khaali hone par apne (loggedInMobile) hi
             // WhatsApp khul jaata tha, jo confusing tha. Ab clear message dikhata hai.
             if (phone.length !== 10) {
-                if (typeof showToast === 'function') showToast('⚠️ Is task ko koi staff assign nahi hai — pehle "Assign To" set karein', 'error', 4000);
-                else alert('Is task ko koi staff assign nahi hai. Pehle Edit karke "Assign To" set karein.');
+                if (typeof showToast === 'function') showToast('⚠️ No staff is assigned to this task — please set "Assign To" first', 'error', 4000);
+                else alert('No staff is assigned to this task. Please edit it and set "Assign To" first.');
                 return;
             }
 
@@ -11111,7 +11111,7 @@
                 String(p.phone || '').replace(/\D/g, '').slice(-10) === normalizedPhone
             ) : null;
             if (existingDup) {
-                let proceed = confirm(`⚠️ Is mobile number (${normalizedPhone}) se pehle se ek party maujood hai: "${existingDup.name}" (${existingDup.type}).\n\nAgar ye wahi party hai, toh "Cancel" dabakar us purani party ko hi edit karein — naya duplicate na banayein.\n\nAgar ye genuinely ek alag insaan/business hai (jaise shared family/shop number), toh "OK" dabakar aage badhein.`);
+                let proceed = confirm(`⚠️ A party already exists with this mobile number (${normalizedPhone}): "${existingDup.name}" (${existingDup.type}).\n\nIf this is the same party, click "Cancel" and edit that existing party instead — don't create a duplicate.\n\nIf this is genuinely a different person/business (e.g. a shared family/shop number), click "OK" to continue.`);
                 if (!proceed) return;
             }
 
@@ -16872,6 +16872,17 @@
             }
 
             // 2. TAB SWITCHING LOGIC
+            // 🐛 FIX: _navStack (jo back-button ke liye "pichla tab" yaad rakhta hai)
+            // kabhi actually populate hi nahi hoti thi — sirf declare hui thi, kahin
+            // push nahi hoti thi. Isliye back button hamesha seedha Home par chala
+            // jaata tha, jis tab se aaye the wahan nahi. Ab current tab ko stack
+            // mein daal rahe hain, naya tab khulne se theek pehle.
+            let _currentActiveSection = document.querySelector('.section.active-section');
+            if (_currentActiveSection && _currentActiveSection.id && _currentActiveSection.id !== tabName && typeof _navStack !== 'undefined') {
+                _navStack.push(_currentActiveSection.id);
+                if (_navStack.length > 20) _navStack.shift(); // stack ko haddse zyada badhne se roko
+            }
+
             let sections = document.getElementsByClassName("section");
             for (let i = 0; i < sections.length; i++) {
                 sections[i].classList.remove("active-section");
@@ -16923,6 +16934,22 @@
 
         // Set initial hash trap
         window.history.replaceState({ utab: 'home' }, '', '#utsav');
+
+        // 🐛 RESILIENCE FIX: kuch Android browsers/devices app background se
+        // resume hone par history state ko silently reset/clear kar dete hain —
+        // jisse upar wala "trap" khatam ho jaata hai aur agli baar back button
+        // seedha app close kar deta hai. Isliye jab bhi app wapas visible/resume
+        // ho, trap state ko dobara confirm/re-establish kar dete hain.
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible' && window.history.state?.utab !== 'trap' && window.history.state?.utab !== 'home') {
+                window.history.pushState({ utab: 'trap' }, '', '#utsav');
+            }
+        });
+        window.addEventListener('pageshow', function () {
+            if (window.history.state?.utab !== 'trap' && window.history.state?.utab !== 'home') {
+                window.history.pushState({ utab: 'trap' }, '', '#utsav');
+            }
+        });
 
         window.addEventListener('popstate', function(e) {
             // Always re-push so we never truly leave the app
@@ -18341,13 +18368,13 @@
         // Notification permission — sirf ek clear button-tap par maangte hain
         // (auto-popup se log usually "Block" dabate hain aur phir kabhi nahi puchta).
         window.enableLocalNotifications = function () {
-            if (!('Notification' in window)) { if (typeof showToast === 'function') showToast('Ye browser notifications support nahi karta', 'error', 3000); return; }
+            if (!('Notification' in window)) { if (typeof showToast === 'function') showToast('This browser does not support notifications', 'error', 3000); return; }
             Notification.requestPermission().then(perm => {
                 if (perm === 'granted') {
                     if (typeof showToast === 'function') showToast('🔔 Notifications ON!', 'success', 2500);
                     let btn = document.getElementById('notifEnableBtn'); if (btn) btn.style.display = 'none';
                 } else {
-                    if (typeof showToast === 'function') showToast('Notifications allow nahi kiye — browser settings se badal sakte ho', 'info', 3500);
+                    if (typeof showToast === 'function') showToast('Notifications were not allowed — you can change this in your browser settings', 'info', 3500);
                 }
             });
         };
@@ -18366,7 +18393,7 @@
         // nahi dikhega, log seedha type kar sakte hain jaisa pehle karte the.
         window.pickContactInto = async function (phoneInputId, nameInputId) {
             if (!('contacts' in navigator && 'ContactsManager' in window)) {
-                if (typeof showToast === 'function') showToast('Ye device/browser contact-picker support nahi karta', 'info', 3000);
+                if (typeof showToast === 'function') showToast('This device/browser does not support the contact picker', 'info', 3000);
                 return;
             }
             try {
