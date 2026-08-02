@@ -9845,7 +9845,23 @@
         // NOTES, PHOTOS & WORKSPACE
         // ==========================================
         function addNote() { let text = document.getElementById('p_new_note').value; if (!text || !currentLeadId) return; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN', { hour12: true, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), text: text }); document.getElementById('p_new_note').value = ""; renderNotes(); }
-        function renderNotes() { let container = document.getElementById('p_notes_list'); container.innerHTML = ""; let notes = leadsDB[currentLeadId].notes || []; if (notes.length === 0) { container.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No notes yet.</p>"; return; } [...notes].reverse().forEach(note => { container.innerHTML += `<div class="note-item"><div class="note-time">${note.time}</div><div class="note-text">${sanitize(note.text)}</div></div>`; }); }
+        function renderNotes() {
+            let container = document.getElementById('p_notes_list'); container.innerHTML = "";
+            let notes = leadsDB[currentLeadId].notes || [];
+            if (notes.length === 0) { container.innerHTML = "<p style='font-size:13px; font-weight:500; color:#94a3b8;'>No notes yet.</p>"; return; }
+            [...notes].reverse().forEach(note => {
+                // 🐛 FIX: pehle har note.text hamesha sanitize() hota tha — jo user-typed
+                // notes ke liye zaroori/sahi hai, lekin "Quotation Created" jaisa system-
+                // generated note khud ek chhota <a> link hota hai (clickable banane ke
+                // liye) — sanitize karne se wo link ki jagah raw HTML code text ki tarah
+                // dikhne lagta tha. Ab sirf explicitly-marked "isSystemHtml" notes (jo
+                // hamesha app ke apne code se banते hain, kabhi raw user input se nahi)
+                // bina-sanitize render hote hain — baaki SAB (default) hamesha sanitize
+                // hi hote hain, jaisa pehle tha.
+                let noteHtml = note.isSystemHtml ? note.text : sanitize(note.text);
+                container.innerHTML += `<div class="note-item"><div class="note-time">${sanitize(note.time)}</div><div class="note-text">${noteHtml}</div></div>`;
+            });
+        }
         function openImgPreview(url, event) { if (event) { event.stopPropagation(); } document.getElementById('fullSizeImg').src = url; document.getElementById('imgPreviewModal').style.display = 'flex'; }
         async function handlePhotoUpload(event) {
             let files = event.target.files;
@@ -12669,7 +12685,7 @@
             salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event, date, items, discount, total, status: 'Draft' };
 
             if (currentQuoteSourceLeadId && leadsDB[currentQuoteSourceLeadId] && !editingSalesId) {
-                leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: `<a href="#" onclick="viewDetails('${id}', 'sales'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">📝 Quotation Created - ₹${total.toLocaleString('en-IN')}</a>` });
+                leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: `<a href="#" onclick="viewDetails('${id}', 'sales'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">📝 Quotation Created - ₹${total.toLocaleString('en-IN')}</a>`, isSystemHtml: true });
             }
 
             updateDataAndUI();
