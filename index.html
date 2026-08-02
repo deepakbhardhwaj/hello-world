@@ -282,6 +282,128 @@
         function el(id) { return document.getElementById(id); }
         function safeText(id, val) { let e = el(id); if (e) e.innerText = val; }
 
+        // ══════════════════════════════════════════════
+        // 🚀 BULLETPROOF MOBILE BACK BUTTON v3
+        // ══════════════════════════════════════════════
+        // 🐛 ROOT-CAUSE FIX: pehle ye setup script mein bahut NEECHE (~line 16900+)
+        // tha. Do problems thi:
+        // 1) Agar PWA fresh khuli ho (jaise home-screen icon se tap karke), history
+        //    stack mein sirf EK hi entry hoti hai. `replaceState` naya entry nahi
+        //    JODTA, sirf current wale ko badalta hai — isliye pehli hi baar back
+        //    dabane par "popstate" fire hi nahi hota (jaane ke liye kuch hai hi
+        //    nahi), aur Android seedha app close/minimize kar deta hai — humara
+        //    JS code kabhi chalta hi nahi. Fix: yahan turant EK extra pushState
+        //    bhi kar rahe hain, taaki shuru se hi 2 entries ka buffer ho — pehli
+        //    back-press par bhi popstate zaroor fire ho.
+        // 2) Ye code itna neeche tha ki agar ISSE PEHLE kahin script mein koi
+        //    error aa jaaye (aur bade app mein aisa ho sakta hai), toh back-button
+        //    wala poora setup kabhi chalta hi nahi tha. Ab ye sabse shuru mein,
+        //    apne try-catch ke andar hai — kuch bhi baad mein toote, ye already
+        //    activate ho chuka hoga.
+        let _navStack = []; // internal tab navigation stack
+        try {
+            window.history.replaceState({ utab: 'home' }, '', '#utsav');
+            window.history.pushState({ utab: 'trap' }, '', '#utsav'); // 👈 critical: 2-entry buffer from the very start
+
+            document.addEventListener('visibilitychange', function () {
+                try {
+                    if (document.visibilityState === 'visible' && (!window.history.state || (window.history.state.utab !== 'trap' && window.history.state.utab !== 'home'))) {
+                        window.history.pushState({ utab: 'trap' }, '', '#utsav');
+                    }
+                } catch (e) { /* best-effort resilience, never break the app over this */ }
+            });
+            window.addEventListener('pageshow', function () {
+                try {
+                    if (!window.history.state || (window.history.state.utab !== 'trap' && window.history.state.utab !== 'home')) {
+                        window.history.pushState({ utab: 'trap' }, '', '#utsav');
+                    }
+                } catch (e) { /* best-effort */ }
+            });
+
+            window.addEventListener('popstate', function (e) {
+                try {
+                    // Always re-push so we never truly leave the app
+                    window.history.pushState({ utab: 'trap' }, '', '#utsav');
+
+                    let handled = false;
+
+                    // 1. Close any open dropdown menus
+                    let openMenus = document.querySelectorAll('.dropdown-menu.show');
+                    if (openMenus.length > 0 && typeof closeAllMenus === 'function') { closeAllMenus(); handled = true; }
+
+                    // 2. Close image preview
+                    if (!handled) {
+                        let imgM = document.getElementById('imgPreviewModal');
+                        if (imgM && imgM.style.display === 'flex') { imgM.style.display = 'none'; handled = true; }
+                    }
+
+                    // 3. Close highest open modal (skip exitConfirmModal — it's handled below)
+                    if (!handled) {
+                        let openModals = Array.from(document.querySelectorAll('.modal-overlay'))
+                            .filter(m => (m.style.display === 'flex' || m.style.display === 'block') && m.id !== 'exitConfirmModal');
+                        if (openModals.length > 0) {
+                            let top = openModals.reduce((a, b) => (parseInt(getComputedStyle(a).zIndex) || 0) >= (parseInt(getComputedStyle(b).zIndex) || 0) ? a : b);
+                            top.style.display = 'none';
+                            if (top.id === 'partyModal' && typeof activeParentModal !== 'undefined' && activeParentModal) {
+                                let pe = document.getElementById(activeParentModal);
+                                if (pe) pe.style.display = 'flex';
+                                activeParentModal = null;
+                            }
+                            handled = true;
+                        }
+                    }
+
+                    // 4. Close open side panels
+                    if (!handled) {
+                        let openPanels = Array.from(document.querySelectorAll('.side-panel')).filter(p => p.classList.contains('open'));
+                        if (openPanels.length > 0) {
+                            let dp = document.getElementById('detailPanel');
+                            if (dp && dp.classList.contains('open') && typeof saveAndClosePanel === 'function') saveAndClosePanel();
+                            else if (typeof closeAllOverlays === 'function') closeAllOverlays();
+                            handled = true;
+                        }
+                    }
+
+                    // 5. Close report result screen (slide back to selector)
+                    if (!handled) {
+                        let hub = document.getElementById('reports-hub');
+                        if (hub && hub.classList.contains('rep-result-open')) {
+                            hub.classList.remove('rep-result-open');
+                            handled = true;
+                        }
+                    }
+
+                    // 6. Navigate back through tab stack
+                    if (!handled) {
+                        let cur = document.querySelector('.active-section');
+                        if (cur && cur.id !== 'home') {
+                            let prev = _navStack.length > 0 ? _navStack.pop() : 'home';
+                            let prevBtn = document.getElementById('btn-' + prev) || null;
+                            let origSections = document.getElementsByClassName('section');
+                            for (let s of origSections) s.classList.remove('active-section');
+                            let btns = document.querySelectorAll('.nav-btn');
+                            for (let b of btns) b.classList.remove('active-btn');
+                            let ts = document.getElementById(prev);
+                            if (ts) ts.classList.add('active-section');
+                            if (prevBtn) prevBtn.classList.add('active-btn');
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            handled = true;
+                        }
+                    }
+
+                    // 7. On home with nothing open → show exit confirm
+                    if (!handled) {
+                        let exitM = document.getElementById('exitConfirmModal');
+                        if (exitM) exitM.style.display = 'flex';
+                    }
+                } catch (err) {
+                    console.warn('Back-button handler error (non-fatal):', err);
+                }
+            });
+        } catch (e) {
+            console.warn('Back-button trap setup failed:', e);
+        }
+
         // ==========================================
         // 🛡️ XSS SECURITY: HTML Sanitizer
         // ==========================================
@@ -16926,108 +17048,6 @@
         function createPBFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; setTimeout(() => { openPurchaseBillModal(); }, 50); }
         function createExpenseFromEvent(leadId) { setTimeout(() => { openExpenseModal(leadId); }, 50); }
         function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } setTimeout(() => { openPaymentModal(partyId); }, 50); }
-
-        // ══════════════════════════════════════════════
-        // 🚀 BULLETPROOF MOBILE BACK BUTTON v2
-        // ══════════════════════════════════════════════
-        let _navStack = []; // internal tab navigation stack
-
-        // Set initial hash trap
-        window.history.replaceState({ utab: 'home' }, '', '#utsav');
-
-        // 🐛 RESILIENCE FIX: kuch Android browsers/devices app background se
-        // resume hone par history state ko silently reset/clear kar dete hain —
-        // jisse upar wala "trap" khatam ho jaata hai aur agli baar back button
-        // seedha app close kar deta hai. Isliye jab bhi app wapas visible/resume
-        // ho, trap state ko dobara confirm/re-establish kar dete hain.
-        document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible' && window.history.state?.utab !== 'trap' && window.history.state?.utab !== 'home') {
-                window.history.pushState({ utab: 'trap' }, '', '#utsav');
-            }
-        });
-        window.addEventListener('pageshow', function () {
-            if (window.history.state?.utab !== 'trap' && window.history.state?.utab !== 'home') {
-                window.history.pushState({ utab: 'trap' }, '', '#utsav');
-            }
-        });
-
-        window.addEventListener('popstate', function(e) {
-            // Always re-push so we never truly leave the app
-            window.history.pushState({ utab: 'trap' }, '', '#utsav');
-
-            let handled = false;
-
-            // 1. Close any open dropdown menus
-            let openMenus = document.querySelectorAll('.dropdown-menu.show');
-            if (openMenus.length > 0) { closeAllMenus(); handled = true; }
-
-            // 2. Close image preview
-            if (!handled) {
-                let imgM = document.getElementById('imgPreviewModal');
-                if (imgM && imgM.style.display === 'flex') { imgM.style.display = 'none'; handled = true; }
-            }
-
-            // 3. Close highest open modal (skip exitConfirmModal — it's handled below)
-            if (!handled) {
-                let openModals = Array.from(document.querySelectorAll('.modal-overlay'))
-                    .filter(m => (m.style.display==='flex'||m.style.display==='block') && m.id !== 'exitConfirmModal');
-                if (openModals.length > 0) {
-                    let top = openModals.reduce((a,b) => (parseInt(getComputedStyle(a).zIndex)||0) >= (parseInt(getComputedStyle(b).zIndex)||0) ? a : b);
-                    top.style.display = 'none';
-                    if (top.id==='partyModal' && typeof activeParentModal!=='undefined' && activeParentModal) {
-                        let pe = document.getElementById(activeParentModal);
-                        if (pe) pe.style.display='flex';
-                        activeParentModal = null;
-                    }
-                    handled = true;
-                }
-            }
-
-            // 4. Close open side panels
-            if (!handled) {
-                let openPanels = Array.from(document.querySelectorAll('.side-panel')).filter(p=>p.classList.contains('open'));
-                if (openPanels.length > 0) {
-                    let dp = document.getElementById('detailPanel');
-                    if (dp && dp.classList.contains('open') && typeof saveAndClosePanel==='function') saveAndClosePanel();
-                    else if (typeof closeAllOverlays==='function') closeAllOverlays();
-                    handled = true;
-                }
-            }
-
-            // 5. Close report result screen (slide back to selector)
-            if (!handled) {
-                let hub = document.getElementById('reports-hub');
-                if (hub && hub.classList.contains('rep-result-open')) {
-                    hub.classList.remove('rep-result-open');
-                    handled = true;
-                }
-            }
-
-            // 6. Navigate back through tab stack
-            if (!handled) {
-                let cur = document.querySelector('.active-section');
-                if (cur && cur.id !== 'home') {
-                    let prev = _navStack.length > 0 ? _navStack.pop() : 'home';
-                    let prevBtn = document.getElementById('btn-' + prev) || null;
-                    // call original to avoid re-pushing stack infinitely
-                    let origSections = document.getElementsByClassName('section');
-                    for (let s of origSections) s.classList.remove('active-section');
-                    let btns = document.querySelectorAll('.nav-btn');
-                    for (let b of btns) b.classList.remove('active-btn');
-                    let ts = document.getElementById(prev);
-                    if (ts) ts.classList.add('active-section');
-                    if (prevBtn) prevBtn.classList.add('active-btn');
-                    window.scrollTo({top:0,behavior:'smooth'});
-                    handled = true;
-                }
-            }
-
-            // 7. On home with nothing open → show exit confirm
-            if (!handled) {
-                let exitM = document.getElementById('exitConfirmModal');
-                if (exitM) exitM.style.display = 'flex';
-            }
-        });
 
         // App exit — never call window.close() in browser; it fails silently or closes tab
         function confirmExitApp() {
