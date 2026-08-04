@@ -3011,6 +3011,7 @@
             <a href="javascript:void(0);" class="nav-link" onclick="openTab('settings-hub', this); closeNav();">⚙️ App
                 Settings</a>
             <a href="javascript:void(0);" class="nav-link" id="sb_install_app_btn" style="display:none; color:#059669; border-color:#A7F3D0; background:#F0FDF4;" onclick="triggerAppInstall(); closeNav();"><span id="sb_install_app_label">📲 Download App</span></a>
+            <a href="javascript:void(0);" class="nav-link" onclick="renderWhatsNewModal(true); closeNav();">🆕 What's New</a>
             <a href="javascript:void(0);" class="nav-link nav-link-cta"
                 style="color: var(--accent-color); border-color: #BFDBFE; background: #EFF6FF; justify-content: center; margin-top:20px;"
                 onclick="openCompanySelector()">🔄 Switch Workspace</a>
@@ -3084,6 +3085,19 @@
                     </div>
                     <div style="font-size:10.5px; color:var(--text-secondary); margin-top:12px;">App ab home screen par ek icon ki tarah aa jaayegi — bilkul native app jaisa experience! 🎉</div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 🆕 What's New / Changelog modal -->
+        <div id="whatsNewModal" class="modal-overlay" style="display:none; z-index:9500;">
+            <div class="modal-content" style="max-width:420px; padding-bottom:20px;">
+                <div class="modal-header">
+                    <h3>🎉 What's New</h3>
+                    <button class="modal-close" onclick="closeWhatsNewModal()">&times;</button>
+                </div>
+                <div id="whatsNewBody" style="padding:4px 18px 6px; max-height:60vh; overflow-y:auto;"></div>
+                <button type="button" onclick="closeWhatsNewModal()"
+                    style="width:calc(100% - 32px); margin:8px 16px 0; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:white; border:none; border-radius:12px; padding:12px; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(37,99,235,.3);">Got it 👍</button>
             </div>
         </div>
 
@@ -6071,6 +6085,7 @@
                             <div style="background:rgba(255,255,255,0.12); border-radius:8px; padding:8px 14px; font-size:11px; font-weight:700;">🔒 Firebase Secure</div>
                         </div>
                         <button id="about_install_app_btn" onclick="triggerAppInstall()" style="display:none; margin-top:14px; background:#059669; color:white; border:none; padding:11px 20px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(5,150,105,.35);">📲 Download App</button>
+                        <button onclick="renderWhatsNewModal(true)" style="margin-top:10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:10px 20px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer;">🆕 What's New</button>
                     </div>
 
                     <div class="set-bento-card">
@@ -18216,6 +18231,91 @@
             return { text: `in ${diff}d`, urgent: false };
         }
 
+        // ==========================================================
+        // 🆕 APP CHANGELOG / "WHAT'S NEW" SYSTEM
+        // ==========================================================
+        // HAR baar jab bhi koi bug-fix ya naya feature app mein aata hai, yahan
+        // ek NAYI entry (sabse UPAR) add honi chahiye — chhota, user-friendly
+        // (technical jargon nahi) description ke saath. Jab bhi koi user/staff
+        // ek naye version wali app kholega (jo unhone pehle nahi dekhi), unhe
+        // ek baar "What's New" popup + notification milegi, aur ye history
+        // hamesha Settings > What's New mein bhi dekhi ja sakti hai.
+        const APP_CHANGELOG = [
+            {
+                version: "2026.08.02",
+                title: "🎉 Latest Updates",
+                changes: [
+                    "Fixed: task/lead assignment now shows up for staff in real-time, no refresh needed",
+                    "Fixed: Quotation-created links inside a lead's notes were showing as raw code instead of a clickable link",
+                    "Fixed: back button now properly navigates within the app instead of closing it",
+                    "Fixed: duplicate businesses, parties, or leads using the same mobile number now show a warning before saving",
+                    "Fixed: 3-dot menus no longer get cropped or hidden behind other cards",
+                    "Improved: Invoices/Quotations list has a cleaner, card-based design matching Leads and Events",
+                    "New: notification bell shows task assignments, upcoming events, and payment reminders",
+                    "New: you can install this app to your home screen (📲 Download App, in the menu)",
+                    "New: pick a contact's number directly from your phone's contact list (Android)"
+                ]
+            }
+        ];
+
+        function getLastSeenAppVersion() {
+            try { return localStorage.getItem('utsav_last_seen_app_version'); } catch (e) { return null; }
+        }
+        function setLastSeenAppVersion(v) {
+            try { localStorage.setItem('utsav_last_seen_app_version', v); } catch (e) { /* best-effort */ }
+        }
+
+        // Sirf naye version ke changes dikhata hai (jo user ne abhi tak nahi dekhe).
+        // fullHistory=true dene par poori changelog history dikhata hai (Settings se).
+        window.renderWhatsNewModal = function (fullHistory) {
+            let lastSeen = getLastSeenAppVersion();
+            let entriesToShow = fullHistory ? APP_CHANGELOG : APP_CHANGELOG.filter(e => !lastSeen || e.version > lastSeen);
+            if (entriesToShow.length === 0) entriesToShow = [APP_CHANGELOG[0]];
+
+            let body = document.getElementById('whatsNewBody');
+            if (!body) return;
+            body.innerHTML = entriesToShow.map(entry => `
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;">${sanitize(entry.title)} · ${sanitize(entry.version)}</div>
+                    ${entry.changes.map(c => `<div style="display:flex; gap:8px; padding:7px 0; font-size:13px; color:var(--text-primary); line-height:1.4;"><span style="flex-shrink:0;">${c.startsWith('Fixed') ? '🐛' : c.startsWith('New') ? '✨' : '⚡'}</span><span>${sanitize(c.replace(/^(Fixed|New|Improved):\s*/, ''))}</span></div>`).join('')}
+                </div>`).join('');
+
+            let modal = document.getElementById('whatsNewModal');
+            if (modal) modal.style.display = 'flex';
+            setLastSeenAppVersion(APP_CHANGELOG[0].version);
+        };
+
+        window.closeWhatsNewModal = function () {
+            let modal = document.getElementById('whatsNewModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // App load hote hi check karta hai — agar naya version hai jo is device
+        // par pehle nahi dekha gaya, toh popup + bell notification dono milte hain.
+        // Bilkul naye user (jinhone kabhi app hi nahi kholi) ko silently latest
+        // version "seen" mark kar dete hain — unke liye "What's New" dikhana
+        // matlab-hin hai.
+        function checkForAppUpdate() {
+            let lastSeen = getLastSeenAppVersion();
+            let latest = APP_CHANGELOG[0].version;
+            if (lastSeen === null) {
+                setLastSeenAppVersion(latest); // fresh install — silently mark as seen
+                return;
+            }
+            if (lastSeen !== latest) {
+                window.renderWhatsNewModal(false);
+                try {
+                    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                            navigator.serviceWorker.ready.then(reg => { if (reg && reg.showNotification) reg.showNotification('🎉 App Updated', { body: 'Naye fixes aur features aa gaye hain — tap karke dekhein.', icon: 'favicon.png', tag: 'app-update-' + latest }); });
+                        } else {
+                            new Notification('🎉 App Updated', { body: 'New fixes and features are available — tap to see.', icon: 'favicon.png', tag: 'app-update-' + latest });
+                        }
+                    }
+                } catch (e) { /* notification best-effort */ }
+            }
+        }
+
         // Har notification ko ek stable unique id deta hai (date-scoped jahan
         // zaroori ho), taaki ek hi cheez baar-baar OS-notify na ho jaaye.
         window.computeNotifications = function () {
@@ -18503,6 +18603,12 @@
             if (typeof debouncedRenderNotificationPanel === 'function') debouncedRenderNotificationPanel();
             if (typeof refreshNotifEnableButtonVisibility === 'function') refreshNotifEnableButtonVisibility();
             if (typeof injectContactPickerButtons === 'function') injectContactPickerButtons();
+
+            // 🆕 "What's New" check — sirf ek baar per session (data ready hote hi)
+            if (!window._appUpdateChecked && typeof checkForAppUpdate === 'function') {
+                window._appUpdateChecked = true;
+                checkForAppUpdate();
+            }
             
             // 🚀 INVENTORY DASHBOARD AUTO-LOAD TRIGGER
             if (typeof renderMainLogisticsHub === 'function') renderMainLogisticsHub();
