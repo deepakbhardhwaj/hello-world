@@ -374,19 +374,25 @@
                     }
 
                     // 6. Navigate back through tab stack
+                    // 🐛 FIX: pehle yahan manually class-switching ki jaati thi (openTab()
+                    // call kiye bina) — isliye showNavAndFabs() kabhi nahi chalta tha, aur
+                    // agar us waqt nav-bar chhupi hui thi (jaise Party/Expense jaise
+                    // full-screen views mein), toh back karne ke baad bhi chhupi hi reh
+                    // jaati thi. Ab asli openTab() function hi call karte hain (jisse
+                    // permission-check + nav-bar sync sab sahi chale) — bas ek flag se
+                    // rok dete hain ki wo apna khud ka navStack-push na kare (kyunki hum
+                    // yahan pehle se hi ek entry POP kar chuke hain — dobara push karne
+                    // se history galat ho jaati).
                     if (!handled) {
                         let cur = document.querySelector('.active-section');
                         if (cur && cur.id !== 'home') {
                             let prev = _navStack.length > 0 ? _navStack.pop() : 'home';
                             let prevBtn = document.getElementById('btn-' + prev) || null;
-                            let origSections = document.getElementsByClassName('section');
-                            for (let s of origSections) s.classList.remove('active-section');
-                            let btns = document.querySelectorAll('.nav-btn');
-                            for (let b of btns) b.classList.remove('active-btn');
-                            let ts = document.getElementById(prev);
-                            if (ts) ts.classList.add('active-section');
-                            if (prevBtn) prevBtn.classList.add('active-btn');
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            if (typeof window.openTab === 'function') {
+                                window._isNavigatingBack = true;
+                                window.openTab(prev, prevBtn);
+                                window._isNavigatingBack = false;
+                            }
                             handled = true;
                         }
                     }
@@ -17008,70 +17014,6 @@
         // 🚀 SMART MOBILE UI & BACK BUTTON FIXES
         // ==========================================
 
-        // ==========================================
-        // 🚀 MASTER OPENTAB ENGINE (Unified & Fast)
-        // ==========================================
-        function openTab(tabName, btnElement) {
-            // 1. SECURITY & PERMISSIONS CHECK
-            if (typeof currentPermissions !== 'undefined' && currentPermissions.modules) {
-                let p = currentPermissions.modules;
-                if (tabName === 'crm' && !p.crm) return alert("⛔ ACCESS DENIED! You don't have permission for CRM/Leads.");
-                if (tabName === 'events' && !p.event) return alert("⛔ ACCESS DENIED! You don't have permission for Events.");
-                if (tabName === 'sales-hub' && !p.sales) return alert("⛔ ACCESS DENIED! You don't have permission for Sales Hub.");
-                if (tabName === 'purchase-hub' && !p.purch) return alert("⛔ ACCESS DENIED! You don't have permission for Purchase Hub.");
-                if (tabName === 'expense-hub' && !p.exp) return alert("⛔ ACCESS DENIED! You don't have permission for Expenses.");
-                if (tabName === 'bank-hub' && !p.bank) return alert("⛔ ACCESS DENIED! You don't have permission for Cash & Bank.");
-                if (tabName === 'reports-hub' && !p.rep) return alert("⛔ ACCESS DENIED! You don't have permission for Reports.");
-            }
-
-            // 2. TAB SWITCHING LOGIC
-            // 🐛 FIX: _navStack (jo back-button ke liye "pichla tab" yaad rakhta hai)
-            // kabhi actually populate hi nahi hoti thi — sirf declare hui thi, kahin
-            // push nahi hoti thi. Isliye back button hamesha seedha Home par chala
-            // jaata tha, jis tab se aaye the wahan nahi. Ab current tab ko stack
-            // mein daal rahe hain, naya tab khulne se theek pehle.
-            let _currentActiveSection = document.querySelector('.section.active-section');
-            if (_currentActiveSection && _currentActiveSection.id && _currentActiveSection.id !== tabName && typeof _navStack !== 'undefined') {
-                _navStack.push(_currentActiveSection.id);
-                if (_navStack.length > 20) _navStack.shift(); // stack ko haddse zyada badhne se roko
-            }
-
-            let sections = document.getElementsByClassName("section");
-            for (let i = 0; i < sections.length; i++) {
-                sections[i].classList.remove("active-section");
-            }
-            let btns = document.querySelectorAll(".nav-btn");
-            for (let i = 0; i < btns.length; i++) {
-                btns[i].classList.remove("active-btn");
-            }
-
-            let targetSection = document.getElementById(tabName);
-            if (targetSection) targetSection.classList.add("active-section");
-            if (btnElement) btnElement.classList.add("active-btn");
-
-            // 3. BOTTOM NAV BAR VISIBILITY
-            let navBar = document.querySelector('.nav-bar');
-            let fullScreenTabs = ['sales-hub', 'purchase-hub', 'expense-hub', 'party-master', 'bank-hub'];
-            if (navBar) {
-                navBar.style.display = fullScreenTabs.includes(tabName) ? 'none' : 'flex';
-            }
-
-            // 4. FLOATING ACTION BUTTON (FAB) VISIBILITY
-            let mainFab = document.getElementById('main-fab-container');
-            if (mainFab && window.hideFabTabs) {
-                mainFab.style.display = window.hideFabTabs.includes(tabName) ? 'none' : 'flex';
-            }
-
-            // 5. CLEANUP & SCROLL
-            if (typeof closeAllMenus === 'function') closeAllMenus();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // 6. AUTO-LOAD SPECIFIC MODULES
-            if (tabName === 'settings-hub' && typeof initSettingsHub === 'function') {
-                setTimeout(() => { initSettingsHub(); }, 100);
-            }
-        }
-
         // 🚀 FAST UI FIX: Removed closePanel() so Workspace stays open behind the modal!
         function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 50); }
         function createPurchaseBillFromEvent(leadId) { tempEventIdForPurchase = leadId; setTimeout(() => { openPurchaseBillModal(); }, 50); }
@@ -19289,7 +19231,40 @@
         };
         var showNavAndFabs = window.showNavAndFabs;
 
+        // 🐛 CRITICAL FIX: is naam ka function POORE app mein DO baar define ho raha
+        // tha — ye wala (window.openTab = function...) hi ACTUALLY chalta tha
+        // (JS mein baad wali assignment jeetti hai), lekin isme teen zaroori
+        // cheezein MISSING thi jo sirf dead/shadowed copy mein thi:
+        //  1) Permission check — staff bina access ke CRM/Sales/etc. tab khol
+        //     sakte the, koi "Access Denied" nahi aata tha!
+        //  2) _navStack.push() — isके bina back-button "sahi pichla tab" kabhi
+        //     yaad hi nahi rakh paata tha (isliye back "app jaisa" nahi lagta
+        //     tha aur kabhi seedha home par ya galat jagah chala jaata tha).
+        //  3) Settings tab khulne par initSettingsHub() kabhi call hi nahi
+        //     hota tha.
+        // Ab sab ek hi (asli, active) jagah hai.
         window.openTab = function(tabName, btnElement) {
+            // 1. SECURITY & PERMISSIONS CHECK
+            if (typeof currentPermissions !== 'undefined' && currentPermissions.modules) {
+                let p = currentPermissions.modules;
+                if (tabName === 'crm' && !p.crm) return alert("⛔ ACCESS DENIED! You don't have permission for CRM/Leads.");
+                if (tabName === 'events' && !p.event) return alert("⛔ ACCESS DENIED! You don't have permission for Events.");
+                if (tabName === 'sales-hub' && !p.sales) return alert("⛔ ACCESS DENIED! You don't have permission for Sales Hub.");
+                if (tabName === 'purchase-hub' && !p.purch) return alert("⛔ ACCESS DENIED! You don't have permission for Purchase Hub.");
+                if (tabName === 'expense-hub' && !p.exp) return alert("⛔ ACCESS DENIED! You don't have permission for Expenses.");
+                if (tabName === 'bank-hub' && !p.bank) return alert("⛔ ACCESS DENIED! You don't have permission for Cash & Bank.");
+                if (tabName === 'reports-hub' && !p.rep) return alert("⛔ ACCESS DENIED! You don't have permission for Reports.");
+            }
+
+            // 2. Back-button ke liye "pichla tab" yaad rakho
+            // (window._isNavigatingBack true hone par skip — us case mein back-button
+            // handler ne khud hi ek entry pop ki hai, dobara push karna history galat kar dega)
+            let _currentActiveSection = document.querySelector('.section.active-section');
+            if (!window._isNavigatingBack && _currentActiveSection && _currentActiveSection.id && _currentActiveSection.id !== tabName && typeof _navStack !== 'undefined') {
+                _navStack.push(_currentActiveSection.id);
+                if (_navStack.length > 20) _navStack.shift();
+            }
+
             let sections = document.getElementsByClassName("section");
             for (let i = 0; i < sections.length; i++) sections[i].classList.remove("active-section");
             let btns = document.querySelectorAll(".nav-btn");
@@ -19302,6 +19277,11 @@
             window.showNavAndFabs();
             if (typeof closeAllMenus === 'function') closeAllMenus();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 3. Settings tab khulte hi usse initialize karo
+            if (tabName === 'settings-hub' && typeof initSettingsHub === 'function') {
+                setTimeout(() => { initSettingsHub(); }, 100);
+            }
         };
 
         // --------------------------------------------------------------
