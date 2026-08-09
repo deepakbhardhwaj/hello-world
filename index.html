@@ -23,6 +23,7 @@
     <!-- 📱 PWA Manifest (inline) -->
     <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22UTSAVhq%20Enterprise%20ERP%22%2C%22short_name%22%3A%22UTSAVhq%22%2C%22description%22%3A%22Secure%20Cloud-Based%20Business%20ERP%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F1F5F9%22%2C%22theme_color%22%3A%22%231D4ED8%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22favicon.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22favicon.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%5D%7D">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -322,6 +323,15 @@
 
             window.addEventListener('popstate', function (e) {
                 try {
+                    // 🐛 FIX: "Exit App?" confirm ka "Exit" button pehle history.go()
+                    // se app band karne ki koshish karta tha — lekin ye poora trap
+                    // system EXACTLY isse rokne ke liye bana hai (taaki galti se
+                    // back-press par app band na ho)! Dono ek doosre se lad rahe the,
+                    // isliye Exit button properly kaam nahi karta tha. Ab jab user
+                    // genuinely "Exit" confirm kare, hum trap ko temporarily hata
+                    // dete hain (window._allowRealExit flag), taaki asli exit ho sake.
+                    if (window._allowRealExit) return;
+
                     // Always re-push so we never truly leave the app
                     window.history.pushState({ utab: 'trap' }, '', '#utsav');
 
@@ -3104,6 +3114,26 @@
                 <div id="whatsNewBody" style="padding:4px 18px 6px; max-height:60vh; overflow-y:auto;"></div>
                 <button type="button" onclick="closeWhatsNewModal()"
                     style="width:calc(100% - 32px); margin:8px 16px 0; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:white; border:none; border-radius:12px; padding:12px; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(37,99,235,.3);">Got it 👍</button>
+            </div>
+        </div>
+
+        <!-- ☁️ Google Drive backup reminder (owner-only) -->
+        <div id="backupReminderModal" class="modal-overlay" style="display:none; z-index:9500;">
+            <div class="modal-content" style="max-width:380px; text-align:center; padding-bottom:20px;">
+                <div class="modal-header" style="justify-content:center; position:relative;">
+                    <h3>☁️ Time for a Backup</h3>
+                    <button class="modal-close" style="position:absolute; right:16px;" onclick="closeBackupReminder(true)">&times;</button>
+                </div>
+                <div style="padding:4px 20px 0;">
+                    <div style="font-size:36px; margin-bottom:8px;">📦</div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); line-height:1.5; margin-bottom:16px;">
+                        Your last Google Drive backup was a while ago. Back up now to keep a safe copy of all your business data.
+                    </div>
+                    <button type="button" onclick="backupToGoogleDrive()"
+                        style="width:100%; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:white; border:none; border-radius:12px; padding:12px; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(37,99,235,.3); margin-bottom:8px;">☁️ Backup Now</button>
+                    <button type="button" onclick="closeBackupReminder(true)"
+                        style="width:100%; background:#F1F5F9; color:var(--text-secondary); border:none; border-radius:12px; padding:11px; font-size:12.5px; font-weight:700; cursor:pointer;">Remind me later</button>
+                </div>
             </div>
         </div>
 
@@ -6092,6 +6122,7 @@
                         </div>
                         <button id="about_install_app_btn" onclick="triggerAppInstall()" style="display:none; margin-top:14px; background:#059669; color:white; border:none; padding:11px 20px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(5,150,105,.35);">📲 Download App</button>
                         <button onclick="renderWhatsNewModal(true)" style="margin-top:10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:10px 20px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer;">🆕 What's New</button>
+                        <button id="about_backup_btn" onclick="backupToGoogleDrive()" style="display:none; margin-top:10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; padding:10px 20px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer;">☁️ Backup to Google Drive</button>
                     </div>
 
                     <div class="set-bento-card">
@@ -17028,8 +17059,15 @@
             if (exitM) exitM.style.display = 'none';
             if (navigator.app && navigator.app.exitApp) { navigator.app.exitApp(); return; }
             if (navigator.device && navigator.device.exitApp) { navigator.device.exitApp(); return; }
-            // PWA / browser fallback — minimize or go to blank
-            try { window.history.go(-(window.history.length)); } catch(e) {}
+            // 🐛 FIX: pehle yahan history.go(-(history.length)) se ek hi jhatke mein
+            // poori history skip karne ki koshish hoti thi — lekin humara back-button
+            // "trap" system isse fight karta tha (usी ke liye bana hai), isliye Exit
+            // kaam nahi karta tha. Ab: (1) trap ko ek flag se temporarily disable
+            // karte hain, (2) sirf EK step wapas jaate hain (asli, saaf tarika) —
+            // isse PWA/browser apna normal "close/minimize" behavior dikha sakta hai.
+            window._allowRealExit = true;
+            try { window.history.back(); } catch (e) {}
+            setTimeout(() => { window._allowRealExit = false; }, 1200); // safety reset agar exit na ho paaya ho
         }
         // ==========================================
         // 🚀 PROFILE, LOGO & SIGNATURE LOGIC
@@ -18174,6 +18212,126 @@
         }
 
         // ==========================================================
+        // ☁️ GOOGLE DRIVE BACKUP (owner-only, reminder-driven)
+        // ==========================================================
+        // ⚠️ IMPORTANT — SETUP ZAROORI HAI ISSE ACTUALLY KAAM KARNE KE LIYE:
+        // Neeche wale GOOGLE_DRIVE_CLIENT_ID mein "YOUR_CLIENT_ID_HERE.apps.googleusercontent.com"
+        // ki jagah apna asli Google OAuth Client ID daalna hoga. Ye main khud
+        // nahi bana sakta — Deepak ko Google Cloud Console mein khud banana
+        // hoga (steps neeche chat mein diye hain).
+        //
+        // 🎯 EK ZAROORI TECHNICAL SACH: koi bhi web app (bina apne server ke)
+        // POORI TARAH "silent" background backup nahi kar sakta jab app band
+        // ho — Google ka authorization sirf is browser session tak valid
+        // rehta hai (~1 ghanta). Isliye ye system "app kholte hi check karo,
+        // agar due ho toh ek-tap mein backup ho jaaye" wale tareeke se kaam
+        // karta hai — jo web ke liye sabse practical/reliable tareeka hai.
+        const GOOGLE_DRIVE_CLIENT_ID = "YOUR_CLIENT_ID_HERE.apps.googleusercontent.com";
+        const BACKUP_REMINDER_DAYS = 2; // har kitne din mein reminder/backup due ho
+
+        let _driveAccessToken = null;
+        let _driveTokenClient = null;
+
+        function getLastBackupDate() {
+            try { return localStorage.getItem('utsav_last_backup_' + currentWorkspaceId); } catch (e) { return null; }
+        }
+        function setLastBackupDate(dateStr) {
+            try { localStorage.setItem('utsav_last_backup_' + currentWorkspaceId, dateStr); } catch (e) { /* best-effort */ }
+        }
+        function daysSinceLastBackup() {
+            let last = getLastBackupDate();
+            if (!last) return 999; // kabhi backup nahi hua
+            return Math.floor((new Date() - new Date(last)) / 86400000);
+        }
+
+        // App khulte hi (sirf OWNER ke liye) check karta hai ki backup due hai ya nahi
+        function checkBackupReminder() {
+            let ownerBackupBtn = document.getElementById('about_backup_btn');
+            if (!isCurrentUserOwner()) { if (ownerBackupBtn) ownerBackupBtn.style.display = 'none'; return; } // 🔒 sirf owner, staff ko kabhi nahi
+            if (ownerBackupBtn) ownerBackupBtn.style.display = 'inline-block';
+            if (daysSinceLastBackup() < BACKUP_REMINDER_DAYS) return;
+            let modal = document.getElementById('backupReminderModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        window.closeBackupReminder = function (skip) {
+            let modal = document.getElementById('backupReminderModal');
+            if (modal) modal.style.display = 'none';
+            if (skip) setLastBackupDate(new Date().toISOString()); // "baad mein" = agle cycle tak na poocho
+        };
+
+        // Google se authorization maangta hai (pehli baar ya token expire hone par)
+        function ensureDriveAuthorized(callback) {
+            if (GOOGLE_DRIVE_CLIENT_ID.indexOf("YOUR_CLIENT_ID_HERE") !== -1) {
+                alert("⚠️ Google Drive backup abhi set up nahi hua hai.\n\nDeepak ko Google Cloud Console se ek OAuth Client ID banake code mein daalna hoga — Claude se poocho, poore steps diye hain.");
+                return;
+            }
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+                if (typeof showToast === 'function') showToast("Google sign-in load nahi ho paaya. Internet check karke dobara try karein.", "error", 4000);
+                return;
+            }
+            if (_driveAccessToken) { callback(); return; }
+
+            if (!_driveTokenClient) {
+                _driveTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_DRIVE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/drive.file',
+                    callback: (resp) => {
+                        if (resp && resp.access_token) {
+                            _driveAccessToken = resp.access_token;
+                            callback();
+                        } else {
+                            if (typeof showToast === 'function') showToast("Google authorization cancel ho gaya.", "info", 3000);
+                        }
+                    }
+                });
+            }
+            _driveTokenClient.requestAccessToken();
+        }
+
+        // Asli backup upload — poora workspace data ek JSON file banake Drive
+        // ke "App Data" scope (drive.file) mein daal deta hai. Ye scope sirf
+        // apni banayi files hi dekh/badal sakta hai — poore Drive tak access
+        // nahi maangta (privacy ke liye sahi, minimal scope).
+        window.backupToGoogleDrive = function () {
+            ensureDriveAuthorized(() => {
+                if (typeof showLoader === 'function') showLoader("Backing up to Google Drive...");
+                let dataToSave = {
+                    leads: leadsDB, parties: partiesDB, sales: salesDB, purchase: purchaseDB,
+                    expense: expenseDB, globalTasks: globalTasksDB, expenseCats: expenseCats,
+                    bank: bankDB, bankTx: bankTxDB, loans: loansDB,
+                    items: itemsDB, warehouses: warehousesDB, stockMovements: stockMovementDB,
+                    leadSources: leadSources, itemUnits: itemUnits, appSettings: appSettings,
+                    trashDB: trashDB, orderBook: window.orderBookDB || {},
+                    _backupDate: new Date().toISOString(), _workspace: currentWorkspaceId
+                };
+                let fileName = `UTSAVhq_Backup_${currentWorkspaceId}_${new Date().toISOString().split('T')[0]}.json`;
+                let fileContent = JSON.stringify(dataToSave, null, 2);
+                let metadata = { name: fileName, mimeType: 'application/json' };
+                let boundary = '-------utsavhq' + Date.now();
+                let body =
+                    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+                    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${fileContent}\r\n--${boundary}--`;
+
+                fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + _driveAccessToken, 'Content-Type': 'multipart/related; boundary=' + boundary },
+                    body: body
+                }).then(res => {
+                    if (typeof hideLoader === 'function') hideLoader();
+                    if (!res.ok) throw new Error('Upload failed: ' + res.status);
+                    setLastBackupDate(new Date().toISOString());
+                    window.closeBackupReminder(false);
+                    if (typeof showToast === 'function') showToast('✅ Backed up to Google Drive!', 'success', 3500);
+                }).catch(err => {
+                    if (typeof hideLoader === 'function') hideLoader();
+                    console.error("Drive backup failed:", err);
+                    if (typeof showToast === 'function') showToast('⚠️ Backup failed — check your connection and try again.', 'error', 4500);
+                });
+            });
+        };
+
+        // ==========================================================
         // 🆕 APP CHANGELOG / "WHAT'S NEW" SYSTEM
         // ==========================================================
         // HAR baar jab bhi koi bug-fix ya naya feature app mein aata hai, yahan
@@ -18183,6 +18341,16 @@
         // ek baar "What's New" popup + notification milegi, aur ye history
         // hamesha Settings > What's New mein bhi dekhi ja sakti hai.
         const APP_CHANGELOG = [
+            {
+                version: "2026.08.06",
+                title: "🎉 Latest Updates",
+                changes: [
+                    "Fixed: back button and Exit confirmation now work reliably from any screen",
+                    "Fixed: staff permission checks and navigation bar visibility are consistent everywhere",
+                    "New: Google Drive backup — owner gets a reminder every 2 days to back up all business data",
+                    "New: manual 'Backup to Google Drive' option in Settings > About"
+                ]
+            },
             {
                 version: "2026.08.02",
                 title: "🎉 Latest Updates",
@@ -18550,6 +18718,12 @@
             if (!window._appUpdateChecked && typeof checkForAppUpdate === 'function') {
                 window._appUpdateChecked = true;
                 checkForAppUpdate();
+            }
+
+            // ☁️ Google Drive backup reminder — sirf ek baar per session, sirf owner ke liye
+            if (!window._backupReminderChecked && typeof checkBackupReminder === 'function') {
+                window._backupReminderChecked = true;
+                setTimeout(checkBackupReminder, 1500); // "What's New" ke turant baad na aaye, isliye chhota delay
             }
             
             // 🚀 INVENTORY DASHBOARD AUTO-LOAD TRIGGER
