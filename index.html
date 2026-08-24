@@ -17251,9 +17251,10 @@
 
         function exportBackupData() {
             if (!currentUser) return alert("Please login first.");
+            if (!currentWorkspaceId) return alert("No active workspace found.");
             saveDataLocally(); // Latest data memory me lelo
 
-            let data = localStorage.getItem('utsav_erp_data_' + currentUser.email);
+            let data = localStorage.getItem('utsav_erp_data_' + currentWorkspaceId);
             if (!data) return alert("No data found to backup!");
 
             let dateStr = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
@@ -17277,24 +17278,57 @@
             let file = event.target.files[0];
             if (!file) return;
 
-            if (confirm("🚨 WARNING: Restoring a backup will overwrite and replace your current app data. Do you want to continue?")) {
-                let reader = new FileReader();
-                reader.onload = function (e) {
-                    try {
-                        let jsonData = JSON.parse(e.target.result);
-                        if (jsonData.leads || jsonData.parties || jsonData.sales || jsonData.bank) {
-                            localStorage.setItem('utsav_erp_data_' + currentUser.email, JSON.stringify(jsonData));
-                            alert("✅ Data Restored Successfully!\nThe App will now restart.");
-                            window.location.reload();
-                        } else {
-                            alert("❌ Invalid Backup File! This doesn't look like our ERP data.");
-                        }
-                    } catch (error) {
-                        alert("❌ Error reading backup file. Make sure it's a valid JSON file.");
-                    }
-                };
-                reader.readAsText(file);
+            if (!currentWorkspaceId) { alert("No active workspace found."); event.target.value = ''; return; }
+            if (!auth.currentUser) {
+                alert("⚠️ Restore needs an active internet connection (so your cloud data updates safely too). Please check your connection and try again.");
+                event.target.value = '';
+                return;
             }
+
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(e.target.result);
+                } catch (error) {
+                    alert("❌ Error reading backup file. Make sure it's a valid JSON file.");
+                    event.target.value = '';
+                    return;
+                }
+                if (!(jsonData.leads || jsonData.parties || jsonData.sales || jsonData.bank)) {
+                    alert("❌ Invalid Backup File! This doesn't look like our ERP data.");
+                    event.target.value = '';
+                    return;
+                }
+
+                // 🛡️ SAFETY CHECK: agar ye backup kisi doosre workspace/company ka hai,
+                // saaf-saaf warn karo — taaki galti se galat company ka data yahan
+                // current workspace par overwrite na ho jaaye
+                let warnText = "🚨 WARNING: Restoring a backup will overwrite and replace your current app data. Do you want to continue?";
+                if (jsonData._workspace && jsonData._workspace !== currentWorkspaceId) {
+                    warnText = "⚠️ This backup file is from a DIFFERENT company/workspace than the one you're currently in.\n\nRestoring it will overwrite YOUR CURRENT company's data with that other backup — it will NOT create a new/duplicate company, it replaces the current one.\n\nAre you absolutely sure you want to continue?";
+                }
+                if (!confirm(warnText)) { event.target.value = ''; return; }
+
+                if (typeof showLoader === 'function') showLoader("Restoring backup...");
+
+                // ☁️ Cloud (Firestore) ko bhi overwrite karna zaroori hai — sirf
+                // localStorage update karne se real-time sync thodi der mein purana
+                // (un-restored) cloud data wapas khींच laata aur restore "undo" ho jaata
+                db.collection("workspace_data").doc(currentWorkspaceId).set(jsonData)
+                    .then(() => {
+                        localStorage.setItem('utsav_erp_data_' + currentWorkspaceId, JSON.stringify(jsonData));
+                        if (typeof hideLoader === 'function') hideLoader();
+                        alert("✅ Data Restored Successfully!\nThe App will now restart.");
+                        window.location.reload();
+                    })
+                    .catch(err => {
+                        if (typeof hideLoader === 'function') hideLoader();
+                        console.error("Restore failed:", err);
+                        alert("❌ Restore failed while saving to cloud: " + (err && err.message ? err.message : "Unknown error") + "\n\nYour current data is safe and unchanged.");
+                    });
+            };
+            reader.readAsText(file);
             event.target.value = ''; // Reset input
         }
         async function deleteCompanyWorkspace() {
@@ -17340,8 +17374,12 @@
                 localStorage.removeItem('utsav_profile');
                 
                 // Remove User Specific Databases (Leads, Sales, etc.)
+                if (currentWorkspaceId) {
+                    localStorage.removeItem('utsav_erp_data_' + currentWorkspaceId);
+                }
+                localStorage.removeItem('utsav_active_workspace');
                 if (currentUser && currentUser.email) {
-                    localStorage.removeItem('utsav_erp_data_' + currentUser.email);
+                    localStorage.removeItem('utsav_erp_data_' + currentUser.email); // legacy key cleanup
                 }
 
                 alert("✅ SUCCESS: All system data has been securely wiped.\nThe App will now restart and log you out.");
@@ -18367,16 +18405,28 @@
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + _driveAccessToken, 'Content-Type': 'multipart/related; boundary=' + boundary },
                     body: body
-                }).then(res => {
+                }).then(async res => {
                     if (typeof hideLoader === 'function') hideLoader();
-                    if (!res.ok) throw new Error('Upload failed: ' + res.status);
+                    if (!res.ok) {
+                        // Google jo asli wajah bataata hai (e.g. "Drive API disabled",
+                        // "invalid credentials") wahi nikaal ke dikhate hain, generic
+                        // "check connection" ki jagah — taaki exact reason pata chale
+                        let reason = 'HTTP ' + res.status;
+                        try {
+                            let errJson = await res.json();
+                            if (errJson && errJson.error && errJson.error.message) reason = errJson.error.message;
+                        } catch (parseErr) { /* body JSON nahi tha, generic reason hi rakho */ }
+                        if (res.status === 401) { _driveAccessToken = null; } // token invalid — agli baar fresh login mangega
+                        throw new Error(reason);
+                    }
                     setLastBackupDate(new Date().toISOString());
                     window.closeBackupReminder(false);
                     if (typeof showToast === 'function') showToast('✅ Backed up to Google Drive!', 'success', 3500);
                 }).catch(err => {
                     if (typeof hideLoader === 'function') hideLoader();
                     console.error("Drive backup failed:", err);
-                    if (typeof showToast === 'function') showToast('⚠️ Backup failed — check your connection and try again.', 'error', 4500);
+                    let msg = (err && err.message) ? err.message : 'Unknown error';
+                    if (typeof showToast === 'function') showToast('⚠️ Backup failed: ' + msg, 'error', 7000);
                 });
             });
         };
