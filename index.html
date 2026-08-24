@@ -914,29 +914,30 @@
             display: block !important;
             opacity: 1 !important;
             visibility: visible !important;
-            position: relative;
             animation: appTabSwitch .32s cubic-bezier(.4,0,.2,1);
         }
 
-        /* Reports hub needs fixed height + relative positioning to clip its two sub-screens */
+        /* Reports hub needs fixed height to clip its two sub-screens */
         #reports-hub.active-section {
             display: block !important;
             height: calc(100vh - 60px); /* full viewport minus nav bar */
             overflow: hidden;
         }
 
-        /* 🚀 Har tab ab isi tarah slide karke khulta hai (Reports jaisa feel) —
-           jaan-boojh kar "left" animate kiya hai, "transform" nahi: transform
-           ancestor par lagane se andar ke position:fixed pill buttons (Sales/
-           Purchase/Inventory ke "➕ Add New" FAB) viewport ki jagah is section
-           ke andar "trap" ho jaate the aur transition ke dauraan jump karte the. */
+        /* 🚀 Har tab ab Reports jaisa hi buttery-smooth slide karta hai —
+           "transform" GPU-accelerated hota hai (Reports ka #rep-screen-result
+           bhi isi se slide karta hai), isliye "left" jaisa laggy nahi lagta.
+           Ye tabhi safe hai jab kisi bhi tab ke andar koi position:fixed
+           element na ho (warna wo transform ke saath "trap" ho jaata) — sabhi
+           "➕ Add" pill buttons isliye ab tabs ke bahar (global level par) rakhe
+           gaye hain, main-fab-container ke paas. */
         @keyframes appTabSwitch {
             from {
-                left: 24px;
+                transform: translateX(28px);
             }
 
             to {
-                left: 0;
+                transform: translateX(0);
             }
         }
 
@@ -3981,8 +3982,6 @@
             </div>
 
             <div id="party-list-container"></div>
-            <button class="pill-floating-btn" style="background: linear-gradient(135deg, #0F172A, #334155);"
-                onclick="openPartyModal()">➕ Add Party</button>
         </div>
 
         <div id="sales-hub" class="content section">
@@ -4304,7 +4303,6 @@
                 </div>
 
                 <div id="sales-list-container"></div>
-                <button id="sales_dynamic_pill" class="pill-floating-btn" onclick="">➕ Add New</button>
             </div>
         </div>
 
@@ -4573,7 +4571,6 @@
                 </div>
 
                 <div id="purchase-list-container"></div>
-                <button id="purchase_dynamic_pill" class="pill-floating-btn" onclick="">➕ Add New</button>
             </div>
         </div>
 
@@ -4630,8 +4627,6 @@
             </div>
 
             <div id="expense-list-container"></div>
-            <button class="pill-floating-btn" style="background: linear-gradient(135deg, #8B5CF6, #4C1D95);"
-                onclick="openExpenseModal()">➕ Add Expense</button>
         </div>
 
         <!-- 9. Cash & Bank Hub -->
@@ -4998,9 +4993,6 @@
                 <div id="item-master-list-container"></div>
             </div>
 
-            <button id="ob_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px !important; background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openOrderBookModal()">➕ New Order</button>
-            <button id="inv_dynamic_pill" class="pill-floating-btn" style="display:none; bottom:25px !important; background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
-            
             <div id="inv_dual_fabs" class="dual-fab-container" style="display:none; bottom:25px !important;">
                 <button id="inv_btn_1" class="dual-fab-btn"></button>
                 <button id="inv_btn_2" class="dual-fab-btn"></button>
@@ -5425,6 +5417,21 @@
                 transform: scale(1.05);
             }
         </style>
+
+        <!-- 🚀 Tab-specific "Add" pill buttons — MOVED OUT of their tab sections.
+             Pehle ye buttons apne-apne tab (Sales/Purchase/Party/Expense/
+             Inventory) ke ANDAR the. Ab tabs par "transform" wali smooth slide
+             animation lagani thi, aur position:fixed button agar kisi transform
+             wale parent ke andar ho to wo viewport ki jagah us parent ke andar
+             "trap" ho jaata hai (jump/glitch karta hai). Isliye inhe bahar nikal
+             diya — inki show/hide logic (getElementById se) waise hi chalti
+             rahegi, sirf HTML position badla hai. -->
+        <button id="party_dynamic_pill" class="pill-floating-btn" style="display:none !important; background: linear-gradient(135deg, #0F172A, #334155);" onclick="openPartyModal()">➕ Add Party</button>
+        <button id="sales_dynamic_pill" class="pill-floating-btn" style="display:none !important;" onclick="">➕ Add New</button>
+        <button id="purchase_dynamic_pill" class="pill-floating-btn" style="display:none !important;" onclick="">➕ Add New</button>
+        <button id="expense_dynamic_pill" class="pill-floating-btn" style="display:none !important; background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="openExpenseModal()">➕ Add Expense</button>
+        <button id="ob_dynamic_pill" class="pill-floating-btn" style="display:none !important; bottom:25px !important; background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="window.openOrderBookModal()">➕ New Order</button>
+        <button id="inv_dynamic_pill" class="pill-floating-btn" style="display:none !important; bottom:25px !important; background: linear-gradient(135deg, #8B5CF6, #4C1D95);" onclick="window.openItemMasterModal()">➕ Add New Item</button>
 
         <div id="main-fab-container"
             style="position: fixed; bottom: 100px; right: 25px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
@@ -19504,8 +19511,8 @@
 
             // 3. Pill Floating Buttons (Add Invoice, Add Party, etc.) Handle
             document.querySelectorAll('.pill-floating-btn').forEach(btn => btn.style.setProperty('display', 'none', 'important'));
-            if (tabName === 'party-master') { let btn = document.querySelector('#party-master .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
-            else if (tabName === 'expense-hub') { let btn = document.querySelector('#expense-hub .pill-floating-btn'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            if (tabName === 'party-master') { let btn = document.getElementById('party_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
+            else if (tabName === 'expense-hub') { let btn = document.getElementById('expense_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
             else if (isInsideSalesList) { let btn = document.getElementById('sales_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); } 
             else if (isInsidePurchaseList) { let btn = document.getElementById('purchase_dynamic_pill'); if (btn) btn.style.setProperty('display', 'flex', 'important'); }
 
