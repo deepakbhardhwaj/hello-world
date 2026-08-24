@@ -23053,7 +23053,7 @@ TONE:
                                 addToolTag(fc.functionCall.name);
                                 const result = executeNexaTool(fc.functionCall.name, fc.functionCall.args || {});
                                 responseParts.push({
-                                    functionResponse: { name: fc.functionCall.name, response: result }
+                                    functionResponse: { id: fc.functionCall.id, name: fc.functionCall.name, response: result }
                                 });
                                 addTypingRow();
                             }
