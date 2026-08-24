@@ -914,26 +914,29 @@
             display: block !important;
             opacity: 1 !important;
             visibility: visible !important;
+            position: relative;
+            animation: appTabSwitch .32s cubic-bezier(.4,0,.2,1);
         }
 
-        /* Reports hub needs fixed height to clip its two sub-screens */
+        /* Reports hub needs fixed height + relative positioning to clip its two sub-screens */
         #reports-hub.active-section {
             display: block !important;
             height: calc(100vh - 60px); /* full viewport minus nav bar */
             overflow: hidden;
         }
 
+        /* 🚀 Har tab ab isi tarah slide karke khulta hai (Reports jaisa feel) —
+           jaan-boojh kar "left" animate kiya hai, "transform" nahi: transform
+           ancestor par lagane se andar ke position:fixed pill buttons (Sales/
+           Purchase/Inventory ke "➕ Add New" FAB) viewport ki jagah is section
+           ke andar "trap" ho jaate the aur transition ke dauraan jump karte the. */
         @keyframes appTabSwitch {
-            0% {
-                opacity: 0;
-                transform: translateY(20px) scale(0.97);
-                filter: blur(2px);
+            from {
+                left: 24px;
             }
 
-            100% {
-                opacity: 1;
-                transform: none;
-                filter: blur(0);
+            to {
+                left: 0;
             }
         }
 
