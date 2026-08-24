@@ -914,7 +914,6 @@
             display: block !important;
             opacity: 1 !important;
             visibility: visible !important;
-            animation: appTabSwitch .32s cubic-bezier(.4,0,.2,1);
         }
 
         /* Reports hub needs fixed height to clip its two sub-screens */
@@ -924,22 +923,11 @@
             overflow: hidden;
         }
 
-        /* 🚀 Har tab ab Reports jaisa hi buttery-smooth slide karta hai —
-           "transform" GPU-accelerated hota hai (Reports ka #rep-screen-result
-           bhi isi se slide karta hai), isliye "left" jaisa laggy nahi lagta.
-           Ye tabhi safe hai jab kisi bhi tab ke andar koi position:fixed
-           element na ho (warna wo transform ke saath "trap" ho jaata) — sabhi
-           "➕ Add" pill buttons isliye ab tabs ke bahar (global level par) rakhe
-           gaye hain, main-fab-container ke paas. */
-        @keyframes appTabSwitch {
-            from {
-                transform: translateX(28px);
-            }
-
-            to {
-                transform: translateX(0);
-            }
-        }
+        /* Tab-switch slide animation try kiya tha (Reports jaisa dikhne ke
+           liye), lekin sahi feel ke liye har tab ko hamesha memory mein
+           "mounted" rakhna padta — jo real performance cost laata is scale
+           ke app mein. Isliye rollback kiya gaya — tabs ab pehle jaisे hi
+           instant khulte hain, koi extra load nahi. */
 
         .section-title {
             font-size: 18px;
