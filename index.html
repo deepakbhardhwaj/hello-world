@@ -5507,7 +5507,28 @@
             </div>
         </div>
 
-        <div id="leadModal" class="modal-overlay">
+        
+        <div id="leadEventPanel" class="modal-overlay" style="display:none; z-index:10600;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3 id="lev_form_title">Add New Function</h3>
+                    <button class="modal-close" onclick="closeLeadEventPanel()">&times;</button>
+                </div>
+                <div style="padding:0 16px 16px;">
+                    <div class="form-group"><label class="form-label">Function Name</label><input type="text" id="lev_name" class="form-input" placeholder="e.g. Haldi, Mehndi, Wedding"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Date</label><input type="date" id="lev_date" class="form-input"></div>
+                        <div class="form-group"><label class="form-label">Time</label><input type="time" id="lev_time" class="form-input"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Venue</label><input type="text" id="lev_venue" class="form-input"></div>
+                    <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="lev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
+                    <button onclick="saveLeadEvent()" class="btn-main" style="width:100%; font-size:12px; margin-top:8px;">Save Function</button>
+                    <div id="lev_list" style="margin-top:12px;"></div>
+                    <button onclick="closeLeadEventPanel()" class="btn-main" style="width:100%; font-size:12px; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; margin-top:8px;">Done</button>
+                </div>
+            </div>
+        </div>
+<div id="leadModal" class="modal-overlay">
             <style>
                 #leadModal .modal-content{max-width:520px;padding:0 0 24px 0;}
                 #leadModal .modal-header{padding:14px 16px 12px;margin-bottom:0;top:0;}
@@ -5572,12 +5593,11 @@
 
                         <div class="lf-section">
                             <span class="lf-section-label">🎉 Event Details</span>
-                            <div class="form-row">
-                                <div class="form-group"><label class="form-label">Function Name</label><input type="text"
-                                        id="l_function" class="form-input" required></div>
-                                <div class="form-group"><label class="form-label">Event Date</label><input type="date"
-                                        id="l_date" class="form-input" required></div>
-                            </div>
+                            <div class="form-group"><label class="form-label">Event Title</label><input type="text"
+                                    id="l_event_title" class="form-input" placeholder="e.g. Deepak 1st Birthday" required></div>
+                            <input type="hidden" id="l_function" value="">
+                            <input type="hidden" id="l_date" value="">
+                            <div id="lead_events_container"></div>
                             <div class="form-group">
                                 <label class="form-label">Category</label>
                                 <div class="lf-chip-row" id="l_category_chips">
@@ -6768,6 +6788,9 @@
                             oninput="loadPartiesIntoSelect('q_party', document.getElementById('q_party').value, this.value)">
                         <select id="q_party" class="form-select" required></select>
                     </div>
+
+                    <div class="form-group"><label class="form-label">Event Title</label><input type="text"
+                            id="q_event_title" class="form-input" placeholder="e.g. Deepak 1st Birthday"></div>
 
                     <div id="quote_events_container"></div>
                     <div id="quote_items_container"></div>
@@ -9854,10 +9877,114 @@
             select.innerHTML = options;
         }
 
+
+        // ===== LEAD MULTI-EVENT FUNCTIONS =====
+        let leadEventsData = [];
+        let editingLeadEventIdx = -1;
+        function openLeadEventPanel() {
+            document.getElementById('lev_name').value = '';
+            document.getElementById('lev_date').value = '';
+            document.getElementById('lev_time').value = '';
+            document.getElementById('lev_venue').value = '';
+            if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
+            document.getElementById('lev_form_title').innerText = 'Add New Function';
+            editingLeadEventIdx = -1;
+            renderLEVList();
+            document.getElementById('leadEventPanel').style.display = 'flex';
+        }
+        function closeLeadEventPanel() {
+            document.getElementById('leadEventPanel').style.display = 'none';
+            renderLeadEvents();
+        }
+        function saveLeadEvent() {
+            let name = document.getElementById('lev_name').value.trim();
+            if (!name) { alert('Please enter function name!'); return; }
+            let userColor = document.getElementById('lev_color') ? document.getElementById('lev_color').value : '';
+            let ev = { name: name, date: document.getElementById('lev_date').value, time: document.getElementById('lev_time').value, venue: document.getElementById('lev_venue').value.trim(), color: userColor || '' };
+            if (editingLeadEventIdx >= 0) { leadEventsData[editingLeadEventIdx] = ev; editingLeadEventIdx = -1; }
+            else { leadEventsData.push(ev); }
+            leadEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+            document.getElementById('lev_name').value = ''; document.getElementById('lev_date').value = ''; document.getElementById('lev_time').value = ''; document.getElementById('lev_venue').value = '';
+            if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
+            document.getElementById('lev_form_title').innerText = 'Add New Function';
+            renderLEVList();
+        }
+        function editLeadEvent(idx) {
+            let ev = leadEventsData[idx];
+            document.getElementById('lev_name').value = ev.name;
+            document.getElementById('lev_date').value = ev.date;
+            document.getElementById('lev_time').value = ev.time;
+            document.getElementById('lev_venue').value = ev.venue;
+            if (document.getElementById('lev_color')) document.getElementById('lev_color').value = ev.color || '#FFFFFF';
+            document.getElementById('lev_form_title').innerText = 'Edit Function: ' + ev.name;
+            editingLeadEventIdx = idx;
+            renderLEVList();
+        }
+        function deleteLeadEvent(idx) {
+            let evName = leadEventsData[idx].name;
+            leadEventsData.splice(idx, 1);
+            renderLEVList();
+        }
+        function renderLEVList() {
+            let html = '';
+            if (leadEventsData.length === 0) { html = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px 0;">No functions added yet.</p>'; }
+            leadEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
+                html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:700;">' + ev.name + '</span>';
+                html += '<div><button onclick="editLeadEvent(' + i + ')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; margin-right:4px;">Edit</button>';
+                html += '<button onclick="deleteLeadEvent(' + i + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Delete</button></div>';
+                html += '</div>';
+                if (d || ev.time || ev.venue) {
+                    html += '<div style="font-size:11px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            document.getElementById('lev_list').innerHTML = html;
+        }
+        function renderLeadEvents() {
+            let container = document.getElementById('lead_events_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
+            html += '<button type="button" onclick="openLeadEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>';
+            html += '</div>';
+            if (leadEventsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function" to get started.</p>';
+            }
+            leadEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
+                html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
+                html += '<button onclick="openLeadEventPanel(); setTimeout(()=>{editLeadEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                html += '</div>';
+                if (d || ev.time || ev.venue) {
+                    html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
         function openLeadModal(editId = null) {
             refreshSourceList();
             editingLeadId = editId;
-            // ✅ BUG FIX: Populate staff assign dropdown every time modal opens
             let assignSel = document.getElementById('l_assign_to');
             if (assignSel) assignSel.innerHTML = getStaffOptions(editId && leadsDB[editId] ? leadsDB[editId].assignedTo : '');
             let statusEl = document.getElementById('l_status');
@@ -9867,14 +9994,14 @@
                 document.getElementById('modal-title').innerText = l.status === 'Won' ? "Edit Event Details" : "Edit Lead";
                 document.getElementById('l_name').value = l.name;
                 document.getElementById('l_phone').value = l.phone;
-                document.getElementById('l_function').value = l.func;
+                document.getElementById('l_event_title').value = l.eventTitle || l.func || '';
+                document.getElementById('l_function').value = l.func || '';
                 document.getElementById('l_date').value = l.date || "";
                 document.getElementById('l_category').value = l.cat;
                 document.getElementById('l_budget').value = l.budget;
+                leadEventsData = (l.events && l.events.length > 0) ? l.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '' })) : [];
 
                 statusEl.value = l.status;
-
-                // 🚨 LOCK: Agar Event hai toh Dropdown ko Disable kar do
                 if (l.status === 'Won') {
                     statusEl.setAttribute('disabled', 'true');
                     statusEl.style.background = '#F1F5F9';
@@ -9888,9 +10015,12 @@
             } else {
                 document.getElementById('modal-title').innerText = "Add New Lead";
                 document.getElementById('leadForm').reset(); if (typeof loadPartiesForLeadSelect === 'function') loadPartiesForLeadSelect();
+                leadEventsData = [];
+                document.getElementById('l_event_title').value = '';
                 statusEl.removeAttribute('disabled');
                 statusEl.style.background = 'white';
             }
+            renderLeadEvents();
             // 🚀 Premium form UI sync: chips + avatar preview reflect whatever the
             // (still-authoritative) hidden <select> values are, in both Add/Edit cases.
             updateLeadAvatarPreview();
@@ -9974,16 +10104,21 @@
 
             // Naya Lead Object banao
             let id = editingLeadId ? editingLeadId : "L" + Date.now();
+            let eventTitleVal = document.getElementById('l_event_title').value.trim() || document.getElementById('l_function').value;
+            let primaryFunc = leadEventsData.length > 0 ? leadEventsData[0].name : (document.getElementById('l_function').value || eventTitleVal);
+            let primaryDate = leadEventsData.length > 0 ? leadEventsData[0].date : document.getElementById('l_date').value;
             let leadObj = {
                 id: id,
                 name: name,
                 phone: phone,
-                func: document.getElementById('l_function').value,
-                date: document.getElementById('l_date').value,
+                eventTitle: eventTitleVal,
+                func: primaryFunc,
+                date: primaryDate,
+                events: leadEventsData,
                 cat: document.getElementById('l_category').value,
                 budget: document.getElementById('l_budget').value || "0",
                 status: status,
-                assignedTo: finalAssignee, // 👈 Yahan change hua hai
+                assignedTo: finalAssignee,
                 venue: document.getElementById('l_venue').value,
                 source: document.getElementById('l_source').value,
                 notes: editingLeadId ? leadsDB[id].notes : [{ time: new Date().toLocaleString('en-IN'), text: "Lead created in system." }],
@@ -10258,8 +10393,20 @@
                 document.getElementById('p_name').innerText = lead.name; document.getElementById('p_phone').innerText = "+91 " + lead.phone;
                 let formattedDate = lead.date ? new Date(lead.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
                 document.getElementById('p_category').innerText = (lead.cat || 'Other').toUpperCase() + " • " + formattedDate;
+                if (lead.eventTitle) { document.getElementById('p_name').innerText = lead.eventTitle; }
                 document.getElementById('p_budget').innerHTML = `<span style="font-size:15px; font-weight:700; color:var(--success);">₹${lead.budget || "0"}</span>`;
-                let crmBodyHtml = `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--border-color);"><label class="upload-btn">+ Upload Images<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label><div class="thumb-grid" id="p_thumbnails"></div></div>`;
+                let crmEventsHtml = '';
+                if (lead.events && lead.events.length > 0) {
+                    crmEventsHtml = '<div style="background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:10px;"><div style="font-size:10px; font-weight:800; color:var(--accent-color); text-transform:uppercase; margin-bottom:6px;">Functions</div>';
+                    lead.events.forEach(ev => {
+                        let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
+                        let evColor = getEventColor(ev);
+                        let tc = getContrastColor(evColor);
+                        crmEventsHtml += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span><span style="font-size:10px; color:var(--text-secondary);">' + evDate + (ev.venue ? ' • ' + ev.venue : '') + '</span></div>';
+                    });
+                    crmEventsHtml += '</div>';
+                }
+                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--border-color);"><label class="upload-btn">+ Upload Images<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label><div class="thumb-grid" id="p_thumbnails"></div></div>`;
                 let crmFooterHtml = `<button class="btn-p-save" style="background: var(--text-secondary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background: var(--accent-color); flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="createQuoteFromLead()">📝 Quote</button><button class="btn-p-won" style="background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="convertToEvent()">Mark Won</button>`;
                 document.getElementById('detailPanelBody').innerHTML = crmBodyHtml; document.getElementById('detailPanelFooter').innerHTML = crmFooterHtml;
                 renderNotes(); renderPhotos();
@@ -10319,8 +10466,7 @@
             closePanel();
 
             setTimeout(() => {
-                // 🚀 FIXED: No Jumping! Stay in CRM
-                openQuotationModal(partyId, lead.func, lead.date);
+                openQuotationModal(partyId, lead.func, lead.date, lead.eventTitle, lead.events);
             }, 400);
         }
 
@@ -12981,14 +13127,18 @@
         // ==========================================
         let quoteEventsData = []; let quoteItemsData = []; let editingQuoteEventIdx = -1;
 
-        function openQuotationModal(preFillPartyId = null, preFillEvent = "", preFillDate = "") {
+        function openQuotationModal(preFillPartyId = null, preFillEvent = "", preFillDate = "", preFillEventTitle = "", preFillEvents = null) {
             hideNavAndFabs();
             editingSalesId = null;
             document.getElementById('quote-modal-title').innerText = "Create Quotation";
             loadPartiesIntoSelect('q_party', preFillPartyId);
             document.getElementById('quoteForm').reset();
             quoteEventsData = []; quoteItemsData = [];
-            if (preFillEvent || preFillDate) {
+            let etEl = document.getElementById('q_event_title');
+            if (etEl) etEl.value = preFillEventTitle || '';
+            if (preFillEvents && preFillEvents.length > 0) {
+                quoteEventsData = preFillEvents.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '' }));
+            } else if (preFillEvent || preFillDate) {
                 quoteEventsData.push({ name: preFillEvent || '', date: preFillDate || '', time: '', venue: '' });
             }
             renderQuoteEvents(); renderQuoteItems(); syncQuoteGrossFromItems();
@@ -13421,7 +13571,9 @@
             let gross = parseFloat(document.getElementById('q_gross') ? document.getElementById('q_gross').value : 0) || 0;
             let discount = parseFloat(document.getElementById('q_discount') ? document.getElementById('q_discount').value : 0) || 0;
             let net = parseFloat(document.getElementById('q_total') ? document.getElementById('q_total').value : 0) || 0;
+            let eventTitleVal = document.getElementById('q_event_title') ? document.getElementById('q_event_title').value : '';
             let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
+            if (eventTitleVal) html += '<p style="font-size:12px; font-weight:700; color:var(--accent-color); margin:0 0 2px;">' + eventTitleVal + '</p>';
             html += '<p style="font-size:11px; color:var(--text-secondary); margin:0;">' + quoteEventsData.length + ' Events \u00B7 ' + quoteItemsData.length + ' Items \u00B7 Gross \u20B9' + gross.toLocaleString('en-IN') + ' \u00B7 Net \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
             // FUNCTION SCHEDULE TABLE (with event colors)
             html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
@@ -13474,7 +13626,8 @@
             let primaryEvent = quoteEventsData.length > 0 ? quoteEventsData[0].name : '';
             let primaryDate = quoteEventsData.length > 0 ? quoteEventsData[0].date : '';
             let grossTotal = parseFloat(document.getElementById('q_gross') ? document.getElementById('q_gross').value : 0) || 0;
-            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: primaryEvent, date: primaryDate, events: quoteEventsData, items: quoteItemsData, discount, total, gross: grossTotal, status: 'Draft', remarks: qRemarks };
+            let qEventTitle = document.getElementById('q_event_title') ? document.getElementById('q_event_title').value : '';
+            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: primaryEvent, date: primaryDate, eventTitle: qEventTitle, events: quoteEventsData, items: quoteItemsData, discount, total, gross: grossTotal, status: 'Draft', remarks: qRemarks };
             if (currentQuoteSourceLeadId && leadsDB[currentQuoteSourceLeadId] && !editingSalesId) {
                 leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: '<a href="#" onclick="viewDetails(\'' + id + '\', \'sales\'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">Quotation Created - \u20B9' + total.toLocaleString('en-IN') + '</a>', isSystemHtml: true });
             }
@@ -14931,6 +15084,8 @@
             if (record.type === 'Quotation') {
                 document.getElementById('quote-modal-title').innerText = "Edit Quotation";
                 loadPartiesIntoSelect('q_party', record.partyId);
+                let etEl = document.getElementById('q_event_title');
+                if (etEl) etEl.value = record.eventTitle || '';
                 quoteEventsData = []; quoteItemsData = [];
                 if (record.events && record.events.length > 0) {
                     quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '' }));
@@ -15410,6 +15565,9 @@
             let partyName = party ? party.name : "System / Unknown";
             let formattedDate = record.date ? new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
             let bodyHtml = "";
+            if (record.type === 'Quotation' && record.eventTitle) {
+                bodyHtml += '<div style="margin-bottom:10px; padding:8px 12px; background:var(--accent-light); border:1px solid #BFDBFE; border-radius:8px;"><span style="font-size:10px; font-weight:700; color:var(--accent-color); text-transform:uppercase;">Event Title</span><div style="font-size:14px; font-weight:800; color:var(--text-primary);">' + record.eventTitle + '</div></div>';
+            }
             let mainActionHtml = "";
 
             let waMsg = "";
@@ -15871,8 +16029,8 @@
                         <div style="font-size:12px; font-weight:500; color:#475569;">${pPhone ? `📞 ${pPhone}<br>` : ''}${pAddress ? `📍 ${pAddress}<br>` : ''}${pGst}</div>
                     </div>
                     <div>
-                        <span class="section-label">Event / Subject</span>
-                        <div style="font-size:14px; font-weight:700;">${record.event || 'General'}</div>
+                        <span class="section-label">${record.type === 'Quotation' && record.eventTitle ? 'Event Title' : 'Event / Subject'}</span>
+                        <div style="font-size:14px; font-weight:700;">${record.type === 'Quotation' && record.eventTitle ? record.eventTitle : (record.event || 'General')}</div>
                         ${record.eventId ? `<div style="font-size:11px; font-weight:600; color:#2563eb; margin-top:4px;">ID: ${record.eventId}</div>` : ''}
                         ${record.ref ? `<div style="font-size:12px; font-weight:600; color:#475569; margin-top:4px;">Bill No: ${sanitize(record.ref)}</div>` : ''}
                     </div>
