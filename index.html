@@ -6748,34 +6748,42 @@
                         onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null;">&times;</button>
                 </div>
                 <form id="quoteForm" onsubmit="event.preventDefault();" novalidate>
-                    <div class="form-group">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0;">Select Client/Party</label>
-                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New</button>
+                    <!-- PARTY SECTION -->
+                    <div style="background:linear-gradient(135deg,#EFF6FF,#F0FDF4); border-radius:10px; padding:12px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label class="form-label" style="margin:0; font-size:13px; color:var(--text-primary);">Select Client / Party</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()" style="font-size:11px;">+ Add New Party</button>
                         </div>
                         <input type="text" class="select-search-box" placeholder="Search Party or ID..."
-                            oninput="loadPartiesIntoSelect('q_party', document.getElementById('q_party').value, this.value)">
-                        <select id="q_party" class="form-select" required></select>
+                            oninput="loadPartiesIntoSelect('q_party', document.getElementById('q_party').value, this.value)"
+                            style="border-radius:8px; margin-bottom:6px;">
+                        <select id="q_party" class="form-select" required style="border-radius:8px;"></select>
                     </div>
 
-                    <!-- MULTI-EVENT SECTION -->
-                    <div style="margin: 12px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #FAFAFE;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Events & Schedule</label>
-                            <button type="button" style="background: var(--accent-color); color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 10px; cursor: pointer; font-weight: 700;"
+                    <!-- EVENTS SECTION -->
+                    <div style="background:white; border:2px solid #E0E7FF; border-radius:10px; padding:12px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #E0E7FF;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="background:#6366F1; color:white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;">1</span>
+                                <label class="form-label" style="margin:0; color:#6366F1; font-size:13px;">Events & Schedule</label>
+                            </div>
+                            <button type="button" style="background:#6366F1; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;"
                                 onclick="addQuoteEvent()">+ Add Event</button>
                         </div>
                         <div id="quote_events_container"></div>
-                        <p id="q_event_hint" style="font-size:10px; color:var(--text-secondary); margin:6px 0 0 0;">Add multiple events like Haldi, Mehndi, Wedding with date, time and venue.</p>
+                        <p style="font-size:10px; color:#94A3B8; margin:6px 0 0 0;">Add events like Haldi, Mehndi, Wedding with date, time & venue.</p>
                     </div>
 
                     <!-- ITEMS SECTION -->
-                    <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
+                    <div style="background:white; border:2px solid #DCFCE7; border-radius:10px; padding:12px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #DCFCE7;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="background:#22C55E; color:white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;">2</span>
+                                <label class="form-label" style="margin:0; color:#22C55E; font-size:13px;">Services / Items</label>
+                            </div>
                         </div>
                         <div id="quote_items_container"></div>
-                        <button type="button" id="q_add_item_btn" style="width:100%; background:white; border:1.5px dashed var(--accent-color); color:var(--accent-color); border-radius:6px; padding:8px; font-size:11px; cursor:pointer; font-weight:700; margin-top:4px;"
+                        <button type="button" id="q_add_item_btn" style="width:100%; background:#F0FDF4; border:1.5px dashed #22C55E; color:#22C55E; border-radius:8px; padding:8px; font-size:11px; cursor:pointer; font-weight:700; margin-top:4px;"
                             onclick="addQuoteItem()">+ Add Item</button>
                     </div>
                     <div class="form-row">
@@ -12894,7 +12902,6 @@
             document.getElementById('quote-modal-title').innerText = "Create Quotation";
             loadPartiesIntoSelect('q_party', preFillPartyId);
             document.getElementById('quoteForm').reset();
-            // Initialize multi-event container
             document.getElementById('quote_events_container').innerHTML = '';
             quoteEventCount = 0;
             if (preFillEvent || preFillDate) {
@@ -12914,13 +12921,13 @@
             let container = document.getElementById('quote_events_container');
             let rowId = 'q_event_' + quoteEventCount;
             let ev = preFill || {};
-            let rowHtml = '<div id="' + rowId + '" style="background:white; border:1px solid #E2E8F0; border-radius:8px; padding:10px; margin-bottom:8px; position:relative;">' +
-                '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); refreshQuoteItemEventDropdowns();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button>' +
+            let rowHtml = '<div id="' + rowId + '" style="background:#F5F3FF; border:1px solid #DDD6FE; border-left:4px solid #8B5CF6; border-radius:8px; padding:10px; margin-bottom:8px; position:relative;">' +
+                '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); refreshQuoteItemEventDropdowns();" style="position:absolute; top:-8px; right:-8px; background:#8B5CF6; color:white; border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(139,92,246,0.4);">×</button>' +
                 '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
-                '<div style="flex:1.5; min-width:120px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Event Name</label><input type="text" class="form-input q-event-name" value="' + (ev.name || '') + '" placeholder="e.g. Haldi" style="font-size:12px; padding:6px 8px;" oninput="refreshQuoteItemEventDropdowns();"></div>' +
-                '<div style="flex:1; min-width:100px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Date</label><input type="date" class="form-input q-event-date" value="' + (ev.date || '') + '" style="font-size:12px; padding:6px 8px;"></div>' +
-                '<div style="flex:0.8; min-width:80px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Time</label><input type="time" class="form-input q-event-time" value="' + (ev.time || '') + '" style="font-size:12px; padding:6px 8px;"></div>' +
-                '<div style="flex:1.5; min-width:120px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Venue</label><input type="text" class="form-input q-event-venue" value="' + (ev.venue || '') + '" placeholder="e.g. ABC Lawn" style="font-size:12px; padding:6px 8px;"></div>' +
+                '<div style="flex:1.5; min-width:120px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Event Name</label><input type="text" class="form-input q-event-name" value="' + (ev.name || '') + '" placeholder="e.g. Haldi" style="font-size:12px; padding:6px 8px;" oninput="refreshQuoteItemEventDropdowns();"></div>' +
+                '<div style="flex:1; min-width:100px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Date</label><input type="date" class="form-input q-event-date" value="' + (ev.date || '') + '" style="font-size:12px; padding:6px 8px;"></div>' +
+                '<div style="flex:0.8; min-width:80px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Time</label><input type="time" class="form-input q-event-time" value="' + (ev.time || '') + '" style="font-size:12px; padding:6px 8px;"></div>' +
+                '<div style="flex:1.5; min-width:120px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Venue</label><input type="text" class="form-input q-event-venue" value="' + (ev.venue || '') + '" placeholder="e.g. ABC Lawn" style="font-size:12px; padding:6px 8px;"></div>' +
                 '</div></div>';
             container.insertAdjacentHTML('beforeend', rowHtml);
             refreshQuoteItemEventDropdowns();
@@ -12951,14 +12958,14 @@
             let rowId = 'q_item_' + quoteItemCount;
             let eventOpts = '<option value="">All Events</option>';
             getQuoteEventOptions().forEach(ev => { eventOpts += '<option value="' + ev + '">' + ev + '</option>'; });
-            let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:white; border:1px solid #CBD5E1; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px; position:relative;">
+            let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#FEFEFE; border:1px solid #BBF7D0; border-left:4px solid #22C55E; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px; position:relative;">
                 <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateQuoteTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button>
                 <div style="display:flex; gap:6px; align-items:flex-end; width:100%;">
-                    <div style="flex:2;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required style="font-size:12px; padding:6px 8px;"></div>
+                    <div style="flex:2;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#166534;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required style="font-size:12px; padding:6px 8px;"></div>
                     <div style="flex:1.1;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Unit</label><select class="form-select q-item-unit" style="padding:6px 4px; font-size:12px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div>
                     <div style="flex:0.8;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculateQuoteTotal()" required style="font-size:12px; padding:6px 8px;"></div>
                     <div style="flex:1.3;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculateQuoteTotal()" required style="font-size:12px; padding:6px 8px;"></div>
-                    <div style="flex:1; min-width:70px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Amount</label><div class="q-item-amount" style="background:#F1F5F9; border:1px solid var(--border-color); border-radius:6px; padding:6px 8px; font-size:12px; font-weight:700; color:var(--accent-color);">₹0</div></div>
+                    <div style="flex:1; min-width:70px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Amount</label><div class="q-item-amount" style="background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 8px; font-size:12px; font-weight:700; color:#166534;">₹0</div></div>
                 </div>
                 <div style="display:flex; gap:6px; align-items:flex-end;">
                     <div style="flex:1.5;"><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:5px 8px;"></div>
@@ -12988,9 +12995,28 @@
         // 🚀 BUG 1 FIX: Save Event ID in Quotation so photos can be linked
         function saveQuotationData() {
             let partyId = document.getElementById('q_party').value;
-            let event = document.getElementById('q_event').value;
-            let date = document.getElementById('q_date').value;
-            if (!partyId || !event) { alert("Fill all required fields!"); return; }
+            if (!partyId) { alert("Please select a client/party!"); return; }
+
+            // Collect multi-event data first
+            let quoteEvents = [];
+            document.querySelectorAll('#quote_events_container > div').forEach(evRow => {
+                let nameEl = evRow.querySelector('.q-event-name');
+                let dateEl = evRow.querySelector('.q-event-date');
+                let timeEl = evRow.querySelector('.q-event-time');
+                let venueEl = evRow.querySelector('.q-event-venue');
+                if (nameEl && nameEl.value.trim()) {
+                    quoteEvents.push({
+                        name: nameEl.value.trim(),
+                        date: dateEl ? dateEl.value : '',
+                        time: timeEl ? timeEl.value : '',
+                        venue: venueEl ? venueEl.value.trim() : ''
+                    });
+                }
+            });
+            if (quoteEvents.length === 0) { alert("Please add at least one event!"); return; }
+
+            let event = quoteEvents[0].name;
+            let date = quoteEvents[0].date;
 
             let items = [];
             document.querySelectorAll('#quote_items_container .quote-item-row').forEach(row => {
@@ -13018,25 +13044,7 @@
             }
 
             let qRemarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
-            // Collect multi-event data
-            let quoteEvents = [];
-            document.querySelectorAll('#quote_events_container .quote-event-row, #quote_events_container > div').forEach(evRow => {
-                let nameEl = evRow.querySelector('.q-event-name');
-                let dateEl = evRow.querySelector('.q-event-date');
-                let timeEl = evRow.querySelector('.q-event-time');
-                let venueEl = evRow.querySelector('.q-event-venue');
-                if (nameEl && nameEl.value.trim()) {
-                    quoteEvents.push({
-                        name: nameEl.value.trim(),
-                        date: dateEl ? dateEl.value : '',
-                        time: timeEl ? timeEl.value : '',
-                        venue: venueEl ? venueEl.value.trim() : ''
-                    });
-                }
-            });
-            let primaryEvent = quoteEvents.length > 0 ? quoteEvents[0].name : (event || '');
-            let primaryDate = quoteEvents.length > 0 ? quoteEvents[0].date : (date || '');
-            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: primaryEvent, date: primaryDate, events: quoteEvents, items, discount, total, status: 'Draft', remarks: qRemarks };
+            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: event, date: date, events: quoteEvents, items, discount, total, status: 'Draft', remarks: qRemarks };
 
             if (currentQuoteSourceLeadId && leadsDB[currentQuoteSourceLeadId] && !editingSalesId) {
                 leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: `<a href="#" onclick="viewDetails('${id}', 'sales'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">📝 Quotation Created - ₹${total.toLocaleString('en-IN')}</a>`, isSystemHtml: true });
@@ -14494,7 +14502,7 @@
             if (event) { event.stopPropagation(); event.preventDefault(); }
             closeAllOverlays(); closeAllMenus(); let record = salesDB[id]; editingSalesId = id;
             if (record.type === 'Quotation') {
-                document.getElementById('quote-modal-title').innerText = "Edit Quotation"; loadPartiesIntoSelect('q_party', record.partyId); document.getElementById('q_discount').value = record.discount; if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || '';
+                document.getElementById('quote-modal-title').innerText = "Edit Quotation"; loadPartiesIntoSelect('q_party', record.partyId); document.getElementById('q_discount').value = record.discount || 0; if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || '';
                 // Load multi-events
                 document.getElementById('quote_events_container').innerHTML = '';
                 quoteEventCount = 0;
