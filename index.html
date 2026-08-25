@@ -13364,19 +13364,21 @@
                 html += '<tr style="background:' + evColor + '; border-bottom:1px solid rgba(0,0,0,0.05);"><td style="padding:6px 8px; font-weight:700; color:' + tc + ';">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9;">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9;">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9;">' + (ev.venue || '-') + '</td></tr>';
             });
             html += '</table>';
-            // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button)
+            // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button) — boxed like function schedule
             html += '<div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Items Summary</div>';
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:12px;">';
             quoteEventsData.forEach((ev, evIdx) => {
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
                 let evColor = getEventColor(ev);
                 let textColor = getContrastColor(evColor);
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:8px; margin-bottom:6px; overflow:hidden;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
                 html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</div>';
                 html += '<button onclick="document.getElementById(\'quotePreviewModal\').style.display=\'none\'; openQuoteItemViewPanel(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
             });
+            html += '</div>';
             // SUMMARY
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
