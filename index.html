@@ -6226,6 +6226,12 @@
             </div>
         </div>
 
+                <div id="docViewerModal" class="modal-overlay" style="display:none; z-index:10000; background:rgba(0,0,0,0.9);">
+            <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+                <button onclick="closeDocViewer()" style="position:absolute; top:15px; right:15px; background:rgba(255,255,255,0.15); color:white; border:none; border-radius:50%; width:36px; height:36px; font-size:18px; cursor:pointer; z-index:10;">&times;</button>
+                <div id="docViewerBody" style="display:flex; flex-direction:column; align-items:center; justify-content:center;"></div>
+            </div>
+        </div>
         <div id="recycleBinModal" class="modal-overlay" style="z-index: 8500;">
             <div class="modal-content"
                 style="max-width: 500px; height: 80vh; display: flex; flex-direction: column; padding:0; overflow:hidden;">
@@ -6624,7 +6630,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <input type="file" id="ast_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;" onchange="showFilePreview('ast_file_upload', 'ast_file_preview')"><div id="ast_file_preview" style="margin-top:8px; display:none;"></div>
+                        <label for="ast_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label><input type="file" id="ast_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('Asset', 'ast_file_upload', 'ast_file_preview')"><div id="ast_file_preview" style="margin-top:6px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background: var(--purple);"
                         onclick="saveAssetData()">Save Asset Purchase</button>
@@ -6764,7 +6770,7 @@
                         <div class="form-group"><label class="form-label">Grand Total (₹)</label><input type="number"
                                 id="q_total" class="form-input" readonly
                                 style="background: #F1F5F9; font-weight: bold; font-size:14px;"></div>
-                    </div><button type="button" class="btn-main" onclick="saveQuotationData()">Save Quotation</button>
+                    </div><div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="q_remarks" class="form-input" rows="2" placeholder="Optional remarks for this quotation" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" onclick="saveQuotationData()">Save Quotation</button>
                 </form>
             </div>
         </div>
@@ -6852,7 +6858,7 @@
                         <span style="color: var(--text-secondary); font-weight: 700;">Balance Due:</span>
                         <span id="di_balance_due" style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
                     </div>
-                    <button type="button" class="btn-main" style="background: var(--success);" onclick="saveDirectInvoiceData()">Save Invoice</button>
+                    <div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="di_remarks" class="form-input" rows="2" placeholder="Optional remarks for this invoice" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" style="background: var(--success);" onclick="saveDirectInvoiceData()">Save Invoice</button>
                 </form>
             </div>
         </div>
@@ -6926,7 +6932,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <input type="file" id="po_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;" onchange="showFilePreview('po_file_upload', 'po_file_preview')"><div id="po_file_preview" style="margin-top:8px; display:none;"></div>
+                        <label for="po_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label><input type="file" id="po_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('PO', 'po_file_upload', 'po_file_preview')"><div id="po_file_preview" style="margin-top:6px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background:var(--warning); color:#000;"
                         onclick="savePOData()">Save Purchase Order</button>
@@ -7033,7 +7039,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <input type="file" id="pb_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;" onchange="showFilePreview('pb_file_upload', 'pb_file_preview')"><div id="pb_file_preview" style="margin-top:8px; display:none;"></div>
+                        <label for="pb_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label><input type="file" id="pb_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('PB', 'pb_file_upload', 'pb_file_preview')"><div id="pb_file_preview" style="margin-top:6px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background: var(--danger);"
                         onclick="savePBData()">Save Vendor Bill</button>
@@ -12903,7 +12909,7 @@
                 evIdForQuote = salesDB[editingSalesId].eventId || null;
             }
 
-            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event, date, items, discount, total, status: 'Draft' };
+            let qRemarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : ''; salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event, date, items, discount, total, status: 'Draft', remarks: qRemarks };
 
             if (currentQuoteSourceLeadId && leadsDB[currentQuoteSourceLeadId] && !editingSalesId) {
                 leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: `<a href="#" onclick="viewDetails('${id}', 'sales'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">📝 Quotation Created - ₹${total.toLocaleString('en-IN')}</a>`, isSystemHtml: true });
@@ -13528,8 +13534,9 @@
             let id = editingSalesId ? editingSalesId : generateDocId('Invoice', eventCodeStr); 
             let status = 'Due'; if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; else if (totalAdvanceApplied > 0) status = 'Partial'; 
             
+            let diRemarks = document.getElementById('di_remarks') ? document.getElementById('di_remarks').value : ''; 
             salesDB[id] = { 
-                id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status,
+                id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: diRemarks,
                 invoiceType: invoiceType, returnDate: returnDate, godownId: 'AUTO_MULTI', rentalStatus: 'Deployed', labour: labourAmt, transport: transportAmt
             }; 
             
@@ -13812,15 +13819,15 @@
         function addPOItem() { poItemCount++; let container = document.getElementById('po_items_container'); let rowId = 'po_item_' + poItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculatePOTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculatePOTotal()" required></div></div><div><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function calculatePOTotal() { let total = 0; document.querySelectorAll('#po_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0; total += (qty * rate); }); let discount = parseFloat(document.getElementById('po_discount').value) || 0; let grandTotal = total - discount; if (grandTotal < 0) grandTotal = 0; document.getElementById('po_total').value = grandTotal; }
         // 🚀 UPDATED SAVE PO (Edit ID Logic Added)
-        // Upload document/file to Cloudinary (images + PDF) and return {url, name, type}
+        // Upload a single file to Cloudinary (images, HEIC, PDF, all formats)
         async function uploadDocToFirebase(file, docId, type) {
             if (!file) return null;
             try {
                 const CLOUD_NAME = "dvjjyinbl";
                 const UPLOAD_PRESET = "event_photos_preset";
-                const isImage = file.type && file.type.startsWith('image/');
+                const isImage = file.type && (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif'));
                 const endpoint = isImage
-                    ? `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
+                    ? `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`
                     : `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`;
 
                 const formData = new FormData();
@@ -13838,12 +13845,11 @@
                 }
 
                 let url = data.secure_url;
-                // For images, use Cloudinary's transformation to get high-quality version
                 if (isImage) {
                     url = url.replace('/upload/', '/upload/q_auto,f_auto/');
                 }
 
-                return { url: url, name: file.name, type: file.type };
+                return { url: url, name: file.name, type: isImage ? 'image' : file.type, format: data.format || '' };
             } catch(e) {
                 console.error('Upload failed:', e);
                 if (typeof showToast === 'function') showToast('Upload failed. Please try again.', 'error', 4000);
@@ -13851,27 +13857,88 @@
             }
         }
 
-        // Show file preview thumbnail in form
-        function showFilePreview(inputId, previewId) {
+        // Track uploaded files per form (multiple files support)
+        window.pendingDocUploads = { PO: [], PB: [], Asset: [], Invoice: [], Quotation: [] };
+
+        function addDocUpload(formType, inputId, previewId) {
             let input = document.getElementById(inputId);
-            let preview = document.getElementById(previewId);
-            if (!input || !preview) return;
-            let file = input.files[0];
-            if (!file) { preview.innerHTML = ''; preview.style.display = 'none'; return; }
-            preview.style.display = 'block';
-            if (file.type.startsWith('image/')) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.innerHTML = '<div style="position:relative; display:inline-block;">' +
-                        '<img src="' + e.target.result + '" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid var(--border-color);">' +
-                        '<div style="font-size:9px; color:var(--text-secondary); margin-top:4px; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + file.name + '</div>' +
-                        '</div>';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.innerHTML = '<div style="display:inline-block; padding:10px 14px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; font-size:11px; font-weight:700;">' +
-                    '📄 ' + file.name + '<br><span style="font-size:9px; color:var(--text-secondary); font-weight:500;">' + (file.type || 'Document') + '</span></div>';
+            if (!input || !input.files.length) return;
+            for (let file of input.files) {
+                window.pendingDocUploads[formType].push({ file: file, previewId: previewId });
             }
+            renderDocPreview(formType, previewId);
+            input.value = '';
+        }
+
+        function removeDocUpload(formType, index, previewId) {
+            window.pendingDocUploads[formType].splice(index, 1);
+            renderDocPreview(formType, previewId);
+        }
+
+        function renderDocPreview(formType, previewId) {
+            let preview = document.getElementById(previewId);
+            if (!preview) return;
+            let docs = window.pendingDocUploads[formType];
+            if (!docs || docs.length === 0) { preview.innerHTML = ''; preview.style.display = 'none'; return; }
+            preview.style.display = 'block';
+            let html = '<div style="font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:4px;">Attached (' + docs.length + '):</div><div style="display:flex; flex-wrap:wrap; gap:4px;">';
+            docs.forEach((doc, i) => {
+                let file = doc.file;
+                let isImg = file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+                if (isImg) {
+                    html += '<div id="doc-thumb-' + formType + '-' + i + '" style="position:relative; display:inline-block; margin:2px;">';
+                    html += '<div style="width:60px; height:60px; background:#f1f5f9; border-radius:6px; border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-size:18px;">...</div>';
+                    html += '<button type="button" onclick="removeDocUpload(\'' + formType + '\',' + i + ',\'' + previewId + '\')" style="position:absolute; top:-6px; right:-6px; background:#dc2626; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">x</button>';
+                    html += '</div>';
+                    // Load thumbnail async
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        let el = document.getElementById('doc-thumb-' + formType + '-' + i);
+                        if (el) el.innerHTML = '<img src="' + e.target.result + '" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color);"><button type="button" onclick="removeDocUpload(\'' + formType + '\',' + i + ',\'' + previewId + '\')" style="position:absolute; top:-6px; right:-6px; background:#dc2626; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">x</button>';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    html += '<div style="position:relative; display:inline-block; margin:2px; padding:6px 8px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:6px; max-width:120px;">';
+                    html += '<div style="font-size:10px; font-weight:700; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">DOC ' + file.name + '</div>';
+                    html += '<button type="button" onclick="removeDocUpload(\'' + formType + '\',' + i + ',\'' + previewId + '\')" style="position:absolute; top:-6px; right:-6px; background:#dc2626; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">x</button>';
+                    html += '</div>';
+                }
+            });
+            html += '</div>';
+            preview.innerHTML = html;
+        }
+
+        // Open full-screen document viewer
+        function openDocViewer(url, name, isImage) {
+            let modal = document.getElementById('docViewerModal');
+            if (!modal) return;
+            let body = document.getElementById('docViewerBody');
+            if (isImage) {
+                body.innerHTML = '<img src="' + url + '" style="max-width:95%; max-height:85vh; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.3);"><div style="margin-top:10px; font-size:12px; color:white; font-weight:600;">' + (name || 'Document') + '</div>';
+            } else {
+                body.innerHTML = '<iframe src="' + url + '" style="width:90%; height:80vh; border:1px solid #334155; border-radius:8px; background:white;"></iframe><div style="margin-top:10px;"><a href="' + url + '" target="_blank" download="' + (name || 'document') + '" style="color:#60A5FA; font-size:12px; font-weight:700;">Download ' + (name || 'Document') + '</a></div>';
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeDocViewer() {
+            let modal = document.getElementById('docViewerModal');
+            if (modal) modal.style.display = 'none';
+            let body = document.getElementById('docViewerBody');
+            if (body) body.innerHTML = '';
+        }
+
+        // Upload all pending docs for a form type
+        async function uploadAllDocs(formType, docId) {
+            let docs = window.pendingDocUploads[formType];
+            if (!docs || docs.length === 0) return [];
+            let results = [];
+            for (let doc of docs) {
+                let result = await uploadDocToFirebase(doc.file, docId, formType);
+                if (result) results.push(result);
+            }
+            window.pendingDocUploads[formType] = [];
+            return results;
         }
 
         async function savePOData() {
@@ -13893,7 +13960,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('po', evId);
 
-            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poFileInput = document.getElementById('po_file_upload'); let poDocUrl = null; if (poFileInput && poFileInput.files[0]) { showLoader('Uploading document...'); poDocUrl = await uploadDocToFirebase(poFileInput.files[0], id, 'PO'); hideLoader(); } purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks, docUrl: poDocUrl };
+            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks, docUrl: poDocUrl };
 
             editingPurchaseId = null;
             updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
@@ -14172,7 +14239,7 @@
                 
                 let mainEventStr = items[0].name + (items.length > 1 ? ` +${items.length - 1} more` : ''); 
                 
-                let astRemarks = document.getElementById('ast_remarks') ? document.getElementById('ast_remarks').value : ''; let astFileInput = document.getElementById('ast_file_upload'); let astDocUrl = null; if (astFileInput && astFileInput.files[0]) { showLoader('Uploading document...'); astDocUrl = await uploadDocToFirebase(astFileInput.files[0], id, 'Asset'); hideLoader(); } purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: astRemarks, docUrl: astDocUrl }; 
+                let astRemarks = document.getElementById('ast_remarks') ? document.getElementById('ast_remarks').value : ''; let astDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['Asset'] && window.pendingDocUploads['Asset'].length > 0) { showLoader('Uploading documents...'); astDocUrl = await uploadAllDocs('Asset', id); hideLoader(); } purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: astRemarks, docUrl: astDocUrl }; 
                 party.balance -= finalGrandTotal; 
                 
                 if (!editingPurchaseId) { 
@@ -14218,7 +14285,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('pb', evId);
 
-            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbFileInput = document.getElementById('pb_file_upload'); let pbDocUrl = null; if (pbFileInput && pbFileInput.files[0]) { showLoader('Uploading document...'); pbDocUrl = await uploadDocToFirebase(pbFileInput.files[0], id, 'PB'); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks, docUrl: pbDocUrl };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks, docUrl: pbDocUrl };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -14284,7 +14351,7 @@
             if (event) { event.stopPropagation(); event.preventDefault(); }
             closeAllOverlays(); closeAllMenus(); let record = salesDB[id]; editingSalesId = id;
             if (record.type === 'Quotation') {
-                document.getElementById('quote-modal-title').innerText = "Edit Quotation"; loadPartiesIntoSelect('q_party', record.partyId); document.getElementById('q_event').value = record.event; document.getElementById('q_date').value = record.date; document.getElementById('q_discount').value = record.discount; document.getElementById('quote_items_container').innerHTML = ''; quoteItemCount = 0;
+                document.getElementById('quote-modal-title').innerText = "Edit Quotation"; loadPartiesIntoSelect('q_party', record.partyId); document.getElementById('q_event').value = record.event; document.getElementById('q_date').value = record.date; document.getElementById('q_discount').value = record.discount; if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || ''; document.getElementById('quote_items_container').innerHTML = ''; quoteItemCount = 0;
                 record.items.forEach(item => {
                     addQuoteItem(); let rows = document.querySelectorAll('#quote_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                     lastRow.querySelector('.q-item-name').value = item.name; lastRow.querySelector('.q-item-qty').value = item.qty; lastRow.querySelector('.q-item-rate').value = item.rate;
@@ -14292,7 +14359,7 @@
                     if (lastRow.querySelector('.q-item-desc')) lastRow.querySelector('.q-item-desc').value = item.desc || "";
                 }); calculateQuoteTotal(); document.getElementById('quotationModal').style.display = 'flex';
             } else if (record.type === 'Invoice') {
-                document.getElementById('di-modal-title').innerText = "Edit Tax Invoice"; loadPartiesIntoSelect('di_party', record.partyId); document.getElementById('di_event').value = record.event; document.getElementById('di_date').value = record.date; document.getElementById('di_discount').value = record.discount; document.getElementById('di_gst').value = record.gstPercent; document.getElementById('di_advance').value = record.advance; document.getElementById('di_advance').setAttribute('readonly', true); document.getElementById('di_advance').style.background = '#F1F5F9'; document.getElementById('available_advance_group').style.display = 'none'; document.getElementById('inv_items_container').innerHTML = ''; invItemCount = 0;
+                document.getElementById('di-modal-title').innerText = "Edit Tax Invoice"; loadPartiesIntoSelect('di_party', record.partyId); document.getElementById('di_event').value = record.event; document.getElementById('di_date').value = record.date; document.getElementById('di_discount').value = record.discount; if (document.getElementById('di_remarks')) document.getElementById('di_remarks').value = record.remarks || ''; document.getElementById('di_gst').value = record.gstPercent; document.getElementById('di_advance').value = record.advance; document.getElementById('di_advance').setAttribute('readonly', true); document.getElementById('di_advance').style.background = '#F1F5F9'; document.getElementById('available_advance_group').style.display = 'none'; document.getElementById('inv_items_container').innerHTML = ''; invItemCount = 0;
                 record.items.forEach(item => {
                     addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                     lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
@@ -14831,10 +14898,32 @@
                     subtotal += item.amount;
                     bodyHtml += `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 6px;">${sanitize(item.name)}</td><td style="padding: 6px; text-align: center;">${item.qty}</td><td style="padding: 6px; text-align: right;">₹${item.rate.toLocaleString('en-IN')}</td><td style="padding: 6px; text-align: right;">₹${item.amount.toLocaleString('en-IN')}</td></tr>`;
                 });
-                bodyHtml += `</table>${record.remarks ? `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Remarks:</strong> ${sanitize(record.remarks)}</div>` : ''}${record.docUrl ? `<div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Attached Document:</strong><br>${record.docUrl.type && record.docUrl.type.startsWith('image/') ? `<img src="${record.docUrl.url}" style="max-width:100%; max-height:300px; border-radius:8px; margin-top:8px; cursor:pointer;" onclick="window.open('${record.docUrl.url}', '_blank')">` : `<a href="${record.docUrl.url}" target="_blank" style="color:var(--accent-color); font-weight:700;">📄 ${sanitize(record.docUrl.name || 'View Document')}</a>`}</div>` : ''}<div style="text-align: right; line-height: 1.6;">`;
+                bodyHtml += `</table>`;
+                if (record.remarks) {
+                    bodyHtml += `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Remarks:</strong> ${sanitize(record.remarks)}</div>`;
+                }
+                if (record.docUrl) {
+                    let docs = Array.isArray(record.docUrl) ? record.docUrl : (record.docUrl.url ? [record.docUrl] : []);
+                    if (docs.length > 0) {
+                        bodyHtml += `<div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Attached Documents (${docs.length}):</strong><div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
+                        docs.forEach(doc => {
+                            let isImg = doc.type === 'image' || (doc.type && doc.type.startsWith('image/'));
+                            if (isImg) {
+                                bodyHtml += `<div style="cursor:pointer;" onclick="openDocViewer('${doc.url}', '${sanitize(doc.name || 'Image')}', true)"><img src="${doc.url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #BFDBFE;"><div style="font-size:8px; color:var(--text-secondary); text-align:center; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sanitize(doc.name || 'Image')}</div></div>`;
+                            } else {
+                                bodyHtml += `<div style="cursor:pointer; padding:8px 10px; background:white; border:1px solid #BFDBFE; border-radius:6px; display:flex; flex-direction:column; align-items:center;" onclick="openDocViewer('${doc.url}', '${sanitize(doc.name || 'Document')}', false)"><div style="font-size:20px;">DOC</div><div style="font-size:9px; font-weight:600; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sanitize(doc.name || 'Doc')}</div></div>`;
+                            }
+                        });
+                        bodyHtml += `</div></div>`;
+                    }
+                }
+                bodyHtml += `<div style="text-align: right; line-height: 1.6;">`;
+
 
                 if (record.type === 'Invoice' || record.type === 'PB' || record.type === 'Asset') {
-                    bodyHtml += `<strong>Subtotal:</strong> ₹${(record.total + record.discount).toLocaleString('en-IN')}<br>${record.discount > 0 ? `<strong>Discount:</strong> ₹${record.discount.toLocaleString('en-IN')}<br>` : ''}<strong>Base Total:</strong> ₹${record.total.toLocaleString('en-IN')}<br><strong>GST (${record.gstPercent}%):</strong> ₹${record.taxAmount.toLocaleString('en-IN')}<br><strong style="font-size: 14px; color: var(--text-primary);">Grand Total: ₹${record.finalTotal.toLocaleString('en-IN')}</strong><br><div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;"><strong style="color: var(--success);">Total Paid/Advance: ₹${record.advance.toLocaleString('en-IN')}</strong><br><strong style="color: var(--danger); font-size: 14px;">Balance Due: ₹${record.balanceDue.toLocaleString('en-IN')}</strong></div>`;
+                    if (record.remarks) {
+                        bodyHtml += '<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:8px; font-size:12px;"><strong>Remarks:</strong> ' + sanitize(record.remarks) + '</div>';
+                    }
 
                     if (record.eventId && context === 'sales') {
                         bodyHtml += `<div style="margin-top:12px; padding:8px; background:#FEF2F2; border-radius:6px; border:1px solid #FCA5A5; text-align:center;"><span style="font-size:11px; color:var(--danger); display:block; margin-bottom:4px;">This bill is linked to an Event Workspace</span><button onclick="unlinkInvoice('${id}')" style="background:var(--danger); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">🚫 Detach from Event</button></div>`;
@@ -15038,8 +15127,8 @@
                 
                 .summary-container { display: flex; justify-content: space-between; margin-top: 10px; gap: 20px; }
                 .history-table { width: 60%; font-size: 11px; }
-                .totals-box { width: 35%; background: ${pt.totalsBg}; border: 1px solid ${pt.tableBorder}; padding: 15px; border-radius: ${pt.radius}; }
-                .grand-total { font-size: 18px; font-weight: 900; border-top: 2px solid ${pt.accent}; padding-top: 8px; margin-top: 8px; color: ${pt.accent}; }
+                .totals-box { width: 30%; background: ${pt.totalsBg}; border: 1px solid ${pt.tableBorder}; padding: 10px; border-radius: ${pt.radius}; font-size: 11px; }
+                .grand-total { font-size: 13px; font-weight: 800; border-top: 2px solid ${pt.accent}; padding-top: 6px; margin-top: 6px; color: ${pt.accent}; }
                 
                 .status-stamp { position:absolute; top: 150px; right: 50px; font-size: 40px; font-weight: 900; opacity: 0.1; text-transform: uppercase; transform: rotate(-15deg); border: 5px solid; padding: 10px 20px; border-radius: 10px; }
                 .stamp-Paid { color: #166534; border-color: #166534; } .stamp-Partial { color: #b45309; border-color: #b45309; } .stamp-Due { color: #dc2626; border-color: #dc2626; }
@@ -15256,7 +15345,21 @@
             // ==========================================
             // 🚀 SMART COMPACT FOOTER (DOUBLE PAGE-BREAK LOCK)
             // ==========================================
-            if (record.docUrl && record.docUrl.url) { html += `<div style="margin-top:15px; page-break-inside:avoid;"><span class="section-label">Attached Document</span>`; if (record.docUrl.type && record.docUrl.type.startsWith('image/')) { html += `<div style="text-align:center;"><img src="${record.docUrl.url}" style="max-width:100%; max-height:500px; border:1px solid #e2e8f0; border-radius:8px;"></div>`; } else { html += `<div style="text-align:center; padding:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;"><a href="${record.docUrl.url}" target="_blank" style="color:#2563eb; font-weight:700; font-size:14px;">📄 ${sanitize(record.docUrl.name || 'View Document')}</a></div>`; } html += `</div>`; }
+            if (record.docUrl) {
+                let docs = Array.isArray(record.docUrl) ? record.docUrl : (record.docUrl.url ? [record.docUrl] : []);
+                if (docs.length > 0) {
+                    html += '<div style="margin-top:15px; page-break-inside:avoid;"><span class="section-label">Attached Documents (' + docs.length + ')</span><div style="display:flex; flex-wrap:wrap; gap:10px;">';
+                    docs.forEach(doc => {
+                        let isImg = doc.type === 'image' || (doc.type && doc.type.startsWith('image/'));
+                        if (isImg) {
+                            html += '<div style="text-align:center;"><img src="' + doc.url + '" style="max-width:200px; max-height:200px; border:1px solid #e2e8f0; border-radius:8px;"><div style="font-size:9px; color:#64748b; margin-top:3px;">' + sanitize(doc.name || 'Image') + '</div></div>';
+                        } else {
+                            html += '<a href="' + doc.url + '" target="_blank" download="' + sanitize(doc.name || 'document') + '" style="display:inline-flex; align-items:center; gap:4px; padding:8px 12px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; color:#2563eb; font-weight:700; font-size:12px; text-decoration:none;">DOC ' + sanitize(doc.name || 'View Document') + ' -></a>';
+                        }
+                    });
+                    html += '</div></div>';
+                }
+            }
 
             html += `<div style="page-break-inside: avoid; break-inside: avoid; margin-top: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #0f172a; padding-top: 15px;">
