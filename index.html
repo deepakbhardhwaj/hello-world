@@ -13017,15 +13017,15 @@
         }
         function autoAssignEventColor(name) {
             let n = (name || '').toLowerCase();
-            if (n.includes('haldi') || n.includes('turmeric')) return '#FCD34D';
-            if (n.includes('mehndi') || n.includes('mehendi') || n.includes('henna')) return '#34D399';
-            if (n.includes('wedding') || n.includes('shaadi') || n.includes('vidaai')) return '#F472B6';
-            if (n.includes('engagement') || n.includes('ring')) return '#818CF8';
-            if (n.includes('sangeet') || n.includes('music')) return '#C084FC';
-            if (n.includes('reception') || n.includes('dinner')) return '#60A5FA';
-            if (n.includes('barat') || n.includes('baraat')) return '#FB923C';
-            if (n.includes(' tilak') || n.includes('roka')) return '#F87171';
-            let palette = ['#3B82F6','#8B5CF6','#EC4899','#10B981','#F59E0B','#06B6D4','#EF4444','#6366F1'];
+            if (n.includes('haldi') || n.includes('turmeric')) return '#FEF3C7';
+            if (n.includes('mehndi') || n.includes('mehendi') || n.includes('henna')) return '#D1FAE5';
+            if (n.includes('wedding') || n.includes('shaadi') || n.includes('vidaai')) return '#FCE7F3';
+            if (n.includes('engagement') || n.includes('ring')) return '#E0E7FF';
+            if (n.includes('sangeet') || n.includes('music')) return '#F3E8FF';
+            if (n.includes('reception') || n.includes('dinner')) return '#DBEAFE';
+            if (n.includes('barat') || n.includes('baraat')) return '#FFEDD5';
+            if (n.includes(' tilak') || n.includes('roka')) return '#FEE2E2';
+            let palette = ['#DBEAFE','#E0E7FF','#FCE7F3','#D1FAE5','#FEF3C7','#CFFAFE','#FEE2E2','#E0E7FF'];
             return palette[quoteEventsData.length % palette.length];
         }
         function getContrastColor(hex) {
@@ -13354,8 +13354,8 @@
             let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
             html += '<p style="font-size:11px; color:var(--text-secondary); margin:0;">' + quoteEventsData.length + ' Events \u00B7 ' + quoteItemsData.length + ' Items \u00B7 Gross \u20B9' + gross.toLocaleString('en-IN') + ' \u00B7 Net \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
             // FUNCTION SCHEDULE TABLE (with event colors)
-            html += '<div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>';
-            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">';
+            html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
+            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden;">';
             html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Venue</th></tr>';
             quoteEventsData.forEach(ev => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
@@ -13365,8 +13365,8 @@
             });
             html += '</table>';
             // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button) — boxed like function schedule
-            html += '<div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Items Summary</div>';
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:12px;">';
+            html += '<div style="margin-top:14px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Items / Services</div>';
+            html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden; margin-bottom:12px;">';
             quoteEventsData.forEach((ev, evIdx) => {
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
@@ -15425,7 +15425,8 @@
                     });
                     bodyHtml += `</table></div>`;
                     // COMPACT EVENT-WISE ITEM SUMMARY (boxed like function schedule)
-                    bodyHtml += `<div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:8px;">`;
+                    bodyHtml += `<div style="margin-top:12px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Items / Services</div>`;
+                    bodyHtml += `<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden; margin-bottom:8px;">`;
                     record.events.forEach((ev, evIdx) => {
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
