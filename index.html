@@ -6781,7 +6781,7 @@
             </div>
         </div>
 
-        <div id="quoteEventPanel" class="modal-overlay" style="display:none; z-index:8000;">
+        <div id="quoteEventPanel" class="modal-overlay" style="display:none; z-index:10600;">
             <div style="position:absolute; right:0; top:0; bottom:0; width:90%; max-width:400px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
                 <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
                     <h3>Function Details</h3>
@@ -6806,7 +6806,7 @@
             </div>
         </div>
 
-        <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:8000;">
+        <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:10600;">
             <div style="position:absolute; right:0; top:0; bottom:0; width:92%; max-width:420px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
                 <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
                     <h3>Add Services / Items</h3>
@@ -6839,7 +6839,7 @@
             </div>
         </div>
 
-        <div id="quotePreviewModal" class="modal-overlay" style="display:none; z-index:9000;">
+        <div id="quotePreviewModal" class="modal-overlay" style="display:none; z-index:10600;">
             <div class="modal-content" style="max-width:550px;">
                 <div class="modal-header">
                     <h3>Quotation Preview</h3>
@@ -6853,7 +6853,7 @@
             </div>
         </div>
 
-        <div id="quoteItemViewModal" class="modal-overlay" style="display:none; z-index:8500;">
+        <div id="quoteItemViewModal" class="modal-overlay" style="display:none; z-index:10600;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -6863,7 +6863,7 @@
                 <button onclick="closeQuoteItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
-        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:8600;">
+        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:10700;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -13346,7 +13346,8 @@
             quoteEventsData.forEach(ev => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                 let evColor = getEventColor(ev);
-                html += '<tr style="border-bottom:1px solid var(--bg-color); border-left:4px solid ' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">' + ev.name + '</td><td style="padding:6px 8px; color:var(--text-secondary);">' + d + '</td><td style="padding:6px 8px; color:var(--text-secondary);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:var(--text-secondary);">' + (ev.venue || '-') + '</td></tr>';
+                let tc = getContrastColor(evColor);
+                html += '<tr style="background:' + evColor + '; border-bottom:1px solid rgba(0,0,0,0.05);"><td style="padding:6px 8px; font-weight:700; color:' + tc + ';">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9;">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9;">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9;">' + (ev.venue || '-') + '</td></tr>';
             });
             html += '</table>';
             // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button)
@@ -15400,7 +15401,8 @@
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
-                        bodyHtml += `<tr style="border-bottom:1px solid var(--bg-color); border-left:4px solid ${evColor};"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:var(--text-secondary);">${evDate}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.time || '-'}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
+                        let tc = getContrastColor(evColor);
+                        bodyHtml += `<tr style="background:${evColor}; border-bottom:1px solid rgba(0,0,0,0.05);"><td style="padding:6px 8px; font-weight:700; color:${tc};">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9;">${evDate}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9;">${ev.time || '-'}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9;">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
                     });
                     bodyHtml += `</table></div>`;
                     // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button)
@@ -15823,7 +15825,8 @@
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
-                        html += '<tr style="border-left:5px solid ' + evColor + ';"><td><strong>' + sanitize(ev.name) + '</strong></td><td>' + evDate + '</td><td>' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right">' + (ev.time || '-') + '</td></tr>';
+                        let tc = getContrastColor(evColor);
+                        html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + tc + ';"><strong>' + sanitize(ev.name) + '</strong></td><td style="color:' + tc + ';">' + evDate + '</td><td style="color:' + tc + ';">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right" style="color:' + tc + ';">' + (ev.time || '-') + '</td></tr>';
                     });
                     html += '</table>';
                     // EVENT-GROUPED ITEMS
