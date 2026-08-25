@@ -40,10 +40,10 @@
             localStorage.setItem('utsav_pending_invite', urlInviteCode);
             if(urlCompName) localStorage.setItem('utsav_pending_invite_name', urlCompName);
             
-            // URL ko clean kar do taaki link lamba na dikhe
+            // Clean URL to hide invite parameters
             window.history.replaceState({}, document.title, window.location.pathname);
         }
-        // 1. Config Define karein
+        // 1. Define Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBYsxYCTEEX6mXUUfTIY206iWX1q_cGGek",
             authDomain: "utsavhq.firebaseapp.com",
@@ -53,7 +53,7 @@
             appId: "1:276683646200:web:52f4f85f8e17e88726c70d"
         };
 
-        // 2. Init karein
+        // 2. Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -5547,6 +5547,17 @@
                     <form id="leadForm" onsubmit="event.preventDefault();" novalidate>
                         <div class="lf-section">
                             <span class="lf-section-label">👤 Client Details</span>
+                            <div class="form-group">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label class="form-label" style="margin:0;">Select Existing Party</label>
+                                    <button type="button" class="link-btn" onclick="openPartyModal()" style="color:var(--accent-color); font-weight:700; font-size:11px;">+ Add New Party</button>
+                                </div>
+                                <input type="text" class="select-search-box" placeholder="Search Party or type new name..."
+                                    oninput="filterPartiesForLead(this.value)">
+                                <select id="l_party_select" class="form-select" onchange="handlePartySelectForLead(this.value)" style="margin-bottom:12px;">
+                                    <option value="">-- Select Existing Party --</option>
+                                </select>
+                            </div>
                             <div class="form-row">
                                 <div class="form-group"><label class="form-label">Client Name</label><input type="text"
                                         id="l_name" class="form-input" oninput="updateLeadAvatarPreview()" required></div>
@@ -6588,6 +6599,14 @@
                             style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
                     </div>
 
+                                        <div class="form-group">
+                        <label class="form-label">Remarks / Notes (Optional)</label>
+                        <textarea id="ast_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Upload Document / Photo (Optional)</label>
+                        <input type="file" id="ast_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;">
+                    </div>
                     <button type="button" class="btn-main" style="background: var(--purple);"
                         onclick="saveAssetData()">Save Asset Purchase</button>
                 </form>
@@ -6882,6 +6901,14 @@
                                 id="po_total" class="form-input" readonly
                                 style="background: #F1F5F9; font-weight: bold; font-size:14px;"></div>
                     </div>
+                                        <div class="form-group">
+                        <label class="form-label">Remarks / Notes (Optional)</label>
+                        <textarea id="po_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Upload Document / Photo (Optional)</label>
+                        <input type="file" id="po_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;">
+                    </div>
                     <button type="button" class="btn-main" style="background:var(--warning); color:#000;"
                         onclick="savePOData()">Save Purchase Order</button>
                 </form>
@@ -6980,6 +7007,14 @@
                         <span style="color: var(--text-secondary); font-weight: 700;">Balance Payable:</span><span
                             id="pb_balance_due"
                             style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
+                    </div>
+                                        <div class="form-group">
+                        <label class="form-label">Remarks / Notes (Optional)</label>
+                        <textarea id="pb_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Upload Document / Photo (Optional)</label>
+                        <input type="file" id="pb_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;">
                     </div>
                     <button type="button" class="btn-main" style="background: var(--danger);"
                         onclick="savePBData()">Save Vendor Bill</button>
@@ -9660,6 +9695,39 @@
                 updateDataAndUI();
             }
         }
+        function filterPartiesForLead(query) {
+            let select = document.getElementById('l_party_select');
+            if (!select) return;
+            let currentVal = select.value;
+            let options = '<option value="">-- Select Existing Party --</option>';
+            Object.values(partiesDB).forEach(p => {
+                if (!query || p.name.toLowerCase().includes(query.toLowerCase()) || (p.phone && p.phone.includes(query))) {
+                    options += '<option value="' + p.id + '">' + sanitize(p.name) + ' (' + p.type + ')' + (p.phone ? ' - ' + p.phone : '') + '</option>';
+                }
+            });
+            select.innerHTML = options;
+            if (currentVal) select.value = currentVal;
+        }
+
+        function handlePartySelectForLead(partyId) {
+            if (!partyId) return;
+            let party = partiesDB[partyId];
+            if (!party) return;
+            if (document.getElementById('l_name')) document.getElementById('l_name').value = party.name || '';
+            if (document.getElementById('l_phone')) document.getElementById('l_phone').value = party.phone || '';
+            if (typeof updateLeadAvatarPreview === 'function') updateLeadAvatarPreview();
+        }
+
+        function loadPartiesForLeadSelect() {
+            let select = document.getElementById('l_party_select');
+            if (!select) return;
+            let options = '<option value="">-- Select Existing Party --</option>';
+            Object.values(partiesDB).forEach(p => {
+                options += '<option value="' + p.id + '">' + sanitize(p.name) + ' (' + p.type + ')' + (p.phone ? ' - ' + p.phone : '') + '</option>';
+            });
+            select.innerHTML = options;
+        }
+
         function openLeadModal(editId = null) {
             refreshSourceList();
             editingLeadId = editId;
@@ -9693,7 +9761,7 @@
                 document.getElementById('l_source').value = l.source || "Direct";
             } else {
                 document.getElementById('modal-title').innerText = "Add New Lead";
-                document.getElementById('leadForm').reset();
+                document.getElementById('leadForm').reset(); if (typeof loadPartiesForLeadSelect === 'function') loadPartiesForLeadSelect();
                 statusEl.removeAttribute('disabled');
                 statusEl.style.background = 'white';
             }
@@ -11666,7 +11734,7 @@
                 let dr = 0; let cr = 0; let partMain = ""; let partSub = "";
                 let clickCtx = 'sales'; let isLink = true;
 
-                if (t.type === 'LoanSanction') { cr = t.amount; partMain = `Loan Sanctioned`; partSub = `A/c: ${activeLoan.purpose || 'General'}`; clickCtx = ''; isLink = false; }
+                if (t.type === 'LoanSanction') { cr = t.amount; partMain = `Loan Sanctioned`; partSub = `A/c: ${activeLoan.purpose || 'General'}`; clickCtx = 'loan'; isLink = true; t.loanId = activeLoan.id; }
                 else if (t.type === 'EmiPayment') { dr = t.amount; partMain = `EMI Paid`; partSub = `Prin: ₹${(t.principal || 0).toLocaleString()} | Int: ₹${(t.interest || 0).toLocaleString()}`; clickCtx = 'purchase'; t.id = t.id; }
                 else if (t.type === 'InterestCharge') { cr = t.amount; partMain = `Interest Applied`; partSub = `Added to Liability`; clickCtx = ''; isLink = false; }
                 else if (t.type === 'Invoice') { dr = t.finalTotal; partMain = `Sales`; partSub = t.id; clickCtx = 'sales'; }
@@ -11685,7 +11753,7 @@
                 let dParts = new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }).split(" ");
                 let dStr = `${dParts[0]} ${dParts[1]}<br>${dParts[2]}`;
 
-                let clickAction = isLink ? `onclick="viewDetails('${t.id}', '${clickCtx}')"` : '';
+                let clickAction = isLink ? (clickCtx === 'loan' ? `onclick="viewLoanDetails('${t.loanId}')"` : `onclick="viewDetails('${t.id}', '${clickCtx}')"`) : '';
                 let pointerStyle = isLink ? `cursor:pointer; transition:0.2s;` : '';
                 let hoverClass = isLink ? `onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"` : '';
 
@@ -12724,7 +12792,7 @@
                 });
                 if (record.mode !== 'Cash') { let bankId = record.mode; if (bankDB[bankId]) { bankDB[bankId].balance -= record.amount; let tx = Object.values(bankTxDB).find(t => t.refId === id); if (tx) delete bankTxDB[tx.id]; } }
             }
-            // TRASH ME BHEJO
+            // Send to trash
             let pName = partiesDB[record.partyId] ? partiesDB[record.partyId].name : "General";
             sendToTrash('Sales', id, record, `${record.type} - ₹${record.finalTotal || record.amount} (${pName})`);
             delete salesDB[id]; updateDataAndUI(); alert('Record deleted successfully.');
@@ -13480,7 +13548,7 @@
                 select.innerHTML += `<option value="${ev.id}">${sanitize(ev.func)} (${sanitize(ev.name)}) - 📅 ${formattedDate}</option>`;
             });
         }
-        function confirmAttachEvent() { let evId = document.getElementById('ae_event_select').value; if (!evId) return alert("Select an event!"); let invId = targetInvoiceToAttach; let ev = leadsDB[evId]; salesDB[invId].eventId = evId; let codeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); let newId = generateDocId('Invoice', codeStr); changeSalesId(invId, newId); updateDataAndUI(); document.getElementById('attachEventModal').style.display = 'none'; viewDetails(newId, 'sales'); alert("Attached Successfully!"); }
+        function confirmAttachEvent() { let evId = document.getElementById('ae_event_select').value; if (!evId) return alert("Please select an event!"); let invId = targetInvoiceToAttach; let ev = leadsDB[evId]; salesDB[invId].eventId = evId; let codeStr = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date); let newId = generateDocId('Invoice', codeStr); changeSalesId(invId, newId); updateDataAndUI(); document.getElementById('attachEventModal').style.display = 'none'; viewDetails(newId, 'sales'); alert("Attached successfully!"); }
 
         // ==========================================
         // PURCHASE HUB
@@ -13701,7 +13769,7 @@
                 let name = row.querySelector('.q-item-name').value; let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0; let unit = row.querySelector('.q-item-unit') ? row.querySelector('.q-item-unit').value : 'Pcs'; let desc = row.querySelector('.q-item-desc') ? row.querySelector('.q-item-desc').value : '';
                 if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate });
             });
-            if (items.length === 0) return alert("Add at least one item!");
+            if (items.length === 0) return alert("Please add at least one item!");
 
             let selectedPhotos = []; document.querySelectorAll('.po-photo-cb:checked').forEach(cb => { selectedPhotos.push({ url: cb.value, label: cb.getAttribute('data-label') }); });
             let discount = parseFloat(document.getElementById('po_discount').value) || 0; let total = parseFloat(document.getElementById('po_total').value) || 0;
@@ -13712,7 +13780,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('po', evId);
 
-            purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates };
+            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks };
 
             editingPurchaseId = null;
             updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
@@ -13760,7 +13828,7 @@
             calculatePBTotal();
         }
         function addPBItem() { pbItemCount++; let container = document.getElementById('pb_items_container'); let rowId = 'pb_item_' + pbItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePBTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculatePBTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculatePBTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
-        function calculatePBTotal() { let baseTotal = 0; document.querySelectorAll('#pb_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; baseTotal += (qty * rate); }); let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount; let manuallyEnteredAdvance = parseFloat(document.getElementById('pb_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal) { alert("Amount paying now cannot be greater than the bill total!"); document.getElementById('pb_advance').value = finalGrandTotal; manuallyEnteredAdvance = finalGrandTotal; } let selectedOldAdvanceId = document.getElementById('pb_use_advance').value; let oldAdvanceAmount = 0; if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { oldAdvanceAmount = Math.min(purchaseDB[selectedOldAdvanceId].availableAmount, finalGrandTotal); } let totalAdvanceApplied = manuallyEnteredAdvance + oldAdvanceAmount; let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0; document.getElementById('pb_final_total').value = finalGrandTotal; document.getElementById('pb_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN'); }
+        function calculatePBTotal() { let baseTotal = 0; document.querySelectorAll('#pb_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; baseTotal += (qty * rate); }); let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount; let manuallyEnteredAdvance = parseFloat(document.getElementById('pb_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal) { alert("Amount paying now cannot exceed the bill total!"); document.getElementById('pb_advance').value = finalGrandTotal; manuallyEnteredAdvance = finalGrandTotal; } let selectedOldAdvanceId = document.getElementById('pb_use_advance').value; let oldAdvanceAmount = 0; if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { oldAdvanceAmount = Math.min(purchaseDB[selectedOldAdvanceId].availableAmount, finalGrandTotal); } let totalAdvanceApplied = manuallyEnteredAdvance + oldAdvanceAmount; let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0; document.getElementById('pb_final_total').value = finalGrandTotal; document.getElementById('pb_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN'); }
         function handlePOSelectionForPB() {
             let poId = document.getElementById('pb_linked_po').value; let badge = document.getElementById('pb_autopilot_badge');
             if (!poId) { convertingPOId = null; if (badge) badge.style.display = 'none'; return; }
@@ -13776,7 +13844,7 @@
                 eventSelect.value = po.eventId;
                 handleEventLinkChange('pb'); 
 
-                // Jo dates PO me tick thi, unhe Bill me automatically tick kar do
+                // Auto-tick dates that were selected in the PO
                 if (po.linkedDates && po.linkedDates.length > 0) {
                     let checkboxes = document.querySelectorAll('.pb-func-cb');
                     checkboxes.forEach(cb => {
@@ -13898,7 +13966,7 @@
 
             let manuallyEnteredAdvance = parseFloat(document.getElementById('ast_advance').value) || 0;
             if (manuallyEnteredAdvance > finalGrandTotal && !editingPurchaseId) {
-                alert("Amount paying now cannot be greater than the bill total!");
+                alert("Amount paying now cannot exceed the bill total!");
                 document.getElementById('ast_advance').value = finalGrandTotal;
                 manuallyEnteredAdvance = finalGrandTotal;
             }
@@ -13928,7 +13996,7 @@
                 let godownEl = document.getElementById('ast_godown_select');
                 let godownId = (godownEl && godownEl.value && godownEl.value.trim() !== "") ? godownEl.value : 'WH_MAIN';
 
-                if (!vendorId || !date) { alert("Vendor and Date are required!"); return; } 
+                if (!vendorId || !date) { alert("Vendor and date are required!"); return; } 
                 
                 let items = []; 
                 document.querySelectorAll('#ast_items_container .quote-item-row').forEach(row => { 
@@ -13955,7 +14023,7 @@
                     }
                 }); 
                 
-                if (items.length === 0) return alert("Add at least one valid asset/item!"); 
+                if (items.length === 0) return alert("Please add at least one valid asset/item!"); 
                 
                 let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
                 let discount = parseFloat(document.getElementById('ast_discount').value) || 0; 
@@ -13991,7 +14059,7 @@
                 
                 let mainEventStr = items[0].name + (items.length > 1 ? ` +${items.length - 1} more` : ''); 
                 
-                purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status }; 
+                let astRemarks = document.getElementById('ast_remarks') ? document.getElementById('ast_remarks').value : ''; purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: astRemarks }; 
                 party.balance -= finalGrandTotal; 
                 
                 if (!editingPurchaseId) { 
@@ -14022,7 +14090,7 @@
             let partyId = document.getElementById('pb_vendor').value; let date = document.getElementById('pb_date').value; let evId = document.getElementById('pb_event_link').value; let refNo = document.getElementById('pb_ref').value;
             if (!partyId || !date) { alert("Fill all required fields!"); return; }
             let items = []; document.querySelectorAll('#pb_items_container .quote-item-row').forEach(row => { let name = row.querySelector('.i-item-name').value; let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); });
-            if (items.length === 0) return alert("Add at least one item!");
+            if (items.length === 0) return alert("Please add at least one item!");
             let party = partiesDB[partyId];
             if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; }
             let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount;
@@ -14037,7 +14105,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('pb', evId);
 
-            purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -14088,7 +14156,7 @@
                 if (r.mode !== 'Cash') { let bankId = r.mode; if (bankDB[bankId]) { bankDB[bankId].balance += r.amount; let tx = Object.values(bankTxDB).find(t => t.refId === id); if (tx) delete bankTxDB[tx.id]; } }
             }
                 
-            // TRASH ME BHEJO
+            // Send to trash
             let pName = partiesDB[r.partyId] ? partiesDB[r.partyId].name : "General";
             sendToTrash('Purchase', id, r, `${r.type} - ₹${r.finalTotal || r.amount} (${pName})`);
             delete purchaseDB[id]; updateDataAndUI();
@@ -14643,7 +14711,7 @@
                 document.getElementById('qv_modal_title').innerText = tMap[record.type] + " Details";
                 let statusColor = "var(--danger)"; if (record.status === "Paid") statusColor = "var(--success)"; if (record.status === "Partial") statusColor = "#0284C7"; if (record.status === "Draft") statusColor = "var(--warning)"; if (record.status === "Invoiced") statusColor = "var(--success)"; if (record.status === "Rejected") statusColor = "var(--danger)";
 
-                bodyHtml = `<div style="margin-bottom: 15px;"><strong>Party:</strong> ${sanitize(partyName)}<br><strong>Doc ID:</strong> ${record.id}<br><strong>Title/Event:</strong> ${record.event}<br><strong>Date:</strong> ${formattedDate}<br><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700; text-transform:uppercase;">${record.status}</span></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;"><tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color);"><th style="padding: 6px; text-align: left;">Item</th><th style="padding: 6px; text-align: center;">Qty</th><th style="padding: 6px; text-align: right;">Rate</th><th style="padding: 6px; text-align: right;">Amount</th></tr>`;
+                bodyHtml = `<div style="margin-bottom: 15px;"><strong>Party:</strong> ${sanitize(partyName)}<br><strong>Doc ID:</strong> ${record.id}${record.ref ? `<br><strong>Bill No.:</strong> ${sanitize(record.ref)}` : ''}<br><strong>Title/Event:</strong> ${record.event}<br><strong>Date:</strong> ${formattedDate}<br><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700; text-transform:uppercase;">${record.status}</span></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;"><tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color);"><th style="padding: 6px; text-align: left;">Item</th><th style="padding: 6px; text-align: center;">Qty</th><th style="padding: 6px; text-align: right;">Rate</th><th style="padding: 6px; text-align: right;">Amount</th></tr>`;
 
                 let subtotal = 0;
                 record.items.forEach(item => {
@@ -14734,7 +14802,7 @@
                                     <div style="font-size:9px; color:var(--warning); font-weight:800; margin-top:2px;">(Advance Adjusted)</div>
                                 </div>`;
                             } else {
-                                // Pura amount use hua
+                                // Full amount used
                                 amtHtml = `
                                 <div style="text-align:right;">
                                     <div style="color:${colorTheme}; font-weight:900; font-size:14px;">${sign} ₹${appliedFromThis.toLocaleString('en-IN')}</div>
@@ -14759,8 +14827,8 @@
             bodyHtml += waBtnHtml;
             bodyHtml += mainActionHtml;
 
-            let delFunc = "alert('Not implemented')";
-            let editFunc = "alert('Not implemented')";
+            let delFunc = "alert('This action is not yet implemented')";
+            let editFunc = "alert('This action is not yet implemented')";
 
             let emiTx = null;
             if (context === 'purchase') {
@@ -16163,7 +16231,7 @@
             let tenure = parseFloat(document.getElementById('loan_tenure').value) || 0;
             let intType = document.getElementById('loan_int_type') ? document.getElementById('loan_int_type').value : "Flat";
 
-            if (!partyId || amount <= 0 || !date || !bankId) return alert("Please fill required fields!");
+            if (!partyId || amount <= 0 || !date || !bankId) return alert("Please fill all required fields!");
 
             if (editingLoanId && loansDB[editingLoanId]) {
                 let old = loansDB[editingLoanId];
@@ -16202,7 +16270,7 @@
             editingLoanId = null;
             updateDataAndUI();
             document.getElementById('loanModal').style.display = 'none';
-            alert(editingLoanId ? "Loan Updated Successfully!" : "Loan Added Successfully!");
+            alert(editingLoanId ? "Loan updated successfully!" : "Loan added successfully!");
         }
         // ==========================================
         // SAFE DELETE LOAN (With EMI Security Lock)
@@ -16218,26 +16286,26 @@
             }
 
             if (!confirm("Are you sure you want to delete this Loan?\nSanctioned amount and processing fees will be reversed.")) return;
-            // ... (baaki ka delete loan function waise hi rahega) 
+            // ... (rest of delete loan function continues as before) 
             let loan = loansDB[loanId];
             if (loan) {
-                // 1. Party Balance theek karein (Loan liability reverse karein)
+                // 1. Reverse party balance (loan liability reversal)
                 if (partiesDB[partyId]) partiesDB[partyId].balance += loan.amount;
 
-                // 2. Bank Transaction hatayein (Jo paisa bank me aaya tha use wapas kam karein)
+                // 2. Remove bank transaction (reverse incoming funds)
                 let oldTx = Object.values(bankTxDB).find(tx => tx.refId === loanId);
                 if (oldTx) {
                     if (bankDB[oldTx.accountId]) bankDB[oldTx.accountId].balance -= oldTx.amount;
                     delete bankTxDB[oldTx.id];
                 }
 
-                // 3. Processing Fee Expense hatayein (Agar koi file charge laga tha)
+                // 3. Remove processing fee expense (if any file charge was applied)
                 let oldExp = Object.values(expenseDB).find(e => e.notes === "File Charge" && e.amount === loan.fee && e.date === loan.date);
                 if (oldExp) delete expenseDB[oldExp.id];
 
                 delete loansDB[loanId];
                 updateDataAndUI();
-                alert("Loan Deleted Successfully!");
+                alert("Loan deleted successfully!");
             }
         }
 
@@ -16262,7 +16330,7 @@
             let totalPrincipalPaid = 0;
             Object.values(bankTxDB || {}).forEach(tx => {
                 if (tx.partyId === partyId && tx.isEmi && tx.linkedLoanId === activeLoan.id) {
-                    if (editTxId && tx.id === editTxId) return; // Edit karte waqt purana count mat karo
+                    if (editTxId && tx.id === editTxId) return; // Don't count old entry when editing
                     totalPrincipalPaid += (tx.principal || 0);
                 }
             });
@@ -16373,7 +16441,7 @@
             let actLnId = modal.dataset.activeLoanId;
             let lnPurpose = modal.dataset.loanPurpose;
 
-            if (totalAmount <= 0 || !date || !mode) return alert("Fill all details!");
+            if (totalAmount <= 0 || !date || !mode) return alert("Please fill all required details!");
 
             let party = partiesDB[pId];
 
@@ -16428,7 +16496,72 @@
             updateDataAndUI();
             document.getElementById('emiModal').style.display = 'none';
             openPartyLedger(pId, actLnId);
-            alert(editId ? "EMI Updated Successfully!" : "EMI Paid Successfully!");
+            alert(editId ? "EMI updated successfully!" : "EMI paid successfully!");
+        }
+
+        function viewLoanDetails(loanId) {
+            let loan = loansDB[loanId];
+            if (!loan) { alert("Loan record not found!"); return; }
+            hideNavAndFabs();
+            let party = partiesDB[loan.partyId];
+            let partyName = party ? party.name : "Unknown";
+            let formattedDate = loan.date ? new Date(loan.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A";
+
+            document.getElementById('qv_modal_title').innerText = "Loan Receipt Details";
+
+            let totalPaid = 0, totalInt = 0, totalPrin = 0;
+            Object.values(bankTxDB).forEach(tx => {
+                if (tx.isEmi && tx.linkedLoanId === loanId) {
+                    totalPaid += tx.amount;
+                    totalInt += (tx.interest || 0);
+                    totalPrin += (tx.principal || 0);
+                }
+            });
+            let outstanding = loan.amount - totalPrin;
+
+            let bodyHtml = `<div style="margin-bottom: 15px;">
+                <strong>Lender:</strong> ${sanitize(partyName)}<br>
+                <strong>Doc ID:</strong> ${loan.id}<br>
+                <strong>Purpose:</strong> ${sanitize(loan.purpose || 'General Loan')}<br>
+                <strong>Date:</strong> ${formattedDate}<br>
+                <strong>Interest Rate:</strong> ${loan.roi || 0}% p.a. (${loan.intType || 'Flat'})<br>
+                <strong>Tenure:</strong> ${loan.tenure || 0} months
+            </div>
+            <div style="display: flex; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px; overflow: hidden;">
+                <div style="flex: 1; padding: 10px; border-right: 1px solid #E2E8F0;">
+                    <div style="font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase;">Sanctioned</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #1E293B;">₹${loan.amount.toLocaleString('en-IN')}</div>
+                </div>
+                <div style="flex: 1; padding: 10px; border-right: 1px solid #E2E8F0;">
+                    <div style="font-size: 9px; color: #059669; font-weight: 800; text-transform: uppercase;">Principal Paid</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #059669;">₹${totalPrin.toLocaleString('en-IN')}</div>
+                </div>
+                <div style="flex: 1; padding: 10px; border-right: 1px solid #E2E8F0;">
+                    <div style="font-size: 9px; color: #D97706; font-weight: 800; text-transform: uppercase;">Interest Paid</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #D97706;">₹${totalInt.toLocaleString('en-IN')}</div>
+                </div>
+                <div style="flex: 1.2; padding: 10px; text-align: right; background: #FFF5F5;">
+                    <div style="font-size: 9px; color: #DC2626; font-weight: 800; text-transform: uppercase;">Outstanding</div>
+                    <div style="font-size: 15px; font-weight: 900; color: #DC2626;">₹${outstanding.toLocaleString('en-IN')}</div>
+                </div>
+            </div>`;
+
+            if (loan.fee && loan.fee > 0) {
+                bodyHtml += `<div style="background:#FEF2F2; border:1px solid #FECACA; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Processing Fee:</strong> ₹${loan.fee.toLocaleString('en-IN')} | <strong>Net Received:</strong> ₹${(loan.amount - loan.fee).toLocaleString('en-IN')}</div>`;
+            }
+            if (loan.note) {
+                bodyHtml += `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Note:</strong> ${sanitize(loan.note)}</div>`;
+            }
+
+            bodyHtml += `<div style="display: flex; gap: 8px; margin-top: 15px;">
+                <button onclick="openLoanModal('${loanId}'); document.getElementById('quoteViewModal').style.display='none';" style="flex: 1; padding: 10px 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; font-weight: 700; font-size:12px; cursor: pointer; color: var(--accent-color);">Edit</button>
+                <button onclick="printVoucher('${loanId}', 'loan');" style="flex: 1; padding: 10px 0; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; font-weight: 700; font-size:12px; cursor: pointer; color: var(--text-primary);">Print</button>
+                <button onclick="document.getElementById('quoteViewModal').style.display='none'; openPartyLedger('${loan.partyId}', '${loanId}');" style="flex: 1; padding: 10px 0; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; font-weight: 700; font-size:12px; cursor: pointer; color: var(--danger);">Ledger</button>
+            </div>`;
+
+            document.getElementById('quoteViewBody').innerHTML = bodyHtml;
+            document.getElementById('quoteViewModal').style.display = 'flex';
+            closeAllMenus();
         }
 
         function deleteEmi(passedEditId = null, passedPartyId = null) {
@@ -16454,7 +16587,7 @@
             updateDataAndUI();
             document.getElementById('emiModal').style.display = 'none';
             openPartyLedger(pId, loanId);
-            alert("EMI Record Deleted Successfully.");
+            alert("EMI record deleted successfully.");
         }
 
         function downloadLoanStatement(partyId) {
@@ -16940,6 +17073,15 @@
         }
 
         function deleteExpense(id) {
+            // Prevent standalone deletion of Loan Interest entries linked to EMI
+            let exp = expenseDB[id];
+            if (exp && exp.cat === 'Loan Interest') {
+                let linkedEmiTx = Object.values(bankTxDB).find(tx => tx.linkedExpId === id && tx.isEmi);
+                if (linkedEmiTx) {
+                    alert("This interest entry is part of an EMI payment.\n\nTo remove it, please delete the full EMI payment from the party ledger.\nThe interest entry will be automatically removed with the EMI.");
+                    return;
+                }
+            }
             if (confirm("🚨 WARNING!\nDelete this expense? Party balances and linked payments will be affected.")) {
                 let oldE = expenseDB[id];
 
@@ -16966,7 +17108,7 @@
 
                 delete expenseDB[id];
                 updateDataAndUI();
-                alert("Expense Deleted Successfully!");
+                alert("Expense deleted successfully!");
             }
             closeAllMenus();
             let viewModal = document.getElementById('quoteViewModal');
@@ -18770,7 +18912,7 @@
         // 🐛 PERF FIX: pehle ye function har single updateDataAndUI() call par
         // (matlab har real-time data change par, jo ab bahut frequent hai) poore
         // page mein '.contact-pick-btn' dhoondh ke loop chalata tha — jabki
-        // browser ka contact-picker support kabhi session ke beech mein badalta
+        // browser contact-picker support can change mid-session
         // hi nahi hai. Ab sirf EK baar (pehli baar) actual kaam karta hai, uske
         // baad turant return ho jaata hai — zero wasted work.
         let _contactPickerAlreadyInjected = false;
