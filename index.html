@@ -6254,11 +6254,26 @@
                         onclick="document.getElementById('directEventModal').style.display='none';">&times;</button>
                 </div>
                 <form id="deForm" onsubmit="event.preventDefault();" novalidate>
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0;">Select Existing Party</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()" style="color:var(--accent-color); font-weight:700; font-size:11px;">+ Add New Party</button>
+                        </div>
+                        <input type="text" class="select-search-box" placeholder="Search Party or type new name..."
+                            oninput="filterPartiesForEvent(this.value)">
+                        <select id="de_party_select" class="form-select" onchange="handlePartySelectForEvent(this.value)" style="margin-bottom:12px;">
+                            <option value="">-- Select Existing Party --</option>
+                        </select>
+                    </div>
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Client Name</label><input type="text"
                                 id="de_name" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label">Mobile Number</label><input type="number"
-                                id="de_phone" class="form-input" required></div>
+                        <div class="form-group"><label class="form-label">Mobile Number</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="number" id="de_phone" class="form-input" required style="flex:1; min-width:0;">
+                                <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('de_phone','de_name')" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">📍</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Event Category</label><select id="de_cat"
@@ -10352,7 +10367,39 @@
         }
         function setEventTab(tab, btnElement) { currentEventTab = tab; document.querySelectorAll('#events .evt-kpi').forEach(b => b.classList.remove('active-kpi')); btnElement.classList.add('active-kpi'); renderEventsDashboard(); }
 
-        function openDirectEventModal() { refreshSourceList(); closeAllMenus(); let form = document.getElementById('deForm'); if (form) form.reset(); let dateCont = document.getElementById('de_dates_container'); if (dateCont) { dateCont.innerHTML = ''; addFunctionDateRow('de_dates_container'); } document.getElementById('directEventModal').style.display = 'flex'; }
+        function filterPartiesForEvent(query) {
+            let select = document.getElementById('de_party_select');
+            if (!select) return;
+            let currentVal = select.value;
+            let options = '<option value="">-- Select Existing Party --</option>';
+            Object.values(partiesDB).forEach(p => {
+                if (!query || p.name.toLowerCase().includes(query.toLowerCase()) || (p.phone && p.phone.includes(query))) {
+                    options += '<option value="' + p.id + '">' + sanitize(p.name) + ' (' + p.type + ')' + (p.phone ? ' - ' + p.phone : '') + '</option>';
+                }
+            });
+            select.innerHTML = options;
+            if (currentVal) select.value = currentVal;
+        }
+
+        function handlePartySelectForEvent(partyId) {
+            if (!partyId) return;
+            let party = partiesDB[partyId];
+            if (!party) return;
+            if (document.getElementById('de_name')) document.getElementById('de_name').value = party.name || '';
+            if (document.getElementById('de_phone')) document.getElementById('de_phone').value = party.phone || '';
+        }
+
+        function loadPartiesForEventSelect() {
+            let select = document.getElementById('de_party_select');
+            if (!select) return;
+            let options = '<option value="">-- Select Existing Party --</option>';
+            Object.values(partiesDB).forEach(p => {
+                options += '<option value="' + p.id + '">' + sanitize(p.name) + ' (' + p.type + ')' + (p.phone ? ' - ' + p.phone : '') + '</option>';
+            });
+            select.innerHTML = options;
+        }
+
+        function openDirectEventModal() { refreshSourceList(); closeAllMenus(); let form = document.getElementById('deForm'); if (form) form.reset(); if (typeof loadPartiesForEventSelect === 'function') loadPartiesForEventSelect(); let dateCont = document.getElementById('de_dates_container'); if (dateCont) { dateCont.innerHTML = ''; addFunctionDateRow('de_dates_container'); } document.getElementById('directEventModal').style.display = 'flex'; }
         // 🚀 SAVE DIRECT EVENT (Now saves venue inside dates)
         function saveDirectEvent() {
             let name = document.getElementById('de_name').value;
@@ -14718,10 +14765,10 @@
                     subtotal += item.amount;
                     bodyHtml += `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 6px;">${sanitize(item.name)}</td><td style="padding: 6px; text-align: center;">${item.qty}</td><td style="padding: 6px; text-align: right;">₹${item.rate.toLocaleString('en-IN')}</td><td style="padding: 6px; text-align: right;">₹${item.amount.toLocaleString('en-IN')}</td></tr>`;
                 });
-                bodyHtml += `</table><div style="text-align: right; line-height: 1.6;">`;
+                bodyHtml += `</table>${record.remarks ? `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Remarks:</strong> ${sanitize(record.remarks)}</div>` : ''}<div style="text-align: right; line-height: 1.6;">`;
 
                 if (record.type === 'Invoice' || record.type === 'PB' || record.type === 'Asset') {
-                    bodyHtml += `<strong>Base Total:</strong> ₹${record.total.toLocaleString('en-IN')}<br><strong>GST (${record.gstPercent}%):</strong> ₹${record.taxAmount.toLocaleString('en-IN')}<br><strong style="font-size: 14px; color: var(--text-primary);">Grand Total: ₹${record.finalTotal.toLocaleString('en-IN')}</strong><br><div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;"><strong style="color: var(--success);">Total Paid/Advance: ₹${record.advance.toLocaleString('en-IN')}</strong><br><strong style="color: var(--danger); font-size: 14px;">Balance Due: ₹${record.balanceDue.toLocaleString('en-IN')}</strong></div>`;
+                    bodyHtml += `<strong>Subtotal:</strong> ₹${(record.total + record.discount).toLocaleString('en-IN')}<br>${record.discount > 0 ? `<strong>Discount:</strong> ₹${record.discount.toLocaleString('en-IN')}<br>` : ''}<strong>Base Total:</strong> ₹${record.total.toLocaleString('en-IN')}<br><strong>GST (${record.gstPercent}%):</strong> ₹${record.taxAmount.toLocaleString('en-IN')}<br><strong style="font-size: 14px; color: var(--text-primary);">Grand Total: ₹${record.finalTotal.toLocaleString('en-IN')}</strong><br><div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;"><strong style="color: var(--success);">Total Paid/Advance: ₹${record.advance.toLocaleString('en-IN')}</strong><br><strong style="color: var(--danger); font-size: 14px;">Balance Due: ₹${record.balanceDue.toLocaleString('en-IN')}</strong></div>`;
 
                     if (record.eventId && context === 'sales') {
                         bodyHtml += `<div style="margin-top:12px; padding:8px; background:#FEF2F2; border-radius:6px; border:1px solid #FCA5A5; text-align:center;"><span style="font-size:11px; color:var(--danger); display:block; margin-bottom:4px;">This bill is linked to an Event Workspace</span><button onclick="unlinkInvoice('${id}')" style="background:var(--danger); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">🚫 Detach from Event</button></div>`;
@@ -15021,6 +15068,7 @@
                         <span class="section-label">Event / Subject</span>
                         <div style="font-size:14px; font-weight:700;">${record.event || 'General'}</div>
                         ${record.eventId ? `<div style="font-size:11px; font-weight:600; color:#2563eb; margin-top:4px;">ID: ${record.eventId}</div>` : ''}
+                        ${record.ref ? `<div style="font-size:12px; font-weight:600; color:#475569; margin-top:4px;">Bill No: ${sanitize(record.ref)}</div>` : ''}
                     </div>
                 </div>`;
 
@@ -15077,7 +15125,9 @@
                 }
                 html += `</table>`;
 
-                // 🚀 PAYMENT HISTORY & TOTALS
+                if (record.remarks) { html += `<div style="background:#F8FAFC; border:1px solid #e2e8f0; padding:12px 15px; border-radius:6px; margin-bottom:15px; font-size:12px;"><strong style="color:#475569;">Remarks:</strong> ${sanitize(record.remarks)}</div>`; }
+
+                // PAYMENT HISTORY & TOTALS
                 html += `<div class="summary-container">`;
 
                 // Left: Payment History
@@ -15128,7 +15178,7 @@
                              <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Discount:</span> <span>₹${(record.discount || 0).toLocaleString('en-IN')}</span></div>
                              <div class="grand-total" style="display:flex; justify-content:space-between;"><span>Estimate Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>`;
                 } else {
-                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Base Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>
+                    html += `${(record.discount && record.discount > 0) ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Subtotal:</span> <span>₹${((record.total || 0) + record.discount).toLocaleString('en-IN')}</span></div><div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#dc2626;"><span>Discount:</span> <span>-₹${record.discount.toLocaleString('en-IN')}</span></div>` : ''}<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Base Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>
                              ${record.taxAmount ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>GST (${record.gstPercent}%):</span> <span>₹${record.taxAmount.toLocaleString('en-IN')}</span></div>` : ''}
                              <div class="grand-total" style="display:flex; justify-content:space-between;"><span>Grand Total:</span> <span>₹${(record.finalTotal || 0).toLocaleString('en-IN')}</span></div>
                              <div style="display:flex; justify-content:space-between; color:#166534; font-weight:700; margin-bottom:5px;"><span>Paid / Advance:</span> <span>₹${(record.advance || 0).toLocaleString('en-IN')}</span></div>
@@ -16518,51 +16568,163 @@
                 }
             });
             let outstanding = loan.amount - totalPrin;
+            let progressPct = loan.amount > 0 ? Math.min(100, Math.round((totalPrin / loan.amount) * 100)) : 0;
 
-            let bodyHtml = `<div style="margin-bottom: 15px;">
-                <strong>Lender:</strong> ${sanitize(partyName)}<br>
-                <strong>Doc ID:</strong> ${loan.id}<br>
-                <strong>Purpose:</strong> ${sanitize(loan.purpose || 'General Loan')}<br>
-                <strong>Date:</strong> ${formattedDate}<br>
-                <strong>Interest Rate:</strong> ${loan.roi || 0}% p.a. (${loan.intType || 'Flat'})<br>
-                <strong>Tenure:</strong> ${loan.tenure || 0} months
-            </div>
-            <div style="display: flex; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px; overflow: hidden;">
-                <div style="flex: 1; padding: 10px; border-right: 1px solid #E2E8F0;">
-                    <div style="font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase;">Sanctioned</div>
-                    <div style="font-size: 14px; font-weight: 800; color: #1E293B;">₹${loan.amount.toLocaleString('en-IN')}</div>
+            let bodyHtml = `<div style="background: linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%); color:white; padding:20px; border-radius:12px; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div style="font-size:10px; font-weight:800; text-transform:uppercase; opacity:0.8; letter-spacing:1px;">Loan Sanctioned</div>
+                        <div style="font-size:28px; font-weight:900; margin-top:4px;">₹${loan.amount.toLocaleString('en-IN')}</div>
+                        <div style="font-size:12px; opacity:0.9; margin-top:4px;">${sanitize(partyName)} • ${sanitize(loan.purpose || 'General Loan')}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:10px; font-weight:800; text-transform:uppercase; opacity:0.8; letter-spacing:1px;">Outstanding</div>
+                        <div style="font-size:24px; font-weight:900; color:#FECACA; margin-top:4px;">₹${outstanding.toLocaleString('en-IN')}</div>
+                    </div>
                 </div>
-                <div style="flex: 1; padding: 10px; border-right: 1px solid #E2E8F0;">
-                    <div style="font-size: 9px; color: #059669; font-weight: 800; text-transform: uppercase;">Principal Paid</div>
-                    <div style="font-size: 14px; font-weight: 800; color: #059669;">₹${totalPrin.toLocaleString('en-IN')}</div>
+                <div style="margin-top:15px; background:rgba(255,255,255,0.15); border-radius:8px; height:8px; overflow:hidden;">
+                    <div style="width:${progressPct}%; background:#FBBF24; height:100%; border-radius:8px; transition:width 0.5s;"></div>
                 </div>
-                <div style="flex: 1; padding: 10px; border-right: 1px solid #E2E8F0;">
-                    <div style="font-size: 9px; color: #D97706; font-weight: 800; text-transform: uppercase;">Interest Paid</div>
-                    <div style="font-size: 14px; font-weight: 800; color: #D97706;">₹${totalInt.toLocaleString('en-IN')}</div>
-                </div>
-                <div style="flex: 1.2; padding: 10px; text-align: right; background: #FFF5F5;">
-                    <div style="font-size: 9px; color: #DC2626; font-weight: 800; text-transform: uppercase;">Outstanding</div>
-                    <div style="font-size: 15px; font-weight: 900; color: #DC2626;">₹${outstanding.toLocaleString('en-IN')}</div>
+                <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:4px; opacity:0.8;">
+                    <span>${progressPct}% Repaid</span>
+                    <span>₹${totalPrin.toLocaleString('en-IN')} / ₹${loan.amount.toLocaleString('en-IN')}</span>
                 </div>
             </div>`;
 
+            bodyHtml += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px; border-radius:8px;">
+                    <div style="font-size:9px; font-weight:800; color:#059669; text-transform:uppercase;">Principal Paid</div>
+                    <div style="font-size:18px; font-weight:900; color:#059669; margin-top:4px;">₹${totalPrin.toLocaleString('en-IN')}</div>
+                </div>
+                <div style="background:#FFFBEB; border:1px solid #FDE68A; padding:12px; border-radius:8px;">
+                    <div style="font-size:9px; font-weight:800; color:#D97706; text-transform:uppercase;">Interest Paid</div>
+                    <div style="font-size:18px; font-weight:900; color:#D97706; margin-top:4px;">₹${totalInt.toLocaleString('en-IN')}</div>
+                </div>
+            </div>`;
+
+            bodyHtml += `<div style="background:white; border:1px solid var(--border-color); border-radius:8px; padding:15px; margin-bottom:15px;">
+                <div style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-bottom:10px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Loan Details</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; font-size:12px;">
+                    <div><span style="color:var(--text-secondary);">Doc ID:</span> <strong>${loan.id}</strong></div>
+                    <div><span style="color:var(--text-secondary);">Date:</span> <strong>${formattedDate}</strong></div>
+                    <div><span style="color:var(--text-secondary);">Interest Rate:</span> <strong>${loan.roi || 0}% p.a.</strong></div>
+                    <div><span style="color:var(--text-secondary);">Type:</span> <strong>${loan.intType || 'Flat'}</strong></div>
+                    <div><span style="color:var(--text-secondary);">Tenure:</span> <strong>${loan.tenure || 0} months</strong></div>
+                    <div><span style="color:var(--text-secondary);">Total EMI Paid:</span> <strong>₹${totalPaid.toLocaleString('en-IN')}</strong></div>
+                </div>`;
+
             if (loan.fee && loan.fee > 0) {
-                bodyHtml += `<div style="background:#FEF2F2; border:1px solid #FECACA; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Processing Fee:</strong> ₹${loan.fee.toLocaleString('en-IN')} | <strong>Net Received:</strong> ₹${(loan.amount - loan.fee).toLocaleString('en-IN')}</div>`;
+                bodyHtml += `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:space-between; font-size:12px;">
+                    <span style="color:var(--text-secondary);">Processing Fee:</span> <strong>₹${loan.fee.toLocaleString('en-IN')}</strong>
+                    <span style="color:var(--text-secondary); margin-left:20px;">Net Received:</span> <strong>₹${(loan.amount - loan.fee).toLocaleString('en-IN')}</strong>
+                </div>`;
             }
+            bodyHtml += `</div>`;
+
             if (loan.note) {
-                bodyHtml += `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Note:</strong> ${sanitize(loan.note)}</div>`;
+                bodyHtml += `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:12px; border-radius:8px; margin-bottom:15px; font-size:12px;"><strong>Note:</strong> ${sanitize(loan.note)}</div>`;
             }
 
-            bodyHtml += `<div style="display: flex; gap: 8px; margin-top: 15px;">
-                <button onclick="openLoanModal('${loanId}'); document.getElementById('quoteViewModal').style.display='none';" style="flex: 1; padding: 10px 0; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; font-weight: 700; font-size:12px; cursor: pointer; color: var(--accent-color);">Edit</button>
-                <button onclick="printVoucher('${loanId}', 'loan');" style="flex: 1; padding: 10px 0; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; font-weight: 700; font-size:12px; cursor: pointer; color: var(--text-primary);">Print</button>
-                <button onclick="document.getElementById('quoteViewModal').style.display='none'; openPartyLedger('${loan.partyId}', '${loanId}');" style="flex: 1; padding: 10px 0; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; font-weight: 700; font-size:12px; cursor: pointer; color: var(--danger);">Ledger</button>
+            bodyHtml += `<div style="display:flex; gap:8px; margin-top:15px;">
+                <button onclick="printLoanReceipt('${loanId}')" style="flex:1; padding:12px 0; background:linear-gradient(135deg,#991B1B,#7F1D1D); color:white; border:none; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 2px 8px rgba(153,27,27,0.3);">Print / Share Receipt</button>
+                <button onclick="openLoanModal('${loanId}'); document.getElementById('quoteViewModal').style.display='none';" style="flex:1; padding:12px 0; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; color:var(--accent-color);">Edit</button>
+                <button onclick="document.getElementById('quoteViewModal').style.display='none'; openPartyLedger('${loan.partyId}', '${loanId}');" style="flex:1; padding:12px 0; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; color:var(--text-primary);">Ledger</button>
             </div>`;
 
             document.getElementById('quoteViewBody').innerHTML = bodyHtml;
             document.getElementById('quoteViewModal').style.display = 'flex';
             closeAllMenus();
         }
+
+        function printLoanReceipt(loanId) {
+            let loan = loansDB[loanId];
+            if (!loan) return alert("Loan record not found!");
+
+            let party = partiesDB[loan.partyId];
+            let partyName = party ? party.name : "Unknown";
+            let pPhone = party && party.phone ? "+91 " + party.phone : "";
+            let dateStr = new Date(loan.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            let totalPaid = 0, totalInt = 0, totalPrin = 0;
+            Object.values(bankTxDB).forEach(tx => {
+                if (tx.isEmi && tx.linkedLoanId === loanId) {
+                    totalPaid += tx.amount;
+                    totalInt += (tx.interest || 0);
+                    totalPrin += (tx.principal || 0);
+                }
+            });
+            let outstanding = loan.amount - totalPrin;
+
+            let cName = (typeof currentUser !== 'undefined' && currentUser.company) ? currentUser.company : "Your Company";
+            let cLogo = (typeof currentUser !== 'undefined' && currentUser.logo) ? '<img src="' + currentUser.logo + '" style="max-height:60px; max-width:160px; object-fit:contain;">' : '';
+
+            let html = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Loan Receipt - ' + loan.id + '</title>';
+            html += '<style>@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap\');';
+            html += 'body{font-family:\'Inter\',sans-serif;padding:25px;color:#0f172a;background:#f1f5f9;margin:0;line-height:1.4;}';
+            html += '.receipt-box{max-width:800px;margin:auto;background:#fff;border:1px solid #e2e8f0;padding:35px;border-radius:8px;}';
+            html += '.header{display:flex;justify-content:space-between;border-bottom:3px solid #991B1B;padding-bottom:15px;margin-bottom:25px;align-items:flex-end;}';
+            html += '.comp-name{font-size:24px;font-weight:900;text-transform:uppercase;}';
+            html += '.doc-title{font-size:26px;font-weight:900;color:#991B1B;text-transform:uppercase;}';
+            html += '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-bottom:25px;}';
+            html += '.section-label{font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:8px;border-bottom:1px solid #cbd5e1;padding-bottom:4px;display:block;}';
+            html += '.loan-box{background:linear-gradient(135deg,#991B1B,#7F1D1D);color:white;padding:25px;border-radius:10px;margin-bottom:20px;}';
+            html += '.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:20px;}';
+            html += '.stat-card{background:#f8fafc;border:1px solid #e2e8f0;padding:15px;border-radius:8px;text-align:center;}';
+            html += '.stat-label{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;}';
+            html += '.stat-value{font-size:20px;font-weight:900;margin-top:4px;}';
+            html += '.footer{margin-top:30px;border-top:2px solid #0f172a;padding-top:15px;display:flex;justify-content:space-between;}';
+            html += '@media print{#print-btn{display:none!important;}body{background:white!important;}.receipt-box{border:none;padding:0;}}</style></head><body>';
+            html += '<div class="receipt-box">';
+
+            html += '<div class="header"><div>' + cLogo + '<div class="comp-name">' + cName + '</div></div>';
+            html += '<div style="text-align:right;"><div class="doc-title">Loan Receipt</div><div style="font-weight:800;font-size:14px;">#' + loan.id + '</div>';
+            html += '<div style="font-size:12px;color:#64748b;">Date: ' + dateStr + '</div></div></div>';
+
+            html += '<div class="info-grid"><div><span class="section-label">Lender Details</span>';
+            html += '<div style="font-size:15px;font-weight:800;">' + sanitize(partyName) + '</div>';
+            if (pPhone) html += '<div style="font-size:12px;color:#475569;">' + pPhone + '</div>';
+            html += '</div><div><span class="section-label">Loan Terms</span>';
+            html += '<div style="font-size:13px;margin-bottom:4px;"><strong>Purpose:</strong> ' + sanitize(loan.purpose || 'General Loan') + '</div>';
+            html += '<div style="font-size:13px;margin-bottom:4px;"><strong>Rate:</strong> ' + (loan.roi || 0) + '% p.a. (' + (loan.intType || 'Flat') + ')</div>';
+            html += '<div style="font-size:13px;"><strong>Tenure:</strong> ' + (loan.tenure || 0) + ' months</div>';
+            html += '</div></div>';
+
+            html += '<div class="loan-box"><div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div><div style="font-size:11px;opacity:0.8;text-transform:uppercase;font-weight:800;letter-spacing:1px;">Sanctioned Amount</div>';
+            html += '<div style="font-size:32px;font-weight:900;margin-top:4px;">₹' + loan.amount.toLocaleString('en-IN') + '</div></div>';
+            html += '<div style="text-align:right;"><div style="font-size:11px;opacity:0.8;text-transform:uppercase;font-weight:800;letter-spacing:1px;">Outstanding</div>';
+            html += '<div style="font-size:28px;font-weight:900;color:#FECACA;margin-top:4px;">₹' + outstanding.toLocaleString('en-IN') + '</div></div></div></div>';
+
+            html += '<div class="stat-grid">';
+            html += '<div class="stat-card"><div class="stat-label">Principal Paid</div><div class="stat-value" style="color:#059669;">₹' + totalPrin.toLocaleString('en-IN') + '</div></div>';
+            html += '<div class="stat-card"><div class="stat-label">Interest Paid</div><div class="stat-value" style="color:#D97706;">₹' + totalInt.toLocaleString('en-IN') + '</div></div>';
+            html += '<div class="stat-card"><div class="stat-label">Total EMI Paid</div><div class="stat-value" style="color:#0f172a;">₹' + totalPaid.toLocaleString('en-IN') + '</div></div>';
+            html += '</div>';
+
+            if (loan.fee && loan.fee > 0) {
+                html += '<div style="background:#FEF2F2;border:1px solid #FECACA;padding:12px;border-radius:8px;margin-bottom:15px;font-size:13px;">';
+                html += '<strong>Processing Fee:</strong> ₹' + loan.fee.toLocaleString('en-IN') + ' | <strong>Net Received:</strong> ₹' + (loan.amount - loan.fee).toLocaleString('en-IN') + '</div>';
+            }
+            if (loan.note) {
+                html += '<div style="background:#F8FAFC;border:1px solid #e2e8f0;padding:12px;border-radius:8px;margin-bottom:15px;font-size:13px;"><strong>Note:</strong> ' + sanitize(loan.note) + '</div>';
+            }
+
+            html += '<div class="footer"><div><div style="font-size:12px;color:#64748b;">Authorized Signatory</div>';
+            html += '<div style="border-top:1.5px solid #0f172a;margin-top:30px;padding-top:6px;font-weight:800;font-size:12px;width:180px;">For ' + cName + '</div></div>';
+            html += '<div style="font-size:10px;color:#94a3b8;">Generated via UTSAVhq ERP</div></div>';
+
+            html += '</div>';
+            html += '<button id="print-btn" onclick="window.print()" style="position:fixed;bottom:20px;right:20px;background:#991B1B;color:white;border:none;padding:14px 24px;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(153,27,27,0.4);">Print / Save as PDF</button>';
+            html += '</body></html>';
+
+            let printWin = window.open('', '_blank');
+            if (!printWin) return alert("Popup blocked! Please allow popups.");
+            printWin.document.write(html);
+            printWin.document.close();
+            printWin.focus();
+        }
+
+        function deleteEmi
 
         function deleteEmi(passedEditId = null, passedPartyId = null) {
             let editId = passedEditId || document.getElementById('emi_edit_id').value;
