@@ -6189,24 +6189,28 @@
                     <div class="set-bento-card">
                         <div class="set-badge" style="color:#2563EB; background:#EFF6FF;">⚡ What's New in v8.8</div>
                         <div class="about-feature">
+                            <span style="font-size:18px;">📎</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Document Upload in Purchase Bills</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Upload photos/PDFs in PO, Vendor Bill & Asset forms — stored on cloud, visible in preview & print</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">💰</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Premium Loan Receipt</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Loan preview upgraded with progress bar, EMI stats & printable shareable receipt</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">📝</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Remarks + Bill No. Display</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Remarks field in all purchase forms; party bill no. & discount now visible in preview & print</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">📋</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Add Party in Event Form</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Select existing party or add new + contact picker in Add Event form</div></div>
+                        </div>
+                        <div class="about-feature">
+                            <span style="font-size:18px;">🗑️</span>
+                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">EMI Safe Delete</div><div style="font-size:11px; color:#64748B; margin-top:1px;">EMI payments now go to Recycle Bin; interest entry auto-deletes with full EMI only</div></div>
+                        </div>
+                        <div class="about-feature">
                             <span style="font-size:18px;">✅</span>
                             <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Email Fix on Voucher Print</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Company email now shows correctly on all printouts instead of company ID</div></div>
-                        </div>
-                        <div class="about-feature">
-                            <span style="font-size:18px;">🎨</span>
-                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Premium Settings Hub</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Completely redesigned with color themes, font size controls &amp; more</div></div>
-                        </div>
-                        <div class="about-feature">
-                            <span style="font-size:18px;">💬</span>
-                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">WhatsApp Templates v2</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Payment reminder template + quick-insert tags for faster editing</div></div>
-                        </div>
-                        <div class="about-feature">
-                            <span style="font-size:18px;">🔢</span>
-                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">PO &amp; PB Prefix Settings</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Custom prefix support for Purchase Orders &amp; Vendor Bills added</div></div>
-                        </div>
-                        <div class="about-feature">
-                            <span style="font-size:18px;">📱</span>
-                            <div><div style="font-size:12px; font-weight:800; color:#0F172A;">Install as Native App</div><div style="font-size:11px; color:#64748B; margin-top:1px;">Save to home screen on Android &amp; iOS — no Play Store needed</div></div>
                         </div>
                     </div>
 
@@ -6620,7 +6624,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <input type="file" id="ast_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;">
+                        <input type="file" id="ast_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;" onchange="showFilePreview('ast_file_upload', 'ast_file_preview')"><div id="ast_file_preview" style="margin-top:8px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background: var(--purple);"
                         onclick="saveAssetData()">Save Asset Purchase</button>
@@ -6922,7 +6926,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <input type="file" id="po_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;">
+                        <input type="file" id="po_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;" onchange="showFilePreview('po_file_upload', 'po_file_preview')"><div id="po_file_preview" style="margin-top:8px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background:var(--warning); color:#000;"
                         onclick="savePOData()">Save Purchase Order</button>
@@ -7029,7 +7033,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <input type="file" id="pb_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;">
+                        <input type="file" id="pb_file_upload" accept="image/*,.pdf" style="font-size:11px; padding:8px; border:1px dashed var(--border-color); border-radius:8px; width:100%;" onchange="showFilePreview('pb_file_upload', 'pb_file_preview')"><div id="pb_file_preview" style="margin-top:8px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background: var(--danger);"
                         onclick="savePBData()">Save Vendor Bill</button>
@@ -13808,7 +13812,69 @@
         function addPOItem() { poItemCount++; let container = document.getElementById('po_items_container'); let rowId = 'po_item_' + poItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculatePOTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculatePOTotal()" required></div></div><div><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function calculatePOTotal() { let total = 0; document.querySelectorAll('#po_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0; total += (qty * rate); }); let discount = parseFloat(document.getElementById('po_discount').value) || 0; let grandTotal = total - discount; if (grandTotal < 0) grandTotal = 0; document.getElementById('po_total').value = grandTotal; }
         // 🚀 UPDATED SAVE PO (Edit ID Logic Added)
-        function savePOData() {
+        // Upload document/file to Cloudinary (images + PDF) and return {url, name, type}
+        async function uploadDocToFirebase(file, docId, type) {
+            if (!file) return null;
+            try {
+                const CLOUD_NAME = "dvjjyinbl";
+                const UPLOAD_PRESET = "event_photos_preset";
+                const isImage = file.type && file.type.startsWith('image/');
+                const endpoint = isImage
+                    ? `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
+                    : `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`;
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", UPLOAD_PRESET);
+                formData.append("folder", `company_docs/${type}`);
+
+                let response = await fetch(endpoint, { method: "POST", body: formData });
+                let data = await response.json();
+
+                if (!response.ok || data.error) {
+                    console.error('Upload error:', data.error);
+                    if (typeof showToast === 'function') showToast('Upload failed: ' + (data.error?.message || 'Unknown error'), 'error', 4000);
+                    return null;
+                }
+
+                let url = data.secure_url;
+                // For images, use Cloudinary's transformation to get high-quality version
+                if (isImage) {
+                    url = url.replace('/upload/', '/upload/q_auto,f_auto/');
+                }
+
+                return { url: url, name: file.name, type: file.type };
+            } catch(e) {
+                console.error('Upload failed:', e);
+                if (typeof showToast === 'function') showToast('Upload failed. Please try again.', 'error', 4000);
+                return null;
+            }
+        }
+
+        // Show file preview thumbnail in form
+        function showFilePreview(inputId, previewId) {
+            let input = document.getElementById(inputId);
+            let preview = document.getElementById(previewId);
+            if (!input || !preview) return;
+            let file = input.files[0];
+            if (!file) { preview.innerHTML = ''; preview.style.display = 'none'; return; }
+            preview.style.display = 'block';
+            if (file.type.startsWith('image/')) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = '<div style="position:relative; display:inline-block;">' +
+                        '<img src="' + e.target.result + '" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid var(--border-color);">' +
+                        '<div style="font-size:9px; color:var(--text-secondary); margin-top:4px; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + file.name + '</div>' +
+                        '</div>';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '<div style="display:inline-block; padding:10px 14px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; font-size:11px; font-weight:700;">' +
+                    '📄 ' + file.name + '<br><span style="font-size:9px; color:var(--text-secondary); font-weight:500;">' + (file.type || 'Document') + '</span></div>';
+            }
+        }
+
+        async function savePOData() {
             let partyId = document.getElementById('po_vendor').value; let evId = document.getElementById('po_event_link').value; let event = document.getElementById('po_event').value; let date = document.getElementById('po_date').value;
             if (!partyId || !event || !date) { alert("Fill all required fields!"); return; }
 
@@ -13827,7 +13893,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('po', evId);
 
-            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks };
+            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poFileInput = document.getElementById('po_file_upload'); let poDocUrl = null; if (poFileInput && poFileInput.files[0]) { showLoader('Uploading document...'); poDocUrl = await uploadDocToFirebase(poFileInput.files[0], id, 'PO'); hideLoader(); } purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks, docUrl: poDocUrl };
 
             editingPurchaseId = null;
             updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
@@ -14033,7 +14099,7 @@
         }
 
         // 🚀 FIXED: ASSET PURCHASE TO GODOWN
-            window.saveAssetData = function() { 
+            window.saveAssetData = async function() { 
                 let vendorId = document.getElementById('ast_vendor').value; 
                 let date = document.getElementById('ast_date').value; 
                 let refNo = document.getElementById('ast_ref').value; 
@@ -14106,7 +14172,7 @@
                 
                 let mainEventStr = items[0].name + (items.length > 1 ? ` +${items.length - 1} more` : ''); 
                 
-                let astRemarks = document.getElementById('ast_remarks') ? document.getElementById('ast_remarks').value : ''; purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: astRemarks }; 
+                let astRemarks = document.getElementById('ast_remarks') ? document.getElementById('ast_remarks').value : ''; let astFileInput = document.getElementById('ast_file_upload'); let astDocUrl = null; if (astFileInput && astFileInput.files[0]) { showLoader('Uploading document...'); astDocUrl = await uploadDocToFirebase(astFileInput.files[0], id, 'Asset'); hideLoader(); } purchaseDB[id] = { id, type: 'Asset', partyId: vendorId, eventId: null, event: mainEventStr, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: astRemarks, docUrl: astDocUrl }; 
                 party.balance -= finalGrandTotal; 
                 
                 if (!editingPurchaseId) { 
@@ -14133,7 +14199,7 @@
             }
             var saveAssetData = window.saveAssetData;
 
-        function savePBData() {
+        async function savePBData() {
             let partyId = document.getElementById('pb_vendor').value; let date = document.getElementById('pb_date').value; let evId = document.getElementById('pb_event_link').value; let refNo = document.getElementById('pb_ref').value;
             if (!partyId || !date) { alert("Fill all required fields!"); return; }
             let items = []; document.querySelectorAll('#pb_items_container .quote-item-row').forEach(row => { let name = row.querySelector('.i-item-name').value; let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); });
@@ -14152,7 +14218,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('pb', evId);
 
-            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbFileInput = document.getElementById('pb_file_upload'); let pbDocUrl = null; if (pbFileInput && pbFileInput.files[0]) { showLoader('Uploading document...'); pbDocUrl = await uploadDocToFirebase(pbFileInput.files[0], id, 'PB'); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks, docUrl: pbDocUrl };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -14765,7 +14831,7 @@
                     subtotal += item.amount;
                     bodyHtml += `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 6px;">${sanitize(item.name)}</td><td style="padding: 6px; text-align: center;">${item.qty}</td><td style="padding: 6px; text-align: right;">₹${item.rate.toLocaleString('en-IN')}</td><td style="padding: 6px; text-align: right;">₹${item.amount.toLocaleString('en-IN')}</td></tr>`;
                 });
-                bodyHtml += `</table>${record.remarks ? `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Remarks:</strong> ${sanitize(record.remarks)}</div>` : ''}<div style="text-align: right; line-height: 1.6;">`;
+                bodyHtml += `</table>${record.remarks ? `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Remarks:</strong> ${sanitize(record.remarks)}</div>` : ''}${record.docUrl ? `<div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Attached Document:</strong><br>${record.docUrl.type && record.docUrl.type.startsWith('image/') ? `<img src="${record.docUrl.url}" style="max-width:100%; max-height:300px; border-radius:8px; margin-top:8px; cursor:pointer;" onclick="window.open('${record.docUrl.url}', '_blank')">` : `<a href="${record.docUrl.url}" target="_blank" style="color:var(--accent-color); font-weight:700;">📄 ${sanitize(record.docUrl.name || 'View Document')}</a>`}</div>` : ''}<div style="text-align: right; line-height: 1.6;">`;
 
                 if (record.type === 'Invoice' || record.type === 'PB' || record.type === 'Asset') {
                     bodyHtml += `<strong>Subtotal:</strong> ₹${(record.total + record.discount).toLocaleString('en-IN')}<br>${record.discount > 0 ? `<strong>Discount:</strong> ₹${record.discount.toLocaleString('en-IN')}<br>` : ''}<strong>Base Total:</strong> ₹${record.total.toLocaleString('en-IN')}<br><strong>GST (${record.gstPercent}%):</strong> ₹${record.taxAmount.toLocaleString('en-IN')}<br><strong style="font-size: 14px; color: var(--text-primary);">Grand Total: ₹${record.finalTotal.toLocaleString('en-IN')}</strong><br><div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;"><strong style="color: var(--success);">Total Paid/Advance: ₹${record.advance.toLocaleString('en-IN')}</strong><br><strong style="color: var(--danger); font-size: 14px;">Balance Due: ₹${record.balanceDue.toLocaleString('en-IN')}</strong></div>`;
@@ -15190,6 +15256,8 @@
             // ==========================================
             // 🚀 SMART COMPACT FOOTER (DOUBLE PAGE-BREAK LOCK)
             // ==========================================
+            if (record.docUrl && record.docUrl.url) { html += `<div style="margin-top:15px; page-break-inside:avoid;"><span class="section-label">Attached Document</span>`; if (record.docUrl.type && record.docUrl.type.startsWith('image/')) { html += `<div style="text-align:center;"><img src="${record.docUrl.url}" style="max-width:100%; max-height:500px; border:1px solid #e2e8f0; border-radius:8px;"></div>`; } else { html += `<div style="text-align:center; padding:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;"><a href="${record.docUrl.url}" target="_blank" style="color:#2563eb; font-weight:700; font-size:14px;">📄 ${sanitize(record.docUrl.name || 'View Document')}</a></div>`; } html += `</div>`; }
+
             html += `<div style="page-break-inside: avoid; break-inside: avoid; margin-top: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #0f172a; padding-top: 15px;">
                     <div style="flex: 1; padding-right: 20px;">`;
@@ -16734,6 +16802,13 @@
             let oldTx = bankTxDB[editId];
             let loanId = oldTx.linkedLoanId;
 
+            // Send to recycle bin before deleting
+            let emiPartyName = partiesDB[pId] ? partiesDB[pId].name : 'Unknown';
+            let emiRecord = JSON.parse(JSON.stringify(oldTx));
+            if (oldTx.refId && purchaseDB[oldTx.refId]) { emiRecord._linkedPaymentOut = JSON.parse(JSON.stringify(purchaseDB[oldTx.refId])); }
+            if (oldTx.linkedExpId && expenseDB[oldTx.linkedExpId]) { emiRecord._linkedInterestExpense = JSON.parse(JSON.stringify(expenseDB[oldTx.linkedExpId])); }
+            sendToTrash('EMI', editId, emiRecord, `EMI Payment - ₹${oldTx.amount.toLocaleString('en-IN')} (${emiPartyName})`);
+
             if (bankDB[oldTx.accountId]) bankDB[oldTx.accountId].balance += oldTx.amount;
             if (partiesDB[pId]) partiesDB[pId].balance -= (oldTx.principal || oldTx.amount);
 
@@ -16747,7 +16822,7 @@
             updateDataAndUI();
             document.getElementById('emiModal').style.display = 'none';
             openPartyLedger(pId, loanId);
-            alert("EMI record deleted successfully.");
+            if (typeof showToast === 'function') showToast('EMI record moved to Recycle Bin', 'info', 3000);
         }
 
         function downloadLoanStatement(partyId) {
@@ -18741,6 +18816,23 @@
         // ek baar "What's New" popup + notification milegi, aur ye history
         // hamesha Settings > What's New mein bhi dekhi ja sakti hai.
         const APP_CHANGELOG = [
+            {
+                version: "2026.08.25",
+                title: "🎉 Latest Updates",
+                changes: [
+                    "New: Upload documents and photos directly in Purchase Order, Vendor Bill, and Asset forms — stored securely on cloud",
+                    "New: Uploaded documents appear in bill preview and print with high-quality zoom support",
+                    "New: Loan receipt now has a premium printable view with progress bar, EMI stats, and share button",
+                    "New: Add Party selector and Contact Picker added to Add Event form (same as Add Lead)",
+                    "New: Remarks/Notes field added to Purchase Order, Vendor Bill, and Asset forms",
+                    "Fixed: Loan receipt is now clickable in party ledger — opens detailed preview",
+                    "Fixed: Party Bill No. now shows alongside Voucher No. in all bill previews and prints",
+                    "Fixed: Discount amount now displays clearly in all bill previews and prints",
+                    "Fixed: EMI interest entry cannot be deleted standalone — must delete full EMI payment",
+                    "Fixed: Deleted EMI payments now go to Recycle Bin for safe recovery",
+                    "Improved: All Hinglish alert messages converted to proper English"
+                ]
+            },
             {
                 version: "2026.08.06",
                 title: "🎉 Latest Updates",
