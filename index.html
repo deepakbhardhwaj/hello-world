@@ -6759,7 +6759,6 @@
                     </div>
 
                     <div id="quote_events_container"></div>
-
                     <div id="quote_items_container"></div>
 
                     <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
@@ -6785,20 +6784,20 @@
         <div id="quoteEventPanel" class="modal-overlay" style="display:none; z-index:8000;">
             <div style="position:absolute; right:0; top:0; bottom:0; width:90%; max-width:400px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
                 <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
-                    <h3>Event Schedule</h3>
+                    <h3>Function Details</h3>
                     <button class="modal-close" onclick="closeQuoteEventPanel()">&times;</button>
                 </div>
                 <div style="padding:16px; overflow-y:auto; flex:1;">
                     <div id="qev_list" style="margin-bottom:12px;"></div>
                     <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">
-                        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;" id="qev_form_title">Add New Event</div>
-                        <div class="form-group"><label class="form-label">Event Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi Ceremony"></div>
+                        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;" id="qev_form_title">Add New Function</div>
+                        <div class="form-group"><label class="form-label">Function Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi Ceremony"></div>
                         <div class="form-row">
                             <div class="form-group"><label class="form-label">Date</label><input type="date" id="qev_date" class="form-input"></div>
                             <div class="form-group"><label class="form-label">Time</label><input type="time" id="qev_time" class="form-input"></div>
                         </div>
                         <div class="form-group"><label class="form-label">Venue</label><input type="text" id="qev_venue" class="form-input" placeholder="e.g. Royal Palace Lawn"></div>
-                        <button type="button" class="btn-main" onclick="saveQuoteEvent()" style="font-size:12px; padding:8px;">Save Event</button>
+                        <button type="button" class="btn-main" onclick="saveQuoteEvent()" style="font-size:12px; padding:8px;">Save Function</button>
                     </div>
                 </div>
             </div>
@@ -6807,12 +6806,12 @@
         <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:8000;">
             <div style="position:absolute; right:0; top:0; bottom:0; width:92%; max-width:420px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
                 <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
-                    <h3>Services & Items</h3>
+                    <h3>Add Services / Items</h3>
                     <button class="modal-close" onclick="closeQuoteItemPanel()">&times;</button>
                 </div>
                 <div style="padding:16px; overflow-y:auto; flex:1;">
                     <div class="form-group">
-                        <label class="form-label">Select Event</label>
+                        <label class="form-label">Select Function</label>
                         <select id="qip_event" class="form-select" onchange="renderQIPList();"></select>
                     </div>
                     <div id="qip_items_list" style="margin-bottom:12px;"></div>
@@ -13039,16 +13038,23 @@
         }
         function renderQuoteEvents() {
             let container = document.getElementById('quote_events_container');
-            let html = '';
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color); margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color);">Function Details</label>';
+            html += '<button type="button" onclick="openQuoteEventPanel()" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button>';
+            html += '</div>';
+            if (quoteEventsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function" to get started.</p>';
+            }
             quoteEventsData.forEach((ev, i) => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
-                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
-                html += '<strong style="font-size:13px; color:var(--text-primary);">' + ev.name + '</strong>';
-                html += '<button onclick="openQuoteEventPanel(); setTimeout(()=>{editQuoteEvent(' + i + ');},100);" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; font-weight:700;">Edit</button>';
+                html += '<div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
+                html += '<strong style="font-size:12px; color:var(--text-primary);">' + ev.name + '</strong>';
+                html += '<button onclick="openQuoteEventPanel(); setTimeout(()=>{editQuoteEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
-                    html += '<div style="font-size:11px; color:var(--text-secondary); line-height:1.5;">';
+                    html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5;">';
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
@@ -13056,7 +13062,7 @@
                 }
                 html += '</div>';
             });
-            html += '<div class="form-group"><button type="button" class="link-btn" onclick="openQuoteEventPanel()" style="font-size:11px;">+ Add Event Details</button></div>';
+            html += '</div>';
             container.innerHTML = html;
         }
 
@@ -13128,29 +13134,34 @@
         }
         function renderQuoteItems() {
             let container = document.getElementById('quote_items_container');
-            let html = '';
-            if (quoteItemsData.length > 0) {
-                quoteEventsData.forEach(ev => {
-                    let evItems = quoteItemsData.filter(i => i.event === ev.name);
-                    if (evItems.length === 0) return;
-                    let evTotal = evItems.reduce((s, i) => s + i.amount, 0);
-                    let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short'}) : '';
-                    html += '<div style="margin-bottom:8px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">';
-                    html += '<div style="background:var(--bg-color); padding:6px 12px; font-size:12px; font-weight:700; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">';
-                    html += '<span>' + ev.name + (d ? ' - ' + d : '') + (ev.time ? ' ' + ev.time : '') + '</span>';
-                    html += '<span style="color:var(--text-secondary);">\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
-                    evItems.forEach(item => {
-                        html += '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-color); padding:8px 12px; border-bottom:1px solid var(--bg-color); font-size:11px;">';
-                        html += '<div style="flex:1;"><strong style="color:var(--text-primary);">' + item.name + '</strong>';
-                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:2px;">' + item.desc + '</div>';
-                        html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
-                        html += '<div style="font-weight:800; color:var(--text-primary); font-size:12px;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
-                        html += '</div>';
-                    });
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color); margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color);">Services / Items</label>';
+            html += '<button type="button" onclick="openQuoteItemPanel()" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Item</button>';
+            html += '</div>';
+            if (quoteItemsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Click "Add Item" to get started.</p>';
+            }
+            quoteEventsData.forEach(ev => {
+                let evItems = quoteItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                let evTotal = evItems.reduce((s, i) => s + i.amount, 0);
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short'}) : '';
+                html += '<div style="margin-bottom:8px; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">';
+                html += '<div style="background:var(--bg-color); padding:5px 10px; font-size:11px; font-weight:700; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">';
+                html += '<span>' + ev.name + (d ? ' - ' + d : '') + (ev.time ? ' ' + ev.time : '') + '</span>';
+                html += '<span style="color:var(--text-secondary);">\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                evItems.forEach(item => {
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-color); padding:7px 10px; border-bottom:1px solid var(--bg-color); font-size:11px;">';
+                    html += '<div style="flex:1;"><strong style="color:var(--text-primary);">' + item.name + '</strong>';
+                    if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.desc + '</div>';
+                    html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
+                    html += '<div style="font-weight:800; color:var(--text-primary); font-size:12px;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
                     html += '</div>';
                 });
-            }
-            html += '<div class="form-group"><button type="button" class="link-btn" onclick="openQuoteItemPanel()" style="font-size:11px;">+ Add Services / Items</button></div>';
+                html += '</div>';
+            });
+            html += '</div>';
             container.innerHTML = html;
         }
 
