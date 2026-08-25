@@ -6841,38 +6841,7 @@
             </div>
         </div>
 
-        <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:10600;">
-            <div style="position:absolute; right:0; top:0; bottom:0; width:92%; max-width:420px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
-                <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
-                    <h3>Add Services / Items</h3>
-                    <button class="modal-close" onclick="closeQuoteItemPanel()">&times;</button>
-                </div>
-                <div style="padding:16px; overflow-y:auto; flex:1;">
-                    <div class="form-group">
-                        <label class="form-label">Select Function</label>
-                        <select id="qip_event" class="form-select" onchange="renderQIPList();"></select>
-                    </div>
-                    <div id="qip_items_list" style="margin-bottom:12px;"></div>
-                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">
-                        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>
-                        <div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="qip_name" class="form-input" placeholder="Enter item name & details"></div>
-                        <div class="form-row">
-                            <div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="qip_unit" class="form-select"></select></div>
-                            <div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="qip_qty" class="form-input" value="1" oninput="updateQIPGross()"></div>
-                            <div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="qip_rate" class="form-input" value="0" oninput="updateQIPGross()"></div>
-                        </div>
-                        <div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="qip_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">Event Total: <span id="qip_gross" style="color:var(--accent-color);">&#8377;0</span></div>
-                            <button type="button" class="btn-main" onclick="saveQuoteItem()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>
-                        </div>
-                    </div>
-                </div>
-                <div style="padding:12px 16px; border-top:1px solid var(--border-color); background:var(--surface-color);">
-                    <button type="button" class="btn-main" onclick="closeQuoteItemPanel()" style="background:var(--text-secondary); font-size:12px; padding:8px;">Done</button>
-                </div>
-            </div>
-        </div>
+
 
         <div id="quotePreviewModal" class="modal-overlay" style="display:none; z-index:10600;">
             <div class="modal-content" style="max-width:550px;">
@@ -13394,10 +13363,9 @@
             let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
             html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
             html += '<label class="form-label" style="margin:0; color:var(--success); font-size:11px;">Services / Items</label>';
-            html += '<button type="button" onclick="openQuoteItemPanel()" style="background:var(--success); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(5,150,105,0.2);">+ Add Item</button>';
             html += '</div>';
             if (quoteItemsData.length === 0) {
-                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Click "Add Item" to get started.</p>';
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Use "View" button to add items per function.</p>';
             }
             quoteEventsData.forEach((ev, evIdx) => {
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
@@ -13488,11 +13456,13 @@
             let evColor = getEventColor(ev);
             let textColor = getContrastColor(evColor);
             let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            // Scrollable item list
+            html += '<div style="max-height:300px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px;">';
             if (evItems.length === 0) {
                 html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px 0;">No items for this function yet.</p>';
             } else {
                 html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-                html += '<tr style="background:var(--bg-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px 4px; text-align:center; width:20px;">#</th><th style="padding:6px 8px; text-align:left;">Item / Service</th><th style="padding:6px 4px; text-align:center; width:40px;">Qty</th><th style="padding:6px 4px; text-align:right; width:50px;">Rate</th><th style="padding:6px 4px; text-align:right; width:60px;">Amount</th><th style="width:30px;"></th></tr>';
+                html += '<tr style="background:var(--bg-color); position:sticky; top:0; z-index:1;"><th style="padding:6px 4px; text-align:center; width:20px; border-bottom:1px solid var(--border-color);">#</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Item / Service</th><th style="padding:6px 4px; text-align:center; width:40px; border-bottom:1px solid var(--border-color);">Qty</th><th style="padding:6px 4px; text-align:right; width:50px; border-bottom:1px solid var(--border-color);">Rate</th><th style="padding:6px 4px; text-align:right; width:60px; border-bottom:1px solid var(--border-color);">Amount</th><th style="width:30px; border-bottom:1px solid var(--border-color);"></th></tr>';
                 evItems.forEach((item) => {
                     let realIdx = quoteItemsData.indexOf(item);
                     html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (evItems.indexOf(item) + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + item.name + '</strong>';
@@ -13506,8 +13476,9 @@
                 html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td colspan="2" style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
                 html += '</table>';
             }
-            // Inline Add Item form
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-top:12px; background:var(--surface-color);">';
+            html += '</div>';
+            // Inline Add Item form (always visible at bottom)
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
             html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="qiv_name" class="form-input" placeholder="Enter item name"></div>';
             html += '<div class="form-row">';
