@@ -13034,7 +13034,13 @@
             return luminance > 0.55 ? '#0F172A' : '#FFFFFF';
         }
         function getEventColor(ev) {
-            if (ev.color && ev.color !== '#FFFFFF') return ev.color;
+            if (ev.color && ev.color !== '#FFFFFF' && ev.color !== '#ffffff') {
+                // Map old flashy colors to soft pastels
+                let map = {'#FCD34D':'#FEF3C7','#34D399':'#D1FAE5','#F472B6':'#FCE7F3','#818CF8':'#E0E7FF','#C084FC':'#F3E8FF','#60A5FA':'#DBEAFE','#FB923C':'#FFEDD5','#F87171':'#FEE2E2','#3B82F6':'#DBEAFE','#8B5CF6':'#E0E7FF','#EC4899':'#FCE7F3','#10B981':'#D1FAE5','#F59E0B':'#FEF3C7','#06B6D4':'#CFFAFE','#EF4444':'#FEE2E2','#6366F1':'#E0E7FF'};
+                let upper = ev.color.toUpperCase();
+                if (map[upper]) return map[upper];
+                return ev.color;
+            }
             return '#FFFFFF';
         }
         function saveQuoteEvent() {
@@ -13211,7 +13217,7 @@
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; overflow:hidden;">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
                 html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</div>';
-                html += '<button type="button" onclick="openQuoteItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '<button type="button" onclick="openQuoteItemPreviewView(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
             });
             html += '</div>';
@@ -13238,6 +13244,33 @@
             let evColor = getEventColor(ev);
             let textColor = getContrastColor(evColor);
             let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + sanitize(ev.name) + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
+            } else {
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr style="background:var(--bg-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px 4px; text-align:center; width:20px;">#</th><th style="padding:6px 8px; text-align:left;">Item / Service</th><th style="padding:6px 4px; text-align:center; width:40px;">Qty</th><th style="padding:6px 4px; text-align:right; width:50px;">Rate</th><th style="padding:6px 4px; text-align:right; width:60px;">Amount</th></tr>';
+                evItems.forEach((item, i) => {
+                    html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (i + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                    if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                    html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.unit || 'Pcs') + '</div></td>';
+                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                });
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+                html += '</table>';
+            }
+            document.getElementById('quoteItemReadBody').innerHTML = html;
+            let rModal = document.getElementById('quoteItemReadModal');
+            rModal.style.setProperty('z-index', '10700', 'important');
+            rModal.style.display = 'flex';
+        }
+        function openQuoteItemPreviewView(evIdx) {
+            let ev = quoteEventsData[evIdx];
+            if (!ev) return;
+            let evItems = quoteItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
             if (evItems.length === 0) {
                 html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
             } else {
@@ -13375,7 +13408,7 @@
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
                 html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</div>';
-                html += '<button onclick="document.getElementById(\'quotePreviewModal\').style.display=\'none\'; openQuoteItemViewPanel(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '<button onclick="openQuoteItemPreviewView(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
             });
             html += '</div>';
