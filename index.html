@@ -6804,7 +6804,7 @@
                         <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;" id="qev_form_title">Add New Function</div>
                         <div class="form-row">
                             <div class="form-group" style="flex:1;"><label class="form-label">Function Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi Ceremony"></div>
-                            <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><select id="qev_color" class="form-input" style="height:34px; padding:2px 6px; cursor:pointer; font-size:12px;"><option value="#FFFFFF">Default (White)</option><option value="#DBEAFE">Light Blue</option><option value="#E0E7FF">Lavender</option><option value="#FCE7F3">Light Pink</option><option value="#D1FAE5">Mint Green</option><option value="#FEF3C7">Cream Yellow</option><option value="#F3E8FF">Light Purple</option><option value="#FFEDD5">Peach</option><option value="#FEE2E2">Light Red</option><option value="#CFFAFE">Light Cyan</option></select></div>
+                            <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="qev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group"><label class="form-label">Date</label><input type="date" id="qev_date" class="form-input"></div>
@@ -13051,9 +13051,9 @@
                 }
                 h /= 6;
             }
-            // Desaturate to 25%, lighten to 88%
-            s = Math.min(s * 0.25, 0.25);
-            l = 0.88;
+            // Soften: 50% saturation, 75% lightness
+            s = Math.min(s * 0.5, 0.5);
+            l = 0.75;
             // Convert back to RGB
             let r1, g1, b1;
             if (s === 0) { r1 = g1 = b1 = l; }
