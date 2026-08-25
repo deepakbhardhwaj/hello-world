@@ -6763,12 +6763,12 @@
 
                     <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
                         <div class="form-row">
-                            <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" oninput="calculateQuoteTotal()" readonly style="background:#F1F5F9;"></div>
-                            <div class="form-group"><label class="form-label">Discount</label><input type="number" id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()"></div>
+                            <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" style="font-weight:700;"></div>
+                            <div class="form-group"><label class="form-label">Discount</label><input type="number" id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" style="color:var(--accent-color);">Net Total</label>
-                            <input type="number" id="q_total" class="form-input" readonly style="font-size:16px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE;">
+                            <input type="number" id="q_total" class="form-input" style="font-size:16px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE;">
                         </div>
                         <div class="form-group" style="margin:12px 0 0 0;">
                             <label class="form-label">Remarks / Notes</label>
@@ -12964,7 +12964,7 @@
             if (preFillEvent || preFillDate) {
                 quoteEventsData.push({ name: preFillEvent || '', date: preFillDate || '', time: '', venue: '' });
             }
-            renderQuoteEvents(); renderQuoteItems(); calculateQuoteTotal();
+            renderQuoteEvents(); renderQuoteItems(); syncQuoteGrossFromItems();
             document.getElementById('quotationModal').style.display = 'flex';
         }
 
@@ -13038,10 +13038,10 @@
         }
         function renderQuoteEvents() {
             let container = document.getElementById('quote_events_container');
-            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color); margin-bottom:12px;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
-            html += '<label class="form-label" style="margin:0; color:var(--accent-color);">Function Details</label>';
-            html += '<button type="button" onclick="openQuoteEventPanel()" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button>';
+            let html = '<div style="border:1px solid #BFDBFE; border-radius:8px; padding:12px; background:var(--accent-light); margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #BFDBFE;">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
+            html += '<button type="button" onclick="openQuoteEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>';
             html += '</div>';
             if (quoteEventsData.length === 0) {
                 html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function" to get started.</p>';
@@ -13084,7 +13084,7 @@
         }
         function closeQuoteItemPanel() {
             document.getElementById('quoteItemPanel').style.display = 'none';
-            renderQuoteItems(); calculateQuoteTotal();
+            renderQuoteItems(); syncQuoteGrossFromItems();
         }
         function updateQIPGross() {
             let qty = parseFloat(document.getElementById('qip_qty').value) || 0;
@@ -13134,10 +13134,10 @@
         }
         function renderQuoteItems() {
             let container = document.getElementById('quote_items_container');
-            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color); margin-bottom:12px;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
-            html += '<label class="form-label" style="margin:0; color:var(--accent-color);">Services / Items</label>';
-            html += '<button type="button" onclick="openQuoteItemPanel()" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Item</button>';
+            let html = '<div style="border:1px solid #A7F3D0; border-radius:8px; padding:12px; background:var(--success-light); margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #A7F3D0;">';
+            html += '<label class="form-label" style="margin:0; color:var(--success); font-size:11px;">Services / Items</label>';
+            html += '<button type="button" onclick="openQuoteItemPanel()" style="background:var(--success); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(5,150,105,0.2);">+ Add Item</button>';
             html += '</div>';
             if (quoteItemsData.length === 0) {
                 html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Click "Add Item" to get started.</p>';
@@ -13166,14 +13166,19 @@
         }
 
         function calculateQuoteTotal() {
-            let gross = quoteItemsData.reduce((s, i) => s + (i.amount || 0), 0);
             let grossEl = document.getElementById('q_gross');
-            if (grossEl) grossEl.value = gross;
             let discount = parseFloat(document.getElementById('q_discount') ? document.getElementById('q_discount').value : 0) || 0;
+            let gross = parseFloat(grossEl ? grossEl.value : 0) || 0;
             let net = gross - discount;
             if (net < 0) net = 0;
             let totalEl = document.getElementById('q_total');
             if (totalEl) totalEl.value = net;
+        }
+        function syncQuoteGrossFromItems() {
+            let gross = quoteItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+            let grossEl = document.getElementById('q_gross');
+            if (grossEl) grossEl.value = gross;
+            calculateQuoteTotal();
         }
 
         // PREVIEW SCREEN
