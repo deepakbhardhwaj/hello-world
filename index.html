@@ -6745,7 +6745,7 @@
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
                     <h3 id="quote-modal-title">Create Quotation</h3>
-                    <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null;">&times;</button>
+                    <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null; showNavAndFabs();">&times;</button>
                 </div>
                 <form id="quoteForm" onsubmit="event.preventDefault();" novalidate>
                     <div class="form-group">
@@ -6863,16 +6863,7 @@
                 <button onclick="closeQuoteItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
-        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:10700;">
-            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
-                <div class="modal-header">
-                    <h3>Item Details</h3>
-                    <button class="modal-close" onclick="document.getElementById('quoteItemReadModal').style.display='none'">&times;</button>
-                </div>
-                <div id="quoteItemReadBody" style="padding:0 0 12px 0;"></div>
-                <button onclick="document.getElementById('quoteItemReadModal').style.display='none'" class="btn-main" style="font-size:12px;">Close</button>
-            </div>
-        </div>
+
 
         <div id="directInvoiceModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
@@ -7491,7 +7482,17 @@
                     onclick="confirmLinkAdvances()">Link</button>
             </div>
         </div>
-        <div id="applyBillsModal" class="modal-overlay" style="z-index: 6100;">
+        <div id="applyBillsM        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:10700;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3>Item Details</h3>
+                    <button class="modal-close" onclick="document.getElementById('quoteItemReadModal').style.display='none'">&times;</button>
+                </div>
+                <div id="quoteItemReadBody" style="padding:0 0 12px 0;"></div>
+                <button onclick="document.getElementById('quoteItemReadModal').style.display='none'" class="btn-main" style="font-size:12px;">Close</button>
+            </div>
+        </div>
+odal" class="modal-overlay" style="z-index: 6100;">
             <div class="modal-content" style="max-width: 400px;">
                 <div class="modal-header">
                     <h3>Apply to Bills</h3><button class="modal-close"
@@ -12980,6 +12981,7 @@
         let quoteEventsData = []; let quoteItemsData = []; let editingQuoteEventIdx = -1;
 
         function openQuotationModal(preFillPartyId = null, preFillEvent = "", preFillDate = "") {
+            hideNavAndFabs();
             editingSalesId = null;
             document.getElementById('quote-modal-title').innerText = "Create Quotation";
             loadPartiesIntoSelect('q_party', preFillPartyId);
@@ -12994,6 +12996,8 @@
 
         // EVENT PANEL FUNCTIONS
         function openQuoteEventPanel() {
+            let epModal = document.getElementById('quoteEventPanel');
+            if (epModal) epModal.style.setProperty('z-index', '10600', 'important');
             document.getElementById('qev_name').value = '';
             document.getElementById('qev_date').value = '';
             document.getElementById('qev_time').value = '';
@@ -13122,6 +13126,8 @@
 
         // ITEM PANEL FUNCTIONS
         function openQuoteItemPanel() {
+            let ipModal = document.getElementById('quoteItemPanel');
+            if (ipModal) ipModal.style.setProperty('z-index', '10600', 'important');
             let eventSel = document.getElementById('qip_event');
             let opts = '<option value="">-- Select Event --</option>';
             quoteEventsData.forEach(ev => { opts += '<option value="' + ev.name + '">' + ev.name + '</option>'; });
@@ -13214,6 +13220,8 @@
         let quoteViewEvIdx = -1;
         function openQuoteItemViewPanel(evIdx) {
             quoteViewEvIdx = evIdx;
+            let ivModal = document.getElementById('quoteItemViewModal');
+            if (ivModal) ivModal.style.setProperty('z-index', '10600', 'important');
             renderQuoteItemView();
             document.getElementById('quoteItemViewModal').style.display = 'flex';
         }
@@ -13245,7 +13253,9 @@
                 html += '</table>';
             }
             document.getElementById('quoteItemReadBody').innerHTML = html;
-            document.getElementById('quoteItemReadModal').style.display = 'flex';
+            let rModal = document.getElementById('quoteItemReadModal');
+            rModal.style.setProperty('z-index', '10700', 'important');
+            rModal.style.display = 'flex';
         }
         function renderQuoteItemView() {
             let ev = quoteEventsData[quoteViewEvIdx];
@@ -13328,6 +13338,9 @@
 
         // PREVIEW SCREEN
         function showQuotePreview() {
+            hideNavAndFabs();
+            let pModal = document.getElementById('quotePreviewModal');
+            if (pModal) pModal.style.setProperty('z-index', '10600', 'important');
             let partyId = document.getElementById('q_party').value;
             if (!partyId) { alert('Please select a client/party!'); return; }
             if (quoteEventsData.length === 0) { alert('Please add at least one function!'); return; }
@@ -13395,6 +13408,7 @@
             updateDataAndUI();
             document.getElementById('quotePreviewModal').style.display = 'none';
             document.getElementById('quotationModal').style.display = 'none';
+            showNavAndFabs();
             let savedSourceLeadId = currentQuoteSourceLeadId;
             currentQuoteSourceLeadId = null;
             let activeTab = document.querySelector('.active-section');
@@ -14840,7 +14854,7 @@
         // 🚀 UPDATED EDIT FUNCTIONS
         function editSalesRecord(id, event) {
             if (event) { event.stopPropagation(); event.preventDefault(); }
-            closeAllOverlays(); closeAllMenus(); let record = salesDB[id]; editingSalesId = id;
+            closeAllOverlays(); closeAllMenus(); hideNavAndFabs(); let record = salesDB[id]; editingSalesId = id;
             if (record.type === 'Quotation') {
                 document.getElementById('quote-modal-title').innerText = "Edit Quotation";
                 loadPartiesIntoSelect('q_party', record.partyId);
@@ -15310,6 +15324,8 @@
         // ==========================================
         function viewDetails(id, context = 'sales') {
             hideNavAndFabs();
+            let vModal = document.getElementById('quoteViewModal');
+            if (vModal) vModal.style.setProperty('z-index', '10600', 'important');
             let record = null;
             if (context === 'sales') { record = salesDB[id]; }
             else if (context === 'purchase') { record = purchaseDB[id]; }
