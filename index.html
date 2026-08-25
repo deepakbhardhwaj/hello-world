@@ -6376,8 +6376,8 @@
                     <div class="form-group"><label class="form-label">Payment Mode</label><select id="pay_mode"
                             class="form-select dynamic-pay-mode"></select></div>
                     <div class="form-group"><label class="form-label">Reference / Notes</label><input type="text"
-                            id="pay_ref" class="form-input" placeholder="e.g. UPI Ref No."></div><button type="button"
-                        class="btn-main" style="background:var(--success);" <div class="form-group">
+                            id="pay_ref" class="form-input" placeholder="e.g. UPI Ref No."></div>
+                    <div class="form-group">
                         <label class="form-label">Attach Documents</label>
                         <label for="pay_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label>
                         <input type="file" id="pay_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('Receipt', 'pay_file_upload', 'pay_file_preview')">
@@ -6437,8 +6437,7 @@
                             placeholder="e.g. UPI Ref No. / Cheque No.">
                     </div>
 
-                    <button type="button" class="btn-main" style="background:var(--danger);"
-                        <div class="form-group">
+                    <div class="form-group">
                         <label class="form-label">Attach Documents</label>
                         <label for="pay_out_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label>
                         <input type="file" id="pay_out_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('PaymentOut', 'pay_out_file_upload', 'pay_out_file_preview')">
