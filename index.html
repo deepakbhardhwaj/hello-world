@@ -15366,19 +15366,16 @@
                         bodyHtml += `<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:var(--text-secondary);">${evDate}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.time || '-'}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
                     });
                     bodyHtml += `</table></div>`;
-                    // EVENT-GROUPED ITEMS
+                    // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button)
                     record.events.forEach(ev => {
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
-                        if (evItems.length === 0) return;
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                        subtotal += evTotal;
                         let evColor = getEventColor(ev);
                         let textColor = getContrastColor(evColor);
-                        bodyHtml += `<div style="margin-bottom:8px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">`;
-                        bodyHtml += `<div style="background:${evColor}; color:${textColor}; padding:6px 10px; font-size:12px; font-weight:700; display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color);"><span>${sanitize(ev.name)}</span><span>₹${evTotal.toLocaleString('en-IN')}</span></div>`;
-                        evItems.forEach((item, itemIdx) => {
-                            subtotal += item.amount;
-                            bodyHtml += `<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid var(--bg-color); font-size:11px;"><div><strong style="color:var(--text-primary);">${itemIdx + 1}. ${sanitize(item.name)}</strong>${item.desc ? '<br><span style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</span>' : ''}<br><span style="font-size:9px; color:var(--text-secondary);">${item.qty} ${item.unit || 'Pcs'} × ₹${item.rate.toLocaleString('en-IN')}</span></div><div style="font-weight:800; color:var(--text-primary); font-size:12px;">₹${item.amount.toLocaleString('en-IN')}</div></div>`;
-                        });
+                        bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:8px; margin-bottom:6px; overflow:hidden;">`;
+                        bodyHtml += `<div style="background:${evColor}; color:${textColor}; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">${sanitize(ev.name)} <span style="font-size:9px; opacity:0.8;">(${evItems.length} items)</span></div>`;
+                        bodyHtml += `<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">₹${evTotal.toLocaleString('en-IN')}</div>`;
                         bodyHtml += `</div>`;
                     });
                 } else {
