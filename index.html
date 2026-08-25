@@ -5508,26 +5508,6 @@
         </div>
 
         
-        <div id="leadEventPanel" class="modal-overlay" style="display:none; z-index:10600;">
-            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
-                <div class="modal-header">
-                    <h3 id="lev_form_title">Add New Function</h3>
-                    <button class="modal-close" onclick="closeLeadEventPanel()">&times;</button>
-                </div>
-                <div style="padding:0 16px 16px;">
-                    <div class="form-group"><label class="form-label">Function Name</label><input type="text" id="lev_name" class="form-input" placeholder="e.g. Haldi, Mehndi, Wedding"></div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Date</label><input type="date" id="lev_date" class="form-input"></div>
-                        <div class="form-group"><label class="form-label">Time</label><input type="time" id="lev_time" class="form-input"></div>
-                    </div>
-                    <div class="form-group"><label class="form-label">Venue</label><input type="text" id="lev_venue" class="form-input"></div>
-                    <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="lev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
-                    <button onclick="saveLeadEvent()" class="btn-main" style="width:100%; font-size:12px; margin-top:8px;">Save Function</button>
-                    <div id="lev_list" style="margin-top:12px;"></div>
-                    <button onclick="closeLeadEventPanel()" class="btn-main" style="width:100%; font-size:12px; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; margin-top:8px;">Done</button>
-                </div>
-            </div>
-        </div>
 <div id="leadModal" class="modal-overlay">
             <style>
                 #leadModal .modal-content{max-width:520px;padding:0 0 24px 0;}
@@ -5669,6 +5649,27 @@
                     </form>
                 </div>
                 <button type="button" id="modal-save-btn" class="btn-main lf-save-btn" onclick="saveLeadData()">Save Lead</button>
+            </div>
+        </div>
+
+        <div id="leadEventPanel" class="modal-overlay" style="display:none; z-index:10600;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3 id="lev_form_title">Add New Function</h3>
+                    <button class="modal-close" onclick="closeLeadEventPanel()">&times;</button>
+                </div>
+                <div style="padding:0 16px 16px;">
+                    <div class="form-group"><label class="form-label">Function Name</label><input type="text" id="lev_name" class="form-input" placeholder="e.g. Haldi, Mehndi, Wedding"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Date</label><input type="date" id="lev_date" class="form-input"></div>
+                        <div class="form-group"><label class="form-label">Time</label><input type="time" id="lev_time" class="form-input"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Venue</label><input type="text" id="lev_venue" class="form-input"></div>
+                    <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="lev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
+                    <button onclick="saveLeadEvent()" class="btn-main" style="width:100%; font-size:12px; margin-top:8px;">Save Function</button>
+                    <div id="lev_list" style="margin-top:12px;"></div>
+                    <button onclick="closeLeadEventPanel()" class="btn-main" style="width:100%; font-size:12px; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; margin-top:8px;">Done</button>
+                </div>
             </div>
         </div>
 
@@ -9882,6 +9883,8 @@
         let leadEventsData = [];
         let editingLeadEventIdx = -1;
         function openLeadEventPanel() {
+            let leModal = document.getElementById('leadEventPanel');
+            if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
             document.getElementById('lev_name').value = '';
             document.getElementById('lev_date').value = '';
             document.getElementById('lev_time').value = '';
