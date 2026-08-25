@@ -6854,13 +6854,13 @@
         </div>
 
         <div id="quoteItemViewModal" class="modal-overlay" style="display:none; z-index:8500;">
-            <div class="modal-content" style="max-width:500px;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
                     <button class="modal-close" onclick="closeQuoteItemViewPanel()">&times;</button>
                 </div>
                 <div id="quoteItemViewBody" style="padding:0 0 12px 0;"></div>
-                <button onclick="closeQuoteItemViewPanel()" class="btn-main" style="font-size:12px;">Close</button>
+                <button onclick="closeQuoteItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
 
@@ -13200,34 +13200,78 @@
             html += '</div>';
             container.innerHTML = html;
         }
-        // VIEW PANEL: shows event-wise item details with Sr. No.
+        // VIEW PANEL: shows event-wise item details with Sr. No. + Add/Edit/Delete inline
+        let quoteViewEvIdx = -1;
         function openQuoteItemViewPanel(evIdx) {
-            let ev = quoteEventsData[evIdx];
-            if (!ev) return;
-            let evItems = quoteItemsData.filter(i => i.event === ev.name);
-            let evColor = getEventColor(ev);
-            let textColor = getContrastColor(evColor);
-            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' - Items (' + evItems.length + ')</div>';
-            if (evItems.length === 0) {
-                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
-            } else {
-                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-                html += '<tr style="background:var(--bg-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px 4px; text-align:center; width:24px;">#</th><th style="padding:6px 8px; text-align:left;">Item / Service</th><th style="padding:6px 4px; text-align:center; width:50px;">Qty</th><th style="padding:6px 4px; text-align:right; width:60px;">Rate</th><th style="padding:6px 8px; text-align:right; width:70px;">Amount</th></tr>';
-                evItems.forEach((item, i) => {
-                    html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (i + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + item.name + '</strong>';
-                    if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + item.desc + '</div>';
-                    html += '<div style="font-size:9px; color:var(--text-secondary);">Unit: ' + item.unit + '</div></td>';
-                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
-                });
-                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
-                html += '</table>';
-            }
-            document.getElementById('quoteItemViewBody').innerHTML = html;
+            quoteViewEvIdx = evIdx;
+            renderQuoteItemView();
             document.getElementById('quoteItemViewModal').style.display = 'flex';
         }
         function closeQuoteItemViewPanel() {
             document.getElementById('quoteItemViewModal').style.display = 'none';
+            renderQuoteItems(); syncQuoteGrossFromItems();
+        }
+        function renderQuoteItemView() {
+            let ev = quoteEventsData[quoteViewEvIdx];
+            if (!ev) return;
+            let evItems = quoteItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px 0;">No items for this function yet.</p>';
+            } else {
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr style="background:var(--bg-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px 4px; text-align:center; width:20px;">#</th><th style="padding:6px 8px; text-align:left;">Item / Service</th><th style="padding:6px 4px; text-align:center; width:40px;">Qty</th><th style="padding:6px 4px; text-align:right; width:50px;">Rate</th><th style="padding:6px 4px; text-align:right; width:60px;">Amount</th><th style="width:30px;"></th></tr>';
+                evItems.forEach((item) => {
+                    let realIdx = quoteItemsData.indexOf(item);
+                    html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (evItems.indexOf(item) + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + item.name + '</strong>';
+                    if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + item.desc + '</div>';
+                    html += '<div style="font-size:9px; color:var(--text-secondary);">' + item.unit + '</div></td>';
+                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td>';
+                    html += '<td style="padding:4px;"><button onclick="deleteQuoteItemFromView(' + realIdx + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:4px; padding:2px 6px; font-size:9px; cursor:pointer;">Del</button></td>';
+                    html += '</tr>';
+                });
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td colspan="2" style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+                html += '</table>';
+            }
+            // Inline Add Item form
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-top:12px; background:var(--surface-color);">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
+            html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="qiv_name" class="form-input" placeholder="Enter item name"></div>';
+            html += '<div class="form-row">';
+            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="qiv_unit" class="form-select">' + getUnitOptions() + '</select></div>';
+            html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="qiv_qty" class="form-input" value="1" oninput="updateQIVGross()"></div>';
+            html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="qiv_rate" class="form-input" value="0" oninput="updateQIVGross()"></div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="qiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="qiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
+            html += '<button type="button" class="btn-main" onclick="saveQuoteItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>';
+            html += '</div></div>';
+            document.getElementById('quoteItemViewBody').innerHTML = html;
+        }
+        function updateQIVGross() {
+            let qty = parseFloat(document.getElementById('qiv_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('qiv_rate').value) || 0;
+            document.getElementById('qiv_gross').innerText = '\u20B9' + (qty * rate).toLocaleString('en-IN');
+        }
+        function saveQuoteItemFromView() {
+            let ev = quoteEventsData[quoteViewEvIdx];
+            if (!ev) return;
+            let name = document.getElementById('qiv_name').value.trim();
+            if (!name) { alert('Please enter item name!'); return; }
+            let qty = parseFloat(document.getElementById('qiv_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('qiv_rate').value) || 0;
+            let unit = document.getElementById('qiv_unit') ? document.getElementById('qiv_unit').value : 'Pcs';
+            let desc = document.getElementById('qiv_desc').value.trim();
+            quoteItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty * rate, event: ev.name });
+            renderQuoteItemView();
+        }
+        function deleteQuoteItemFromView(idx) {
+            quoteItemsData.splice(idx, 1);
+            renderQuoteItemView();
         }
 
         function calculateQuoteTotal() {
@@ -13279,7 +13323,7 @@
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:8px; margin-bottom:6px; overflow:hidden;">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
                 html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</div>';
-                html += '<button onclick="openQuoteItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '<button onclick="document.getElementById(\'quotePreviewModal\').style.display=\'none\'; openQuoteItemViewPanel(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
             });
             // SUMMARY
@@ -15611,7 +15655,7 @@
                 .status-stamp { position:absolute; top: 150px; right: 50px; font-size: 40px; font-weight: 900; opacity: 0.1; text-transform: uppercase; transform: rotate(-15deg); border: 5px solid; padding: 10px 20px; border-radius: 10px; }
                 .stamp-Paid { color: #166534; border-color: #166534; } .stamp-Partial { color: #b45309; border-color: #b45309; } .stamp-Due { color: #dc2626; border-color: #dc2626; }
 
-                @media print { #mobile-print-btn { display:none !important; } body { background:white !important; } .receipt-box { border:none; box-shadow:none; padding:0; } }
+                @media print { #mobile-print-btn { display:none !important; } body { background:white !important; } .receipt-box { border:none; box-shadow:none; padding:0; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
             </style></head><body>
             <div class="receipt-box">`;
 
