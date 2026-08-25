@@ -6742,127 +6742,114 @@
         </div>
 
         <div id="quotationModal" class="modal-overlay" style="z-index: 5500;">
-            <div class="modal-content" style="max-width: 600px; max-height: 92vh; overflow-y: auto;">
-                <div class="modal-header" style="position:sticky; top:0; z-index:10; background:#0F172A; color:white; border-radius:0;">
-                    <h3 id="quote-modal-title" style="color:white;">Create Quotation</h3>
-                    <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null;" style="color:white;">&times;</button>
+            <div class="modal-content" style="max-width: 550px;">
+                <div class="modal-header">
+                    <h3 id="quote-modal-title">Create Quotation</h3>
+                    <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null;">&times;</button>
                 </div>
-                <form id="quoteForm" onsubmit="event.preventDefault();" novalidate style="padding:20px;">
-                    <!-- PARTY -->
-                    <div style="margin-bottom:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label class="form-label" style="margin:0; font-size:13px; font-weight:700; color:#334155;">Client / Party</label>
-                            <button type="button" class="link-btn" onclick="openPartyModal()" style="font-size:11px;">+ Add New</button>
+                <form id="quoteForm" onsubmit="event.preventDefault();" novalidate>
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0;">Select Client / Party</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New</button>
                         </div>
                         <input type="text" class="select-search-box" placeholder="Search Party or ID..."
-                            oninput="loadPartiesIntoSelect('q_party', document.getElementById('q_party').value, this.value)"
-                            style="border-radius:8px; margin-bottom:6px;">
-                        <select id="q_party" class="form-select" required style="border-radius:8px;"></select>
+                            oninput="loadPartiesIntoSelect('q_party', document.getElementById('q_party').value, this.value)">
+                        <select id="q_party" class="form-select" required></select>
                     </div>
 
-                    <!-- EVENTS LIST -->
-                    <div id="quote_events_container" style="margin-bottom:8px;"></div>
+                    <div id="quote_events_container"></div>
 
-                    <!-- ITEMS LIST -->
-                    <div id="quote_items_container" style="margin-bottom:8px;"></div>
+                    <div id="quote_items_container"></div>
 
-                    <!-- TOTALS -->
-                    <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; margin-bottom:16px; background:#F8FAFC;">
-                        <div class="form-row" style="margin-bottom:8px;">
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B;">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" style="font-size:14px; font-weight:700; padding:8px 10px;" oninput="calculateQuoteTotal()"></div>
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B;">Discount</label><input type="number" id="q_discount" class="form-input" value="0" style="font-size:14px; padding:8px 10px;" oninput="calculateQuoteTotal()"></div>
+                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" oninput="calculateQuoteTotal()" readonly style="background:#F1F5F9;"></div>
+                            <div class="form-group"><label class="form-label">Discount</label><input type="number" id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()"></div>
                         </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 4px; border-top:1px solid #E2E8F0; margin-top:4px;">
-                            <span style="font-size:14px; font-weight:700; color:#334155;">Net Total</span>
-                            <input type="number" id="q_total" class="form-input" readonly style="width:120px; text-align:right; font-size:18px; font-weight:800; color:#0F172A; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:8px; padding:6px 10px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" style="color:var(--accent-color);">Net Total</label>
+                            <input type="number" id="q_total" class="form-input" readonly style="font-size:16px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE;">
                         </div>
-                        <div class="form-group" style="margin:8px 0 0 0;"><label class="form-label" style="font-size:11px; color:#64748B;">Remarks</label><textarea id="q_remarks" class="form-input" rows="2" placeholder="Optional remarks for this quotation" style="font-size:12px; padding:8px 10px;"></textarea></div>
+                        <div class="form-group" style="margin:12px 0 0 0;">
+                            <label class="form-label">Remarks / Notes</label>
+                            <textarea id="q_remarks" class="form-input" rows="2" placeholder="Optional remarks for this quotation" style="font-size:12px; padding:8px 10px;"></textarea>
+                        </div>
                     </div>
 
-                    <button type="button" style="width:100%; background:#0F172A; color:white; border:none; border-radius:10px; padding:14px; font-size:14px; cursor:pointer; font-weight:700;"
-                        onclick="showQuotePreview()">Preview & Save Quotation</button>
+                    <button type="button" class="btn-main" onclick="showQuotePreview()">Preview & Save Quotation</button>
                 </form>
             </div>
         </div>
 
-        <!-- SLIDE-IN EVENT PANEL -->
-        <div id="quoteEventPanel" class="modal-overlay" style="display:none; z-index:8000; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">
-            <div style="position:absolute; right:0; top:0; bottom:0; width:92%; max-width:420px; background:#FAFBFC; border-radius:0; box-shadow:-12px 0 40px rgba(0,0,0,0.15); display:flex; flex-direction:column; animation:slideIn 0.3s ease;">
-                <div style="background:#0F172A; color:white; padding:18px 20px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin:0; font-size:17px; font-weight:700;">Event Schedule</h3>
-                        <p style="margin:2px 0 0; font-size:11px; color:#94A3B8;">Add function details with date, time & venue</p>
-                    </div>
-                    <button onclick="closeQuoteEventPanel()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:50%; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+        <div id="quoteEventPanel" class="modal-overlay" style="display:none; z-index:8000;">
+            <div style="position:absolute; right:0; top:0; bottom:0; width:90%; max-width:400px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
+                <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
+                    <h3>Event Schedule</h3>
+                    <button class="modal-close" onclick="closeQuoteEventPanel()">&times;</button>
                 </div>
-                <div style="padding:20px; overflow-y:auto; flex:1;">
-                    <div id="qev_list" style="margin-bottom:16px;"></div>
-                    <div id="qev_form" style="border:1px solid #E2E8F0; border-radius:10px; padding:16px; background:white;">
-                        <div style="font-size:13px; font-weight:700; color:#0F172A; margin-bottom:12px;" id="qev_form_title">Add New Event</div>
-                        <div class="form-group" style="margin-bottom:12px;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Event Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi Ceremony" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;"></div>
-                        <div class="form-row" style="margin-bottom:12px;">
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Date</label><input type="date" id="qev_date" class="form-input" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;"></div>
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Time</label><input type="time" id="qev_time" class="form-input" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;"></div>
+                <div style="padding:16px; overflow-y:auto; flex:1;">
+                    <div id="qev_list" style="margin-bottom:12px;"></div>
+                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">
+                        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;" id="qev_form_title">Add New Event</div>
+                        <div class="form-group"><label class="form-label">Event Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi Ceremony"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Date</label><input type="date" id="qev_date" class="form-input"></div>
+                            <div class="form-group"><label class="form-label">Time</label><input type="time" id="qev_time" class="form-input"></div>
                         </div>
-                        <div class="form-group" style="margin-bottom:14px;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Venue</label><input type="text" id="qev_venue" class="form-input" placeholder="e.g. Royal Palace Lawn" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;"></div>
-                        <button type="button" onclick="saveQuoteEvent()" style="width:100%; background:#0F172A; color:white; border:none; border-radius:8px; padding:11px; font-size:13px; font-weight:700; cursor:pointer;">Save Event</button>
+                        <div class="form-group"><label class="form-label">Venue</label><input type="text" id="qev_venue" class="form-input" placeholder="e.g. Royal Palace Lawn"></div>
+                        <button type="button" class="btn-main" onclick="saveQuoteEvent()" style="font-size:12px; padding:8px;">Save Event</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SLIDE-IN ITEM PANEL -->
-        <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:8000; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">
-            <div style="position:absolute; right:0; top:0; bottom:0; width:94%; max-width:440px; background:#FAFBFC; box-shadow:-12px 0 40px rgba(0,0,0,0.15); display:flex; flex-direction:column; animation:slideIn 0.3s ease;">
-                <div style="background:#0F172A; color:white; padding:18px 20px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin:0; font-size:17px; font-weight:700;">Services & Items</h3>
-                        <p style="margin:2px 0 0; font-size:11px; color:#94A3B8;">Add items linked to specific events</p>
-                    </div>
-                    <button onclick="closeQuoteItemPanel()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:50%; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+        <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:8000;">
+            <div style="position:absolute; right:0; top:0; bottom:0; width:92%; max-width:420px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
+                <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
+                    <h3>Services & Items</h3>
+                    <button class="modal-close" onclick="closeQuoteItemPanel()">&times;</button>
                 </div>
-                <div style="padding:20px; overflow-y:auto; flex:1;">
-                    <div class="form-group" style="margin-bottom:16px;">
-                        <label class="form-label" style="font-size:11px; font-weight:700; color:#64748B; margin-bottom:4px;">Select Event</label>
-                        <select id="qip_event" class="form-select" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;" onchange="renderQIPList();"></select>
+                <div style="padding:16px; overflow-y:auto; flex:1;">
+                    <div class="form-group">
+                        <label class="form-label">Select Event</label>
+                        <select id="qip_event" class="form-select" onchange="renderQIPList();"></select>
                     </div>
-                    <div id="qip_items_list" style="margin-bottom:16px;"></div>
-                    <div style="border:1px solid #E2E8F0; border-radius:10px; padding:16px; background:white;">
-                        <div style="font-size:13px; font-weight:700; color:#0F172A; margin-bottom:12px;">Add New Item</div>
-                        <div class="form-group" style="margin-bottom:12px;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Item / Service Name</label><input type="text" id="qip_name" class="form-input" placeholder="Enter item name & details" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;"></div>
-                        <div class="form-row" style="margin-bottom:12px;">
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Unit</label><select id="qip_unit" class="form-select" style="font-size:13px; padding:10px 8px; border-radius:8px; border:1px solid #CBD5E1;"></select></div>
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Qty</label><input type="number" id="qip_qty" class="form-input" value="1" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;" oninput="updateQIPGross()"></div>
-                            <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Rate</label><input type="number" id="qip_rate" class="form-input" value="0" style="font-size:14px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;" oninput="updateQIPGross()"></div>
+                    <div id="qip_items_list" style="margin-bottom:12px;"></div>
+                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">
+                        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>
+                        <div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="qip_name" class="form-input" placeholder="Enter item name & details"></div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="qip_unit" class="form-select"></select></div>
+                            <div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="qip_qty" class="form-input" value="1" oninput="updateQIPGross()"></div>
+                            <div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="qip_rate" class="form-input" value="0" oninput="updateQIPGross()"></div>
                         </div>
-                        <div class="form-group" style="margin-bottom:14px;"><label class="form-label" style="font-size:11px; color:#64748B; margin-bottom:4px;">Description (Optional)</label><input type="text" id="qip_desc" class="form-input" placeholder="Specification / details" style="font-size:12px; padding:10px 12px; border-radius:8px; border:1px solid #CBD5E1;"></div>
+                        <div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="qip_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="font-size:14px; font-weight:800; color:#0F172A;">Event Total: <span id="qip_gross" style="color:#475569;">&#8377;0</span></div>
-                            <button type="button" onclick="saveQuoteItem()" style="background:#0F172A; color:white; border:none; border-radius:8px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer;">+ Add Item</button>
+                            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">Event Total: <span id="qip_gross" style="color:var(--accent-color);">&#8377;0</span></div>
+                            <button type="button" class="btn-main" onclick="saveQuoteItem()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>
                         </div>
                     </div>
                 </div>
-                <div style="padding:14px 20px; border-top:1px solid #E2E8F0; background:white;">
-                    <button type="button" onclick="closeQuoteItemPanel()" style="width:100%; background:#0F172A; color:white; border:none; border-radius:8px; padding:12px; font-size:13px; font-weight:700; cursor:pointer;">Done</button>
+                <div style="padding:12px 16px; border-top:1px solid var(--border-color); background:var(--surface-color);">
+                    <button type="button" class="btn-main" onclick="closeQuoteItemPanel()" style="background:var(--text-secondary); font-size:12px; padding:8px;">Done</button>
                 </div>
             </div>
         </div>
 
-        <!-- QUOTATION PREVIEW SCREEN -->
         <div id="quotePreviewModal" class="modal-overlay" style="display:none; z-index:9000;">
-            <div class="modal-content" style="max-width:600px; max-height:92vh; overflow-y:auto;">
-                <div style="background:#0F172A; color:white; padding:18px 20px; border-radius:0; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="margin:0; font-size:16px; font-weight:700;">Quotation Preview</h3>
-                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:50%; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+            <div class="modal-content" style="max-width:550px;">
+                <div class="modal-header">
+                    <h3>Quotation Preview</h3>
+                    <button class="modal-close" onclick="document.getElementById('quotePreviewModal').style.display='none';">&times;</button>
                 </div>
-                <div id="quotePreviewBody" style="padding:20px;"></div>
-                <div style="display:flex; gap:10px; padding:16px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;">
-                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" style="flex:1; background:white; border:1px solid #CBD5E1; color:#334155; border-radius:8px; padding:11px; font-size:13px; font-weight:700; cursor:pointer;">Edit</button>
-                    <button onclick="confirmSaveQuotation()" style="flex:2; background:#0F172A; color:white; border:none; border-radius:8px; padding:11px; font-size:13px; font-weight:700; cursor:pointer;">Confirm & Save</button>
+                <div id="quotePreviewBody" style="padding:0 0 12px 0;"></div>
+                <div style="display:flex; gap:8px; padding-top:8px;">
+                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">Edit</button>
+                    <button onclick="confirmSaveQuotation()" class="btn-main" style="flex:2; font-size:12px;">Confirm & Save</button>
                 </div>
             </div>
         </div>
-
 
         <div id="directInvoiceModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
@@ -13030,20 +13017,20 @@
         }
         function renderQEVList() {
             let html = '';
-            if (quoteEventsData.length === 0) { html = '<p style="font-size:12px; color:#94A3B8; text-align:center; padding:16px 0;">No events added yet.</p>'; }
+            if (quoteEventsData.length === 0) { html = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px 0;">No events added yet.</p>'; }
             quoteEventsData.forEach((ev, i) => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
-                html += '<div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:8px;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">';
-                html += '<strong style="font-size:14px; color:#0F172A;">' + ev.name + '</strong>';
-                html += '<div><button onclick="editQuoteEvent(' + i + ')" style="background:#F1F5F9; border:1px solid #E2E8F0; color:#475569; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; margin-right:4px;">Edit</button>';
-                html += '<button onclick="deleteQuoteEvent(' + i + ')" style="background:#FEF2F2; border:1px solid #FECACA; color:#DC2626; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer;">Delete</button></div>';
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
+                html += '<strong style="font-size:13px; color:var(--text-primary);">' + ev.name + '</strong>';
+                html += '<div><button onclick="editQuoteEvent(' + i + ')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; margin-right:4px;">Edit</button>';
+                html += '<button onclick="deleteQuoteEvent(' + i + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Delete</button></div>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
-                    html += '<div style="font-size:12px; color:#64748B; line-height:1.6;">';
-                    if (d) html += '<span style="margin-right:12px;">' + d + '</span>';
-                    if (ev.time) html += '<span style="margin-right:12px;">' + ev.time + '</span>';
-                    if (ev.venue) html += '<span>' + ev.venue + '</span>';
+                    html += '<div style="font-size:11px; color:var(--text-secondary); line-height:1.5;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -13055,21 +13042,21 @@
             let html = '';
             quoteEventsData.forEach((ev, i) => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
-                html += '<div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:8px;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">';
-                html += '<strong style="font-size:14px; color:#0F172A;">' + ev.name + '</strong>';
-                html += '<button onclick="openQuoteEventPanel(); setTimeout(()=>{editQuoteEvent(' + i + ');},100);" style="background:#F1F5F9; border:1px solid #E2E8F0; color:#475569; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer;">Edit</button>';
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
+                html += '<strong style="font-size:13px; color:var(--text-primary);">' + ev.name + '</strong>';
+                html += '<button onclick="openQuoteEventPanel(); setTimeout(()=>{editQuoteEvent(' + i + ');},100);" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; font-weight:700;">Edit</button>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
-                    html += '<div style="font-size:12px; color:#64748B; line-height:1.6;">';
-                    if (d) html += '<span style="margin-right:12px;">' + d + '</span>';
-                    if (ev.time) html += '<span style="margin-right:12px;">' + ev.time + '</span>';
-                    if (ev.venue) html += '<span>' + ev.venue + '</span>';
+                    html += '<div style="font-size:11px; color:var(--text-secondary); line-height:1.5;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
                     html += '</div>';
                 }
                 html += '</div>';
             });
-            html += '<button type="button" onclick="openQuoteEventPanel()" style="width:100%; background:white; border:1.5px dashed #CBD5E1; color:#475569; border-radius:10px; padding:12px; font-size:13px; cursor:pointer; font-weight:600; margin-top:4px;">+ Add Event Details</button>';
+            html += '<div class="form-group"><button type="button" class="link-btn" onclick="openQuoteEventPanel()" style="font-size:11px;">+ Add Event Details</button></div>';
             container.innerHTML = html;
         }
 
@@ -13123,19 +13110,20 @@
             let items = quoteItemsData.filter(i => i.event === evName);
             let html = '';
             let gross = 0;
-            if (items.length === 0) { html = '<p style="font-size:12px; color:#94A3B8; text-align:center; padding:14px 0;">No items added for ' + (evName || 'this event') + ' yet.</p>'; }
+            if (items.length === 0) { html = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:10px 0;">No items for ' + (evName || 'this event') + ' yet.</p>'; }
             items.forEach((item) => {
                 let realIdx = quoteItemsData.indexOf(item);
                 gross += item.amount;
-                html += '<div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">';
-                html += '<div style="flex:1;"><strong style="font-size:13px; color:#0F172A;">' + item.name + '</strong>';
-                if (item.desc) html += '<div style="font-size:11px; color:#64748B; margin-top:2px;">' + item.desc + '</div>';
-                html += '<div style="font-size:11px; color:#94A3B8; margin-top:2px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
-                html += '<div style="display:flex; align-items:center; gap:8px;"><span style="font-size:14px; font-weight:800; color:#0F172A;">\u20B9' + item.amount.toLocaleString('en-IN') + '</span>';
-                html += '<button onclick="deleteQuoteItem(' + realIdx + ')" style="background:#FEF2F2; border:1px solid #FECACA; color:#DC2626; border-radius:6px; padding:5px 10px; font-size:11px; cursor:pointer;">Delete</button></div>';
-                html += '</div>';
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+                html += '<div style="flex:1;"><strong style="font-size:12px; color:var(--text-primary);">' + item.name + '</strong>';
+                if (item.desc) html += '<div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">' + item.desc + '</div>';
+                html += '<div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
+                html += '<div style="text-align:right;"><div style="font-size:13px; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
+                html += '<button onclick="deleteQuoteItem(' + realIdx + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer; margin-top:4px;">Delete</button></div>';
+                html += '</div></div>';
             });
-            if (gross > 0) html += '<div style="text-align:right; font-size:14px; font-weight:800; color:#0F172A; padding:8px 4px; border-top:1px solid #E2E8F0; margin-top:4px;">Event Total: \u20B9' + gross.toLocaleString('en-IN') + '</div>';
+            if (gross > 0) html += '<div style="text-align:right; font-size:12px; font-weight:800; color:var(--accent-color); padding:6px 4px;">Event Total: \u20B9' + gross.toLocaleString('en-IN') + '</div>';
             document.getElementById('qip_items_list').innerHTML = html;
         }
         function renderQuoteItems() {
@@ -13147,22 +13135,22 @@
                     if (evItems.length === 0) return;
                     let evTotal = evItems.reduce((s, i) => s + i.amount, 0);
                     let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short'}) : '';
-                    html += '<div style="margin-bottom:10px; border:1px solid #E2E8F0; border-radius:10px; overflow:hidden;">';
-                    html += '<div style="background:#F1F5F9; padding:8px 14px; font-size:13px; font-weight:700; color:#0F172A; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0;">';
-                    html += '<span>' + ev.name + (d ? ' \u00B7 ' + d : '') + (ev.time ? ' \u00B7 ' + ev.time : '') + '</span>';
-                    html += '<span style="color:#475569;">\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                    html += '<div style="margin-bottom:8px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">';
+                    html += '<div style="background:var(--bg-color); padding:6px 12px; font-size:12px; font-weight:700; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">';
+                    html += '<span>' + ev.name + (d ? ' - ' + d : '') + (ev.time ? ' ' + ev.time : '') + '</span>';
+                    html += '<span style="color:var(--text-secondary);">\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
                     evItems.forEach(item => {
-                        html += '<div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:10px 14px; border-bottom:1px solid #F1F5F9; font-size:12px;">';
-                        html += '<div style="flex:1;"><strong style="color:#0F172A;">' + item.name + '</strong>';
-                        if (item.desc) html += '<div style="font-size:10px; color:#64748B; margin-top:2px;">' + item.desc + '</div>';
-                        html += '<div style="font-size:10px; color:#94A3B8; margin-top:2px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
-                        html += '<div style="font-weight:800; color:#0F172A; font-size:13px;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
+                        html += '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-color); padding:8px 12px; border-bottom:1px solid var(--bg-color); font-size:11px;">';
+                        html += '<div style="flex:1;"><strong style="color:var(--text-primary);">' + item.name + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:2px;">' + item.desc + '</div>';
+                        html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
+                        html += '<div style="font-weight:800; color:var(--text-primary); font-size:12px;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
                         html += '</div>';
                     });
                     html += '</div>';
                 });
             }
-            html += '<button type="button" onclick="openQuoteItemPanel()" style="width:100%; background:white; border:1.5px dashed #CBD5E1; color:#475569; border-radius:10px; padding:12px; font-size:13px; cursor:pointer; font-weight:600; margin-top:4px;">+ Add Services / Items</button>';
+            html += '<div class="form-group"><button type="button" class="link-btn" onclick="openQuoteItemPanel()" style="font-size:11px;">+ Add Services / Items</button></div>';
             container.innerHTML = html;
         }
 
@@ -13188,15 +13176,15 @@
             let gross = quoteItemsData.reduce((s,i) => s + (i.amount||0), 0);
             let discount = parseFloat(document.getElementById('q_discount').value) || 0;
             let net = gross - discount;
-            let html = '<div style="margin-bottom:16px;"><h4 style="margin:0 0 4px; font-size:18px; color:#0F172A;">' + partyName + '</h4>';
-            html += '<p style="font-size:12px; color:#64748B; margin:0;">' + quoteEventsData.length + ' Events \u00B7 ' + quoteItemsData.length + ' Items \u00B7 Gross \u20B9' + gross.toLocaleString('en-IN') + ' \u00B7 Net \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
-            // EVENT SCHEDULE TABLE (above items, like invoice Function Schedule)
-            html += '<div style="font-size:12px; font-weight:700; color:#475569; margin-bottom:6px;">Function Schedule</div>';
-            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:12px; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">';
-            html += '<tr style="background:#F1F5F9;"><th style="padding:8px 10px; text-align:left; border-bottom:1px solid #E2E8F0;">Function</th><th style="padding:8px 10px; text-align:left; border-bottom:1px solid #E2E8F0;">Date</th><th style="padding:8px 10px; text-align:left; border-bottom:1px solid #E2E8F0;">Time</th><th style="padding:8px 10px; text-align:left; border-bottom:1px solid #E2E8F0;">Venue</th></tr>';
+            let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
+            html += '<p style="font-size:11px; color:var(--text-secondary); margin:0;">' + quoteEventsData.length + ' Events \u00B7 ' + quoteItemsData.length + ' Items \u00B7 Gross \u20B9' + gross.toLocaleString('en-IN') + ' \u00B7 Net \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
+            // FUNCTION SCHEDULE TABLE
+            html += '<div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>';
+            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">';
+            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Venue</th></tr>';
             quoteEventsData.forEach(ev => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
-                html += '<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 10px; font-weight:700; color:#0F172A;">' + ev.name + '</td><td style="padding:8px 10px; color:#475569;">' + d + '</td><td style="padding:8px 10px; color:#475569;">' + (ev.time || '-') + '</td><td style="padding:8px 10px; color:#475569;">' + (ev.venue || '-') + '</td></tr>';
+                html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">' + ev.name + '</td><td style="padding:6px 8px; color:var(--text-secondary);">' + d + '</td><td style="padding:6px 8px; color:var(--text-secondary);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:var(--text-secondary);">' + (ev.venue || '-') + '</td></tr>';
             });
             html += '</table>';
             // EVENT-GROUPED ITEMS
@@ -13204,26 +13192,27 @@
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
                 if (evItems.length === 0) return;
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<div style="margin-bottom:12px; border:1px solid #E2E8F0; border-radius:10px; overflow:hidden;">';
-                html += '<div style="background:#F1F5F9; padding:8px 14px; font-size:13px; font-weight:700; color:#0F172A; display:flex; justify-content:space-between;">';
-                html += '<span>' + ev.name + '</span><span style="color:#475569;">\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                html += '<div style="margin-bottom:8px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">';
+                html += '<div style="background:var(--bg-color); padding:6px 12px; font-size:12px; font-weight:700; color:var(--text-primary); display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color);">';
+                html += '<span>' + ev.name + '</span><span style="color:var(--text-secondary);">\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
                 evItems.forEach(item => {
-                    html += '<div style="display:flex; justify-content:space-between; padding:8px 14px; border-bottom:1px solid #F1F5F9; font-size:12px;">';
-                    html += '<div><strong style="color:#0F172A;">' + item.name + '</strong>';
-                    if (item.desc) html += '<div style="font-size:10px; color:#64748B; margin-top:2px;">' + item.desc + '</div>';
-                    html += '<div style="font-size:10px; color:#94A3B8; margin-top:2px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
-                    html += '<div style="font-weight:800; color:#0F172A; font-size:13px;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
+                    html += '<div style="display:flex; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--bg-color); font-size:11px;">';
+                    html += '<div><strong style="color:var(--text-primary);">' + item.name + '</strong>';
+                    if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.desc + '</div>';
+                    html += '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.qty + ' ' + item.unit + ' \u00D7 \u20B9' + item.rate.toLocaleString('en-IN') + '</div></div>';
+                    html += '<div style="font-weight:800; color:var(--text-primary); font-size:12px;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
                     html += '</div>';
                 });
                 html += '</div>';
             });
-            html += '<div style="border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-top:12px; background:#F8FAFC;">';
-            html += '<div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:4px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:4px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:16px; font-weight:800; color:#0F172A; border-top:1px solid #CBD5E1; padding-top:6px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
+            // SUMMARY
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
+            html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
             html += '</div>';
             let remarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
-            if (remarks) html += '<div style="background:white; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; font-size:12px; margin-top:10px;"><strong style="color:#475569;">Remarks:</strong> ' + remarks + '</div>';
+            if (remarks) html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; font-size:11px; margin-top:8px;"><strong style="color:var(--text-secondary);">Remarks:</strong> ' + remarks + '</div>';
             document.getElementById('quotePreviewBody').innerHTML = html;
             document.getElementById('quotePreviewModal').style.display = 'flex';
         }
@@ -15248,12 +15237,12 @@
 
                 let subtotal = 0;
                 if (record.type === 'Quotation' && record.events && record.events.length > 0) {
-                    // FUNCTION SCHEDULE TABLE (above items, like invoice)
-                    bodyHtml += `<div style="margin-bottom:12px;"><div style="font-size:12px; font-weight:700; color:#475569; margin-bottom:6px;">Function Schedule</div>`;
-                    bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;"><tr style="background:#F1F5F9;"><th style="padding:6px 8px; text-align:left;">Function</th><th style="padding:6px 8px; text-align:left;">Date</th><th style="padding:6px 8px; text-align:left;">Time</th><th style="padding:6px 8px; text-align:left;">Venue</th></tr>`;
+                    // FUNCTION SCHEDULE TABLE
+                    bodyHtml += `<div style="margin-bottom:12px;"><div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>`;
+                    bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Venue</th></tr>`;
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
-                        bodyHtml += `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:6px 8px; font-weight:700; color:#0F172A;">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:#475569;">${evDate}</td><td style="padding:6px 8px; color:#475569;">${ev.time || '-'}</td><td style="padding:6px 8px; color:#475569;">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
+                        bodyHtml += `<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:var(--text-secondary);">${evDate}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.time || '-'}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
                     });
                     bodyHtml += `</table></div>`;
                     // EVENT-GROUPED ITEMS
@@ -15261,11 +15250,11 @@
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
                         if (evItems.length === 0) return;
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
-                        bodyHtml += `<div style="margin-bottom:10px; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">`;
-                        bodyHtml += `<div style="background:#F1F5F9; padding:6px 10px; font-size:12px; font-weight:700; color:#0F172A; display:flex; justify-content:space-between; border-bottom:1px solid #E2E8F0;"><span>${sanitize(ev.name)}</span><span style="color:#475569;">₹${evTotal.toLocaleString('en-IN')}</span></div>`;
+                        bodyHtml += `<div style="margin-bottom:8px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">`;
+                        bodyHtml += `<div style="background:var(--bg-color); padding:6px 10px; font-size:12px; font-weight:700; color:var(--text-primary); display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color);"><span>${sanitize(ev.name)}</span><span style="color:var(--text-secondary);">₹${evTotal.toLocaleString('en-IN')}</span></div>`;
                         evItems.forEach(item => {
                             subtotal += item.amount;
-                            bodyHtml += `<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #F3F4F6; font-size:12px;"><div><strong>${sanitize(item.name)}</strong>${item.desc ? '<br><span style="font-size:10px; color:#64748B;">' + sanitize(item.desc) + '</span>' : ''}<br><span style="font-size:10px; color:#94A3B8;">${item.qty} ${item.unit || 'Pcs'} × ₹${item.rate.toLocaleString('en-IN')}</span></div><div style="font-weight:800; color:#0F172A;">₹${item.amount.toLocaleString('en-IN')}</div></div>`;
+                            bodyHtml += `<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid var(--bg-color); font-size:11px;"><div><strong style="color:var(--text-primary);">${sanitize(item.name)}</strong>${item.desc ? '<br><span style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</span>' : ''}<br><span style="font-size:9px; color:var(--text-secondary);">${item.qty} ${item.unit || 'Pcs'} × ₹${item.rate.toLocaleString('en-IN')}</span></div><div style="font-weight:800; color:var(--text-primary); font-size:12px;">₹${item.amount.toLocaleString('en-IN')}</div></div>`;
                         });
                         bodyHtml += `</div>`;
                     });
@@ -15668,13 +15657,13 @@
                 // QUOTATION PRINT - Event Schedule table + Event-grouped items
                 let subtotal = 0;
                 if (record.type === 'Quotation' && record.events && record.events.length > 0) {
-                    // FUNCTION SCHEDULE TABLE (above items, like invoice)
+                    // FUNCTION SCHEDULE TABLE
                     html += '<span class="section-label">Function Schedule</span>';
                     html += '<table style="margin-bottom:15px; font-size:11px;">';
                     html += '<tr><th style="width:25%">Function Name</th><th style="width:20%">Date</th><th style="width:40%">Venue</th><th class="right" style="width:15%">Time</th></tr>';
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
-                        html += '<tr><td><strong style="color:#0f172a;">' + sanitize(ev.name) + '</strong></td><td>' + evDate + '</td><td>' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right">' + (ev.time || '-') + '</td></tr>';
+                        html += '<tr><td><strong>' + sanitize(ev.name) + '</strong></td><td>' + evDate + '</td><td>' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right">' + (ev.time || '-') + '</td></tr>';
                     });
                     html += '</table>';
                     // EVENT-GROUPED ITEMS
@@ -15684,7 +15673,7 @@
                         if (evItems.length === 0) return;
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
                         html += '<div style="margin:10px 0; border:1px solid #E2E8F0; border-radius:6px; overflow:hidden;">';
-                        html += '<div style="background:#F1F5F9; padding:6px 10px; font-size:12px; font-weight:800; color:#0f172a; display:flex; justify-content:space-between; border-bottom:1px solid #E2E8F0;">';
+                        html += '<div style="background:#F1F5F9; padding:6px 10px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; border-bottom:1px solid #E2E8F0;">';
                         html += '<span>' + sanitize(ev.name) + '</span>';
                         html += '<span>₹' + evTotal.toLocaleString('en-IN') + '</span></div>';
                         evItems.forEach(item => {
@@ -15692,8 +15681,8 @@
                             let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
                             let unitHtml = item.unit ? item.unit : 'Pcs';
                             html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #F3F4F6; font-size:11px;">';
-                            html += '<div><strong style="color:#0f172a;">' + sanitize(item.name) + '</strong>' + descHtml + '<br><span style="font-size:9px; color:#64748b;">' + item.qty + ' ' + unitHtml + ' × ₹' + item.rate.toLocaleString('en-IN') + '</span></div>';
-                            html += '<div style="font-weight:800; color:#0f172a;">₹' + item.amount.toLocaleString('en-IN') + '</div>';
+                            html += '<div><strong>' + sanitize(item.name) + '</strong>' + descHtml + '<br><span style="font-size:9px; color:#64748b;">' + item.qty + ' ' + unitHtml + ' × ₹' + item.rate.toLocaleString('en-IN') + '</span></div>';
+                            html += '<div style="font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</div>';
                             html += '</div>';
                         });
                         html += '</div>';
