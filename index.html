@@ -6742,16 +6742,16 @@
         </div>
 
         <div id="quotationModal" class="modal-overlay" style="z-index: 5500;">
-            <div class="modal-content" style="max-width: 550px;">
-                <div class="modal-header">
+            <div class="modal-content" style="max-width: 580px; max-height: 92vh; overflow-y: auto;">
+                <div class="modal-header" style="position:sticky; top:0; z-index:10; background:white; border-bottom:2px solid var(--accent-color);">
                     <h3 id="quote-modal-title">Create Quotation</h3><button class="modal-close"
                         onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null;">&times;</button>
                 </div>
-                <form id="quoteForm" onsubmit="event.preventDefault();" novalidate>
+                <form id="quoteForm" onsubmit="event.preventDefault();" novalidate style="padding:16px;">
                     <!-- PARTY SECTION -->
-                    <div style="background:linear-gradient(135deg,#EFF6FF,#F0FDF4); border-radius:10px; padding:12px; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <label class="form-label" style="margin:0; font-size:13px; color:var(--text-primary);">Select Client / Party</label>
+                    <div style="background:linear-gradient(135deg,#EFF6FF,#F0FDF4); border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #DBEAFE;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary);">Client / Party</label>
                             <button type="button" class="link-btn" onclick="openPartyModal()" style="font-size:11px;">+ Add New Party</button>
                         </div>
                         <input type="text" class="select-search-box" placeholder="Search Party or ID..."
@@ -6761,39 +6761,122 @@
                     </div>
 
                     <!-- EVENTS SECTION -->
-                    <div style="background:white; border:2px solid #E0E7FF; border-radius:10px; padding:12px; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #E0E7FF;">
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <span style="background:#6366F1; color:white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;">1</span>
-                                <label class="form-label" style="margin:0; color:#6366F1; font-size:13px;">Events & Schedule</label>
+                    <div style="background:#FAFAFF; border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #E0E7FF;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="background:linear-gradient(135deg,#6366F1,#8B5CF6); color:white; border-radius:8px; padding:3px 10px; font-size:11px; font-weight:800;">STEP 1</span>
+                                <label class="form-label" style="margin:0; font-size:14px; font-weight:700; color:#6366F1;">Events & Schedule</label>
                             </div>
-                            <button type="button" style="background:#6366F1; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;"
-                                onclick="addQuoteEvent()">+ Add Event</button>
+                            <button type="button" style="background:linear-gradient(135deg,#6366F1,#8B5CF6); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:11px; cursor:pointer; font-weight:700; box-shadow:0 2px 8px rgba(99,102,241,0.3);"
+                                onclick="openQuoteEventPanel()">+ Add Event Details</button>
                         </div>
-                        <div id="quote_events_container"></div>
-                        <p style="font-size:10px; color:#94A3B8; margin:6px 0 0 0;">Add events like Haldi, Mehndi, Wedding with date, time & venue.</p>
+                        <div id="quote_events_container" style="min-height:30px;"></div>
                     </div>
 
                     <!-- ITEMS SECTION -->
-                    <div style="background:white; border:2px solid #DCFCE7; border-radius:10px; padding:12px; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #DCFCE7;">
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <span style="background:#22C55E; color:white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;">2</span>
-                                <label class="form-label" style="margin:0; color:#22C55E; font-size:13px;">Services / Items</label>
+                    <div style="background:#FEFFFE; border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #DCFCE7;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="background:linear-gradient(135deg,#22C55E,#16A34A); color:white; border-radius:8px; padding:3px 10px; font-size:11px; font-weight:800;">STEP 2</span>
+                                <label class="form-label" style="margin:0; font-size:14px; font-weight:700; color:#22C55E;">Services / Items</label>
                             </div>
+                            <button type="button" style="background:linear-gradient(135deg,#22C55E,#16A34A); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:11px; cursor:pointer; font-weight:700; box-shadow:0 2px 8px rgba(34,197,94,0.3);"
+                                onclick="openQuoteItemPanel()">+ Add Event-wise Item</button>
                         </div>
-                        <div id="quote_items_container"></div>
-                        <button type="button" id="q_add_item_btn" style="width:100%; background:#F0FDF4; border:1.5px dashed #22C55E; color:#22C55E; border-radius:8px; padding:8px; font-size:11px; cursor:pointer; font-weight:700; margin-top:4px;"
-                            onclick="addQuoteItem()">+ Add Item</button>
+                        <div id="quote_items_container" style="min-height:30px;"></div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number"
-                                id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()"></div>
-                        <div class="form-group"><label class="form-label">Grand Total (₹)</label><input type="number"
-                                id="q_total" class="form-input" readonly
-                                style="background: #F1F5F9; font-weight: bold; font-size:14px;"></div>
-                    </div><div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="q_remarks" class="form-input" rows="2" placeholder="Optional remarks for this quotation" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" onclick="saveQuotationData()">Save Quotation</button>
+
+                    <!-- TOTALS SECTION -->
+                    <div style="background:linear-gradient(135deg,#FFF7ED,#FEF2F2); border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #FED7AA;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="background:linear-gradient(135deg,#F59E0B,#EA580C); color:white; border-radius:8px; padding:3px 10px; font-size:11px; font-weight:800;">STEP 3</span>
+                            <label class="form-label" style="margin:0; font-size:14px; font-weight:700; color:#EA580C;">Summary & Totals</label>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label" style="font-size:11px;">Gross Amount (₹)</label><input type="number" id="q_gross" class="form-input" value="0" style="font-size:13px; font-weight:700; color:#EA580C;" oninput="calculateQuoteTotal()"></div>
+                            <div class="form-group"><label class="form-label" style="font-size:11px;">Discount (₹)</label><input type="number" id="q_discount" class="form-input" value="0" style="font-size:13px;" oninput="calculateQuoteTotal()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label" style="font-size:11px;">Net Total (₹)</label><input type="number" id="q_total" class="form-input" readonly style="background:#FEF2F2; font-weight:800; font-size:16px; color:#DC2626; border:2px solid #FCA5A5;"></div>
+                            <div class="form-group"><label class="form-label" style="font-size:11px;">Remarks / Notes</label><textarea id="q_remarks" class="form-input" rows="1" placeholder="Optional" style="font-size:11px; padding:6px 8px;"></textarea></div>
+                        </div>
+                    </div>
+
+                    <button type="button" style="width:100%; background:linear-gradient(135deg,var(--accent-color),#7C3AED); color:white; border:none; border-radius:10px; padding:12px; font-size:15px; cursor:pointer; font-weight:800; box-shadow:0 4px 12px rgba(124,58,237,0.3);"
+                        onclick="showQuotePreview()">Preview & Save Quotation</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- SLIDE-IN EVENT PANEL -->
+        <div id="quoteEventPanel" class="modal-overlay" style="display:none; z-index:8000; background:rgba(0,0,0,0.5);">
+            <div style="position:absolute; right:0; top:0; bottom:0; width:90%; max-width:400px; background:white; border-radius:16px 0 0 16px; box-shadow:-8px 0 30px rgba(0,0,0,0.15); display:flex; flex-direction:column; animation:slideIn 0.3s ease;">
+                <div style="background:linear-gradient(135deg,#6366F1,#8B5CF6); color:white; padding:16px; border-radius:16px 0 0 0; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0; font-size:16px;">Event Details</h3>
+                    <button onclick="closeQuoteEventPanel()" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:50%; width:30px; height:30px; font-size:18px; cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:16px; overflow-y:auto; flex:1;">
+                    <div id="qev_list" style="margin-bottom:12px;"></div>
+                    <div id="qev_form" style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:10px; padding:12px;">
+                        <div style="font-size:12px; font-weight:700; color:#6366F1; margin-bottom:8px;" id="qev_form_title">Add New Event</div>
+                        <div class="form-group"><label class="form-label" style="font-size:10px; color:#7C3AED;">Event Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi" style="font-size:13px; padding:8px 10px; border-radius:6px;"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label" style="font-size:10px; color:#7C3AED;">Date</label><input type="date" id="qev_date" class="form-input" style="font-size:13px; padding:8px 10px; border-radius:6px;"></div>
+                            <div class="form-group"><label class="form-label" style="font-size:10px; color:#7C3AED;">Time</label><input type="time" id="qev_time" class="form-input" style="font-size:13px; padding:8px 10px; border-radius:6px;"></div>
+                        </div>
+                        <div class="form-group"><label class="form-label" style="font-size:10px; color:#7C3AED;">Venue</label><input type="text" id="qev_venue" class="form-input" placeholder="e.g. ABC Lawn" style="font-size:13px; padding:8px 10px; border-radius:6px;"></div>
+                        <button type="button" onclick="saveQuoteEvent()" style="width:100%; background:#6366F1; color:white; border:none; border-radius:8px; padding:8px; font-size:12px; font-weight:700; cursor:pointer; margin-top:4px;">Save Event</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE-IN ITEM PANEL -->
+        <div id="quoteItemPanel" class="modal-overlay" style="display:none; z-index:8000; background:rgba(0,0,0,0.5);">
+            <div style="position:absolute; right:0; top:0; bottom:0; width:92%; max-width:420px; background:white; border-radius:16px 0 0 16px; box-shadow:-8px 0 30px rgba(0,0,0,0.15); display:flex; flex-direction:column; animation:slideIn 0.3s ease;">
+                <div style="background:linear-gradient(135deg,#22C55E,#16A34A); color:white; padding:16px; border-radius:16px 0 0 0; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0; font-size:16px;">Add Items for Event</h3>
+                    <button onclick="closeQuoteItemPanel()" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:50%; width:30px; height:30px; font-size:18px; cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:16px; overflow-y:auto; flex:1;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-size:11px; font-weight:700; color:#166534;">Select Event</label>
+                        <select id="qip_event" class="form-select" style="font-size:13px; padding:8px; border-radius:6px;" onchange="renderQIPList();"></select>
+                    </div>
+                    <div id="qip_items_list" style="margin-bottom:12px;"></div>
+                    <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px;">
+                        <div style="font-size:12px; font-weight:700; color:#166534; margin-bottom:8px;">Add New Item</div>
+                        <div class="form-group"><label class="form-label" style="font-size:10px; color:#166534;">Item / Service Name</label><input type="text" id="qip_name" class="form-input" placeholder="Enter item name & details" style="font-size:13px; padding:8px 10px; border-radius:6px;"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label" style="font-size:10px; color:#166534;">Unit</label><select id="qip_unit" class="form-select" style="font-size:12px; padding:6px; border-radius:6px;"></select></div>
+                            <div class="form-group"><label class="form-label" style="font-size:10px; color:#166534;">Qty</label><input type="number" id="qip_qty" class="form-input" value="1" style="font-size:13px; padding:8px; border-radius:6px;" oninput="updateQIPGross()"></div>
+                            <div class="form-group"><label class="form-label" style="font-size:10px; color:#166534;">Rate (₹)</label><input type="number" id="qip_rate" class="form-input" value="0" style="font-size:13px; padding:8px; border-radius:6px;" oninput="updateQIPGross()"></div>
+                        </div>
+                        <div class="form-group"><label class="form-label" style="font-size:10px; color:#166534;">Description (Optional)</label><input type="text" id="qip_desc" class="form-input" placeholder="Specification / details" style="font-size:11px; padding:6px 8px; border-radius:6px;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                            <div style="font-size:13px; font-weight:800; color:#166534;">Event Total: <span id="qip_gross">₹0</span></div>
+                            <button type="button" onclick="saveQuoteItem()" style="background:#22C55E; color:white; border:none; border-radius:8px; padding:8px 16px; font-size:12px; font-weight:700; cursor:pointer;">+ Add to Event</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:12px 16px; border-top:1px solid #E5E7EB; background:#F8FAFC;">
+                    <button type="button" onclick="closeQuoteItemPanel()" style="width:100%; background:linear-gradient(135deg,#22C55E,#16A34A); color:white; border:none; border-radius:8px; padding:10px; font-size:13px; font-weight:700; cursor:pointer;">Done - Back to Quotation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUOTATION PREVIEW SCREEN -->
+        <div id="quotePreviewModal" class="modal-overlay" style="display:none; z-index:9000;">
+            <div class="modal-content" style="max-width:600px; max-height:92vh; overflow-y:auto;">
+                <div style="background:linear-gradient(135deg,#0F172A,#1E293B); color:white; padding:16px; border-radius:12px 12px 0 0; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0; font-size:16px;">Quotation Preview</h3>
+                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" style="background:rgba(255,255,255,0.15); border:none; color:white; border-radius:50%; width:30px; height:30px; font-size:18px; cursor:pointer;">&times;</button>
+                </div>
+                <div id="quotePreviewBody" style="padding:20px;"></div>
+                <div style="display:flex; gap:10px; padding:16px; background:#F8FAFC; border-top:1px solid #E5E7EB;">
+                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" style="flex:1; background:white; border:2px solid var(--border-color); color:var(--text-primary); border-radius:8px; padding:10px; font-size:13px; font-weight:700; cursor:pointer;">Edit</button>
+                    <button onclick="confirmSaveQuotation()" style="flex:2; background:linear-gradient(135deg,#22C55E,#16A34A); color:white; border:none; border-radius:8px; padding:10px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(34,197,94,0.3);">Confirm & Save</button>
+                </div>
             </div>
         </div>
 
@@ -12897,172 +12980,266 @@
                 } else { selectEl.innerHTML = getUnitOptions('Pcs'); }
             }
         }
+        // ==========================================
+        // QUOTATION ENGINE (Futuristic UI)
+        // ==========================================
+        let quoteEventsData = []; let quoteItemsData = []; let editingQuoteEventIdx = -1;
+
         function openQuotationModal(preFillPartyId = null, preFillEvent = "", preFillDate = "") {
             editingSalesId = null;
             document.getElementById('quote-modal-title').innerText = "Create Quotation";
             loadPartiesIntoSelect('q_party', preFillPartyId);
             document.getElementById('quoteForm').reset();
-            document.getElementById('quote_events_container').innerHTML = '';
-            quoteEventCount = 0;
+            quoteEventsData = []; quoteItemsData = [];
             if (preFillEvent || preFillDate) {
-                addQuoteEvent({ name: preFillEvent || '', date: preFillDate || '' });
-            } else {
-                addQuoteEvent();
+                quoteEventsData.push({ name: preFillEvent || '', date: preFillDate || '', time: '', venue: '' });
             }
-            document.getElementById('quote_items_container').innerHTML = '';
-            quoteItemCount = 0;
-            addQuoteItem();
-            calculateQuoteTotal();
+            renderQuoteEvents(); renderQuoteItems(); calculateQuoteTotal();
             document.getElementById('quotationModal').style.display = 'flex';
         }
-        let quoteEventCount = 0;
-        function addQuoteEvent(preFill) {
-            quoteEventCount++;
+
+        // EVENT PANEL FUNCTIONS
+        function openQuoteEventPanel() {
+            document.getElementById('qev_name').value = '';
+            document.getElementById('qev_date').value = '';
+            document.getElementById('qev_time').value = '';
+            document.getElementById('qev_venue').value = '';
+            document.getElementById('qev_form_title').innerText = 'Add New Event';
+            editingQuoteEventIdx = -1;
+            renderQEVList();
+            document.getElementById('quoteEventPanel').style.display = 'flex';
+        }
+        function closeQuoteEventPanel() {
+            document.getElementById('quoteEventPanel').style.display = 'none';
+            renderQuoteEvents();
+            renderQuoteItems();
+            calculateQuoteTotal();
+        }
+        function saveQuoteEvent() {
+            let name = document.getElementById('qev_name').value.trim();
+            if (!name) { alert('Please enter event name!'); return; }
+            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim() };
+            if (editingQuoteEventIdx >= 0) { quoteEventsData[editingQuoteEventIdx] = ev; editingQuoteEventIdx = -1; }
+            else { quoteEventsData.push(ev); }
+            quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+            document.getElementById('qev_name').value = ''; document.getElementById('qev_date').value = ''; document.getElementById('qev_time').value = ''; document.getElementById('qev_venue').value = '';
+            document.getElementById('qev_form_title').innerText = 'Add New Event';
+            renderQEVList();
+        }
+        function editQuoteEvent(idx) {
+            let ev = quoteEventsData[idx];
+            document.getElementById('qev_name').value = ev.name;
+            document.getElementById('qev_date').value = ev.date;
+            document.getElementById('qev_time').value = ev.time;
+            document.getElementById('qev_venue').value = ev.venue;
+            document.getElementById('qev_form_title').innerText = 'Edit Event: ' + ev.name;
+            editingQuoteEventIdx = idx;
+            renderQEVList();
+        }
+        function deleteQuoteEvent(idx) {
+            let evName = quoteEventsData[idx].name;
+            let itemCount = quoteItemsData.filter(i => i.event === evName).length;
+            if (itemCount > 0) { if (!confirm(evName + ' has ' + itemCount + ' items linked. Delete anyway?')) return; }
+            quoteEventsData.splice(idx, 1);
+            quoteItemsData = quoteItemsData.filter(i => i.event !== evName);
+            renderQEVList();
+        }
+        function renderQEVList() {
+            let html = '';
+            if (quoteEventsData.length === 0) { html = '<p style="font-size:11px; color:#94A3B8; text-align:center; padding:10px;">No events added yet.</p>'; }
+            quoteEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short'}) : '';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; background:white; border:1px solid #E0E7FF; border-radius:8px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="font-size:12px;"><strong style="color:#6366F1;">' + ev.name + '</strong>';
+                if (d) html += ' | ' + d; if (ev.time) html += ' | ' + ev.time; if (ev.venue) html += ' | ' + ev.venue;
+                html += '</div>';
+                html += '<div><button onclick="editQuoteEvent(' + i + ')" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#2563EB; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; margin-right:4px;">Edit</button>';
+                html += '<button onclick="deleteQuoteEvent(' + i + ')" style="background:#FEF2F2; border:1px solid #FCA5A5; color:#DC2626; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Del</button></div>';
+                html += '</div>';
+            });
+            document.getElementById('qev_list').innerHTML = html;
+        }
+        function renderQuoteEvents() {
             let container = document.getElementById('quote_events_container');
-            let rowId = 'q_event_' + quoteEventCount;
-            let ev = preFill || {};
-            let rowHtml = '<div id="' + rowId + '" style="background:#F5F3FF; border:1px solid #DDD6FE; border-left:4px solid #8B5CF6; border-radius:8px; padding:10px; margin-bottom:8px; position:relative;">' +
-                '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); refreshQuoteItemEventDropdowns();" style="position:absolute; top:-8px; right:-8px; background:#8B5CF6; color:white; border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(139,92,246,0.4);">×</button>' +
-                '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
-                '<div style="flex:1.5; min-width:120px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Event Name</label><input type="text" class="form-input q-event-name" value="' + (ev.name || '') + '" placeholder="e.g. Haldi" style="font-size:12px; padding:6px 8px;" oninput="refreshQuoteItemEventDropdowns();"></div>' +
-                '<div style="flex:1; min-width:100px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Date</label><input type="date" class="form-input q-event-date" value="' + (ev.date || '') + '" style="font-size:12px; padding:6px 8px;"></div>' +
-                '<div style="flex:0.8; min-width:80px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Time</label><input type="time" class="form-input q-event-time" value="' + (ev.time || '') + '" style="font-size:12px; padding:6px 8px;"></div>' +
-                '<div style="flex:1.5; min-width:120px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#7C3AED;">Venue</label><input type="text" class="form-input q-event-venue" value="' + (ev.venue || '') + '" placeholder="e.g. ABC Lawn" style="font-size:12px; padding:6px 8px;"></div>' +
-                '</div></div>';
-            container.insertAdjacentHTML('beforeend', rowHtml);
-            refreshQuoteItemEventDropdowns();
-        }
-
-        function getQuoteEventOptions() {
-            let names = [];
-            document.querySelectorAll('#quote_events_container .q-event-name').forEach(inp => {
-                let n = inp.value.trim();
-                if (n) names.push(n);
+            if (quoteEventsData.length === 0) { container.innerHTML = '<p style="font-size:11px; color:#94A3B8; text-align:center; padding:8px;">Click "Add Event Details" to add events.</p>'; return; }
+            let html = '';
+            quoteEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#F5F3FF; border:1px solid #DDD6FE; border-left:4px solid #8B5CF6; border-radius:8px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="font-size:12px;"><strong style="color:#6366F1;">' + ev.name + '</strong>';
+                if (d) html += ' - ' + d; if (ev.time) html += ' at ' + ev.time; if (ev.venue) html += ' | ' + ev.venue;
+                html += '</div>';
+                html += '<button onclick="openQuoteEventPanel(); setTimeout(()=>{editQuoteEvent(' + i + ');},100);" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#2563EB; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                html += '</div>';
             });
-            return names;
+            container.innerHTML = html;
         }
 
-        function refreshQuoteItemEventDropdowns() {
-            let events = getQuoteEventOptions();
-            document.querySelectorAll('#quote_items_container .q-item-event').forEach(sel => {
-                let current = sel.value;
-                let opts = '<option value="">All Events</option>';
-                events.forEach(ev => { opts += '<option value="' + ev + '"' + (ev === current ? ' selected' : '') + '>' + ev + '</option>'; });
-                sel.innerHTML = opts;
+        // ITEM PANEL FUNCTIONS
+        function openQuoteItemPanel() {
+            let eventSel = document.getElementById('qip_event');
+            let opts = '<option value="">-- Select Event --</option>';
+            quoteEventsData.forEach(ev => { opts += '<option value="' + ev.name + '">' + ev.name + '</option>'; });
+            eventSel.innerHTML = opts;
+            if (quoteEventsData.length > 0) eventSel.value = quoteEventsData[0].name;
+            let unitSel = document.getElementById('qip_unit');
+            if (unitSel) unitSel.innerHTML = getUnitOptions();
+            document.getElementById('qip_name').value = '';
+            document.getElementById('qip_qty').value = '1';
+            document.getElementById('qip_rate').value = '0';
+            document.getElementById('qip_desc').value = '';
+            renderQIPList(); updateQIPGross();
+            document.getElementById('quoteItemPanel').style.display = 'flex';
+        }
+        function closeQuoteItemPanel() {
+            document.getElementById('quoteItemPanel').style.display = 'none';
+            renderQuoteItems(); calculateQuoteTotal();
+        }
+        function updateQIPGross() {
+            let qty = parseFloat(document.getElementById('qip_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('qip_rate').value) || 0;
+            document.getElementById('qip_gross').innerText = '\u20B9' + (qty * rate).toLocaleString('en-IN');
+        }
+        function saveQuoteItem() {
+            let evName = document.getElementById('qip_event').value;
+            let name = document.getElementById('qip_name').value.trim();
+            if (!evName) { alert('Please select an event first!'); return; }
+            if (!name) { alert('Please enter item name!'); return; }
+            let qty = parseFloat(document.getElementById('qip_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('qip_rate').value) || 0;
+            let unit = document.getElementById('qip_unit') ? document.getElementById('qip_unit').value : 'Pcs';
+            let desc = document.getElementById('qip_desc').value.trim();
+            quoteItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty * rate, event: evName });
+            document.getElementById('qip_name').value = '';
+            document.getElementById('qip_qty').value = '1';
+            document.getElementById('qip_rate').value = '0';
+            document.getElementById('qip_desc').value = '';
+            renderQIPList(); updateQIPGross();
+        }
+        function deleteQuoteItem(idx) {
+            quoteItemsData.splice(idx, 1);
+            renderQIPList();
+        }
+        function renderQIPList() {
+            let evName = document.getElementById('qip_event').value;
+            let items = quoteItemsData.filter(i => i.event === evName);
+            let html = '';
+            let gross = 0;
+            if (items.length === 0) { html = '<p style="font-size:11px; color:#94A3B8; text-align:center; padding:8px;">No items for ' + (evName || 'this event') + ' yet.</p>'; }
+            items.forEach((item) => {
+                let realIdx = quoteItemsData.indexOf(item);
+                gross += item.amount;
+                html += '<div style="background:white; border:1px solid #BBF7D0; border-radius:8px; padding:8px 10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="font-size:12px;"><strong>' + item.name + '</strong><br><span style="font-size:10px; color:#64748B;">' + item.qty + ' ' + item.unit + ' x \u20B9' + item.rate.toLocaleString('en-IN') + ' = \u20B9' + item.amount.toLocaleString('en-IN') + '</span></div>';
+                html += '<button onclick="deleteQuoteItem(' + realIdx + ')" style="background:#FEF2F2; border:1px solid #FCA5A5; color:#DC2626; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Del</button>';
+                html += '</div>';
             });
+            if (gross > 0) html += '<div style="text-align:right; font-size:13px; font-weight:800; color:#166534; padding:4px 0;">Event Gross: \u20B9' + gross.toLocaleString('en-IN') + '</div>';
+            document.getElementById('qip_items_list').innerHTML = html;
         }
-
-        function addQuoteItem() {
-            quoteItemCount++;
+        function renderQuoteItems() {
             let container = document.getElementById('quote_items_container');
-            let rowId = 'q_item_' + quoteItemCount;
-            let eventOpts = '<option value="">All Events</option>';
-            getQuoteEventOptions().forEach(ev => { eventOpts += '<option value="' + ev + '">' + ev + '</option>'; });
-            let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#FEFEFE; border:1px solid #BBF7D0; border-left:4px solid #22C55E; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px; position:relative;">
-                <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateQuoteTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button>
-                <div style="display:flex; gap:6px; align-items:flex-end; width:100%;">
-                    <div style="flex:2;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px; color:#166534;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required style="font-size:12px; padding:6px 8px;"></div>
-                    <div style="flex:1.1;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Unit</label><select class="form-select q-item-unit" style="padding:6px 4px; font-size:12px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div>
-                    <div style="flex:0.8;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculateQuoteTotal()" required style="font-size:12px; padding:6px 8px;"></div>
-                    <div style="flex:1.3;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculateQuoteTotal()" required style="font-size:12px; padding:6px 8px;"></div>
-                    <div style="flex:1; min-width:70px;"><label class="form-label" style="margin:0 0 2px 0; font-size:10px;">Amount</label><div class="q-item-amount" style="background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 8px; font-size:12px; font-weight:700; color:#166534;">₹0</div></div>
-                </div>
-                <div style="display:flex; gap:6px; align-items:flex-end;">
-                    <div style="flex:1.5;"><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:5px 8px;"></div>
-                    <div style="flex:1; min-width:100px;"><select class="form-select q-item-event" style="padding:5px 4px; font-size:11px;" onchange="refreshQuoteItemEventDropdowns()">${eventOpts}</select></div>
-                </div>
-            </div>`;
-            container.insertAdjacentHTML('beforeend', rowHtml);
-            // Auto-scroll to the new item
-            setTimeout(() => { rowId && document.getElementById(rowId) && document.getElementById(rowId).scrollIntoView({behavior:'smooth', block:'nearest'}); }, 50);
+            if (quoteItemsData.length === 0) { container.innerHTML = '<p style="font-size:11px; color:#94A3B8; text-align:center; padding:8px;">Click "Add Event-wise Item" to add items.</p>'; return; }
+            let html = '';
+            quoteEventsData.forEach(ev => {
+                let evItems = quoteItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                let evTotal = evItems.reduce((s, i) => s + i.amount, 0);
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short'}) : '';
+                html += '<div style="margin-bottom:10px;">';
+                html += '<div style="background:linear-gradient(135deg,#6366F1,#8B5CF6); color:white; border-radius:8px 8px 0 0; padding:6px 10px; font-size:12px; font-weight:700; display:flex; justify-content:space-between;">';
+                html += '<span>' + ev.name + (d ? ' | ' + d : '') + (ev.time ? ' | ' + ev.time : '') + '</span>';
+                html += '<span>\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                evItems.forEach(item => {
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#FEFEFE; border:1px solid #DCFCE7; border-top:none; padding:6px 10px; font-size:11px;">';
+                    html += '<div><strong>' + item.name + '</strong>';
+                    if (item.desc) html += '<br><span style="font-size:9px; color:#64748B;">' + item.desc + '</span>';
+                    html += '<br><span style="color:#64748B;">' + item.qty + ' ' + item.unit + ' x \u20B9' + item.rate.toLocaleString('en-IN') + '</span></div>';
+                    html += '<div style="text-align:right; font-weight:700; color:#166534;">\u20B9' + item.amount.toLocaleString('en-IN') + '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+            container.innerHTML = html;
         }
+
         function calculateQuoteTotal() {
-            let total = 0;
-            let rows = document.querySelectorAll('#quote_items_container .quote-item-row');
-            rows.forEach(row => {
-                let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0;
-                let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
-                let amt = qty * rate;
-                total += amt;
-                let amtEl = row.querySelector('.q-item-amount');
-                if (amtEl) amtEl.textContent = '₹' + amt.toLocaleString('en-IN');
-            });
-            let discount = parseFloat(document.getElementById('q_discount').value) || 0;
-            let grandTotal = total - discount;
-            if (grandTotal < 0) grandTotal = 0;
-            document.getElementById('q_total').value = grandTotal;
+            let gross = quoteItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+            let grossEl = document.getElementById('q_gross');
+            if (grossEl) grossEl.value = gross;
+            let discount = parseFloat(document.getElementById('q_discount') ? document.getElementById('q_discount').value : 0) || 0;
+            let net = gross - discount;
+            if (net < 0) net = 0;
+            let totalEl = document.getElementById('q_total');
+            if (totalEl) totalEl.value = net;
         }
-        // 🚀 BUG 1 FIX: Save Event ID in Quotation so photos can be linked
-        function saveQuotationData() {
+
+        // PREVIEW SCREEN
+        function showQuotePreview() {
             let partyId = document.getElementById('q_party').value;
-            if (!partyId) { alert("Please select a client/party!"); return; }
-
-            // Collect multi-event data first
-            let quoteEvents = [];
-            document.querySelectorAll('#quote_events_container > div').forEach(evRow => {
-                let nameEl = evRow.querySelector('.q-event-name');
-                let dateEl = evRow.querySelector('.q-event-date');
-                let timeEl = evRow.querySelector('.q-event-time');
-                let venueEl = evRow.querySelector('.q-event-venue');
-                if (nameEl && nameEl.value.trim()) {
-                    quoteEvents.push({
-                        name: nameEl.value.trim(),
-                        date: dateEl ? dateEl.value : '',
-                        time: timeEl ? timeEl.value : '',
-                        venue: venueEl ? venueEl.value.trim() : ''
-                    });
-                }
+            if (!partyId) { alert('Please select a client/party!'); return; }
+            if (quoteEventsData.length === 0) { alert('Please add at least one event!'); return; }
+            if (quoteItemsData.length === 0) { alert('Please add at least one item!'); return; }
+            let party = partiesDB[partyId];
+            let partyName = party ? party.name : 'Unknown';
+            let gross = quoteItemsData.reduce((s,i) => s + (i.amount||0), 0);
+            let discount = parseFloat(document.getElementById('q_discount').value) || 0;
+            let net = gross - discount;
+            let html = '<div style="margin-bottom:16px;"><h4 style="margin:0 0 4px; color:var(--text-primary);">' + partyName + '</h4>';
+            html += '<p style="font-size:12px; color:var(--text-secondary); margin:0;">' + quoteEventsData.length + ' Events | ' + quoteItemsData.length + ' Items | Gross: \u20B9' + gross.toLocaleString('en-IN') + ' | Net: \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
+            quoteEventsData.forEach(ev => {
+                let evItems = quoteItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                html += '<div style="margin-bottom:12px; border:1px solid #E5E7EB; border-radius:8px; overflow:hidden;">';
+                html += '<div style="background:#F5F3FF; border-left:4px solid #8B5CF6; padding:8px 10px; font-size:13px; font-weight:700; color:#6366F1; display:flex; justify-content:space-between;">';
+                html += '<span>' + ev.name + (d ? ' - ' + d : '') + (ev.time ? ' at ' + ev.time : '') + (ev.venue ? ' | ' + ev.venue : '') + '</span>';
+                html += '<span>\u20B9' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                evItems.forEach(item => {
+                    html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #F3F4F6; font-size:12px;">';
+                    html += '<div><strong>' + item.name + '</strong>';
+                    if (item.desc) html += '<br><span style="font-size:10px; color:#64748B;">' + item.desc + '</span>';
+                    html += '</div><div style="text-align:right;">' + item.qty + ' ' + item.unit + ' x \u20B9' + item.rate.toLocaleString('en-IN') + '<br><strong>\u20B9' + item.amount.toLocaleString('en-IN') + '</strong></div>';
+                    html += '</div>';
+                });
+                html += '</div>';
             });
-            if (quoteEvents.length === 0) { alert("Please add at least one event!"); return; }
+            html += '<div style="text-align:right; font-size:14px; font-weight:800; color:#DC2626; padding:8px 0;">Gross: \u20B9' + gross.toLocaleString('en-IN') + ' | Discount: -\u20B9' + discount.toLocaleString('en-IN') + ' | Net Total: \u20B9' + net.toLocaleString('en-IN') + '</div>';
+            let remarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
+            if (remarks) html += '<div style="background:#F8FAFC; border:1px solid #E5E7EB; border-radius:6px; padding:8px; font-size:12px; margin-top:8px;"><strong>Remarks:</strong> ' + remarks + '</div>';
+            document.getElementById('quotePreviewBody').innerHTML = html;
+            document.getElementById('quotePreviewModal').style.display = 'flex';
+        }
 
-            let event = quoteEvents[0].name;
-            let date = quoteEvents[0].date;
-
-            let items = [];
-            document.querySelectorAll('#quote_items_container .quote-item-row').forEach(row => {
-                let name = row.querySelector('.q-item-name').value;
-                let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0;
-                let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0;
-                let unit = row.querySelector('.q-item-unit') ? row.querySelector('.q-item-unit').value : 'Pcs';
-                let desc = row.querySelector('.q-item-desc') ? row.querySelector('.q-item-desc').value : '';
-                let linkedEvent = row.querySelector('.q-item-event') ? row.querySelector('.q-item-event').value : '';
-                if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate, event: linkedEvent });
-            });
-
-            if (items.length === 0) return alert("Please add at least one item!");
-
+        function confirmSaveQuotation() {
+            let partyId = document.getElementById('q_party').value;
+            if (!partyId) { alert('Please select a client/party!'); return; }
             let discount = parseFloat(document.getElementById('q_discount').value) || 0;
             let total = parseFloat(document.getElementById('q_total').value) || 0;
             let id = editingSalesId ? editingSalesId : generateDocId('Quotation');
-
-            // 🚀 SMART FIX: Quotation ke andar eventId save karna zaroori hai
             let evIdForQuote = null;
-            if (currentQuoteSourceLeadId && !editingSalesId) {
-                evIdForQuote = currentQuoteSourceLeadId;
-            } else if (editingSalesId && salesDB[editingSalesId]) {
-                evIdForQuote = salesDB[editingSalesId].eventId || null;
-            }
-
+            if (currentQuoteSourceLeadId && !editingSalesId) { evIdForQuote = currentQuoteSourceLeadId; }
+            else if (editingSalesId && salesDB[editingSalesId]) { evIdForQuote = salesDB[editingSalesId].eventId || null; }
             let qRemarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
-            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: event, date: date, events: quoteEvents, items, discount, total, status: 'Draft', remarks: qRemarks };
-
+            let primaryEvent = quoteEventsData.length > 0 ? quoteEventsData[0].name : '';
+            let primaryDate = quoteEventsData.length > 0 ? quoteEventsData[0].date : '';
+            let grossTotal = quoteItemsData.reduce((s,i) => s + (i.amount||0), 0);
+            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: primaryEvent, date: primaryDate, events: quoteEventsData, items: quoteItemsData, discount, total, gross: grossTotal, status: 'Draft', remarks: qRemarks };
             if (currentQuoteSourceLeadId && leadsDB[currentQuoteSourceLeadId] && !editingSalesId) {
-                leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: `<a href="#" onclick="viewDetails('${id}', 'sales'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">📝 Quotation Created - ₹${total.toLocaleString('en-IN')}</a>`, isSystemHtml: true });
+                leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: '<a href="#" onclick="viewDetails(\'' + id + '\', \'sales\'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">Quotation Created - \u20B9' + total.toLocaleString('en-IN') + '</a>', isSystemHtml: true });
             }
-
             updateDataAndUI();
+            document.getElementById('quotePreviewModal').style.display = 'none';
             document.getElementById('quotationModal').style.display = 'none';
-            let savedSourceLeadId = currentQuoteSourceLeadId; // backup id
+            let savedSourceLeadId = currentQuoteSourceLeadId;
             currentQuoteSourceLeadId = null;
-            
-            // 🚀 SMART ROUTING: Agar hum CRM mein hain, toh wapas usi panel ko kholo!
             let activeTab = document.querySelector('.active-section');
-            if (activeTab && activeTab.id === 'crm' && savedSourceLeadId) {
-                openPanel(savedSourceLeadId); 
-            } else {
-                setSalesTab('Quotation', document.getElementById('st-quotations')); 
-            }
+            if (activeTab && activeTab.id === 'crm' && savedSourceLeadId) { openPanel(savedSourceLeadId); }
+            else { setSalesTab('Quotation', document.getElementById('st-quotations')); }
+            if (typeof showToast === 'function') showToast('Quotation saved successfully!', 'success', 3000);
         }
+
         // 🚀 SMART QUOTE REJECTION
         function rejectQuotation(id) { 
             if (confirm("Mark Quotation as Rejected?")) { 
@@ -14502,23 +14679,22 @@
             if (event) { event.stopPropagation(); event.preventDefault(); }
             closeAllOverlays(); closeAllMenus(); let record = salesDB[id]; editingSalesId = id;
             if (record.type === 'Quotation') {
-                document.getElementById('quote-modal-title').innerText = "Edit Quotation"; loadPartiesIntoSelect('q_party', record.partyId); document.getElementById('q_discount').value = record.discount || 0; if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || '';
-                // Load multi-events
-                document.getElementById('quote_events_container').innerHTML = '';
-                quoteEventCount = 0;
+                document.getElementById('quote-modal-title').innerText = "Edit Quotation";
+                loadPartiesIntoSelect('q_party', record.partyId);
+                quoteEventsData = []; quoteItemsData = [];
                 if (record.events && record.events.length > 0) {
-                    record.events.forEach(ev => addQuoteEvent(ev));
-                } else {
-                    addQuoteEvent({ name: record.event || '', date: record.date || '' });
+                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '' }));
+                } else if (record.event) {
+                    quoteEventsData.push({ name: record.event, date: record.date || '', time: '', venue: '' });
                 }
-                document.getElementById('quote_items_container').innerHTML = '';
-                quoteItemCount = 0;
-                record.items.forEach(item => {
-                    addQuoteItem(); let rows = document.querySelectorAll('#quote_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
-                    lastRow.querySelector('.q-item-name').value = item.name; lastRow.querySelector('.q-item-qty').value = item.qty; lastRow.querySelector('.q-item-rate').value = item.rate; if (item.event && lastRow.querySelector('.q-item-event')) { lastRow.querySelector('.q-item-event').value = item.event; }
-                    if (lastRow.querySelector('.q-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.q-item-unit').innerHTML = getUnitOptions(item.unit); }
-                    if (lastRow.querySelector('.q-item-desc')) lastRow.querySelector('.q-item-desc').value = item.desc || "";
-                }); calculateQuoteTotal(); document.getElementById('quotationModal').style.display = 'flex';
+                if (record.items && record.items.length > 0) {
+                    quoteItemsData = record.items.map(item => ({ name: item.name, desc: item.desc || '', unit: item.unit || 'Pcs', qty: item.qty, rate: item.rate, amount: item.amount, event: item.event || (quoteEventsData.length > 0 ? quoteEventsData[0].name : '') }));
+                }
+                quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+                document.getElementById('q_discount').value = record.discount || 0;
+                if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || '';
+                renderQuoteEvents(); renderQuoteItems(); calculateQuoteTotal();
+                document.getElementById('quotationModal').style.display = 'flex';
             } else if (record.type === 'Invoice') {
                 document.getElementById('di-modal-title').innerText = "Edit Tax Invoice"; loadPartiesIntoSelect('di_party', record.partyId); document.getElementById('di_event').value = record.event; document.getElementById('di_date').value = record.date; document.getElementById('di_discount').value = record.discount; if (document.getElementById('di_remarks')) document.getElementById('di_remarks').value = record.remarks || ''; document.getElementById('di_gst').value = record.gstPercent; document.getElementById('di_advance').value = record.advance; document.getElementById('di_advance').setAttribute('readonly', true); document.getElementById('di_advance').style.background = '#F1F5F9'; document.getElementById('available_advance_group').style.display = 'none'; document.getElementById('inv_items_container').innerHTML = ''; invItemCount = 0;
                 record.items.forEach(item => {
@@ -15052,14 +15228,36 @@
                 document.getElementById('qv_modal_title').innerText = tMap[record.type] + " Details";
                 let statusColor = "var(--danger)"; if (record.status === "Paid") statusColor = "var(--success)"; if (record.status === "Partial") statusColor = "#0284C7"; if (record.status === "Draft") statusColor = "var(--warning)"; if (record.status === "Invoiced") statusColor = "var(--success)"; if (record.status === "Rejected") statusColor = "var(--danger)";
 
-                bodyHtml = `<div style="margin-bottom: 15px;"><strong>Party:</strong> ${sanitize(partyName)}<br><strong>Doc ID:</strong> ${record.id}${record.ref ? `<br><strong>Bill No.:</strong> ${sanitize(record.ref)}` : ''}<br><strong>Title/Event:</strong> ${record.event}<br><strong>Date:</strong> ${formattedDate}<br><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700; text-transform:uppercase;">${record.status}</span></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;"><tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color);"><th style="padding: 6px; text-align: left;">Item</th><th style="padding: 6px; text-align: center;">Qty</th><th style="padding: 6px; text-align: right;">Rate</th><th style="padding: 6px; text-align: right;">Amount</th></tr>`;
+                bodyHtml = `<div style="margin-bottom: 15px;"><strong>Party:</strong> ${sanitize(partyName)}<br><strong>Doc ID:</strong> ${record.id}${record.ref ? `<br><strong>Bill No.:</strong> ${sanitize(record.ref)}` : ''}${record.events && record.events.length > 0 ? '' : `<br><strong>Title/Event:</strong> ${sanitize(record.event || '')}`}<br><strong>Date:</strong> ${formattedDate}<br><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700; text-transform:uppercase;">${record.status}</span></div>`;
 
                 let subtotal = 0;
-                record.items.forEach(item => {
-                    subtotal += item.amount;
-                    bodyHtml += `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 6px;">${sanitize(item.name)}${item.event ? '<br><span style="font-size:9px; color:var(--accent-color); font-weight:600;">' + sanitize(item.event) + '</span>' : ''}</td><td style="padding: 6px; text-align: center;">${item.qty}</td><td style="padding: 6px; text-align: right;">₹${item.rate.toLocaleString('en-IN')}</td><td style="padding: 6px; text-align: right;">₹${item.amount.toLocaleString('en-IN')}</td></tr>`;
-                });
-                bodyHtml += `</table>`;
+                if (record.type === 'Quotation' && record.events && record.events.length > 0) {
+                    // EVENT-GROUPED RENDERING for quotations
+                    record.events.forEach(ev => {
+                        let evItems = (record.items || []).filter(i => i.event === ev.name);
+                        let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                        let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                        bodyHtml += `<div style="margin-bottom:12px; border:1px solid #E5E7EB; border-radius:8px; overflow:hidden;">`;
+                        bodyHtml += `<div style="background:linear-gradient(135deg,#6366F1,#8B5CF6); color:white; padding:6px 10px; font-size:12px; font-weight:700; display:flex; justify-content:space-between;"><span>${sanitize(ev.name)}${evDate ? ' - ' + evDate : ''}${ev.time ? ' at ' + ev.time : ''}${ev.venue ? ' | ' + sanitize(ev.venue) : ''}</span><span>₹${evTotal.toLocaleString('en-IN')}</span></div>`;
+                        if (evItems.length === 0) {
+                            bodyHtml += `<div style="padding:6px 10px; font-size:11px; color:#94A3B8;">No items for this event.</div>`;
+                        } else {
+                            evItems.forEach(item => {
+                                subtotal += item.amount;
+                                bodyHtml += `<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #F3F4F6; font-size:12px;"><div><strong>${sanitize(item.name)}</strong>${item.desc ? '<br><span style="font-size:10px; color:#64748B;">' + sanitize(item.desc) + '</span>' : ''}<br><span style="font-size:10px; color:#64748B;">${item.qty} ${item.unit || 'Pcs'} × ₹${item.rate.toLocaleString('en-IN')}</span></div><div style="font-weight:700; color:#166534;">₹${item.amount.toLocaleString('en-IN')}</div></div>`;
+                            });
+                        }
+                        bodyHtml += `</div>`;
+                    });
+                } else {
+                    // STANDARD TABLE RENDERING
+                    bodyHtml += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;"><tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color);"><th style="padding: 6px; text-align: left;">Item</th><th style="padding: 6px; text-align: center;">Qty</th><th style="padding: 6px; text-align: right;">Rate</th><th style="padding: 6px; text-align: right;">Amount</th></tr>`;
+                    record.items.forEach(item => {
+                        subtotal += item.amount;
+                        bodyHtml += `<tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 6px;">${sanitize(item.name)}${item.event ? '<br><span style="font-size:9px; color:var(--accent-color); font-weight:600;">' + sanitize(item.event) + '</span>' : ''}</td><td style="padding: 6px; text-align: center;">${item.qty}</td><td style="padding: 6px; text-align: right;">₹${item.rate.toLocaleString('en-IN')}</td><td style="padding: 6px; text-align: right;">₹${item.amount.toLocaleString('en-IN')}</td></tr>`;
+                    });
+                    bodyHtml += `</table>`;
+                }
                 if (record.remarks) {
                     bodyHtml += `<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"><strong>Remarks:</strong> ${sanitize(record.remarks)}</div>`;
                 }
@@ -15447,45 +15645,66 @@
                     }
                 }
 
-                // EVENT SCHEDULE BOX (for multi-event quotations)
-                if (record.events && record.events.length > 0) {
-                    html += '<div style="margin:10px 0; padding:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px;">';
-                    html += '<div style="font-size:11px; font-weight:800; color:#475569; margin-bottom:6px;">Event Schedule</div>';
+                // EVENT-GROUPED PRINT for Quotations
+                let subtotal = 0;
+                if (record.type === 'Quotation' && record.events && record.events.length > 0) {
                     record.events.forEach(ev => {
+                        let evItems = (record.items || []).filter(i => i.event === ev.name);
+                        let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
-                        html += '<div style="font-size:10px; margin-bottom:3px;"><strong>' + sanitize(ev.name) + '</strong>';
-                        if (evDate) html += ' | ' + evDate;
-                        if (ev.time) html += ' | ' + ev.time;
-                        if (ev.venue) html += ' | ' + sanitize(ev.venue);
+                        html += '<div style="margin:10px 0; border:1px solid #E2E8F0; border-radius:6px; overflow:hidden;">';
+                        html += '<div style="background:#6366F1; color:white; padding:8px 10px; font-size:12px; font-weight:800; display:flex; justify-content:space-between;">';
+                        html += '<span>' + sanitize(ev.name) + (evDate ? ' | ' + evDate : '') + (ev.time ? ' | ' + ev.time : '') + (ev.venue ? ' | ' + sanitize(ev.venue) : '') + '</span>';
+                        html += '<span>₹' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                        evItems.forEach(item => {
+                            subtotal += item.amount;
+                            let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
+                            let unitHtml = item.unit ? item.unit : 'Pcs';
+                            html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #F3F4F6; font-size:11px;">';
+                            html += '<div><strong style="color:#0f172a;">' + sanitize(item.name) + '</strong>' + descHtml + '<br><span style="font-size:9px; color:#64748b;">' + item.qty + ' ' + unitHtml + ' × ₹' + item.rate.toLocaleString('en-IN') + '</span></div>';
+                            html += '<div style="font-weight:800; color:#0f172a;">₹' + item.amount.toLocaleString('en-IN') + '</div>';
+                            html += '</div>';
+                        });
                         html += '</div>';
                     });
-                    html += '</div>';
+                } else {
+                    // EVENT SCHEDULE BOX (for non-quotation or non-grouped)
+                    if (record.events && record.events.length > 0) {
+                        html += '<div style="margin:10px 0; padding:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px;">';
+                        html += '<div style="font-size:11px; font-weight:800; color:#475569; margin-bottom:6px;">Event Schedule</div>';
+                        record.events.forEach(ev => {
+                            let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
+                            html += '<div style="font-size:10px; margin-bottom:3px;"><strong>' + sanitize(ev.name) + '</strong>';
+                            if (evDate) html += ' | ' + evDate;
+                            if (ev.time) html += ' | ' + ev.time;
+                            if (ev.venue) html += ' | ' + sanitize(ev.venue);
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    }
+
+                    // MAIN ITEMS TABLE
+                    html += `<span class="section-label">Particulars</span>
+                    <table><tr><th style="width:45%">Service / Item</th><th class="center" style="width:15%">Qty & Unit</th><th class="right" style="width:20%">Rate</th><th class="right" style="width:20%">Amount</th></tr>`;
+                    if (record.items && Array.isArray(record.items)) {
+                        record.items.forEach(item => {
+                            subtotal += item.amount;
+                            let descHtml = item.desc ? `<div style="font-size:10px; color:#64748b; margin-top:4px;"><i>${sanitize(item.desc)}</i></div>` : '';
+                            let eventHtml = item.event ? `<div style="font-size:9px; color:#2563eb; font-weight:700; margin-top:2px;">${sanitize(item.event)}</div>` : '';
+                            let unitHtml = item.unit ? item.unit : 'Pcs';
+                            html += `<tr>
+                                <td><strong style="color:#0f172a; font-size:12px;">${sanitize(item.name)}</strong>${descHtml}${eventHtml}</td>
+                                <td class="center"><strong style="font-size:12px;">${item.qty}</strong> <span style="font-size:10px; color:#64748b;">${unitHtml}</span></td>
+                                <td class="right">₹${item.rate.toLocaleString('en-IN')}</td>
+                                <td class="right" style="font-weight:800; color:#0f172a;">₹${item.amount.toLocaleString('en-IN')}</td>
+                            </tr>`;
+                        });
+                    } else if (record.amount) {
+                        subtotal = record.amount;
+                        html += `<tr><td><strong>General Amount</strong></td><td class="center">1</td><td class="right">₹${record.amount.toLocaleString('en-IN')}</td><td class="right" style="font-weight:800;">₹${record.amount.toLocaleString('en-IN')}</td></tr>`;
+                    }
+                    html += `</table>`;
                 }
-
-                // MAIN ITEMS TABLE (With Description & Unit)
-                html += `<span class="section-label">Particulars</span>
-                <table><tr><th style="width:45%">Service / Item</th><th class="center" style="width:15%">Qty & Unit</th><th class="right" style="width:20%">Rate</th><th class="right" style="width:20%">Amount</th></tr>`;
-
-                let subtotal = 0;
-                if (record.items && Array.isArray(record.items)) {
-                    record.items.forEach(item => {
-                        subtotal += item.amount;
-                        let descHtml = item.desc ? `<div style="font-size:10px; color:#64748b; margin-top:4px;"><i>${sanitize(item.desc)}</i></div>` : '';
-                        let eventHtml = item.event ? `<div style="font-size:9px; color:#2563eb; font-weight:700; margin-top:2px;">${sanitize(item.event)}</div>` : '';
-                        let unitHtml = item.unit ? item.unit : 'Pcs';
-
-                        html += `<tr>
-                            <td><strong style="color:#0f172a; font-size:12px;">${sanitize(item.name)}</strong>${descHtml}${eventHtml}</td>
-                            <td class="center"><strong style="font-size:12px;">${item.qty}</strong> <span style="font-size:10px; color:#64748b;">${unitHtml}</span></td>
-                            <td class="right">₹${item.rate.toLocaleString('en-IN')}</td>
-                            <td class="right" style="font-weight:800; color:#0f172a;">₹${item.amount.toLocaleString('en-IN')}</td>
-                        </tr>`;
-                    });
-                } else if (record.amount) {
-                    subtotal = record.amount;
-                    html += `<tr><td><strong>General Amount</strong></td><td class="center">1</td><td class="right">₹${record.amount.toLocaleString('en-IN')}</td><td class="right" style="font-weight:800;">₹${record.amount.toLocaleString('en-IN')}</td></tr>`;
-                }
-                html += `</table>`;
 
                 if (record.remarks) { html += `<div style="background:#F8FAFC; border:1px solid #e2e8f0; padding:12px 15px; border-radius:6px; margin-bottom:15px; font-size:12px;"><strong style="color:#475569;">Remarks:</strong> ${sanitize(record.remarks)}</div>`; }
 
