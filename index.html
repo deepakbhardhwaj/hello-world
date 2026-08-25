@@ -6804,7 +6804,7 @@
                         <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;" id="qev_form_title">Add New Function</div>
                         <div class="form-row">
                             <div class="form-group" style="flex:1;"><label class="form-label">Function Name</label><input type="text" id="qev_name" class="form-input" placeholder="e.g. Haldi Ceremony"></div>
-                            <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="qev_color" class="form-input" value="#3B82F6" style="height:34px; padding:2px; cursor:pointer;"></div>
+                            <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="qev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group"><label class="form-label">Date</label><input type="date" id="qev_date" class="form-input"></div>
@@ -13003,7 +13003,7 @@
             document.getElementById('qev_date').value = '';
             document.getElementById('qev_time').value = '';
             document.getElementById('qev_venue').value = '';
-            if (document.getElementById('qev_color')) document.getElementById('qev_color').value = '#3B82F6';
+            if (document.getElementById('qev_color')) document.getElementById('qev_color').value = '#FFFFFF';
             document.getElementById('qev_form_title').innerText = 'Add New Function';
             editingQuoteEventIdx = -1;
             renderQEVList();
@@ -13034,19 +13034,19 @@
             return luminance > 0.55 ? '#0F172A' : '#FFFFFF';
         }
         function getEventColor(ev) {
-            if (ev.color) return ev.color;
-            return autoAssignEventColor(ev.name);
+            if (ev.color && ev.color !== '#FFFFFF') return ev.color;
+            return '#FFFFFF';
         }
         function saveQuoteEvent() {
             let name = document.getElementById('qev_name').value.trim();
             if (!name) { alert('Please enter event name!'); return; }
             let userColor = document.getElementById('qev_color') ? document.getElementById('qev_color').value : '';
-            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim(), color: userColor || autoAssignEventColor(name) };
+            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim(), color: userColor || '' };
             if (editingQuoteEventIdx >= 0) { quoteEventsData[editingQuoteEventIdx] = ev; editingQuoteEventIdx = -1; }
             else { quoteEventsData.push(ev); }
             quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
             document.getElementById('qev_name').value = ''; document.getElementById('qev_date').value = ''; document.getElementById('qev_time').value = ''; document.getElementById('qev_venue').value = '';
-            if (document.getElementById('qev_color')) document.getElementById('qev_color').value = '#3B82F6';
+            if (document.getElementById('qev_color')) document.getElementById('qev_color').value = '#FFFFFF';
             document.getElementById('qev_form_title').innerText = 'Add New Event';
             renderQEVList();
         }
@@ -13056,7 +13056,7 @@
             document.getElementById('qev_date').value = ev.date;
             document.getElementById('qev_time').value = ev.time;
             document.getElementById('qev_venue').value = ev.venue;
-            if (document.getElementById('qev_color')) document.getElementById('qev_color').value = ev.color || '#3B82F6';
+            if (document.getElementById('qev_color')) document.getElementById('qev_color').value = ev.color || '#FFFFFF';
             document.getElementById('qev_form_title').innerText = 'Edit Function: ' + ev.name;
             editingQuoteEventIdx = idx;
             renderQEVList();
@@ -15424,19 +15424,21 @@
                         bodyHtml += `<tr style="background:${evColor}; border-bottom:1px solid rgba(0,0,0,0.05);"><td style="padding:6px 8px; font-weight:700; color:${tc};">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9;">${evDate}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9;">${ev.time || '-'}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9;">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
                     });
                     bodyHtml += `</table></div>`;
-                    // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button)
+                    // COMPACT EVENT-WISE ITEM SUMMARY (boxed like function schedule)
+                    bodyHtml += `<div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:8px;">`;
                     record.events.forEach((ev, evIdx) => {
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
                         subtotal += evTotal;
                         let evColor = getEventColor(ev);
                         let textColor = getContrastColor(evColor);
-                        bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:8px; margin-bottom:6px; overflow:hidden;">`;
+                        bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">`;
                         bodyHtml += `<div style="background:${evColor}; color:${textColor}; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">${sanitize(ev.name)} <span style="font-size:9px; opacity:0.8;">(${evItems.length} items)</span></div>`;
                         bodyHtml += `<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">₹${evTotal.toLocaleString('en-IN')}</div>`;
                         bodyHtml += `<button onclick="openQuoteItemReadOnlyView('${id}', ${evIdx})" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>`;
                         bodyHtml += `</div>`;
                     });
+                    bodyHtml += `</div>`;
                 } else {
                     // STANDARD TABLE RENDERING
                     bodyHtml += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;"><tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color);"><th style="padding: 6px; text-align: left;">Item</th><th style="padding: 6px; text-align: center;">Qty</th><th style="padding: 6px; text-align: right;">Rate</th><th style="padding: 6px; text-align: right;">Amount</th></tr>`;
