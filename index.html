@@ -6756,7 +6756,7 @@
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
                     <h3 id="quote-modal-title">Create Quotation</h3>
-                    <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null; showNavAndFabs();">&times;</button>
+                    <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null; smartShowNav();">&times;</button>
                 </div>
                 <form id="quoteForm" onsubmit="event.preventDefault();" novalidate>
                     <div class="form-group">
@@ -7477,7 +7477,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 id="qv_modal_title">Details</h3>
-                    <button class="modal-close" onclick="document.getElementById('quoteViewModal').style.display='none'; showNavAndFabs();">&times;</button>
+                    <button class="modal-close" onclick="document.getElementById('quoteViewModal').style.display='none'; smartShowNav();">&times;</button>
                 </div>
                 <div id="quoteViewBody" style="font-size:13px; line-height:1.5;"></div>
             </div>
@@ -10249,7 +10249,7 @@
             // 🚀 SAFETY GUARD: Agar data temporary undefined h to crash hone se bachao
             if (!lead) {
                 console.error("Lead/Event data not found for ID:", id);
-                showNavAndFabs();
+                smartShowNav();
                 return;
             }
 
@@ -10771,7 +10771,7 @@
         function closePanel() { 
             document.getElementById('detailPanel').classList.remove('open'); 
             setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; currentLeadId = null; activeWorkspaceEventId = null; }, 300); 
-            showNavAndFabs(); // 🚀 FIX: Panel band hote hi Navbar wapas aayega
+            smartShowNav(); // 🚀 FIX: Panel band hote hi Navbar wapas aayega
         }
         function saveAndClosePanel() { 
             // 🚀 FIX: Added safety check (leadsDB[currentLeadId]) before reading status
@@ -12078,7 +12078,7 @@
         function closePartyLedger() {
             document.getElementById('partyLedgerPanel').classList.remove('open');
             setTimeout(() => { document.getElementById('partyOverlay').style.display = 'none'; activePartyId = null; }, 300);
-            showNavAndFabs(); // 🚀 NAV BAR WAPAS LAANE KE LIYE
+            smartShowNav(); // 🚀 NAV BAR WAPAS LAANE KE LIYE
         }
 
         // ==========================================
@@ -12511,7 +12511,7 @@
         function closeBankLedger() {
             document.getElementById('bankLedgerPanel').classList.remove('open');
             setTimeout(() => { document.getElementById('bankOverlay').style.display = 'none'; activeBankId = null; }, 300);
-            showNavAndFabs(); // 🚀 NAV BAR WAPAS LAANE KE LIYE
+            smartShowNav(); // 🚀 NAV BAR WAPAS LAANE KE LIYE
         }
 
         // ==========================================
@@ -13409,7 +13409,7 @@
             updateDataAndUI();
             document.getElementById('quotePreviewModal').style.display = 'none';
             document.getElementById('quotationModal').style.display = 'none';
-            showNavAndFabs();
+            smartShowNav();
             let savedSourceLeadId = currentQuoteSourceLeadId;
             currentQuoteSourceLeadId = null;
             let activeTab = document.querySelector('.active-section');
@@ -20599,6 +20599,17 @@
         // --------------------------------------------------------------
         if(window.hideFabTabs && window.hideFabTabs.includes('inventory-hub')) {
             window.hideFabTabs = window.hideFabTabs.filter(t => t !== 'inventory-hub');
+        }
+
+
+        function smartShowNav() {
+            // Only show nav if no modals or side-panels are open
+            let anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay'))
+                .some(m => m.style.display === 'flex' || m.style.display === 'block');
+            let anyPanelOpen = document.querySelector('.side-panel.open');
+            if (!anyModalOpen && !anyPanelOpen) {
+                showNavAndFabs();
+            }
         }
 
         window.hideNavAndFabs = function() {
