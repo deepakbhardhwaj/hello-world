@@ -6863,6 +6863,16 @@
                 <button onclick="closeQuoteItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
+        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:8600;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3>Item Details</h3>
+                    <button class="modal-close" onclick="document.getElementById('quoteItemReadModal').style.display='none'">&times;</button>
+                </div>
+                <div id="quoteItemReadBody" style="padding:0 0 12px 0;"></div>
+                <button onclick="document.getElementById('quoteItemReadModal').style.display='none'" class="btn-main" style="font-size:12px;">Close</button>
+            </div>
+        </div>
 
         <div id="directInvoiceModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
@@ -13211,6 +13221,32 @@
             document.getElementById('quoteItemViewModal').style.display = 'none';
             renderQuoteItems(); syncQuoteGrossFromItems();
         }
+        function openQuoteItemReadOnlyView(recordId, evIdx) {
+            let record = salesDB[recordId];
+            if (!record || !record.events || !record.events[evIdx]) return;
+            let ev = record.events[evIdx];
+            let evItems = (record.items || []).filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + sanitize(ev.name) + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
+            } else {
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr style="background:var(--bg-color); border-bottom:1px solid var(--border-color);"><th style="padding:6px 4px; text-align:center; width:20px;">#</th><th style="padding:6px 8px; text-align:left;">Item / Service</th><th style="padding:6px 4px; text-align:center; width:40px;">Qty</th><th style="padding:6px 4px; text-align:right; width:50px;">Rate</th><th style="padding:6px 4px; text-align:right; width:60px;">Amount</th></tr>';
+                evItems.forEach((item, i) => {
+                    html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (i + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                    if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                    html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.unit || 'Pcs') + '</div></td>';
+                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                });
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+                html += '</table>';
+            }
+            document.getElementById('quoteItemReadBody').innerHTML = html;
+            document.getElementById('quoteItemReadModal').style.display = 'flex';
+        }
         function renderQuoteItemView() {
             let ev = quoteEventsData[quoteViewEvIdx];
             if (!ev) return;
@@ -15358,16 +15394,17 @@
 
                 let subtotal = 0;
                 if (record.type === 'Quotation' && record.events && record.events.length > 0) {
-                    // FUNCTION SCHEDULE TABLE
+                    // FUNCTION SCHEDULE TABLE (with event colors)
                     bodyHtml += `<div style="margin-bottom:12px;"><div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>`;
                     bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Venue</th></tr>`;
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
-                        bodyHtml += `<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:var(--text-secondary);">${evDate}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.time || '-'}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
+                        let evColor = getEventColor(ev);
+                        bodyHtml += `<tr style="border-bottom:1px solid var(--bg-color); border-left:4px solid ${evColor};"><td style="padding:6px 8px; font-weight:700; color:var(--text-primary);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:var(--text-secondary);">${evDate}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.time || '-'}</td><td style="padding:6px 8px; color:var(--text-secondary);">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
                     });
                     bodyHtml += `</table></div>`;
                     // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button)
-                    record.events.forEach(ev => {
+                    record.events.forEach((ev, evIdx) => {
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
                         subtotal += evTotal;
@@ -15376,6 +15413,7 @@
                         bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:8px; margin-bottom:6px; overflow:hidden;">`;
                         bodyHtml += `<div style="background:${evColor}; color:${textColor}; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">${sanitize(ev.name)} <span style="font-size:9px; opacity:0.8;">(${evItems.length} items)</span></div>`;
                         bodyHtml += `<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">₹${evTotal.toLocaleString('en-IN')}</div>`;
+                        bodyHtml += `<button onclick="openQuoteItemReadOnlyView('${id}', ${evIdx})" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>`;
                         bodyHtml += `</div>`;
                     });
                 } else {
@@ -15778,13 +15816,14 @@
                 // QUOTATION PRINT - Event Schedule table + Event-grouped items
                 let subtotal = 0;
                 if (record.type === 'Quotation' && record.events && record.events.length > 0) {
-                    // FUNCTION SCHEDULE TABLE
+                    // FUNCTION SCHEDULE TABLE (with event colors)
                     html += '<span class="section-label">Function Schedule</span>';
                     html += '<table style="margin-bottom:15px; font-size:11px;">';
                     html += '<tr><th style="width:25%">Function Name</th><th style="width:20%">Date</th><th style="width:40%">Venue</th><th class="right" style="width:15%">Time</th></tr>';
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
-                        html += '<tr><td><strong>' + sanitize(ev.name) + '</strong></td><td>' + evDate + '</td><td>' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right">' + (ev.time || '-') + '</td></tr>';
+                        let evColor = getEventColor(ev);
+                        html += '<tr style="border-left:5px solid ' + evColor + ';"><td><strong>' + sanitize(ev.name) + '</strong></td><td>' + evDate + '</td><td>' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right">' + (ev.time || '-') + '</td></tr>';
                     });
                     html += '</table>';
                     // EVENT-GROUPED ITEMS
