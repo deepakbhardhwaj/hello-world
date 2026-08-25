@@ -6741,6 +6741,17 @@
             </div>
         </div>
 
+
+        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:10700;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3>Item Details</h3>
+                    <button class="modal-close" onclick="document.getElementById('quoteItemReadModal').style.display='none'">&times;</button>
+                </div>
+                <div id="quoteItemReadBody" style="padding:0 0 12px 0;"></div>
+                <button onclick="document.getElementById('quoteItemReadModal').style.display='none'" class="btn-main" style="font-size:12px;">Close</button>
+            </div>
+        </div>
         <div id="quotationModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
@@ -7482,17 +7493,7 @@
                     onclick="confirmLinkAdvances()">Link</button>
             </div>
         </div>
-        <div id="applyBillsM        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:10700;">
-            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
-                <div class="modal-header">
-                    <h3>Item Details</h3>
-                    <button class="modal-close" onclick="document.getElementById('quoteItemReadModal').style.display='none'">&times;</button>
-                </div>
-                <div id="quoteItemReadBody" style="padding:0 0 12px 0;"></div>
-                <button onclick="document.getElementById('quoteItemReadModal').style.display='none'" class="btn-main" style="font-size:12px;">Close</button>
-            </div>
-        </div>
-odal" class="modal-overlay" style="z-index: 6100;">
+        <div id="applyBillsModal" class="modal-overlay" style="z-index: 6100;">
             <div class="modal-content" style="max-width: 400px;">
                 <div class="modal-header">
                     <h3>Apply to Bills</h3><button class="modal-close"
