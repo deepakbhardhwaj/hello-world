@@ -14947,9 +14947,31 @@
 
 
                 if (record.type === 'Invoice' || record.type === 'PB' || record.type === 'Asset') {
-                    if (record.remarks) {
-                        bodyHtml += '<div style="background:#F8FAFC; border:1px solid var(--border-color); padding:10px; border-radius:8px; margin-bottom:8px; font-size:12px;"><strong>Remarks:</strong> ' + sanitize(record.remarks) + '</div>';
+
+                    // Show full breakdown: Subtotal, Labour, Transport, Discount, GST, Grand Total
+                    let baseSubtotal = (record.total || 0) + (record.discount || 0);
+                    if (record.labour || record.transport) {
+                        baseSubtotal = baseSubtotal - (record.labour || 0) - (record.transport || 0);
                     }
+                    bodyHtml += '<strong>Subtotal:</strong> ₹' + baseSubtotal.toLocaleString('en-IN') + '<br>';
+                    if (record.labour && record.labour > 0) {
+                        bodyHtml += '<strong>Labour Charge:</strong> ₹' + (record.labour || 0).toLocaleString('en-IN') + '<br>';
+                    }
+                    if (record.transport && record.transport > 0) {
+                        bodyHtml += '<strong>Transport Charge:</strong> ₹' + (record.transport || 0).toLocaleString('en-IN') + '<br>';
+                    }
+                    if (record.discount && record.discount > 0) {
+                        bodyHtml += '<strong>Discount:</strong> -₹' + record.discount.toLocaleString('en-IN') + '<br>';
+                    }
+                    bodyHtml += '<strong>Base Total:</strong> ₹' + (record.total || 0).toLocaleString('en-IN') + '<br>';
+                    if (record.taxAmount && record.taxAmount > 0) {
+                        bodyHtml += '<strong>GST (' + record.gstPercent + '%):</strong> ₹' + record.taxAmount.toLocaleString('en-IN') + '<br>';
+                    }
+                    bodyHtml += '<strong style="font-size: 14px; color: var(--text-primary);">Grand Total: ₹' + (record.finalTotal || 0).toLocaleString('en-IN') + '</strong><br>';
+                    bodyHtml += '<div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;">';
+                    bodyHtml += '<strong style="color: var(--success);">Total Paid/Advance: ₹' + (record.advance || 0).toLocaleString('en-IN') + '</strong><br>';
+                    bodyHtml += '<strong style="color: var(--danger); font-size: 14px;">Balance Due: ₹' + (record.balanceDue || 0).toLocaleString('en-IN') + '</strong>';
+                    bodyHtml += '</div>';
 
                     if (record.eventId && context === 'sales') {
                         bodyHtml += `<div style="margin-top:12px; padding:8px; background:#FEF2F2; border-radius:6px; border:1px solid #FCA5A5; text-align:center;"><span style="font-size:11px; color:var(--danger); display:block; margin-bottom:4px;">This bill is linked to an Event Workspace</span><button onclick="unlinkInvoice('${id}')" style="background:var(--danger); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">🚫 Detach from Event</button></div>`;
@@ -15359,7 +15381,21 @@
                              <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Discount:</span> <span>₹${(record.discount || 0).toLocaleString('en-IN')}</span></div>
                              <div class="grand-total" style="display:flex; justify-content:space-between;"><span>Estimate Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>`;
                 } else {
-                    html += `${(record.discount && record.discount > 0) ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Subtotal:</span> <span>₹${((record.total || 0) + record.discount).toLocaleString('en-IN')}</span></div><div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#dc2626;"><span>Discount:</span> <span>-₹${record.discount.toLocaleString('en-IN')}</span></div>` : ''}<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Base Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>
+                    let printSubtotal = (record.total || 0) + (record.discount || 0);
+                    if (record.labour || record.transport) {
+                        printSubtotal = printSubtotal - (record.labour || 0) - (record.transport || 0);
+                    }
+                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Subtotal:</span> <span>₹${printSubtotal.toLocaleString('en-IN')}</span></div>`;
+                    if (record.labour && record.labour > 0) {
+                        html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Labour Charge:</span> <span>₹${(record.labour || 0).toLocaleString('en-IN')}</span></div>`;
+                    }
+                    if (record.transport && record.transport > 0) {
+                        html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Transport Charge:</span> <span>₹${(record.transport || 0).toLocaleString('en-IN')}</span></div>`;
+                    }
+                    if (record.discount && record.discount > 0) {
+                        html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#dc2626;"><span>Discount:</span> <span>-₹${record.discount.toLocaleString('en-IN')}</span></div>`;
+                    }
+                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Base Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>
                              ${record.taxAmount ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>GST (${record.gstPercent}%):</span> <span>₹${record.taxAmount.toLocaleString('en-IN')}</span></div>` : ''}
                              <div class="grand-total" style="display:flex; justify-content:space-between;"><span>Grand Total:</span> <span>₹${(record.finalTotal || 0).toLocaleString('en-IN')}</span></div>
                              <div style="display:flex; justify-content:space-between; color:#166534; font-weight:700; margin-bottom:5px;"><span>Paid / Advance:</span> <span>₹${(record.advance || 0).toLocaleString('en-IN')}</span></div>
