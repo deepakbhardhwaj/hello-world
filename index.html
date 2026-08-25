@@ -13038,8 +13038,8 @@
         }
         function renderQuoteEvents() {
             let container = document.getElementById('quote_events_container');
-            let html = '<div style="border:1px solid #BFDBFE; border-radius:8px; padding:12px; background:var(--accent-light); margin-bottom:12px;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #BFDBFE;">';
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
             html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
             html += '<button type="button" onclick="openQuoteEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>';
             html += '</div>';
@@ -13134,8 +13134,8 @@
         }
         function renderQuoteItems() {
             let container = document.getElementById('quote_items_container');
-            let html = '<div style="border:1px solid #A7F3D0; border-radius:8px; padding:12px; background:var(--success-light); margin-bottom:12px;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #A7F3D0;">';
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
             html += '<label class="form-label" style="margin:0; color:var(--success); font-size:11px;">Services / Items</label>';
             html += '<button type="button" onclick="openQuoteItemPanel()" style="background:var(--success); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(5,150,105,0.2);">+ Add Item</button>';
             html += '</div>';
@@ -15359,7 +15359,7 @@
                         </div>`;
                     }
                 } else {
-                    if (record.events && record.events.length > 0) {
+                    if (record.type !== 'Quotation' && record.events && record.events.length > 0) {
                         bodyHtml += '<div style="background:#FAFAFE; border:1px solid #E2E8F0; padding:10px; border-radius:8px; margin-bottom:10px; font-size:11px;">';
                         bodyHtml += '<strong style="color:var(--accent-color);">Event Schedule:</strong><br>';
                         record.events.forEach(ev => {
@@ -15643,7 +15643,8 @@
                 </div>`;
 
                 // 🚀 EVENT SCHEDULE (DATES) - Prints ONLY selected dates with Venue
-                if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
+                // Skip for Quotations that have their own events array (printed separately below)
+                if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId] && !(record.type === 'Quotation' && record.events && record.events.length > 0)) {
                     let ev = leadsDB[record.eventId];
                     
                     let datesToPrint = (record.linkedDates && record.linkedDates.length > 0) ? record.linkedDates : (ev.dates || []);
