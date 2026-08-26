@@ -6837,78 +6837,13 @@
                 <button onclick="document.getElementById('quoteItemReadModal').style.display='none'" class="btn-main" style="font-size:12px;">Close</button>
             </div>
         </div>
-        <style>
-            /* ============================================
-               ✨ UNIFIED DOCUMENT DESIGN SYSTEM
-               Shared look for Quotation + Invoice: form, preview & print
-               ============================================ */
-            .doc-header {
-                display:flex; align-items:center; justify-content:space-between; gap:10px;
-                margin:-16px -16px 14px -16px; padding:16px; position:sticky; top:-16px; z-index:10;
-                background: linear-gradient(120deg, #0F172A 0%, #1E293B 60%, #1D4ED8 170%);
-                box-shadow: 0 4px 14px rgba(15,23,42,0.22);
-            }
-            .doc-header-left { display:flex; align-items:center; gap:10px; }
-            .doc-header-icon {
-                width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center;
-                font-size:17px; background: linear-gradient(135deg,#3B82F6,#1D4ED8);
-                box-shadow: 0 4px 10px rgba(29,78,216,0.4), inset 0 1px 0 rgba(255,255,255,0.25); flex-shrink:0;
-            }
-            .doc-header h3 { margin:0; font-size:15px; font-weight:800; color:#fff; letter-spacing:-0.1px; }
-            .doc-header .doc-header-sub { margin:1px 0 0; font-size:10.5px; color:#CBD5E1; font-weight:600; }
-            .doc-header .modal-close { background:rgba(255,255,255,0.12); color:#fff; }
-            .doc-header .modal-close:hover { background:rgba(255,255,255,0.25); color:#fff; }
-
-            .doc-section-title {
-                display:flex; align-items:center; gap:7px; font-size:11px; font-weight:800; color:#334155;
-                text-transform:uppercase; letter-spacing:0.4px; margin:16px 0 8px;
-            }
-            .doc-section-title .num {
-                width:18px; height:18px; border-radius:6px; background:var(--accent-light); color:var(--accent-color);
-                border:1px solid #BFDBFE; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;
-            }
-            .doc-section-title:first-child { margin-top:0; }
-
-            .doc-card {
-                border:1px solid var(--border-color); border-radius:10px; padding:12px; background:#F8FAFC; margin-bottom:12px;
-            }
-            .doc-total-input {
-                font-size:16px !important; font-weight:800 !important; color:var(--accent-color) !important;
-                background:#EFF6FF !important; border:1px solid #BFDBFE !important;
-            }
-
-            .doc-item-card {
-                background:white; border:1px solid var(--border-color); border-left:3px solid var(--accent-color);
-                border-radius:10px; margin-bottom:12px; box-shadow:var(--shadow-sm); position:relative; transition:0.2s;
-            }
-            .doc-item-card:hover { box-shadow:var(--shadow-md); }
-
-            .doc-preview-doc {
-                background:#fff; border-radius:12px; border:1px solid var(--border-color); box-shadow:var(--shadow-md); overflow:hidden;
-            }
-            .doc-preview-accent { height:5px; background:linear-gradient(90deg,#3B82F6,#1D4ED8,#0F172A); }
-            .doc-preview-inner { padding:16px; }
-
-            .doc-cta-btn {
-                background: linear-gradient(120deg,#1E293B,#0F172A 55%,#1D4ED8 170%) !important;
-                box-shadow: 0 8px 18px rgba(15,23,42,0.25) !important;
-            }
-        </style>
-
         <div id="quotationModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
-                <div class="doc-header">
-                    <div class="doc-header-left">
-                        <div class="doc-header-icon">📝</div>
-                        <div>
-                            <h3 id="quote-modal-title">Create Quotation</h3>
-                            <p class="doc-header-sub">Build a client estimate</p>
-                        </div>
-                    </div>
+                <div class="modal-header">
+                    <h3 id="quote-modal-title">Create Quotation</h3>
                     <button class="modal-close" onclick="document.getElementById('quotationModal').style.display='none'; editingSalesId=null; smartShowNav();">&times;</button>
                 </div>
                 <form id="quoteForm" onsubmit="event.preventDefault();" novalidate>
-                    <div class="doc-section-title"><span class="num">1</span> Client Details</div>
                     <div class="form-group">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label class="form-label" style="margin:0;">Select Client / Party</label>
@@ -6922,13 +6857,10 @@
                     <div class="form-group"><label class="form-label">Event Title</label><input type="text"
                             id="q_event_title" class="form-input" placeholder="e.g. Deepak 1st Birthday"></div>
 
-                    <div class="doc-section-title"><span class="num">2</span> Function Schedule</div>
                     <div id="quote_events_container"></div>
-                    <div class="doc-section-title"><span class="num">3</span> Services / Items</div>
                     <div id="quote_items_container"></div>
 
-                    <div class="doc-section-title"><span class="num">4</span> Pricing Summary</div>
-                    <div class="doc-card">
+                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
                         <div class="form-row">
                             <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
                             <div class="form-group"><label class="form-label">Transport</label><input type="number" id="q_transport" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
@@ -6936,7 +6868,7 @@
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" style="color:var(--accent-color);">Net Total</label>
-                            <input type="number" id="q_total" class="form-input doc-total-input">
+                            <input type="number" id="q_total" class="form-input" style="font-size:16px; font-weight:800; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE;">
                         </div>
                         <div class="form-group" style="margin:12px 0 0 0;">
                             <label class="form-label">Remarks / Notes</label>
@@ -6944,7 +6876,7 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn-main doc-cta-btn" onclick="showQuotePreview()">✨ Preview & Save Quotation</button>
+                    <button type="button" class="btn-main" onclick="showQuotePreview()">Preview & Save Quotation</button>
                 </form>
             </div>
         </div>
@@ -6978,20 +6910,14 @@
 
         <div id="quotePreviewModal" class="modal-overlay" style="display:none; z-index:10600;">
             <div class="modal-content" style="max-width:550px;">
-                <div class="doc-header">
-                    <div class="doc-header-left">
-                        <div class="doc-header-icon">📄</div>
-                        <div><h3>Quotation Preview</h3><p class="doc-header-sub">Review before sending to client</p></div>
-                    </div>
+                <div class="modal-header">
+                    <h3>Quotation Preview</h3>
                     <button class="modal-close" onclick="document.getElementById('quotePreviewModal').style.display='none';">&times;</button>
                 </div>
-                <div class="doc-preview-doc" style="margin-bottom:12px;">
-                    <div class="doc-preview-accent"></div>
-                    <div id="quotePreviewBody" class="doc-preview-inner"></div>
-                </div>
-                <div style="display:flex; gap:8px; padding-top:4px;">
-                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">✏️ Edit</button>
-                    <button onclick="confirmSaveQuotation()" class="btn-main doc-cta-btn" style="flex:2; font-size:12px;">✅ Confirm & Save</button>
+                <div id="quotePreviewBody" style="padding:0 0 12px 0;"></div>
+                <div style="display:flex; gap:8px; padding-top:8px;">
+                    <button onclick="document.getElementById('quotePreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">Edit</button>
+                    <button onclick="confirmSaveQuotation()" class="btn-main" style="flex:2; font-size:12px;">Confirm & Save</button>
                 </div>
             </div>
         </div>
@@ -7010,20 +6936,13 @@
 
         <div id="directInvoiceModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
-                <div class="doc-header">
-                    <div class="doc-header-left">
-                        <div class="doc-header-icon">🧾</div>
-                        <div>
-                            <h3 id="di-modal-title">Create Tax Invoice</h3>
-                            <p class="doc-header-sub">Generate a billable invoice</p>
-                        </div>
-                    </div>
+                <div class="modal-header">
+                    <h3 id="di-modal-title">Create Tax Invoice</h3>
                     <button class="modal-close" onclick="document.getElementById('directInvoiceModal').style.display='none'; editingSalesId=null; tempEventIdForInvoice=null;">&times;</button>
                 </div>
                 <form id="diForm" onsubmit="event.preventDefault();" novalidate>
                     <div id="di_autopilot_badge" style="display:none; background:#EFF6FF; color:#1D4ED8; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:16px; border:1px solid #BFDBFE; display:flex; align-items:center; gap:6px;"></div>
-
-                    <div class="doc-section-title"><span class="num">1</span> Client Details</div>
+                    
                     <div class="form-group">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label class="form-label" style="margin:0;">Select Client/Party</label>
@@ -7038,8 +6957,7 @@
                         <div class="form-group"><label class="form-label">Invoice Date</label><input type="date" id="di_date" class="form-input" required></div>
                     </div>
 
-                    <div class="doc-section-title"><span class="num">2</span> Services / Items</div>
-                    <div class="doc-card">
+                    <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
                         <div class="form-group" style="margin-bottom: 12px;">
                             <label class="form-label" style="color:var(--accent-color);">Invoice Type</label>
                             <select id="di_invoice_type" class="form-select" onchange="toggleInvoiceType()">
@@ -7060,7 +6978,7 @@
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Item List</label>
+                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
                             <div style="display: flex; gap: 8px;">
                                 <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Stock</button>
                                 <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addInvoiceItem()">+ Add Item</button>
@@ -7069,66 +6987,38 @@
                         <div id="inv_items_container"></div>
                     </div>
 
-                    <div class="doc-section-title"><span class="num">3</span> Pricing Summary</div>
-                    <div class="doc-card">
-                        <div class="form-row" style="margin-bottom: 0;">
-                            <div class="form-group"><label class="form-label">Labour Charge (₹)</label><input type="number" id="di_labour" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
-                            <div class="form-group"><label class="form-label">Transport Charge (₹)</label><input type="number" id="di_transport" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number" id="di_discount" class="form-input" value="0" oninput="calculateDirectInvoiceTotal()"></div>
-                            <div class="form-group"><label class="form-label">Add GST (%)</label><select id="di_gst" class="form-select" onchange="calculateDirectInvoiceTotal()">
-                                <option value="0">0% (No GST)</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option>
-                            </select></div>
-                        </div>
-                        <div class="form-group" style="margin:0;">
-                            <label class="form-label" style="color:var(--accent-color);">Grand Total (₹)</label>
-                            <input type="number" id="di_final_total" class="form-input doc-total-input" readonly>
-                        </div>
+                    <div class="form-row" style="margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+                        <div class="form-group"><label class="form-label">Labour Charge (₹)</label><input type="number" id="di_labour" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
+                        <div class="form-group"><label class="form-label">Transport Charge (₹)</label><input type="number" id="di_transport" class="form-input" value="0" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
                     </div>
 
-                    <div class="form-group" id="available_advance_group" style="display:none; background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 8px; margin-top: 4px;">
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number" id="di_discount" class="form-input" value="0" oninput="calculateDirectInvoiceTotal()"></div>
+                        <div class="form-group"><label class="form-label">Add GST (%)</label><select id="di_gst" class="form-select" onchange="calculateDirectInvoiceTotal()">
+                            <option value="0">0% (No GST)</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option>
+                        </select></div>
+                    </div>
+
+                    <div class="form-group"><label class="form-label">Grand Total (₹)</label><input type="number" id="di_final_total" class="form-input" readonly style="background: #F1F5F9; font-weight: bold; font-size: 16px; color:var(--accent-color);"></div>
+
+                    <div class="form-group" id="available_advance_group" style="display:none; background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 8px; margin-top: 16px;">
                         <label class="form-label" style="color: var(--warning);">Use Available Advance</label>
                         <select id="di_use_advance" class="form-select" onchange="calculateDirectInvoiceTotal()">
                             <option value="0">Do not use advance</option>
                         </select>
                     </div>
 
-                    <div class="doc-section-title"><span class="num">4</span> Payment &amp; Remarks</div>
-                    <div class="doc-card">
-                        <div class="form-row">
-                            <div class="form-group"><label class="form-label" style="color: var(--success);">New Advance Received (₹)</label><input type="number" id="di_advance" class="form-input" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
-                            <div class="form-group"><label class="form-label">Payment Mode</label><select id="di_pay_mode" class="form-select dynamic-pay-mode"></select></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px; padding: 8px 10px; background:white; border:1px solid var(--border-color); border-radius:8px;">
-                            <span style="color: var(--text-secondary); font-weight: 700; font-size:12px;">Balance Due:</span>
-                            <span id="di_balance_due" style="font-weight: 800; color: var(--danger); font-size: 17px;">₹0</span>
-                        </div>
-                        <div class="form-group" style="margin:0;"><label class="form-label">Remarks / Notes</label><textarea id="di_remarks" class="form-input" rows="2" placeholder="Optional remarks for this invoice" style="font-size:12px; padding:8px 10px;"></textarea></div>
+                    <div class="form-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
+                        <div class="form-group"><label class="form-label" style="color: var(--success);">New Advance Received (₹)</label><input type="number" id="di_advance" class="form-input" placeholder="0" oninput="calculateDirectInvoiceTotal()"></div>
+                        <div class="form-group"><label class="form-label">Payment Mode</label><select id="di_pay_mode" class="form-select dynamic-pay-mode"></select></div>
                     </div>
 
-                    <button type="button" class="btn-main doc-cta-btn" onclick="showInvoicePreview()">✨ Preview & Save Invoice</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px;">
+                        <span style="color: var(--text-secondary); font-weight: 700;">Balance Due:</span>
+                        <span id="di_balance_due" style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
+                    </div>
+                    <div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="di_remarks" class="form-input" rows="2" placeholder="Optional remarks for this invoice" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" style="background: var(--success);" onclick="saveDirectInvoiceData()">Save Invoice</button>
                 </form>
-            </div>
-        </div>
-
-        <div id="invoicePreviewModal" class="modal-overlay" style="display:none; z-index:10600;">
-            <div class="modal-content" style="max-width:550px;">
-                <div class="doc-header">
-                    <div class="doc-header-left">
-                        <div class="doc-header-icon">📄</div>
-                        <div><h3>Invoice Preview</h3><p class="doc-header-sub">Review before finalizing the bill</p></div>
-                    </div>
-                    <button class="modal-close" onclick="document.getElementById('invoicePreviewModal').style.display='none';">&times;</button>
-                </div>
-                <div class="doc-preview-doc" style="margin-bottom:12px;">
-                    <div class="doc-preview-accent"></div>
-                    <div id="invoicePreviewBody" class="doc-preview-inner"></div>
-                </div>
-                <div style="display:flex; gap:8px; padding-top:4px;">
-                    <button onclick="document.getElementById('invoicePreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">✏️ Edit</button>
-                    <button onclick="document.getElementById('invoicePreviewModal').style.display='none'; saveDirectInvoiceData();" class="btn-main doc-cta-btn" style="flex:2; font-size:12px;">✅ Confirm & Save</button>
-                </div>
             </div>
         </div>
 
@@ -14570,7 +14460,7 @@
             toggleInvoiceType(); // Refresh fields view
             document.getElementById('directInvoiceModal').style.display = 'flex'; 
         }
-        function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row doc-item-card" id="${rowId}" style="padding:12px 12px 12px 14px; display:flex; flex-direction:column; gap:8px;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:#F8FAFC; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
+        function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function handlePartySelectionForInvoice() { if (editingSalesId) return; let pId = document.getElementById('di_party').value; let advanceGroup = document.getElementById('available_advance_group'); let advanceSelect = document.getElementById('di_use_advance'); advanceSelect.innerHTML = '<option value="0">Do not use advance</option>'; let hasAdvance = false; if (pId) { Object.values(salesDB).forEach(s => { if (s.type === 'Receipt' && s.partyId === pId && s.availableAmount > 0) { advanceSelect.innerHTML += `<option value="${s.id}">Use Available: ₹${s.availableAmount.toLocaleString('en-IN')}</option>`; hasAdvance = true; } }); } advanceGroup.style.display = hasAdvance ? 'block' : 'none'; calculateDirectInvoiceTotal(); }
         document.getElementById('di_party').addEventListener('change', handlePartySelectionForInvoice);
 
@@ -14886,11 +14776,9 @@
             let formEl = document.getElementById('diForm');
             if(formEl) formEl.reset(); 
             
-            document.getElementById('di_event').value = quote.eventTitle || quote.event || ''; 
+            document.getElementById('di_event').value = quote.event || ''; 
             document.getElementById('di_date').value = new Date().toISOString().split('T')[0]; 
             document.getElementById('di_discount').value = quote.discount || 0; 
-            let diTransEl = document.getElementById('di_transport'); if (diTransEl) diTransEl.value = quote.transport || 0;
-            let diRemarksEl = document.getElementById('di_remarks'); if (diRemarksEl) diRemarksEl.value = quote.remarks || '';
             
             let itemsContainer = document.getElementById('inv_items_container');
             itemsContainer.innerHTML = ''; 
@@ -14936,73 +14824,6 @@
 
         function openApplyBillsModal(recId) { targetReceiptId = recId; let rec = salesDB[recId]; let partyId = rec.partyId; let body = document.getElementById('ab_modal_body'); body.innerHTML = `<div style="margin-bottom:15px; font-size:14px;"><strong>Available to Apply:</strong> <span style="color:var(--success); font-weight:800;">₹${rec.availableAmount.toLocaleString('en-IN')}</span></div>`; let bills = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.partyId === partyId && s.balanceDue > 0); if (bills.length === 0) { body.innerHTML += `<p style="color:var(--text-secondary); font-size:13px; text-align:center; padding:20px; background:#F8FAFC; border-radius:12px;">No pending bills found for this party.</p>`; document.getElementById('ab_save_btn').style.display = 'none'; } else { let listHtml = ''; bills.forEach(bill => { let date = new Date(bill.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); listHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border-color); border-radius:12px; margin-bottom:12px; background:white; box-shadow:var(--shadow-sm);"><div><div style="font-weight:800; font-size:15px; color:var(--danger);">Due: ₹${bill.balanceDue.toLocaleString('en-IN')}</div><div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-top:6px;">${bill.event} • ${date}</div></div><input type="checkbox" class="bill-checkbox" value="${bill.id}" style="width:24px; height:24px; cursor:pointer; accent-color:var(--success);"></div>`; }); body.innerHTML += listHtml; document.getElementById('ab_save_btn').style.display = 'block'; } document.getElementById('quoteViewModal').style.display = 'none'; document.getElementById('applyBillsModal').style.display = 'flex'; }
         function confirmApplyToBills() { let rec = salesDB[targetReceiptId]; let checkboxes = document.querySelectorAll('.bill-checkbox:checked'); if (checkboxes.length === 0) { alert("Please select at least one bill!"); return; } let totalApplied = 0; checkboxes.forEach(cb => { let billId = cb.value; let bill = salesDB[billId]; if (rec.availableAmount > 0 && bill.balanceDue > 0) { let applyAmt = Math.min(rec.availableAmount, bill.balanceDue); bill.advance += applyAmt; bill.balanceDue -= applyAmt; if (bill.balanceDue <= 0) bill.status = 'Paid'; else bill.status = 'Partial'; rec.usedAmount += applyAmt; rec.availableAmount -= applyAmt; if (!rec.linkedInvoices) rec.linkedInvoices = []; if (!rec.linkedInvoices.includes(bill.id)) rec.linkedInvoices.push(bill.id); totalApplied += applyAmt; } }); updateDataAndUI(); document.getElementById('applyBillsModal').style.display = 'none'; viewDetails(targetReceiptId, 'sales'); alert(`Success! ₹${totalApplied.toLocaleString('en-IN')} applied to pending bills.`); }
-
-        // PREVIEW SCREEN — mirrors showQuotePreview() so Invoice has the same review-before-save flow as Quotation
-        function showInvoicePreview() {
-            let partyId = document.getElementById('di_party').value;
-            let eventTitle = document.getElementById('di_event').value.trim();
-            let date = document.getElementById('di_date').value;
-            if (!partyId) { alert('Please select a client/party!'); return; }
-            if (!eventTitle) { alert('Please enter a Bill / Event Title!'); return; }
-
-            let items = [];
-            document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => {
-                let name = row.querySelector('.i-item-name').value.trim();
-                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0;
-                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0;
-                let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs';
-                let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : '';
-                if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate });
-            });
-            if (items.length === 0) { alert('Please add at least one valid item!'); return; }
-            calculateDirectInvoiceTotal();
-
-            let party = partiesDB[partyId];
-            let partyName = party ? party.name : 'Unknown';
-            let formattedDate = date ? new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-            let invoiceType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
-
-            let itemsGross = items.reduce((s, i) => s + i.amount, 0);
-            let labour = parseFloat(document.getElementById('di_labour')?.value) || 0;
-            let transport = parseFloat(document.getElementById('di_transport')?.value) || 0;
-            let discount = parseFloat(document.getElementById('di_discount').value) || 0;
-            let gstPercent = parseFloat(document.getElementById('di_gst').value) || 0;
-            let subtotal = itemsGross + labour + transport;
-            let afterDiscount = Math.max(0, subtotal - discount);
-            let taxAmount = (afterDiscount * gstPercent) / 100;
-            let grandTotal = afterDiscount + taxAmount;
-            let advance = parseFloat(document.getElementById('di_advance').value) || 0;
-            let balanceDue = document.getElementById('di_balance_due') ? document.getElementById('di_balance_due').innerText : '₹0';
-
-            let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
-            html += '<p style="font-size:12px; font-weight:700; color:var(--accent-color); margin:0 0 2px;">' + eventTitle + (invoiceType === 'Rental' ? ' · Rental' : '') + '</p>';
-            html += '<p style="font-size:11px; color:var(--text-secondary); margin:0;">' + formattedDate + ' · ' + items.length + ' Items · Grand Total ₹' + grandTotal.toLocaleString('en-IN') + '</p></div>';
-
-            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">';
-            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Item</th><th style="padding:6px 8px; text-align:center; border:1px solid var(--border-color);">Qty</th><th style="padding:6px 8px; text-align:right; border:1px solid var(--border-color);">Rate</th><th style="padding:6px 8px; text-align:right; border:1px solid var(--border-color);">Amount</th></tr>';
-            items.forEach(item => {
-                html += '<tr><td style="padding:6px 8px; border:1px solid var(--border-color);"><strong>' + item.name + '</strong>' + (item.desc ? '<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">' + item.desc + '</div>' : '') + '</td><td style="padding:6px 8px; text-align:center; border:1px solid var(--border-color);">' + item.qty + ' ' + item.unit + '</td><td style="padding:6px 8px; text-align:right; border:1px solid var(--border-color);">₹' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 8px; text-align:right; font-weight:700; border:1px solid var(--border-color);">₹' + item.amount.toLocaleString('en-IN') + '</td></tr>';
-            });
-            html += '</table>';
-
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; background:var(--bg-color);">';
-            html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Items Subtotal</span><span>₹' + itemsGross.toLocaleString('en-IN') + '</span></div>';
-            if (labour > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Labour Charge</span><span>+₹' + labour.toLocaleString('en-IN') + '</span></div>';
-            if (transport > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Transport Charge</span><span>+₹' + transport.toLocaleString('en-IN') + '</span></div>';
-            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-₹' + discount.toLocaleString('en-IN') + '</span></div>';
-            if (gstPercent > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>GST (' + gstPercent + '%)</span><span>+₹' + taxAmount.toLocaleString('en-IN') + '</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Grand Total</span><span>₹' + grandTotal.toLocaleString('en-IN') + '</span></div>';
-            if (advance > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--success); margin-top:4px;"><span>Advance Received</span><span>₹' + advance.toLocaleString('en-IN') + '</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:12px; font-weight:800; color:var(--danger); margin-top:2px;"><span>Balance Due</span><span>' + balanceDue + '</span></div>';
-            html += '</div>';
-
-            let remarks = document.getElementById('di_remarks') ? document.getElementById('di_remarks').value : '';
-            if (remarks) html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; font-size:11px; margin-top:8px;"><strong style="color:var(--text-secondary);">Remarks:</strong> ' + remarks + '</div>';
-
-            document.getElementById('invoicePreviewBody').innerHTML = html;
-            let pModal = document.getElementById('invoicePreviewModal');
-            if (pModal) { pModal.style.setProperty('z-index', '10600', 'important'); pModal.style.display = 'flex'; }
-        }
 
         function calculateDirectInvoiceTotal() { 
             let baseTotal = 0; 
