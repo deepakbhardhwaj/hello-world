@@ -7736,12 +7736,26 @@
                 id="fullSizeImg" src=""
                 style="max-width:90%; max-height:80vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>
 
+        <!-- Cover photo picker modal -->
+        <div id="coverPickerModal" class="modal-overlay" style="z-index:7000; align-items:flex-end !important; justify-content:center !important;" onclick="document.getElementById('coverPickerModal').style.display='none'">
+            <div style="background:white; width:100%; max-width:500px; border-radius:16px 16px 0 0; max-height:80vh; overflow-y:auto; padding:16px;" onclick="event.stopPropagation()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h3 style="margin:0; font-size:16px; font-weight:800; color:#0F172A;">Select Cover Photo</h3>
+                    <button onclick="document.getElementById('coverPickerModal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94A3B8;">&times;</button>
+                </div>
+                <div id="cover_picker_grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;"></div>
+                <button id="cover_remove_btn" onclick="removeCoverPhoto(); document.getElementById('coverPickerModal').style.display='none'" style="width:100%; margin-top:14px; padding:12px; background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:none;">Remove Cover</button>
+            </div>
+        </div>
+
         <div class="side-panel-overlay" id="panelOverlay" onclick="saveAndClosePanel()"></div>
         <div class="side-panel" id="detailPanel">
             <div id="panel-cover" class="panel-cover">
                 <div class="panel-cover-placeholder" id="panel-cover-placeholder">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
                 </div>
+                <!-- Cover photo action button: shows 'Add Cover' or 'Edit Cover' depending on state -->
+                <button id="cover-action-btn" onclick="openCoverPicker()" style="position:absolute; bottom:10px; left:10px; z-index:10; background:rgba(15,23,42,.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 14px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
             </div>
             <div class="panel-header" style="display:block; padding:0; border-bottom:none; box-shadow:none; background:transparent;">
                 <button class="modal-close" onclick="saveAndClosePanel()" style="position:absolute; top:14px; right:14px; z-index:10; background:rgba(15,23,42,.4); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.15); border-radius:50%; width:34px; height:34px; font-size:20px; cursor:pointer; color:white; line-height:1;">&times;</button>
@@ -10593,17 +10607,22 @@
                 coverDiv.style.backgroundImage = `url(${coverUrl})`;
                 if (coverPlaceholder) coverPlaceholder.style.display = 'none';
                 coverDiv.onclick = function(e) { openImgPreview(coverUrl, e); };
+                // Show "Edit Cover" button when cover is set
+                let btn = document.getElementById('cover-action-btn');
+                if (btn) { btn.style.display = 'block'; btn.textContent = '✎ Edit Cover'; }
             } else {
                 coverDiv.style.display = 'block';
                 coverDiv.style.backgroundImage = 'none';
                 if (coverPlaceholder) coverPlaceholder.style.display = 'flex';
                 coverDiv.onclick = null;
+                // Show "Add Cover" button when no cover is set
+                let btn = document.getElementById('cover-action-btn');
+                if (btn) { btn.style.display = 'block'; btn.textContent = '📷 Add Cover'; }
             }
         }
 
-        // Set a specific photo URL as the cover (from lead photos or event photos)
-        function setAsCoverPhoto(url, event) {
-            if (event) event.stopPropagation();
+        // Set a specific photo URL as the cover (called from cover picker modal)
+        function setAsCoverPhoto(url) {
             if (!currentLeadId || !url) return;
             try {
                 // If already cover, unselect it
@@ -10613,11 +10632,7 @@
                     leadsDB[currentLeadId].coverPhoto = url;
                 }
                 saveDataLocally();
-                // Brief loading animation while cover updates
                 if (typeof window.showLoader === 'function') window.showLoader('Updating cover...');
-                // 🐛 FIX: Defer DOM rebuild to next tick so the current click event
-                // finishes cleanly — calling renderPhotos() synchronously inside the
-                // click handler destroys the button mid-event, causing "Something went wrong".
                 setTimeout(function() {
                     try {
                         updateCoverPhoto();
@@ -10631,11 +10646,61 @@
                     } catch(e) { console.error('Cover re-render error:', e); }
                     if (typeof window.hideLoader === 'function') window.hideLoader();
                 }, 50);
+                // Close the picker modal
+                let modal = document.getElementById('coverPickerModal');
+                if (modal) modal.style.display = 'none';
             } catch(e) {
                 console.error('setAsCoverPhoto error:', e);
                 if (typeof window.hideLoader === 'function') window.hideLoader();
                 if (typeof showToast === 'function') showToast('Could not update cover', 'error');
             }
+        }
+
+        // Open cover photo picker — collects all photos from lead.photos + event photos
+        function openCoverPicker() {
+            if (!currentLeadId || !leadsDB[currentLeadId]) return;
+            let lead = leadsDB[currentLeadId];
+            let allPhotos = [];
+            // Collect lead-level photos
+            if (lead.photos && lead.photos.length > 0) {
+                lead.photos.forEach(function(p) {
+                    let url = typeof p === 'string' ? p : p.url;
+                    if (url) allPhotos.push(url);
+                });
+            }
+            // Collect event-level photos
+            if (lead.events && lead.events.length > 0) {
+                lead.events.forEach(function(ev) {
+                    if (ev.photos && ev.photos.length > 0) {
+                        ev.photos.forEach(function(p) {
+                            let url = typeof p === 'string' ? p : p.url;
+                            if (url) allPhotos.push(url);
+                        });
+                    }
+                });
+            }
+            if (allPhotos.length === 0) {
+                if (typeof showToast === 'function') showToast('No photos uploaded yet. Upload photos first.', 'info', 3000);
+                return;
+            }
+            let currentCover = lead.coverPhoto || '';
+            let grid = document.getElementById('cover_picker_grid');
+            grid.innerHTML = '';
+            allPhotos.forEach(function(url) {
+                let isSelected = url === currentCover;
+                let div = document.createElement('div');
+                div.style.cssText = 'position:relative; cursor:pointer; border-radius:8px; overflow:hidden; border:3px solid ' + (isSelected ? 'var(--accent-color)' : 'transparent') + ';';
+                div.innerHTML = '<img src="' + url + '" style="width:100%; height:100px; object-fit:cover;">' +
+                    (isSelected ? '<div style="position:absolute; top:4px; right:4px; background:var(--accent-color); color:white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold;">&#10003;</div>' : '');
+                div.onclick = function() { setAsCoverPhoto(url); };
+                grid.appendChild(div);
+            });
+            // Show/hide remove button
+            let removeBtn = document.getElementById('cover_remove_btn');
+            if (removeBtn) removeBtn.style.display = currentCover ? 'block' : 'none';
+            // Open modal
+            let modal = document.getElementById('coverPickerModal');
+            if (modal) modal.style.display = 'flex';
         }
 
         // Clear the manually chosen cover photo (revert to auto-selection)
@@ -10663,10 +10728,9 @@
                     // Use data-url attribute to avoid quote-escaping crashes with single-quote chars in URLs
                     thumbContainer.innerHTML += `
                     <div style="position:relative; display:inline-flex; flex-direction:column; gap:4px; margin-right:10px; width:85px;">
-                        <div style="position:relative; width:85px; height:85px;" ontouchstart="pressTimer=setTimeout(function(){setAsCoverPhoto('${url}', event)},500)" ontouchend="clearTimeout(pressTimer)" ontouchmove="clearTimeout(pressTimer)" onmousedown="pressTimer=setTimeout(function(){setAsCoverPhoto('${url}', event)},500)" onmouseup="clearTimeout(pressTimer)" onmouseleave="clearTimeout(pressTimer)">
-                            <img loading="lazy" src="${url}" style="width: 85px; height: 85px; border-radius: 6px; object-fit: cover; border: 2px solid ${isCover ? 'var(--accent-color)' : 'var(--border-color)'}; cursor: pointer;" onclick="openImgPreview('${url}', event)">
+                        <div style="position:relative; width:85px; height:85px;">
+                            <img loading="lazy" src="${url}" style="width: 85px; height: 85px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="openImgPreview('${url}', event)">
                             <button onclick="deleteLeadPhoto(${index})" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:10;">&times;</button>
-                            ${isCover ? '<span style="position:absolute; bottom:3px; left:3px; right:3px; background:var(--accent-color); color:white; font-size:7px; font-weight:800; text-align:center; border-radius:3px; padding:1px 0; pointer-events:none;">COVER</span>' : ''}
                         </div>
                         <input type="text" value="${label}" placeholder="e.g. Stage" onchange="updatePhotoLabel(${index}, this.value)" style="font-size:10px; padding:4px 2px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; font-weight:600; outline:none; background:#F8FAFC;">
                     </div>`;
@@ -10703,10 +10767,9 @@
                         let url = typeof photoData === 'string' ? photoData : photoData.url;
                         let label = typeof photoData === 'string' ? '' : (photoData.label || '');
                         let isCover = lead.coverPhoto === url;
-                        html += '<div style="position:relative;" ontouchstart="pressTimer=setTimeout(function(){setAsCoverPhoto(\'' + url + '\', event)},500)" ontouchend="clearTimeout(pressTimer)" ontouchmove="clearTimeout(pressTimer)" onmousedown="pressTimer=setTimeout(function(){setAsCoverPhoto(\'' + url + '\', event)},500)" onmouseup="clearTimeout(pressTimer)" onmouseleave="clearTimeout(pressTimer)">';
-                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:6px; border:2px solid ' + (isCover ? 'var(--accent-color)' : 'var(--border-color)') + '; cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                        html += '<div style="position:relative;">';
+                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
                         html += '<button onclick="deleteLeadEventPhoto(' + evIdx + ', ' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
-                        if (isCover) html += '<span style="position:absolute; bottom:2px; left:2px; right:2px; background:var(--accent-color); color:white; font-size:7px; font-weight:800; text-align:center; border-radius:3px; padding:1px 0; pointer-events:none;">COVER</span>';
                         html += '<input type="text" value="' + sanitize(label) + '" placeholder="e.g. Stage" onchange="updateEventPhotoLabel(' + evIdx + ', ' + index + ', this.value)" style="font-size:9px; padding:3px 2px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; font-weight:600; outline:none; background:#F8FAFC; margin-top:4px;">';
                         html += '</div>';
                     });
