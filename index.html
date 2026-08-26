@@ -1726,14 +1726,27 @@
 
         .panel-cover {
             width: 100%;
-            height: 140px;
-            background-color: #E2E8F0;
+            height: 180px;
+            background-color: #1E293B;
             background-size: cover;
             background-position: center;
             display: none;
             position: relative;
             cursor: pointer;
             border-radius: 0;
+        }
+        .panel-cover::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 60%;
+            background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.3) 50%, transparent 100%);
+            pointer-events: none;
+        }
+        .panel-cover-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 60%, #2563EB 100%);
+            display: flex; align-items: center; justify-content: center;
         }
 
         .panel-header {
@@ -1774,7 +1787,7 @@
         }
 
         .panel-body {
-            padding: 16px;
+            padding: 12px 16px;
             flex: 1;
             overflow-y: auto;
             background: var(--bg-color);
@@ -1831,8 +1844,22 @@
             font-weight: 800;
             color: var(--text-secondary);
             text-transform: uppercase;
-            margin: 16px 0 8px 0;
-            letter-spacing: 0.5px;
+            margin: 14px 0 8px 0;
+            letter-spacing: 0.8px;
+            padding-left: 2px;
+        }
+        .crm-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+            border: 1px solid #F1F5F9;
+        }
+        .crm-card-title {
+            font-size: 11px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .5px; margin-bottom: 8px; display: flex;
+            justify-content: space-between; align-items: center;
         }
 
         .timeline-container {
@@ -7704,17 +7731,25 @@
 
         <div class="side-panel-overlay" id="panelOverlay" onclick="saveAndClosePanel()"></div>
         <div class="side-panel" id="detailPanel">
-            <div id="panel-cover" class="panel-cover"></div>
-            <div class="panel-header" style="display:block; padding:0;">
-                <div style="position:relative; padding:14px 16px;">
-                    <button class="modal-close" onclick="saveAndClosePanel()" style="position:absolute; top:10px; right:10px; z-index:5; background:rgba(255,255,255,.85); border:none; border-radius:50%; width:30px; height:30px; font-size:18px; cursor:pointer; color:#0F172A; box-shadow:0 2px 6px rgba(0,0,0,.1);">&times;</button>
-                    <h2 id="p_name" style="margin:0 0 2px 0; font-size:18px; font-weight:800; color:var(--text-primary); line-height:1.3; padding-right:36px;">Name</h2>
-                    <div id="p_event_title" style="font-size:13px; font-weight:600; color:var(--accent-color); margin-bottom:6px;"></div>
-                    <p id="p_phone" style="margin:4px 0; color:var(--text-secondary); cursor:pointer; font-weight:600; font-size:13px;" onclick="showPhonePopup()">Phone</p>
-                    <div class="budget-display" id="p_budget" style="margin-top:8px;">₹0</div>
+            <div id="panel-cover" class="panel-cover">
+                <div class="panel-cover-placeholder" id="panel-cover-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
                 </div>
             </div>
-            <div class="panel-body" id="detailPanelBody"></div>
+            <div class="panel-header" style="display:block; padding:0; border-bottom:none; box-shadow:none; background:transparent;">
+                <button class="modal-close" onclick="saveAndClosePanel()" style="position:absolute; top:14px; right:14px; z-index:10; background:rgba(15,23,42,.4); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.15); border-radius:50%; width:34px; height:34px; font-size:20px; cursor:pointer; color:white; line-height:1;">&times;</button>
+                <div id="panel-hero-info" style="position:relative; z-index:5; margin-top:-60px; padding:0 16px 12px;">
+                    <h2 id="p_name" style="margin:0 0 3px 0; font-size:20px; font-weight:800; color:white; line-height:1.25; text-shadow:0 2px 8px rgba(0,0,0,.4); padding-right:40px;">Name</h2>
+                    <div id="p_event_title" style="font-size:13px; font-weight:600; color:rgba(255,255,255,.8); margin-bottom:0; text-shadow:0 1px 4px rgba(0,0,0,.3);"></div>
+                </div>
+                <div style="background:white; border-radius:16px 16px 0 0; margin-top:0; padding:14px 16px 10px; box-shadow:0 -4px 20px rgba(0,0,0,.06); position:relative; z-index:6;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                        <p id="p_phone" style="margin:0; color:var(--accent-color); cursor:pointer; font-weight:700; font-size:13px;" onclick="showPhonePopup()">Phone</p>
+                        <div class="budget-display" id="p_budget" style="margin:0; font-size:18px; font-weight:900; color:var(--success);">₹0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body" id="detailPanelBody" style="background:#F1F5F9;"></div>
             <div class="panel-footer" id="detailPanelFooter" style="padding: 12px 16px;"></div>
         </div>
 
@@ -10554,10 +10589,11 @@
             else {
                 document.getElementById('p_name').innerText = lead.name;
                 document.getElementById('p_event_title').innerText = lead.eventTitle || '';
-                document.getElementById('p_phone').innerHTML = '&#128222; +91 ' + sanitize(lead.phone) + ' <span style="font-size:10px; opacity:0.6;">(tap for options)</span>';
-                document.getElementById('p_budget').innerHTML = '<span style="font-size:15px; font-weight:700; color:var(--success);">₹' + (lead.budget || '0') + '</span>';
+                document.getElementById('p_phone').innerHTML = '&#128222; +91 ' + sanitize(lead.phone);
+                document.getElementById('p_budget').innerHTML = '₹' + (lead.budget || '0');
                 // Set cover photo from first event's first photo
                 let coverDiv = document.getElementById('panel-cover');
+                let coverPlaceholder = document.getElementById('panel-cover-placeholder');
                 let coverUrl = '';
                 if (lead.events && lead.events.length > 0) {
                     for (let i = 0; i < lead.events.length; i++) {
@@ -10570,30 +10606,32 @@
                 if (coverUrl) {
                     coverDiv.style.display = 'block';
                     coverDiv.style.backgroundImage = 'url(' + coverUrl + ')';
+                    if (coverPlaceholder) coverPlaceholder.style.display = 'none';
                     coverDiv.onclick = function(e) { openImgPreview(coverUrl, e); };
                 } else {
-                    coverDiv.style.display = 'none';
+                    coverDiv.style.display = 'block';
+                    coverDiv.style.backgroundImage = 'none';
+                    if (coverPlaceholder) coverPlaceholder.style.display = 'flex';
+                    coverDiv.onclick = null;
                 }
                 // Functions box (like quotation preview style)
-                let crmEventsHtml = '<div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:10px;">';
-                crmEventsHtml += '<div style="padding:6px 10px; background:#F8FAFC; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;"><span style="font-size:11px; font-weight:800; color:var(--accent-color);">FUNCTIONS</span><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; font-weight:700;">+ Add</button></div>';
-                crmEventsHtml += '<div style="padding:6px 10px;">';
+                let crmEventsHtml = '<div class="crm-card"><div class="crm-card-title" style="color:var(--accent-color);"><span>Functions</span><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add</button></div>';
                 if (lead.events && lead.events.length > 0) {
                     lead.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
                         let tc = getContrastColor(evColor);
-                        crmEventsHtml += '<div style="display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid var(--bg-color);">';
-                        crmEventsHtml += '<span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; min-width:60px; text-align:center;">' + ev.name + '</span>';
-                        crmEventsHtml += '<span style="font-size:10px; color:var(--text-secondary); flex:1;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + '</span>';
+                        crmEventsHtml += '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F1F5F9;">';
+                        crmEventsHtml += '<span style="background:' + evColor + '; color:' + tc + '; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; min-width:65px; text-align:center;">' + ev.name + '</span>';
+                        crmEventsHtml += '<span style="font-size:11px; color:var(--text-secondary); flex:1; line-height:1.4;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + '</span>';
                         crmEventsHtml += '</div>';
                     });
                 } else {
-                    crmEventsHtml += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:6px 0; margin:0;">No functions added yet.</p>';
+                    crmEventsHtml += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:10px 0; margin:0;">No functions added yet.</p>';
                 }
-                crmEventsHtml += '</div></div>';
-                let crmBodyHtml = crmEventsHtml + `<div class="form-group"><label class="form-label">Lead Status</label><div id="p_status_pills" style="display:flex; flex-wrap:wrap; gap:6px;">${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? '<span style="font-size:11px; color:var(--text-secondary); padding:5px 0;">Meeting in progress — complete meeting to change status.</span>' : ''}<button type="button" onclick="setLeadStatusFromPanel('New')" class="p-status-pill" data-status="New" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'New' ? 'background:#3B82F6; color:white; border-color:#3B82F6;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">New</button><button type="button" onclick="setLeadStatusFromPanel('Hot')" class="p-status-pill" data-status="Hot" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Hot' ? 'background:#EF4444; color:white; border-color:#EF4444;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Hot</button><button type="button" onclick="setLeadStatusFromPanel('Thinking')" class="p-status-pill" data-status="Thinking" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Thinking' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Thinking</button><button type="button" onclick="setLeadStatusFromPanel('Lost')" class="p-status-pill" data-status="Lost" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Lost' ? 'background:#94A3B8; color:white; border-color:#94A3B8;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Lost</button></div></div>${lead.status === 'Meeting Scheduled' ? '<div style="background:#F5F3FF; border:1px solid #8B5CF6; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#128197;</span><div><div style="font-size:11px; font-weight:800; color:#8B5CF6;">Meeting Scheduled</div><div style="font-size:10px; color:#64748b;">' + (lead.meetingDate || '') + ' ' + (lead.meetingTime || '') + '</div></div><button type="button" onclick="completeMeetingFromPanel()" style="margin-left:auto; background:#10B981; border:none; color:white; border-radius:6px; padding:5px 10px; font-size:10px; font-weight:700; cursor:pointer;">Mark Done</button></div>' : ''}${lead.status === 'Meeting Completed' ? '<div style="background:#F0FDF4; border:1px solid #10B981; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#9989;</span><div><div style="font-size:11px; font-weight:800; color:#10B981;">Meeting Completed</div><div style="font-size:10px; color:#64748b;">Ready for next action</div></div></div>' : ''}${(lead.status !== 'Meeting Scheduled' && lead.status !== 'Meeting Completed') ? '<div style="display:flex; gap:6px; margin-bottom:10px;"><button type="button" onclick="scheduleMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #8B5CF6; cursor:pointer; background:#F5F3FF; color:#8B5CF6;">&#128197; Schedule Meeting</button></div>' : ''}<div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
-                let crmFooterHtml = `<button class="btn-p-save" style="background: var(--text-secondary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background: var(--accent-color); flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="createQuoteFromLead()">📝 Quote</button><button class="btn-p-won" style="background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="convertToEvent()">Mark Won</button>`;
+                crmEventsHtml += '</div>';
+                let crmBodyHtml = crmEventsHtml + `<div class="crm-card"><div class="crm-card-title" style="color:var(--text-primary);">Lead Status</div><div id="p_status_pills" style="display:flex; flex-wrap:wrap; gap:6px;">${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? '<span style="font-size:11px; color:var(--text-secondary); padding:5px 0;">Meeting in progress — complete meeting to change status.</span>' : ''}<button type="button" onclick="setLeadStatusFromPanel('New')" class="p-status-pill" data-status="New" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'New' ? 'background:#3B82F6; color:white; border-color:#3B82F6;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">New</button><button type="button" onclick="setLeadStatusFromPanel('Hot')" class="p-status-pill" data-status="Hot" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Hot' ? 'background:#EF4444; color:white; border-color:#EF4444;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Hot</button><button type="button" onclick="setLeadStatusFromPanel('Thinking')" class="p-status-pill" data-status="Thinking" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Thinking' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Thinking</button><button type="button" onclick="setLeadStatusFromPanel('Lost')" class="p-status-pill" data-status="Lost" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Lost' ? 'background:#94A3B8; color:white; border-color:#94A3B8;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Lost</button></div></div>${lead.status === 'Meeting Scheduled' ? '<div style="background:#F5F3FF; border:1px solid #8B5CF6; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#128197;</span><div><div style="font-size:11px; font-weight:800; color:#8B5CF6;">Meeting Scheduled</div><div style="font-size:10px; color:#64748b;">' + (lead.meetingDate || '') + ' ' + (lead.meetingTime || '') + '</div></div><button type="button" onclick="completeMeetingFromPanel()" style="margin-left:auto; background:#10B981; border:none; color:white; border-radius:6px; padding:5px 10px; font-size:10px; font-weight:700; cursor:pointer;">Mark Done</button></div>' : ''}${lead.status === 'Meeting Completed' ? '<div style="background:#F0FDF4; border:1px solid #10B981; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#9989;</span><div><div style="font-size:11px; font-weight:800; color:#10B981;">Meeting Completed</div><div style="font-size:10px; color:#64748b;">Ready for next action</div></div></div>' : ''}${(lead.status !== 'Meeting Scheduled' && lead.status !== 'Meeting Completed') ? '<div style="display:flex; gap:6px; margin-bottom:10px;"><button type="button" onclick="scheduleMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #8B5CF6; cursor:pointer; background:#F5F3FF; color:#8B5CF6;">&#128197; Schedule Meeting</button></div>' : ''}</div><div class="crm-card"><div class="crm-card-title" style="color:var(--text-primary);">Assign / Transfer To</div><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list" style="border:none; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.04);"></div><div class="note-input-row" style="display:flex; gap:8px; margin-top:8px;"><input type="text" id="p_new_note" class="form-input" style="flex:1; border-radius:10px;" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()" style="background:var(--accent-color); border:none; color:white; border-radius:10px; padding:0 16px; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;">Save</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
+                let crmFooterHtml = `<button class="btn-p-save" style="background:#F1F5F9; color:var(--text-secondary); border:none; padding:14px; border-radius:12px; font-weight:700; cursor:pointer; flex:1; font-size:13px;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background:var(--accent-color); flex:1.5; display:flex; justify-content:center; align-items:center; gap:6px; border-radius:12px; font-size:13px;" onclick="createQuoteFromLead()">Quote</button><button class="btn-p-won" style="background:var(--success); color:white; border:none; padding:14px; border-radius:12px; font-weight:700; cursor:pointer; flex:1.5; display:flex; justify-content:center; align-items:center; gap:6px; font-size:13px;" onclick="convertToEvent()">Mark Won</button>`;
                 document.getElementById('detailPanelBody').innerHTML = crmBodyHtml; document.getElementById('detailPanelFooter').innerHTML = crmFooterHtml;
                 renderNotes();
             }
