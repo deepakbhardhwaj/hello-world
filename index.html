@@ -9871,6 +9871,9 @@
         function closeLeadEventPanel() {
             document.getElementById('leadEventPanel').style.display = 'none';
             renderLeadEvents();
+            if (editingLeadId && currentLeadId === editingLeadId && leadsDB[currentLeadId]) {
+                openPanel(currentLeadId);
+            }
         }
         function saveLeadEvent() {
             let name = document.getElementById('lev_name').value.trim();
@@ -9884,6 +9887,11 @@
             if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
             document.getElementById('lev_form_title').innerText = 'Add New Function';
             renderLEVList();
+            if (editingLeadId && leadsDB[editingLeadId]) {
+                leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, color: ev.color, photos: ev.photos || [] }));
+                saveDataLocally();
+                updateDataAndUI();
+            }
         }
         function editLeadEvent(idx) {
             let ev = leadEventsData[idx];
@@ -10502,9 +10510,12 @@
                         let tc = getContrastColor(evColor);
                         crmEventsHtml += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span><span style="font-size:10px; color:var(--text-secondary);">' + evDate + (ev.venue ? ' • ' + ev.venue : '') + '</span></div>';
                     });
+                    crmEventsHtml += '<div style="margin-top:6px;"><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button></div>';
                     crmEventsHtml += '</div>';
+                } else {
+                    crmEventsHtml = '<div style="background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:10px;"><div style="font-size:10px; font-weight:800; color:var(--accent-color); text-transform:uppercase; margin-bottom:6px;">Functions</div><div style="margin-top:4px;"><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button></div></div>';
                 }
-                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
+                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Lead Status</label><div id="p_status_pills" style="display:flex; flex-wrap:wrap; gap:6px;"><button type="button" onclick="setLeadStatusFromPanel('New')" class="p-status-pill" data-status="New" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'New' ? 'background:#3B82F6; color:white; border-color:#3B82F6;' : 'background:var(--surface-color); color:var(--text-secondary);'}">New</button><button type="button" onclick="setLeadStatusFromPanel('Hot')" class="p-status-pill" data-status="Hot" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Hot' ? 'background:#EF4444; color:white; border-color:#EF4444;' : 'background:var(--surface-color); color:var(--text-secondary);'}">Hot</button><button type="button" onclick="setLeadStatusFromPanel('Thinking')" class="p-status-pill" data-status="Thinking" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Thinking' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : 'background:var(--surface-color); color:var(--text-secondary);'}">Thinking</button><button type="button" onclick="setLeadStatusFromPanel('Lost')" class="p-status-pill" data-status="Lost" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Lost' ? 'background:#94A3B8; color:white; border-color:#94A3B8;' : 'background:var(--surface-color); color:var(--text-secondary);'}">Lost</button></div></div><div style="display:flex; gap:6px; margin-bottom:10px;"><button type="button" onclick="scheduleMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #8B5CF6; cursor:pointer; ${lead.status === 'Meeting Scheduled' ? 'background:#8B5CF6; color:white;' : 'background:#F5F3FF; color:#8B5CF6;'}">&#128197; Schedule Meeting</button><button type="button" onclick="completeMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #10B981; cursor:pointer; ${lead.status === 'Meeting Completed' ? 'background:#10B981; color:white;' : 'background:#F0FDF4; color:#10B981;'}">&#9989; Meeting Done</button></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
                 let crmFooterHtml = `<button class="btn-p-save" style="background: var(--text-secondary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background: var(--accent-color); flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="createQuoteFromLead()">📝 Quote</button><button class="btn-p-won" style="background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="convertToEvent()">Mark Won</button>`;
                 document.getElementById('detailPanelBody').innerHTML = crmBodyHtml; document.getElementById('detailPanelFooter').innerHTML = crmFooterHtml;
                 renderNotes();
@@ -10529,6 +10540,50 @@
                 });
             }
             return html;
+        }
+        function setLeadStatusFromPanel(newStatus) {
+            if (!currentLeadId) return;
+            let lead = leadsDB[currentLeadId];
+            let oldStatus = lead.status;
+            if (newStatus === 'Won' && oldStatus !== 'Won') { convertToEvent(); return; }
+            if (oldStatus !== newStatus) {
+                lead.status = newStatus;
+                lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: 'Status changed to: ' + newStatus });
+                updateDataAndUI();
+            }
+            openPanel(currentLeadId);
+        }
+        function scheduleMeetingFromPanel() {
+            if (!currentLeadId) return;
+            document.getElementById('crmMeetingPromptModal').style.display = 'flex';
+        }
+        function completeMeetingFromPanel() {
+            if (!currentLeadId) return;
+            let lead = leadsDB[currentLeadId];
+            if (lead.status === 'Won' || lead.status === 'Lost') return;
+            lead.status = 'Meeting Completed';
+            lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: 'Meeting completed.' });
+            updateDataAndUI();
+            openPanel(currentLeadId);
+        }
+        function addFunctionFromPanel() {
+            if (!currentLeadId) return;
+            let lead = leadsDB[currentLeadId];
+            leadEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] })) : [];
+            editingLeadId = currentLeadId;
+            let leModal = document.getElementById('leadEventPanel');
+            if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
+            document.getElementById('lev_name').value = '';
+            document.getElementById('lev_date').value = '';
+            document.getElementById('lev_time').value = '';
+            document.getElementById('lev_venue').value = '';
+            if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
+            document.getElementById('lev_form_title').innerText = 'Add New Function';
+            editingLeadEventIdx = -1;
+            renderLEVList();
+            let levPS = document.getElementById('lev_photos_section');
+            if (levPS) levPS.innerHTML = '';
+            document.getElementById('leadEventPanel').style.display = 'flex';
         }
         function updateLeadStatus(shouldRender = true) {
             if (!currentLeadId) return; let newStatus = document.getElementById('p_status').value; let oldStatus = leadsDB[currentLeadId].status;
@@ -11740,7 +11795,7 @@
             let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!");
         }
 
-        function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; document.getElementById('p_status').value = "Meeting Scheduled"; }
+        function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; if (currentLeadId && leadsDB[currentLeadId]) openPanel(currentLeadId); }
 
         function toggleTaskStatus(taskId, isGlobal, leadId) { if (isGlobal) { let t = globalTasksDB[taskId]; t.done = !t.done; if (t.done && t.type === 'Meeting' && t.leadId && leadsDB[t.leadId] && leadsDB[t.leadId].status !== 'Won' && leadsDB[t.leadId].status !== 'Lost') { leadsDB[t.leadId].status = "Meeting Completed"; leadsDB[t.leadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting completed from Tasks Hub." }); } } else { let task = leadsDB[leadId].tasks.find(x => (x.id || x) === taskId); if (task) task.done = !task.done; } updateDataAndUI(); }
         
