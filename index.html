@@ -7737,7 +7737,7 @@
                 style="max-width:90%; max-height:80vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>
 
         <!-- Cover photo picker modal -->
-        <div id="coverPickerModal" class="modal-overlay" style="z-index:7000; align-items:flex-end !important; justify-content:center !important;" onclick="document.getElementById('coverPickerModal').style.display='none'">
+        <div id="coverPickerModal" class="modal-overlay" style="z-index:9900; align-items:flex-end !important; justify-content:center !important; display:none;" onclick="document.getElementById('coverPickerModal').style.display='none'">
             <div style="background:white; width:100%; max-width:500px; border-radius:16px 16px 0 0; max-height:80vh; overflow-y:auto; padding:16px;" onclick="event.stopPropagation()">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                     <h3 style="margin:0; font-size:16px; font-weight:800; color:#0F172A;">Select Cover Photo</h3>
@@ -10690,9 +10690,14 @@
             // Show/hide remove button
             let removeBtn = document.getElementById('cover_remove_btn');
             if (removeBtn) removeBtn.style.display = currentCover ? 'block' : 'none';
-            // Open modal
+            // Move modal to body so it renders above the side-panel's stacking context
             let modal = document.getElementById('coverPickerModal');
-            if (modal) modal.style.display = 'flex';
+            if (modal) {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+                modal.style.display = 'flex';
+            }
         }
 
         // Clear the manually chosen cover photo (revert to auto-selection)
