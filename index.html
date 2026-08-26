@@ -13417,7 +13417,8 @@
                     html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
                 });
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                 html += '</table>';
             }
             document.getElementById('quoteItemReadBody').innerHTML = html;
@@ -13444,7 +13445,8 @@
                     html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
                 });
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                 html += '</table>';
             }
             document.getElementById('quoteItemReadBody').innerHTML = html;
@@ -13476,7 +13478,8 @@
                     html += '</tr>';
                 });
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td colspan="2" style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<tr style="border-top:2px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:6px 8px; text-align:right; font-weight:800; color:var(--text-primary);">Event Total:</td><td colspan="2" style="padding:6px 8px; text-align:right; font-weight:800; font-size:13px; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                 html += '</table>';
             }
             html += '</div>';
@@ -13595,11 +13598,12 @@
             quoteEventsData.forEach((ev, evIdx) => {
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
                 let evColor = getEventColor(ev);
                 let textColor = getContrastColor(evColor);
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
-                html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</div>';
+                html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
                 html += '<button onclick="document.getElementById(\'quotePreviewModal\').style.display=\'none\'; openQuoteItemViewPanel(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
             });
@@ -15093,7 +15097,7 @@
                 if (etEl) etEl.value = record.eventTitle || '';
                 quoteEventsData = []; quoteItemsData = [];
                 if (record.events && record.events.length > 0) {
-                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '' }));
+                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0 }));
                 } else if (record.event) {
                     quoteEventsData.push({ name: record.event, date: record.date || '', time: '', venue: '' });
                 }
@@ -15103,6 +15107,7 @@
                 quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
                 document.getElementById('q_discount').value = record.discount || 0;
                 let qTransEl = document.getElementById('q_transport'); if (qTransEl) qTransEl.value = record.transport || 0;
+                let qGrossEl = document.getElementById('q_gross'); if (qGrossEl) qGrossEl.value = record.gross || 0;
                 if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || '';
                 renderQuoteEvents(); renderQuoteItems(); calculateQuoteTotal();
                 document.getElementById('quotationModal').style.display = 'flex';
@@ -15664,12 +15669,13 @@
                     record.events.forEach((ev, evIdx) => {
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
-                        subtotal += evTotal;
+                        let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                        subtotal += evDisplayTotal;
                         let evColor = getEventColor(ev);
                         let textColor = getContrastColor(evColor);
                         bodyHtml += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">`;
                         bodyHtml += `<div style="background:${evColor}; color:${textColor}; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">${sanitize(ev.name)} <span style="font-size:9px; opacity:0.8;">(${evItems.length} items)</span></div>`;
-                        bodyHtml += `<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">₹${evTotal.toLocaleString('en-IN')}</div>`;
+                        bodyHtml += `<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">₹${evDisplayTotal.toLocaleString('en-IN')}</div>`;
                         bodyHtml += `<button onclick="openQuoteItemReadOnlyView('${id}', ${evIdx})" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>`;
                         bodyHtml += `</div>`;
                     });
@@ -16094,12 +16100,13 @@
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
                         if (evItems.length === 0) return;
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                        let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
                         let evColor = getEventColor(ev);
                         let textColor = getContrastColor(evColor);
                         html += '<div style="margin:10px 0; border:1px solid #E2E8F0; border-radius:6px; overflow:hidden;">';
                         html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:6px 10px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; border-bottom:1px solid #E2E8F0;">';
                         html += '<span>' + sanitize(ev.name) + '</span>';
-                        html += '<span>₹' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                        html += '<span>₹' + evDisplayTotal.toLocaleString('en-IN') + '</span></div>';
                         evItems.forEach((item, itemIdx) => {
                             subtotal += item.amount;
                             let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
