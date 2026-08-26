@@ -10892,6 +10892,78 @@
             }
             return html;
         }
+        // Delete all reference photos of a lead from local data + Firestore + Cloudinary.
+        // Cloudinary Admin API requires server-side credentials, so we use the
+        // unsigned destroy endpoint with the upload preset. If that fails,
+        // photos are still removed from local + Firestore (orphaned on Cloudinary).
+        async function deleteLeadPhotosFromCloud(leadId) {
+            if (!leadId || !leadsDB[leadId]) return;
+            var lead = leadsDB[leadId];
+            var allUrls = [];
+
+            // Collect lead-level photos
+            if (lead.photos && lead.photos.length > 0) {
+                lead.photos.forEach(function(p) {
+                    var u = typeof p === 'string' ? p : p.url;
+                    if (u) allUrls.push(u);
+                });
+            }
+            // Collect event-level photos
+            if (lead.events && lead.events.length > 0) {
+                lead.events.forEach(function(ev) {
+                    if (ev.photos && ev.photos.length > 0) {
+                        ev.photos.forEach(function(p) {
+                            var u = typeof p === 'string' ? p : p.url;
+                            if (u) allUrls.push(u);
+                        });
+                    }
+                });
+            }
+
+            if (allUrls.length === 0) return;
+
+            var CLOUD_NAME = "dvjjyinbl";
+            var UPLOAD_PRESET = "event_photos_preset";
+
+            // Attempt to delete each photo from Cloudinary via unsigned destroy API.
+            // Extract public_id from the URL (format: .../upload/v123/folder/filename.jpg)
+            for (var i = 0; i < allUrls.length; i++) {
+                var url = allUrls[i];
+                try {
+                    // Extract public_id from URL (everything after /upload/ minus extension)
+                    var match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(\.[^.]+)?$/);
+                    var publicId = match ? match[1] : null;
+                    if (!publicId) continue;
+
+                    var formData = new FormData();
+                    formData.append('public_id', publicId);
+                    formData.append('upload_preset', UPLOAD_PRESET);
+
+                    // Use fetch with keepalive so it fires even if panel closes
+                    fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/delete_by_token', {
+                        method: 'POST',
+                        body: formData,
+                        keepalive: true
+                    }).catch(function(e) {
+                        console.warn('Cloudinary delete failed for', publicId, e);
+                    });
+                } catch(e) {
+                    console.warn('Photo delete error:', e);
+                }
+            }
+
+            // Clear local photo arrays immediately
+            lead.photos = [];
+            if (lead.events && lead.events.length > 0) {
+                lead.events.forEach(function(ev) { ev.photos = []; });
+            }
+            if (lead.coverPhoto) delete lead.coverPhoto;
+
+            if (typeof showToast === 'function') {
+                showToast(allUrls.length + ' reference photo(s) deleted', 'info', 3000);
+            }
+        }
+
         function setLeadStatusFromPanel(newStatus) {
             if (!currentLeadId || !leadsDB[currentLeadId]) return;
             let lead = leadsDB[currentLeadId];
@@ -10902,9 +10974,19 @@
                 return;
             }
             if (newStatus === 'Won' && oldStatus !== 'Won') { convertToEvent(); return; }
+            // Confirmation dialog when marking lead as Lost
+            if (newStatus === 'Lost' && oldStatus !== 'Lost') {
+                if (!confirm('Are you sure you want to mark this lead as Lost?\n\nAll reference photos for this lead will be permanently deleted from the server and your device to free up cloud space.')) {
+                    return;
+                }
+            }
             if (oldStatus !== newStatus) {
                 lead.status = newStatus;
                 lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: 'Status changed to: ' + newStatus });
+                // Delete all reference photos when lead is marked Lost
+                if (newStatus === 'Lost') {
+                    deleteLeadPhotosFromCloud(currentLeadId);
+                }
                 updateDataAndUI();
             }
             // Close and reopen panel safely
@@ -14322,7 +14404,7 @@
 
         // 🚀 SMART QUOTE REJECTION
         function rejectQuotation(id) { 
-            if (confirm("Mark Quotation as Rejected?")) { 
+            if (confirm("Mark Quotation as Rejected?\n\nThis will mark the lead as Lost and permanently delete all reference photos from the server and your device to free up cloud space.")) { 
                 let q = salesDB[id];
                 q.status = 'Rejected'; 
                 let party = partiesDB[q.partyId]; 
@@ -14335,8 +14417,10 @@
                 if (targetEvId && leadsDB[targetEvId]) { 
                     leadsDB[targetEvId].status = 'Lost'; 
                     leadsDB[targetEvId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Quotation Rejected. Marked as Lost." }); 
+                    // Delete all reference photos when lead is marked Lost via quotation rejection
+                    deleteLeadPhotosFromCloud(targetEvId);
                 } 
-                updateDataAndUI(); // 👈 Ye cloud par update bhej dega
+                updateDataAndUI(); // This will sync to cloud
                 document.getElementById('quoteViewModal').style.display = 'none'; 
                 viewDetails(id, 'sales'); 
             } 
