@@ -7755,7 +7755,7 @@
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
                 </div>
                 <!-- Cover photo action button: shows 'Add Cover' or 'Edit Cover' depending on state -->
-                <button id="cover-action-btn" onclick="openCoverPicker()" style="position:absolute; top:14px; left:14px; z-index:10; background:rgba(15,23,42,.55); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 14px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
+                <button id="cover-action-btn" onclick="openCoverPicker()" style="position:absolute; bottom:14px; right:14px; z-index:10; background:rgba(15,23,42,.55); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 14px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
             </div>
             <div class="panel-header" style="display:block; padding:0; border-bottom:none; box-shadow:none; background:transparent;">
                 <button class="modal-close" onclick="saveAndClosePanel()" style="position:absolute; top:14px; right:14px; z-index:10; background:rgba(15,23,42,.4); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.15); border-radius:50%; width:34px; height:34px; font-size:20px; cursor:pointer; color:white; line-height:1;">&times;</button>
@@ -10606,7 +10606,6 @@
                 coverDiv.style.display = 'block';
                 coverDiv.style.backgroundImage = `url(${coverUrl})`;
                 if (coverPlaceholder) coverPlaceholder.style.display = 'none';
-                coverDiv.onclick = function(e) { openImgPreview(coverUrl, e); };
                 // Show "Edit Cover" button when cover is set
                 let btn = document.getElementById('cover-action-btn');
                 if (btn) { btn.style.display = 'block'; btn.textContent = '✎ Edit Cover'; }
@@ -10614,7 +10613,6 @@
                 coverDiv.style.display = 'block';
                 coverDiv.style.backgroundImage = 'none';
                 if (coverPlaceholder) coverPlaceholder.style.display = 'flex';
-                coverDiv.onclick = null;
                 // Show "Add Cover" button when no cover is set
                 let btn = document.getElementById('cover-action-btn');
                 if (btn) { btn.style.display = 'block'; btn.textContent = '📷 Add Cover'; }
@@ -10632,26 +10630,20 @@
                     leadsDB[currentLeadId].coverPhoto = url;
                 }
                 saveDataLocally();
-                if (typeof window.showLoader === 'function') window.showLoader('Updating cover...');
-                setTimeout(function() {
-                    try {
-                        updateCoverPhoto();
-                        renderPhotos();
-                        let lead = leadsDB[currentLeadId];
-                        let photosWrapper = document.getElementById('lead_event_photos_wrapper');
-                        if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
-                        if (typeof showToast === 'function') {
-                            showToast(leadsDB[currentLeadId].coverPhoto ? 'Cover photo set' : 'Cover photo removed', 'success', 2000);
-                        }
-                    } catch(e) { console.error('Cover re-render error:', e); }
-                    if (typeof window.hideLoader === 'function') window.hideLoader();
-                }, 50);
-                // Close the picker modal
+                // Close the picker modal immediately
                 let modal = document.getElementById('coverPickerModal');
                 if (modal) modal.style.display = 'none';
+                // Update cover and re-render thumbnails
+                updateCoverPhoto();
+                renderPhotos();
+                let lead = leadsDB[currentLeadId];
+                let photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
+                if (typeof showToast === 'function') {
+                    showToast(leadsDB[currentLeadId].coverPhoto ? 'Cover photo set' : 'Cover photo removed', 'success', 2000);
+                }
             } catch(e) {
                 console.error('setAsCoverPhoto error:', e);
-                if (typeof window.hideLoader === 'function') window.hideLoader();
                 if (typeof showToast === 'function') showToast('Could not update cover', 'error');
             }
         }
