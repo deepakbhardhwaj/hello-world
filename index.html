@@ -10457,12 +10457,8 @@
             saveDataLocally();
             updateDataAndUI();
             // Re-render just the photos section
-            let photosHtml = renderLeadEventPhotosHtml(lead);
-            let photosContainer = document.querySelector('#detailPanelBody .panel-section-title:last-of-type');
-            if (photosContainer) {
-                let wrapper = photosContainer.nextElementSibling;
-                if (wrapper) wrapper.innerHTML = photosHtml;
-            }
+            let photosWrapper = document.getElementById('lead_event_photos_wrapper');
+            if (photosWrapper) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
             event.target.value = '';
         }
         function deleteLeadEventPhoto(evIdx, photoIdx) {
@@ -10473,12 +10469,8 @@
                 lead.events[evIdx].photos.splice(photoIdx, 1);
                 saveDataLocally();
                 updateDataAndUI();
-                let photosHtml = renderLeadEventPhotosHtml(lead);
-                let photosContainer = document.querySelector('#detailPanelBody .panel-section-title:last-of-type');
-                if (photosContainer) {
-                    let wrapper = photosContainer.nextElementSibling;
-                    if (wrapper) wrapper.innerHTML = photosHtml;
-                }
+                let photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                if (photosWrapper) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
             }
         }
 
@@ -10512,7 +10504,7 @@
                     });
                     crmEventsHtml += '</div>';
                 }
-                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div>` + renderLeadEventPhotosHtml(lead) + `</div>`;
+                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
                 let crmFooterHtml = `<button class="btn-p-save" style="background: var(--text-secondary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background: var(--accent-color); flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="createQuoteFromLead()">📝 Quote</button><button class="btn-p-won" style="background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="convertToEvent()">Mark Won</button>`;
                 document.getElementById('detailPanelBody').innerHTML = crmBodyHtml; document.getElementById('detailPanelFooter').innerHTML = crmFooterHtml;
                 renderNotes();
@@ -13547,8 +13539,8 @@
                 evItems.forEach((item, i) => {
                     html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (i + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
                     if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
-                    html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.unit || 'Pcs') + '</div></td>';
-                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</td>';
+                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
                 });
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
                 let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
@@ -13575,8 +13567,8 @@
                 evItems.forEach((item, i) => {
                     html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + (i + 1) + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
                     if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
-                    html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.unit || 'Pcs') + '</div></td>';
-                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</td>';
+                    html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
                 });
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
                 let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
@@ -16528,7 +16520,7 @@
                         evItems.forEach((item, itemIdx) => {
                             let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
                             let unitHtml = item.unit ? item.unit : 'Pcs';
-                            html += '<tr><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + (itemIdx + 1) + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px;"><strong>' + sanitize(item.name) + '</strong>' + descHtml + '<div style="font-size:9px; color:#64748b;">' + item.qty + ' ' + unitHtml + '</div></td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + item.qty + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">₹' + item.rate.toLocaleString('en-IN') + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right; font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                            html += '<tr><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + (itemIdx + 1) + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px;"><strong>' + sanitize(item.name) + '</strong>' + descHtml + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + item.qty + ' ' + unitHtml + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">₹' + item.rate.toLocaleString('en-IN') + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right; font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</td></tr>';
                         });
                         html += '<tr style="background:#F8FAFC;"><td colspan="4" style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800;">Event Total:</td><td style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800; font-size:14px; color:#2563eb;">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                         html += '</table>';
