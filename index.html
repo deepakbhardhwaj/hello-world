@@ -10605,19 +10605,34 @@
         function setAsCoverPhoto(url, event) {
             if (event) event.stopPropagation();
             if (!currentLeadId || !url) return;
-            // If already cover, unselect it
-            if (leadsDB[currentLeadId].coverPhoto === url) {
-                delete leadsDB[currentLeadId].coverPhoto;
-            } else {
-                leadsDB[currentLeadId].coverPhoto = url;
+            try {
+                // If already cover, unselect it
+                if (leadsDB[currentLeadId].coverPhoto === url) {
+                    delete leadsDB[currentLeadId].coverPhoto;
+                } else {
+                    leadsDB[currentLeadId].coverPhoto = url;
+                }
+                saveDataLocally();
+                // Brief loading animation while cover updates
+                if (typeof window.showLoader === 'function') window.showLoader('Updating cover...');
+                // 🐛 FIX: Defer DOM rebuild to next tick so the current click event
+                // finishes cleanly — calling renderPhotos() synchronously inside the
+                // click handler destroys the button mid-event, causing "Something went wrong".
+                setTimeout(function() {
+                    try {
+                        updateCoverPhoto();
+                        renderPhotos();
+                        let lead = leadsDB[currentLeadId];
+                        let photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                        if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
+                    } catch(e) { console.error('Cover re-render error:', e); }
+                    if (typeof window.hideLoader === 'function') window.hideLoader();
+                }, 50);
+            } catch(e) {
+                console.error('setAsCoverPhoto error:', e);
+                if (typeof window.hideLoader === 'function') window.hideLoader();
+                if (typeof showToast === 'function') showToast('Could not update cover', 'error');
             }
-            saveDataLocally();
-            updateCoverPhoto();
-            // Re-render thumbnails so the star/button state updates immediately
-            renderPhotos();
-            let lead = leadsDB[currentLeadId];
-            let photosWrapper = document.getElementById('lead_event_photos_wrapper');
-            if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
         }
 
         // Clear the manually chosen cover photo (revert to auto-selection)
@@ -10644,11 +10659,11 @@
                     let isCover = leadsDB[currentLeadId].coverPhoto === url;
                     // Use data-url attribute to avoid quote-escaping crashes with single-quote chars in URLs
                     thumbContainer.innerHTML += `
-                    <div style="position:relative; display:inline-flex; flex-direction:column; gap:6px; margin-right:10px; width:85px;">
-                        <div style="position:relative;">
+                    <div style="position:relative; display:inline-flex; flex-direction:column; gap:4px; margin-right:10px; width:85px;">
+                        <div style="position:relative; width:85px; height:85px;">
                             <img loading="lazy" src="${url}" style="width: 85px; height: 85px; border-radius: 6px; object-fit: cover; border: 2px solid ${isCover ? 'var(--accent-color)' : 'var(--border-color)'}; cursor: pointer;" onclick="openImgPreview('${url}', event)">
                             <button onclick="deleteLeadPhoto(${index})" style="position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:10;">&times;</button>
-                            <button onclick="setAsCoverPhoto(this.dataset.url, event)" data-url="${url}" title="Set as cover" style="position:absolute; bottom:-6px; left:-6px; background:${isCover ? 'var(--accent-color)' : 'white'}; color:${isCover ? 'white' : '#64748B'}; border:1px solid ${isCover ? 'var(--accent-color)' : 'var(--border-color)'}; border-radius:50%; width:22px; height:22px; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:10;">${isCover ? '★' : '☆'}</button>
+                            <button onclick="setAsCoverPhoto(this.dataset.url, event)" data-url="${url}" title="Set as cover" style="position:absolute; top:-6px; left:-6px; background:${isCover ? 'var(--accent-color)' : 'white'}; color:${isCover ? 'white' : '#64748B'}; border:1px solid ${isCover ? 'var(--accent-color)' : 'var(--border-color)'}; border-radius:50%; width:20px; height:20px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:10;">${isCover ? '★' : '☆'}</button>
                         </div>
                         <input type="text" value="${label}" placeholder="e.g. Stage" onchange="updatePhotoLabel(${index}, this.value)" style="font-size:10px; padding:4px 2px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; font-weight:600; outline:none; background:#F8FAFC;">
                     </div>`;
@@ -10688,7 +10703,7 @@
                         html += '<div style="position:relative;">';
                         html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:6px; border:2px solid ' + (isCover ? 'var(--accent-color)' : 'var(--border-color)') + '; cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
                         html += '<button onclick="deleteLeadEventPhoto(' + evIdx + ', ' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
-                        html += '<button onclick="setAsCoverPhoto(this.dataset.url, event)" data-url="' + url + '" title="Set as cover" style="position:absolute; bottom:-4px; left:-4px; background:' + (isCover ? 'var(--accent-color)' : 'white') + '; color:' + (isCover ? 'white' : '#64748B') + '; border:1px solid ' + (isCover ? 'var(--accent-color)' : 'var(--border-color)') + '; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">' + (isCover ? '★' : '☆') + '</button>';
+                        html += '<button onclick="setAsCoverPhoto(this.dataset.url, event)" data-url="' + url + '" title="Set as cover" style="position:absolute; top:-4px; left:-4px; background:' + (isCover ? 'var(--accent-color)' : 'white') + '; color:' + (isCover ? 'white' : '#64748B') + '; border:1px solid ' + (isCover ? 'var(--accent-color)' : 'var(--border-color)') + '; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">' + (isCover ? '★' : '☆') + '</button>';
                         html += '<input type="text" value="' + sanitize(label) + '" placeholder="e.g. Stage" onchange="updateEventPhotoLabel(' + evIdx + ', ' + index + ', this.value)" style="font-size:9px; padding:3px 2px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; font-weight:600; outline:none; background:#F8FAFC; margin-top:4px;">';
                         html += '</div>';
                     });
