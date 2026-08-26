@@ -3373,14 +3373,11 @@
                 </div>
                 <input type="file" id="crm_csv_upload" accept=".csv" style="display:none;" onchange="importLeadsFromCSV(event)">
                 <div class="crm-kpi-strip">
-                    <div class="crm-kpi active-kpi" id="crm-kpi-All" onclick="crmSetFilter('All',this)">
-                        <div class="ck-val" id="crm-stat-total">0</div><div class="ck-lbl">All</div>
+                    <div class="crm-kpi active-kpi" id="crm-kpi-Active" onclick="crmSetFilter('Active',this)">
+                        <div class="ck-val" id="crm-stat-total">0</div><div class="ck-lbl">Active</div>
                     </div>
-                    <div class="crm-kpi" id="crm-kpi-New" onclick="crmSetFilter('New',this)">
-                        <div class="ck-val" id="crm-stat-new" style="color:#93C5FD;">0</div><div class="ck-lbl">New</div>
-                    </div>
-                    <div class="crm-kpi" id="crm-kpi-Hot" onclick="crmSetFilter('Hot',this)">
-                        <div class="ck-val" id="crm-stat-active" style="color:#FCA5A5;">0</div><div class="ck-lbl">Hot</div>
+                    <div class="crm-kpi" id="crm-kpi-Meeting" onclick="crmSetFilter('Meeting',this)">
+                        <div class="ck-val" id="crm-stat-active" style="color:#C4B5FD;">0</div><div class="ck-lbl">Meeting</div>
                     </div>
                     <div class="crm-kpi" id="crm-kpi-Won" onclick="crmSetFilter('Won',this)">
                         <div class="ck-val" id="crm-stat-won" style="color:#6EE7B7;">0</div><div class="ck-lbl">Won</div>
@@ -3388,6 +3385,12 @@
                     <div class="crm-kpi" id="crm-kpi-Lost" onclick="crmSetFilter('Lost',this)">
                         <div class="ck-val" id="crm-stat-lost" style="color:#CBD5E1;">0</div><div class="ck-lbl">Lost</div>
                     </div>
+                </div>
+                <div id="crm-sub-filters" style="display:none; padding:0 16px 10px; gap:6px; position:relative; z-index:1;">
+                    <button class="crm-sub-pill active-sub" onclick="setCrmSubFilter('All',this)" style="background:white; border:1px solid rgba(255,255,255,.3); color:#0F172A; padding:4px 10px; border-radius:16px; font-size:10px; font-weight:700; cursor:pointer;">All</button>
+                    <button class="crm-sub-pill" onclick="setCrmSubFilter('New',this)" style="background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:white; padding:4px 10px; border-radius:16px; font-size:10px; font-weight:700; cursor:pointer;">New</button>
+                    <button class="crm-sub-pill" onclick="setCrmSubFilter('Hot',this)" style="background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:white; padding:4px 10px; border-radius:16px; font-size:10px; font-weight:700; cursor:pointer;">Hot</button>
+                    <button class="crm-sub-pill" onclick="setCrmSubFilter('Thinking',this)" style="background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:white; padding:4px 10px; border-radius:16px; font-size:10px; font-weight:700; cursor:pointer;">Thinking</button>
                 </div>
             </div>
 
@@ -8403,7 +8406,7 @@
 
         let editingLoanId = null; // Loan edit mode track karne ke liye
 
-        let currentFilter = 'All'; let currentSalesTab = 'Invoice'; let currentPurchaseTab = 'PB'; let currentEventTab = 'Upcoming';
+        let currentFilter = 'Active'; let currentSalesTab = 'Invoice'; let currentPurchaseTab = 'PB'; let currentEventTab = 'Upcoming';
         let currentPartyFilter = 'All'; let currentTaskFilter = 'Pending'; let currentExpenseFilter = 'General';
         let salesSubFilter = 'All'; let purchaseSubFilter = 'All'; let privacyMode = true;
         let currentReportType = 'dash';
@@ -9792,11 +9795,22 @@
         // ==========================================
         // CRM LEADS LOGIC (THE MISSING PIECE)
         // ==========================================
+        let crmSubFilter = 'All';
         function setFilter(type, element) { currentFilter = type; document.querySelectorAll('#crm .filter-box').forEach(box => { box.classList.remove('active-filter'); }); if(element) element.classList.add('active-filter'); renderLeadsList(); }
         function crmSetFilter(type, element) {
             currentFilter = type;
             document.querySelectorAll('.crm-kpi').forEach(k => k.classList.remove('active-kpi'));
             if (element) element.classList.add('active-kpi');
+            // Show/hide sub-filters for Active Leads
+            let subRow = document.getElementById('crm-sub-filters');
+            if (subRow) subRow.style.display = (type === 'Active') ? 'flex' : 'none';
+            if (type !== 'Active') crmSubFilter = 'All';
+            renderLeadsList();
+        }
+        function setCrmSubFilter(type, element) {
+            crmSubFilter = type;
+            document.querySelectorAll('#crm-sub-filters .crm-sub-pill').forEach(p => p.classList.remove('active-sub'));
+            if (element) element.classList.add('active-sub');
             renderLeadsList();
         }
         function actionEdit(id, event) { event.stopPropagation(); event.preventDefault(); closeAllMenus(); openLeadModal(id); }
@@ -10182,7 +10196,7 @@
             crmContainer.innerHTML = "";
             if (homeContainer) homeContainer.innerHTML = "";
 
-            let counts = { total:0, new:0, hot:0, won:0, lost:0 };
+            let counts = { total:0, new:0, hot:0, won:0, lost:0, meeting:0 };
             let pipelineTotal = 0;
             let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
 
@@ -10216,14 +10230,27 @@
                 counts.total++;
                 if (lead.status==='New') counts.new++;
                 if (lead.status==='Hot') counts.hot++;
+                if (lead.status==='Thinking') counts.thinking = (counts.thinking||0) + 1;
                 if (lead.status==='Won') counts.won++;
                 if (lead.status==='Lost') counts.lost++;
+                if (lead.status==='Meeting Scheduled' || lead.status==='Meeting Completed') counts.meeting++;
                 if (lead.status !== 'Lost') pipelineTotal += parseFloat(lead.budget||0);
 
                 // Filter
                 let sw = (searchTerms.crm||'').toLowerCase();
                 if (sw && !((lead.name||'').toLowerCase().includes(sw) || (lead.phone||'').includes(sw) || (lead.cat||'').toLowerCase().includes(sw) || (lead.func||'').toLowerCase().includes(sw))) return;
-                if (currentFilter !== 'All' && lead.status !== currentFilter) return;
+                if (currentFilter === 'Active') {
+                    if (['New','Hot','Thinking'].indexOf(lead.status) === -1) return;
+                    if (crmSubFilter !== 'All' && lead.status !== crmSubFilter) return;
+                } else if (currentFilter === 'Meeting') {
+                    if (lead.status !== 'Meeting Scheduled' && lead.status !== 'Meeting Completed') return;
+                } else if (currentFilter === 'Won') {
+                    if (lead.status !== 'Won') return;
+                } else if (currentFilter === 'Lost') {
+                    if (lead.status !== 'Lost') return;
+                } else {
+                    return;
+                }
                 matchedCount++;
                 if (rendered >= renderLimit) return;
                 rendered++;
@@ -10243,7 +10270,12 @@
                 let staffTag = staffName ? `<span class="crm-tag" style="background:#EFF6FF;color:#2563EB;">👤 ${sanitize(staffName)}</span>` : '';
                 let sourceTag = lead.source ? `<span class="crm-tag" style="background:#F8FAFC;color:#64748B;">📍 ${sanitize(lead.source)}</span>` : '';
                 let taskCount = (lead.tasks||[]).length;
-                let taskTag = taskCount ? `<span class="crm-tag" style="background:#FFF7ED;color:#D97706;">📋 ${taskCount} task${taskCount>1?'s':''}</span>` : '';
+                let taskTag = taskCount ? `<span class="crm-tag" style="background:#FFF7ED;color:#D97706;">${taskCount} task${taskCount>1?'s':''}</span>` : '';
+                let meetingTag = '';
+                if (lead.status === 'Meeting Scheduled' && lead.meetingDate) {
+                    let mDate = new Date(lead.meetingDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+                    meetingTag = `<span class="crm-tag" style="background:#FAF5FF;color:#7C3AED;">${lead.meetingTime || ''} ${mDate}</span>`;
+                }
 
                 let cardHtml = `
                 <div class="crm-card-v3 ${lead.status==='Hot'?'hot-card':''}" onclick="openLeadDetail('${lead.id}')">
@@ -10260,7 +10292,7 @@
                             <span class="crm-tag tag-${sc}" style="flex-shrink:0;margin-top:2px;">${sanitize(lead.status)}</span>
                         </div>
                         <div class="crm-card-tags">
-                            ${staffTag}${sourceTag}${taskTag}
+                            ${staffTag}${sourceTag}${taskTag}${meetingTag}
                         </div>
                     </div>
                     <div class="crm-card-foot">
@@ -10289,18 +10321,17 @@
             });
 
             // Update KPI strip counts
-            let tsEl=document.getElementById('crm-stat-total'); if(tsEl) tsEl.textContent=counts.total;
-            let tnEl=document.getElementById('crm-stat-new');   if(tnEl) tnEl.textContent=counts.new;
-            let taEl=document.getElementById('crm-stat-active'); if(taEl) taEl.textContent=counts.hot;
+            let tsEl=document.getElementById('crm-stat-total'); if(tsEl) tsEl.textContent=counts.new + counts.hot + (counts.thinking||0);
+            let taEl=document.getElementById('crm-stat-active'); if(taEl) taEl.textContent=counts.meeting;
             let twEl=document.getElementById('crm-stat-won');   if(twEl) twEl.textContent=counts.won;
             let tlEl=document.getElementById('crm-stat-lost');  if(tlEl) tlEl.textContent=counts.lost;
             let pvEl=document.getElementById('crm-pipeline-val'); if(pvEl) pvEl.textContent='Pipeline: ₹'+pipelineTotal.toLocaleString('en-IN');
-            let lblEl=document.getElementById('crm-list-label'); if(lblEl) lblEl.textContent=(currentFilter==='All'?'All Leads':currentFilter+' Leads')+' ('+matchedCount+')';
+            let lblEl=document.getElementById('crm-list-label'); if(lblEl) { let lblMap = {'Active':'Active Leads', 'Meeting':'Meetings', 'Won':'Won Leads', 'Lost':'Lost Leads'}; lblEl.textContent=(lblMap[currentFilter] || 'All Leads') + (currentFilter === 'Active' && crmSubFilter !== 'All' ? ' (' + crmSubFilter + ')' : '') + ' (' + matchedCount + ')'; }
 
             if (rendered === 0) {
                 crmContainer.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#94A3B8;">
                     <div style="font-size:36px;margin-bottom:10px;">🔍</div>
-                    <div style="font-weight:800;font-size:14px;color:#475569;">No ${currentFilter==='All'?'':currentFilter+' '}leads found</div>
+                    <div style="font-weight:800;font-size:14px;color:#475569;">No ${currentFilter==='Active'?'active':currentFilter==='Meeting'?'meeting':currentFilter.toLowerCase()} leads found</div>
                     <div style="font-size:12px;margin-top:5px;font-weight:500;">Tap "+ Add Lead" to get started</div>
                 </div>`;
             }
@@ -10501,21 +10532,25 @@
                 document.getElementById('p_category').innerText = (lead.cat || 'Other').toUpperCase() + " • " + formattedDate;
                 if (lead.eventTitle) { document.getElementById('p_name').innerText = lead.eventTitle; }
                 document.getElementById('p_budget').innerHTML = `<span style="font-size:15px; font-weight:700; color:var(--success);">₹${lead.budget || "0"}</span>`;
-                let crmEventsHtml = '';
+                // Functions box (like quotation preview style)
+                let crmEventsHtml = '<div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; margin-bottom:10px;">';
+                crmEventsHtml += '<div style="padding:6px 10px; background:#F8FAFC; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;"><span style="font-size:11px; font-weight:800; color:var(--accent-color);">FUNCTIONS</span><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; font-weight:700;">+ Add</button></div>';
+                crmEventsHtml += '<div style="padding:6px 10px;">';
                 if (lead.events && lead.events.length > 0) {
-                    crmEventsHtml = '<div style="background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:10px;"><div style="font-size:10px; font-weight:800; color:var(--accent-color); text-transform:uppercase; margin-bottom:6px;">Functions</div>';
                     lead.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
                         let tc = getContrastColor(evColor);
-                        crmEventsHtml += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span><span style="font-size:10px; color:var(--text-secondary);">' + evDate + (ev.venue ? ' • ' + ev.venue : '') + '</span></div>';
+                        crmEventsHtml += '<div style="display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid var(--bg-color);">';
+                        crmEventsHtml += '<span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; min-width:60px; text-align:center;">' + ev.name + '</span>';
+                        crmEventsHtml += '<span style="font-size:10px; color:var(--text-secondary); flex:1;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + '</span>';
+                        crmEventsHtml += '</div>';
                     });
-                    crmEventsHtml += '<div style="margin-top:6px;"><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button></div>';
-                    crmEventsHtml += '</div>';
                 } else {
-                    crmEventsHtml = '<div style="background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-bottom:10px;"><div style="font-size:10px; font-weight:800; color:var(--accent-color); text-transform:uppercase; margin-bottom:6px;">Functions</div><div style="margin-top:4px;"><button type="button" onclick="addFunctionFromPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button></div></div>';
+                    crmEventsHtml += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:6px 0; margin:0;">No functions added yet.</p>';
                 }
-                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Lead Status</label><div id="p_status_pills" style="display:flex; flex-wrap:wrap; gap:6px;"><button type="button" onclick="setLeadStatusFromPanel('New')" class="p-status-pill" data-status="New" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'New' ? 'background:#3B82F6; color:white; border-color:#3B82F6;' : 'background:var(--surface-color); color:var(--text-secondary);'}">New</button><button type="button" onclick="setLeadStatusFromPanel('Hot')" class="p-status-pill" data-status="Hot" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Hot' ? 'background:#EF4444; color:white; border-color:#EF4444;' : 'background:var(--surface-color); color:var(--text-secondary);'}">Hot</button><button type="button" onclick="setLeadStatusFromPanel('Thinking')" class="p-status-pill" data-status="Thinking" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Thinking' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : 'background:var(--surface-color); color:var(--text-secondary);'}">Thinking</button><button type="button" onclick="setLeadStatusFromPanel('Lost')" class="p-status-pill" data-status="Lost" style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Lost' ? 'background:#94A3B8; color:white; border-color:#94A3B8;' : 'background:var(--surface-color); color:var(--text-secondary);'}">Lost</button></div></div><div style="display:flex; gap:6px; margin-bottom:10px;"><button type="button" onclick="scheduleMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #8B5CF6; cursor:pointer; ${lead.status === 'Meeting Scheduled' ? 'background:#8B5CF6; color:white;' : 'background:#F5F3FF; color:#8B5CF6;'}">&#128197; Schedule Meeting</button><button type="button" onclick="completeMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #10B981; cursor:pointer; ${lead.status === 'Meeting Completed' ? 'background:#10B981; color:white;' : 'background:#F0FDF4; color:#10B981;'}">&#9989; Meeting Done</button></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
+                crmEventsHtml += '</div></div>';
+                let crmBodyHtml = crmEventsHtml + `<div style="display:flex; gap:6px; margin-bottom:10px;"><button id="p_btn_call" class="btn-action btn-call" style="flex:1; padding:10px; border-radius:8px; border:none; background:#10B981; color:white; font-weight:700; font-size:12px; cursor:pointer;" onclick="window.location.href='tel:${sanitize(lead.phone)}'">Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" style="flex:1; padding:10px; border-radius:8px; border:none; background:#25D366; color:white; font-weight:700; font-size:12px; cursor:pointer;" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Lead Status</label><div id="p_status_pills" style="display:flex; flex-wrap:wrap; gap:6px;">${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? '<span style="font-size:11px; color:var(--text-secondary); padding:5px 0;">Meeting in progress — complete meeting to change status.</span>' : ''}<button type="button" onclick="setLeadStatusFromPanel('New')" class="p-status-pill" data-status="New" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'New' ? 'background:#3B82F6; color:white; border-color:#3B82F6;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">New</button><button type="button" onclick="setLeadStatusFromPanel('Hot')" class="p-status-pill" data-status="Hot" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Hot' ? 'background:#EF4444; color:white; border-color:#EF4444;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Hot</button><button type="button" onclick="setLeadStatusFromPanel('Thinking')" class="p-status-pill" data-status="Thinking" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Thinking' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Thinking</button><button type="button" onclick="setLeadStatusFromPanel('Lost')" class="p-status-pill" data-status="Lost" ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'disabled' : ''} style="padding:5px 12px; font-size:11px; font-weight:700; border-radius:20px; border:1px solid #E2E8F0; cursor:pointer; ${lead.status === 'Lost' ? 'background:#94A3B8; color:white; border-color:#94A3B8;' : 'background:var(--surface-color); color:var(--text-secondary);'} ${(lead.status === 'Meeting Scheduled' || lead.status === 'Meeting Completed') ? 'opacity:0.4; pointer-events:none;' : ''}">Lost</button></div></div>${lead.status === 'Meeting Scheduled' ? '<div style="background:#F5F3FF; border:1px solid #8B5CF6; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#128197;</span><div><div style="font-size:11px; font-weight:800; color:#8B5CF6;">Meeting Scheduled</div><div style="font-size:10px; color:#64748b;">' + (lead.meetingDate || '') + ' ' + (lead.meetingTime || '') + '</div></div><button type="button" onclick="completeMeetingFromPanel()" style="margin-left:auto; background:#10B981; border:none; color:white; border-radius:6px; padding:5px 10px; font-size:10px; font-weight:700; cursor:pointer;">Mark Done</button></div>' : ''}${lead.status === 'Meeting Completed' ? '<div style="background:#F0FDF4; border:1px solid #10B981; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#9989;</span><div><div style="font-size:11px; font-weight:800; color:#10B981;">Meeting Completed</div><div style="font-size:10px; color:#64748b;">Ready for next action</div></div></div>' : ''}${(lead.status !== 'Meeting Scheduled' && lead.status !== 'Meeting Completed') ? '<div style="display:flex; gap:6px; margin-bottom:10px;"><button type="button" onclick="scheduleMeetingFromPanel()" style="flex:1; padding:8px; font-size:11px; font-weight:700; border-radius:8px; border:1px solid #8B5CF6; cursor:pointer; background:#F5F3FF; color:#8B5CF6;">&#128197; Schedule Meeting</button></div>' : ''}<div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div id="lead_event_photos_wrapper">` + renderLeadEventPhotosHtml(lead) + `</div>`;
                 let crmFooterHtml = `<button class="btn-p-save" style="background: var(--text-secondary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background: var(--accent-color); flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="createQuoteFromLead()">📝 Quote</button><button class="btn-p-won" style="background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="convertToEvent()">Mark Won</button>`;
                 document.getElementById('detailPanelBody').innerHTML = crmBodyHtml; document.getElementById('detailPanelFooter').innerHTML = crmFooterHtml;
                 renderNotes();
@@ -10542,29 +10577,39 @@
             return html;
         }
         function setLeadStatusFromPanel(newStatus) {
-            if (!currentLeadId) return;
+            if (!currentLeadId || !leadsDB[currentLeadId]) return;
             let lead = leadsDB[currentLeadId];
             let oldStatus = lead.status;
+            // If meeting is scheduled, lock status changes until meeting is completed
+            if (oldStatus === 'Meeting Scheduled' && newStatus !== 'Meeting Completed' && newStatus !== 'Won' && newStatus !== 'Lost') {
+                alert('Please complete the meeting first before changing the lead status.');
+                return;
+            }
             if (newStatus === 'Won' && oldStatus !== 'Won') { convertToEvent(); return; }
             if (oldStatus !== newStatus) {
                 lead.status = newStatus;
                 lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: 'Status changed to: ' + newStatus });
                 updateDataAndUI();
             }
-            openPanel(currentLeadId);
+            // Close and reopen panel safely
+            let panel = document.getElementById('detailPanel');
+            if (panel) panel.classList.remove('open');
+            setTimeout(function() { let _crmPanel = document.getElementById('detailPanel'); if (_crmPanel) _crmPanel.classList.remove('open'); setTimeout(function() { if (currentLeadId && leadsDB[currentLeadId]) openPanel(currentLeadId); }, 100); }, 100);
         }
         function scheduleMeetingFromPanel() {
             if (!currentLeadId) return;
             document.getElementById('crmMeetingPromptModal').style.display = 'flex';
         }
         function completeMeetingFromPanel() {
-            if (!currentLeadId) return;
+            if (!currentLeadId || !leadsDB[currentLeadId]) return;
             let lead = leadsDB[currentLeadId];
             if (lead.status === 'Won' || lead.status === 'Lost') return;
             lead.status = 'Meeting Completed';
             lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: 'Meeting completed.' });
             updateDataAndUI();
-            openPanel(currentLeadId);
+            let panel = document.getElementById('detailPanel');
+            if (panel) panel.classList.remove('open');
+            setTimeout(function() { let _crmPanel = document.getElementById('detailPanel'); if (_crmPanel) _crmPanel.classList.remove('open'); setTimeout(function() { if (currentLeadId && leadsDB[currentLeadId]) openPanel(currentLeadId); }, 100); }, 100);
         }
         function addFunctionFromPanel() {
             if (!currentLeadId) return;
@@ -11795,7 +11840,7 @@
             let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadName: personName, leadId: null }; updateDataAndUI(); document.getElementById('quickMeetingModal').style.display = 'none'; alert("Meeting Scheduled!");
         }
 
-        function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; if (currentLeadId && leadsDB[currentLeadId]) openPanel(currentLeadId); }
+        function saveCrmMeetingPrompt() { let date = document.getElementById('crm_meet_date').value; let time = document.getElementById('crm_meet_time').value; let agenda = document.getElementById('crm_meet_agenda').value; if (!date || !time) return alert("Date and Time required"); leadsDB[currentLeadId].status = "Meeting Scheduled"; leadsDB[currentLeadId].meetingDate = date; leadsDB[currentLeadId].meetingTime = time; leadsDB[currentLeadId].meetingAgenda = agenda || ''; leadsDB[currentLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting Scheduled for: " + date + " " + time + (agenda ? " (" + agenda + ")" : "") }); let mId = "MTG" + Date.now(); globalTasksDB[mId] = { id: mId, type: 'Meeting', text: agenda || "Follow-up Meeting", done: false, date: date, time: time, leadId: currentLeadId }; updateDataAndUI(); document.getElementById('crmMeetingPromptModal').style.display = 'none'; let _crmPanel = document.getElementById('detailPanel'); if (_crmPanel) _crmPanel.classList.remove('open'); setTimeout(function() { if (currentLeadId && leadsDB[currentLeadId]) openPanel(currentLeadId); }, 100); }
 
         function toggleTaskStatus(taskId, isGlobal, leadId) { if (isGlobal) { let t = globalTasksDB[taskId]; t.done = !t.done; if (t.done && t.type === 'Meeting' && t.leadId && leadsDB[t.leadId] && leadsDB[t.leadId].status !== 'Won' && leadsDB[t.leadId].status !== 'Lost') { leadsDB[t.leadId].status = "Meeting Completed"; leadsDB[t.leadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: "Meeting completed from Tasks Hub." }); } } else { let task = leadsDB[leadId].tasks.find(x => (x.id || x) === taskId); if (task) task.done = !task.done; } updateDataAndUI(); }
         
