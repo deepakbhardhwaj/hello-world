@@ -7757,7 +7757,7 @@
             </div>
             <div class="panel-header" style="display:block; padding:0; border-bottom:none; box-shadow:none; background:transparent;">
                 <button class="modal-close" onclick="saveAndClosePanel()" style="position:absolute; top:14px; right:14px; z-index:10; background:rgba(15,23,42,.4); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.15); border-radius:50%; width:34px; height:34px; font-size:20px; cursor:pointer; color:white; line-height:1;">&times;</button>
-                <button id="coverEditBtn" onclick="openCoverPicker()" style="position:absolute; top:14px; left:14px; z-index:10; background:rgba(15,23,42,.5); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
+                <button id="coverEditBtn" onclick="openCoverPicker()" style="position:absolute; top:50px; right:14px; z-index:10; background:rgba(15,23,42,.5); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
                 <div id="panel-hero-info" style="position:relative; z-index:5; margin-top:-60px; padding:0 16px 12px;">
                     <h2 id="p_name" style="margin:0 0 3px 0; font-size:20px; font-weight:800; color:white; line-height:1.25; text-shadow:0 2px 8px rgba(0,0,0,.4); padding-right:40px;">Name</h2>
                     <div id="p_event_title" style="font-size:13px; font-weight:600; color:rgba(255,255,255,.8); margin-bottom:0; text-shadow:0 1px 4px rgba(0,0,0,.3);"></div>
@@ -10621,26 +10621,27 @@
         // Set a specific photo URL as the cover (called from cover picker modal)
         function setAsCoverPhoto(url) {
             if (!currentLeadId || !url) return;
+            if (leadsDB[currentLeadId].coverPhoto === url) {
+                delete leadsDB[currentLeadId].coverPhoto;
+            } else {
+                leadsDB[currentLeadId].coverPhoto = url;
+            }
+            saveDataLocally();
+            var modal = document.getElementById('coverPickerModal');
+            if (modal) modal.style.display = 'none';
+            // Update cover photo area
+            updateCoverPhoto();
+            // Re-render thumbnails — wrap in try/catch so a render error
+            // does not show a false "Could not update cover" toast when the
+            // cover was actually updated successfully.
+            try { renderPhotos(); } catch(e) { console.error('renderPhotos error:', e); }
             try {
-                if (leadsDB[currentLeadId].coverPhoto === url) {
-                    delete leadsDB[currentLeadId].coverPhoto;
-                } else {
-                    leadsDB[currentLeadId].coverPhoto = url;
-                }
-                saveDataLocally();
-                let modal = document.getElementById('coverPickerModal');
-                if (modal) modal.style.display = 'none';
-                updateCoverPhoto();
-                renderPhotos();
-                let lead = leadsDB[currentLeadId];
-                let photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                var lead = leadsDB[currentLeadId];
+                var photosWrapper = document.getElementById('lead_event_photos_wrapper');
                 if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
-                if (typeof showToast === 'function') {
-                    showToast(leadsDB[currentLeadId].coverPhoto ? 'Cover photo set' : 'Cover photo removed', 'success', 2000);
-                }
-            } catch(e) {
-                console.error('setAsCoverPhoto error:', e);
-                if (typeof showToast === 'function') showToast('Could not update cover', 'error');
+            } catch(e) { console.error('event photos re-render error:', e); }
+            if (typeof showToast === 'function') {
+                showToast(leadsDB[currentLeadId].coverPhoto ? 'Cover photo set' : 'Cover photo removed', 'success', 2000);
             }
         }
 
