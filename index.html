@@ -6799,8 +6799,8 @@
                     <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
                         <div class="form-row">
                             <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
-                            <div class="form-group"><label class="form-label">Discount</label><input type="number" id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
                             <div class="form-group"><label class="form-label">Transport</label><input type="number" id="q_transport" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
+                            <div class="form-group"><label class="form-label">Discount</label><input type="number" id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" style="color:var(--accent-color);">Net Total</label>
@@ -13371,11 +13371,13 @@
             quoteEventsData.forEach((ev, evIdx) => {
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
                 let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                let evManual = ev.manualGross || 0;
+                let evDisplayTotal = evManual > 0 ? evManual : evTotal;
                 let evColor = getEventColor(ev);
                 let textColor = getContrastColor(evColor);
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; overflow:hidden;">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
-                html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evTotal.toLocaleString('en-IN') + '</div>';
+                html += '<input type="number" value="' + evDisplayTotal + '" oninput="updateEventManualGross(' + evIdx + ', this.value)" placeholder="' + evTotal + '" style="width:80px; padding:5px 6px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color); border:none; border-left:1px solid var(--border-color); text-align:right;">';
                 html += '<button type="button" onclick="openQuoteItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
             });
@@ -13540,10 +13542,21 @@
             if (totalEl) totalEl.value = net;
         }
         function syncQuoteGrossFromItems() {
-            let gross = quoteItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+            let gross = 0;
+            quoteEventsData.forEach(ev => {
+                let evItems = quoteItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                gross += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
             let grossEl = document.getElementById('q_gross');
             if (grossEl) grossEl.value = gross;
             calculateQuoteTotal();
+        }
+        function updateEventManualGross(evIdx, val) {
+            let ev = quoteEventsData[evIdx];
+            if (!ev) return;
+            ev.manualGross = parseFloat(val) || 0;
+            syncQuoteGrossFromItems();
         }
 
         // PREVIEW SCREEN
@@ -13594,8 +13607,8 @@
             // SUMMARY
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
-            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
             if (transport > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Transport</span><span>+\u20B9' + transport.toLocaleString('en-IN') + '</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
             html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
             html += '</div>';
             let remarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
@@ -15756,8 +15769,8 @@
                         bodyHtml += '</div>';
                     }
                     bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Gross Amount:</span><span>₹${(record.gross || subtotal).toLocaleString('en-IN')}</span></div>`;
-                    if (record.discount && record.discount > 0) bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Discount:</span><span>-₹${record.discount.toLocaleString('en-IN')}</span></div>`;
                     if (record.transport && record.transport > 0) bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Transport:</span><span>+₹${record.transport.toLocaleString('en-IN')}</span></div>`;
+                    if (record.discount && record.discount > 0) bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Discount:</span><span>-₹${record.discount.toLocaleString('en-IN')}</span></div>`;
                     bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Estimate Total:</span><span>₹${record.total.toLocaleString('en-IN')}</span></div>`;
 
                     if (record.status === 'Draft' && record.type === 'Quotation') {
@@ -16187,8 +16200,8 @@
                 html += `<div class="totals-box">`;
                 if (record.type === 'Quotation' || record.type === 'PO') {
                     html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Gross Amount:</span> <span>₹${(record.gross || subtotal).toLocaleString('en-IN')}</span></div>`;
-                    if (record.discount && record.discount > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#dc2626;"><span>Discount:</span> <span>-₹${(record.discount || 0).toLocaleString('en-IN')}</span></div>`;
                     if (record.transport && record.transport > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Transport Charge:</span> <span>+₹${(record.transport || 0).toLocaleString('en-IN')}</span></div>`;
+                    if (record.discount && record.discount > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#dc2626;"><span>Discount:</span> <span>-₹${(record.discount || 0).toLocaleString('en-IN')}</span></div>`;
                     html += `<div class="grand-total" style="display:flex; justify-content:space-between;"><span>Estimate Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>`;
                 } else {
                     let printSubtotal = (record.total || 0) + (record.discount || 0);
