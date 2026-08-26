@@ -7754,10 +7754,10 @@
                 <div class="panel-cover-placeholder" id="panel-cover-placeholder">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
                 </div>
+                <button id="coverEditBtn" onclick="event.stopPropagation(); openCoverPicker()" style="position:absolute; bottom:14px; right:14px; z-index:10; background:rgba(15,23,42,.5); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
             </div>
             <div class="panel-header" style="display:block; padding:0; border-bottom:none; box-shadow:none; background:transparent;">
                 <button class="modal-close" onclick="saveAndClosePanel()" style="position:absolute; top:14px; right:14px; z-index:10; background:rgba(15,23,42,.4); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.15); border-radius:50%; width:34px; height:34px; font-size:20px; cursor:pointer; color:white; line-height:1;">&times;</button>
-                <button id="coverEditBtn" onclick="openCoverPicker()" style="position:absolute; bottom:14px; right:14px; z-index:10; background:rgba(15,23,42,.5); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; color:white; cursor:pointer; display:none;">📷 Add Cover</button>
                 <div id="panel-hero-info" style="position:relative; z-index:5; margin-top:-60px; padding:0 16px 12px;">
                     <h2 id="p_name" style="margin:0 0 3px 0; font-size:20px; font-weight:800; color:white; line-height:1.25; text-shadow:0 2px 8px rgba(0,0,0,.4); padding-right:40px;">Name</h2>
                     <div id="p_event_title" style="font-size:13px; font-weight:600; color:rgba(255,255,255,.8); margin-bottom:0; text-shadow:0 1px 4px rgba(0,0,0,.3);"></div>
