@@ -6798,8 +6798,9 @@
 
                     <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
                         <div class="form-row">
-                            <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" style="font-weight:700;"></div>
+                            <div class="form-group"><label class="form-label">Gross Amount</label><input type="number" id="q_gross" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
                             <div class="form-group"><label class="form-label">Discount</label><input type="number" id="q_discount" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
+                            <div class="form-group"><label class="form-label">Transport</label><input type="number" id="q_transport" class="form-input" value="0" oninput="calculateQuoteTotal()" style="font-weight:700;"></div>
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label" style="color:var(--accent-color);">Net Total</label>
@@ -13531,8 +13532,9 @@
         function calculateQuoteTotal() {
             let grossEl = document.getElementById('q_gross');
             let discount = parseFloat(document.getElementById('q_discount') ? document.getElementById('q_discount').value : 0) || 0;
+            let transport = parseFloat(document.getElementById('q_transport') ? document.getElementById('q_transport').value : 0) || 0;
             let gross = parseFloat(grossEl ? grossEl.value : 0) || 0;
-            let net = gross - discount;
+            let net = gross - discount + transport;
             if (net < 0) net = 0;
             let totalEl = document.getElementById('q_total');
             if (totalEl) totalEl.value = net;
@@ -13557,6 +13559,7 @@
             let partyName = party ? party.name : 'Unknown';
             let gross = parseFloat(document.getElementById('q_gross') ? document.getElementById('q_gross').value : 0) || 0;
             let discount = parseFloat(document.getElementById('q_discount') ? document.getElementById('q_discount').value : 0) || 0;
+            let transport = parseFloat(document.getElementById('q_transport') ? document.getElementById('q_transport').value : 0) || 0;
             let net = parseFloat(document.getElementById('q_total') ? document.getElementById('q_total').value : 0) || 0;
             let eventTitleVal = document.getElementById('q_event_title') ? document.getElementById('q_event_title').value : '';
             let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
@@ -13591,7 +13594,8 @@
             // SUMMARY
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
+            if (transport > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Transport</span><span>+\u20B9' + transport.toLocaleString('en-IN') + '</span></div>';
             html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
             html += '</div>';
             let remarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
@@ -13604,6 +13608,7 @@
             let partyId = document.getElementById('q_party').value;
             if (!partyId) { alert('Please select a client/party!'); return; }
             let discount = parseFloat(document.getElementById('q_discount').value) || 0;
+            let transport = parseFloat(document.getElementById('q_transport') ? document.getElementById('q_transport').value : 0) || 0;
             let total = parseFloat(document.getElementById('q_total').value) || 0;
             let id = editingSalesId ? editingSalesId : generateDocId('Quotation');
             let evIdForQuote = null;
@@ -13614,7 +13619,7 @@
             let primaryDate = quoteEventsData.length > 0 ? quoteEventsData[0].date : '';
             let grossTotal = parseFloat(document.getElementById('q_gross') ? document.getElementById('q_gross').value : 0) || 0;
             let qEventTitle = document.getElementById('q_event_title') ? document.getElementById('q_event_title').value : '';
-            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: primaryEvent, date: primaryDate, eventTitle: qEventTitle, events: quoteEventsData, items: quoteItemsData, discount, total, gross: grossTotal, status: 'Draft', remarks: qRemarks };
+            salesDB[id] = { id, type: 'Quotation', partyId, eventId: evIdForQuote, event: primaryEvent, date: primaryDate, eventTitle: qEventTitle, events: quoteEventsData, items: quoteItemsData, discount, transport, total, gross: grossTotal, status: 'Draft', remarks: qRemarks };
             if (currentQuoteSourceLeadId && leadsDB[currentQuoteSourceLeadId] && !editingSalesId) {
                 leadsDB[currentQuoteSourceLeadId].notes.push({ time: new Date().toLocaleString('en-IN'), text: '<a href="#" onclick="viewDetails(\'' + id + '\', \'sales\'); return false;" style="color:var(--accent-color); font-weight:700; text-decoration:none;">Quotation Created - \u20B9' + total.toLocaleString('en-IN') + '</a>', isSystemHtml: true });
             }
@@ -15084,6 +15089,7 @@
                 }
                 quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
                 document.getElementById('q_discount').value = record.discount || 0;
+                let qTransEl = document.getElementById('q_transport'); if (qTransEl) qTransEl.value = record.transport || 0;
                 if (document.getElementById('q_remarks')) document.getElementById('q_remarks').value = record.remarks || '';
                 renderQuoteEvents(); renderQuoteItems(); calculateQuoteTotal();
                 document.getElementById('quotationModal').style.display = 'flex';
@@ -15749,7 +15755,10 @@
                         });
                         bodyHtml += '</div>';
                     }
-                    bodyHtml += `<strong>Subtotal:</strong> ₹${subtotal.toLocaleString('en-IN')}<br><strong>Discount:</strong> ₹${record.discount.toLocaleString('en-IN')}<br><strong style="font-size: 14px; color: var(--accent-color);">Estimate Total: ₹${record.total.toLocaleString('en-IN')}</strong>`;
+                    bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Gross Amount:</span><span>₹${(record.gross || subtotal).toLocaleString('en-IN')}</span></div>`;
+                    if (record.discount && record.discount > 0) bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Discount:</span><span>-₹${record.discount.toLocaleString('en-IN')}</span></div>`;
+                    if (record.transport && record.transport > 0) bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>Transport:</span><span>+₹${record.transport.toLocaleString('en-IN')}</span></div>`;
+                    bodyHtml += `<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Estimate Total:</span><span>₹${record.total.toLocaleString('en-IN')}</span></div>`;
 
                     if (record.status === 'Draft' && record.type === 'Quotation') {
                         mainActionHtml = `<div style="display:flex; gap:8px; margin-bottom:12px;"><button onclick="actionConvert('${id}')" style="flex:1; padding: 10px 0; background: #F0FDF4; border: 1px solid #22C55E; border-radius: 6px; font-weight: 700; font-size:12px; color: var(--success); cursor: pointer;">🔄 Invoice</button><button onclick="rejectQuotation('${id}')" style="flex:1; padding: 10px 0; background: #FEF2F2; border: 1px solid #EF4444; border-radius: 6px; font-weight: 700; font-size:12px; color: var(--danger); cursor: pointer;">❌ Reject</button></div>`;
@@ -16177,9 +16186,10 @@
                 // Right: Totals Box
                 html += `<div class="totals-box">`;
                 if (record.type === 'Quotation' || record.type === 'PO') {
-                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Subtotal:</span> <span>₹${subtotal.toLocaleString('en-IN')}</span></div>
-                             <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Discount:</span> <span>₹${(record.discount || 0).toLocaleString('en-IN')}</span></div>
-                             <div class="grand-total" style="display:flex; justify-content:space-between;"><span>Estimate Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>`;
+                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Gross Amount:</span> <span>₹${(record.gross || subtotal).toLocaleString('en-IN')}</span></div>`;
+                    if (record.discount && record.discount > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#dc2626;"><span>Discount:</span> <span>-₹${(record.discount || 0).toLocaleString('en-IN')}</span></div>`;
+                    if (record.transport && record.transport > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Transport Charge:</span> <span>+₹${(record.transport || 0).toLocaleString('en-IN')}</span></div>`;
+                    html += `<div class="grand-total" style="display:flex; justify-content:space-between;"><span>Estimate Total:</span> <span>₹${(record.total || 0).toLocaleString('en-IN')}</span></div>`;
                 } else {
                     let printSubtotal = (record.total || 0) + (record.discount || 0);
                     if (record.labour || record.transport) {
