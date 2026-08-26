@@ -1698,9 +1698,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.45);
             z-index: 3999;
             display: none;
+            backdrop-filter: blur(2px);
         }
 
         .side-panel {
@@ -1713,7 +1714,9 @@
             height: 100%;
             background: var(--bg-color);
             z-index: 4000;
-            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 24px 0 0 24px;
+            overflow: hidden;
+            box-shadow: -8px 0 30px rgba(0, 0, 0, 0.12);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Faster snap curve */
             display: flex;
             flex-direction: column;
@@ -10278,10 +10281,20 @@
             }
 
             let allLeads = Object.values(leadsDB || {});
-            // Sort: Hot first, then by date desc
+            // Sort: by earliest event date ascending (soonest first)
+            function getEarliestEventDate(lead) {
+                if (lead.events && lead.events.length > 0) {
+                    let dates = lead.events.map(ev => ev.date).filter(d => d).sort((a,b) => new Date(a) - new Date(b));
+                    if (dates.length > 0) return new Date(dates[0]);
+                }
+                if (lead.date) return new Date(lead.date);
+                return new Date(8640000000000000); // far future = no date = last
+            }
             allLeads.sort((a,b) => {
-                if (a.status==='Hot' && b.status!=='Hot') return -1;
-                if (b.status==='Hot' && a.status!=='Hot') return 1;
+                let da = getEarliestEventDate(a);
+                let db = getEarliestEventDate(b);
+                if (da < db) return -1;
+                if (da > db) return 1;
                 return (b.id||'').localeCompare(a.id||'');
             });
 
