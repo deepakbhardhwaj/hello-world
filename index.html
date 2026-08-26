@@ -13960,7 +13960,7 @@
             html += '<label class="form-label" style="margin:0; color:var(--success); font-size:11px;">Services / Items</label>';
             html += '</div>';
             if (quoteItemsData.length === 0) {
-                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Use "View" button to add items per function.</p>';
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Use "Add" button to add items per function.</p>';
             }
             quoteEventsData.forEach((ev, evIdx) => {
                 let evItems = quoteItemsData.filter(i => i.event === ev.name);
@@ -13972,7 +13972,7 @@
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; overflow:hidden;">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
                 html += '<input type="number" value="' + evDisplayTotal + '" oninput="updateEventManualGross(' + evIdx + ', this.value)" placeholder="' + evTotal + '" style="width:80px; padding:5px 6px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color); border:none; border-left:1px solid var(--border-color); text-align:right;">';
-                html += '<button type="button" onclick="openQuoteItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '<button type="button" onclick="openQuoteItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">Add</button>';
                 html += '</div>';
             });
             html += '</div>';
