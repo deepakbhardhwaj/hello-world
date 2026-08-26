@@ -3372,9 +3372,10 @@
                 .crm-card-name{font-size:13px;font-weight:900;color:#0F172A;line-height:1.2;}
                 .crm-card-func{font-size:10px;color:#64748B;font-weight:600;margin-top:1px;}
                 .crm-card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
-                .crm-card-events{margin-top:4px;padding-top:4px;border-top:1px solid #F1F5F9;}
-                .crm-event-names{font-size:10px;font-weight:700;color:#475569;line-height:1.25;}
+                .crm-card-events{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:4px;padding-top:4px;border-top:1px solid #F1F5F9;}
+                .crm-event-names{font-size:10px;font-weight:700;color:#475569;line-height:1.25;flex:1;min-width:0;}
                 .crm-event-dates{font-size:9px;font-weight:600;color:#94A3B8;margin-top:1px;line-height:1.25;}
+                .crm-event-meta{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end;flex-shrink:0;max-width:55%;}
                 .crm-tag{font-size:9px;font-weight:800;padding:2px 7px;border-radius:7px;}
                 .crm-card-foot{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-radius:0 0 10px 10px;}
                 .crm-foot-budget{font-size:13px;font-weight:900;color:#0F172A;}
@@ -10377,12 +10378,15 @@
                             </div>
                             <span class="crm-tag tag-${sc}" style="flex-shrink:0;margin-top:2px;">${sanitize(lead.status)}</span>
                         </div>
-                        <div class="crm-card-tags">
-                            ${staffTag}${sourceTag}${taskTag}${meetingTag}
-                        </div>
+                        ${taskTag || meetingTag ? `<div class="crm-card-tags">${taskTag}${meetingTag}</div>` : ''}
                         ${(() => {
+    // 🐛 FIX: Staff name and source tags moved from crm-card-tags row into the
+    // events (function) row's right side, so they sit beside the function line
+    // instead of below the lead name — filling the empty right-side space.
+    let metaHtml = staffTag + sourceTag;
     let evs = lead.events || [];
-    if (!evs.length) return '';
+    let hasEvents = evs.length > 0;
+    if (!hasEvents && !metaHtml) return '';
     let names = evs.map(ev => sanitize(ev.name||'')).join(' - ');
     let dates = evs.map(ev => ev.date).filter(d => d).sort((a,b) => new Date(a) - new Date(b));
     let dateStr = '';
@@ -10409,8 +10413,13 @@
         }
     }
     let html = '<div class="crm-card-events">';
-    html += '<div class="crm-event-names">' + names + '</div>';
+    html += '<div style="flex:1;min-width:0;">';
+    if (names) html += '<div class="crm-event-names">' + names + '</div>';
     if (dateStr) html += '<div class="crm-event-dates">' + dateStr + '</div>';
+    html += '</div>';
+    if (metaHtml) {
+        html += '<div class="crm-event-meta">' + metaHtml + '</div>';
+    }
     html += '</div>';
     return html;
 })()}
