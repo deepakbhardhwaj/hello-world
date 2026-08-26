@@ -5667,6 +5667,7 @@
                     <div class="form-group"><label class="form-label">Venue</label><input type="text" id="lev_venue" class="form-input"></div>
                     <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="lev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
                     <button onclick="saveLeadEvent()" class="btn-main" style="width:100%; font-size:12px; margin-top:8px;">Save Function</button>
+                    <div id="lev_photos_section" style="margin-top:10px;"></div>
                     <div id="lev_list" style="margin-top:12px;"></div>
                     <button onclick="closeLeadEventPanel()" class="btn-main" style="width:100%; font-size:12px; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; margin-top:8px;">Done</button>
                 </div>
@@ -9863,6 +9864,8 @@
             document.getElementById('lev_form_title').innerText = 'Add New Function';
             editingLeadEventIdx = -1;
             renderLEVList();
+            let levPS = document.getElementById('lev_photos_section');
+            if (levPS) levPS.innerHTML = '';
             document.getElementById('leadEventPanel').style.display = 'flex';
         }
         function closeLeadEventPanel() {
@@ -9873,8 +9876,8 @@
             let name = document.getElementById('lev_name').value.trim();
             if (!name) { alert('Please enter function name!'); return; }
             let userColor = document.getElementById('lev_color') ? document.getElementById('lev_color').value : '';
-            let ev = { name: name, date: document.getElementById('lev_date').value, time: document.getElementById('lev_time').value, venue: document.getElementById('lev_venue').value.trim(), color: userColor || '' };
-            if (editingLeadEventIdx >= 0) { leadEventsData[editingLeadEventIdx] = ev; editingLeadEventIdx = -1; }
+            let ev = { name: name, date: document.getElementById('lev_date').value, time: document.getElementById('lev_time').value, venue: document.getElementById('lev_venue').value.trim(), color: userColor || '', photos: [] };
+            if (editingLeadEventIdx >= 0) { ev.photos = leadEventsData[editingLeadEventIdx].photos || []; leadEventsData[editingLeadEventIdx] = ev; editingLeadEventIdx = -1; }
             else { leadEventsData.push(ev); }
             leadEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
             document.getElementById('lev_name').value = ''; document.getElementById('lev_date').value = ''; document.getElementById('lev_time').value = ''; document.getElementById('lev_venue').value = '';
@@ -9892,11 +9895,64 @@
             document.getElementById('lev_form_title').innerText = 'Edit Function: ' + ev.name;
             editingLeadEventIdx = idx;
             renderLEVList();
+            renderLEVPhotos();
         }
         function deleteLeadEvent(idx) {
             let evName = leadEventsData[idx].name;
             leadEventsData.splice(idx, 1);
             renderLEVList();
+        }
+        async function handleLEVPhotoUpload(event) {
+            let files = event.target.files;
+            if (!files.length) return;
+            let ev = leadEventsData[editingLeadEventIdx];
+            if (!ev) return;
+            if (!ev.photos) ev.photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
+                    else { alert('Cloudinary did not return a URL!'); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            renderLEVPhotos();
+            event.target.value = '';
+        }
+        function updateLEVPhotoLabel(photoIdx, val) {
+            let ev = leadEventsData[editingLeadEventIdx];
+            if (!ev || !ev.photos) return;
+            let p = ev.photos[photoIdx];
+            if (typeof p === 'string') { ev.photos[photoIdx] = { url: p, label: val }; }
+            else { p.label = val; }
+        }
+        function deleteLEVPhoto(photoIdx) {
+            let ev = leadEventsData[editingLeadEventIdx];
+            if (!ev || !ev.photos) return;
+            if (confirm('Delete this photo?')) { ev.photos.splice(photoIdx, 1); renderLEVPhotos(); }
+        }
+        function renderLEVPhotos() {
+            let section = document.getElementById('lev_photos_section');
+            if (!section) return;
+            let ev = leadEventsData[editingLeadEventIdx];
+            if (!ev) { section.innerHTML = ''; return; }
+            let photos = ev.photos || [];
+            let html = '';
+            html += '<div style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Reference Photos (' + photos.length + ')</div>';
+            html += '<label style="display:inline-block; background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; margin-bottom:6px;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handleLEVPhotoUpload(event)"></label>';
+            html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+            photos.forEach((photoData, index) => {
+                let url = typeof photoData === 'string' ? photoData : photoData.url;
+                let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                html += '<div style="position:relative;">';
+                html += '<img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                html += '<button onclick="deleteLEVPhoto(' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
+                html += '<input type="text" value="' + label + '" placeholder="Name (optional)" onchange="updateLEVPhotoLabel(' + index + ', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
+                html += '</div>';
+            });
+            html += '</div>';
+            section.innerHTML = html;
         }
         function renderLEVList() {
             let html = '';
@@ -9908,14 +9964,16 @@
                 html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
                 html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:700;">' + ev.name + '</span>';
+                let photoCount = (ev.photos && ev.photos.length > 0) ? ev.photos.length : 0;
                 html += '<div><button onclick="editLeadEvent(' + i + ')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; margin-right:4px;">Edit</button>';
                 html += '<button onclick="deleteLeadEvent(' + i + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Delete</button></div>';
                 html += '</div>';
-                if (d || ev.time || ev.venue) {
+                if (d || ev.time || ev.venue || photoCount > 0) {
                     html += '<div style="font-size:11px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
+                    if (photoCount > 0) html += (d || ev.time || ev.venue ? ' &nbsp; ' : '') + photoCount + ' photo' + (photoCount > 1 ? 's' : '');
                     html += '</div>';
                 }
                 html += '</div>';
@@ -9972,7 +10030,7 @@
                 document.getElementById('l_date').value = l.date || "";
                 document.getElementById('l_category').value = l.cat;
                 document.getElementById('l_budget').value = l.budget;
-                leadEventsData = (l.events && l.events.length > 0) ? l.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '' })) : [];
+                leadEventsData = (l.events && l.events.length > 0) ? l.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] })) : [];
 
                 statusEl.value = l.status;
                 if (l.status === 'Won') {
@@ -10349,6 +10407,81 @@
         // isliye seedha usी ko alias kar diya.
         window.openLeadDetail = function (id) { openPanel(id); };
 
+        function renderLeadEventPhotosHtml(lead) {
+            if (!lead || !lead.events || lead.events.length === 0) {
+                return '<div style="background:white; padding:16px; border-radius:12px; border:1px solid var(--border-color);"><p style="font-size:13px; font-weight:500; color:#94a3b8;">No events added yet.</p></div>';
+            }
+            let html = '';
+            lead.events.forEach((ev, evIdx) => {
+                let evPhotos = ev.photos || [];
+                let evColor = getEventColor(ev);
+                let tc = getContrastColor(evColor);
+                html += '<div style="margin-bottom:12px; background:white; padding:12px; border-radius:8px; border:1px solid var(--border-color);">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+                html += '<span style="background:' + evColor + '; color:' + tc + '; padding:2px 10px; border-radius:4px; font-size:11px; font-weight:700;">' + sanitize(ev.name) + '</span>';
+                html += '<label style="display:inline-block; background:var(--success); color:white; border:none; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;">+ Upload<input type="file" multiple accept="image/*" style="display:none;" onchange="handleLeadEventPhotoUpload(event, ' + evIdx + ')"></label>';
+                html += '</div>';
+                if (evPhotos.length > 0) {
+                    html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+                    evPhotos.forEach((photoData, index) => {
+                        let url = typeof photoData === 'string' ? photoData : photoData.url;
+                        let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                        html += '<div style="position:relative;">';
+                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                        html += '<button onclick="deleteLeadEventPhoto(' + evIdx + ', ' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
+                        if (label) html += '<div style="font-size:9px; font-weight:700; color:var(--text-primary); text-align:center; margin-top:2px;">' + sanitize(label) + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<p style="font-size:11px; color:#94a3b8; margin:4px 0 0 0;">No photos for this event yet.</p>';
+                }
+                html += '</div>';
+            });
+            return html;
+        }
+        async function handleLeadEventPhotoUpload(event, evIdx) {
+            let files = event.target.files;
+            if (!files.length || !currentLeadId) return;
+            let lead = leadsDB[currentLeadId];
+            if (!lead || !lead.events || !lead.events[evIdx]) return;
+            if (!lead.events[evIdx].photos) lead.events[evIdx].photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { lead.events[evIdx].photos.push({ url: uploadedUrl, label: '' }); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            saveDataLocally();
+            updateDataAndUI();
+            // Re-render just the photos section
+            let photosHtml = renderLeadEventPhotosHtml(lead);
+            let photosContainer = document.querySelector('#detailPanelBody .panel-section-title:last-of-type');
+            if (photosContainer) {
+                let wrapper = photosContainer.nextElementSibling;
+                if (wrapper) wrapper.innerHTML = photosHtml;
+            }
+            event.target.value = '';
+        }
+        function deleteLeadEventPhoto(evIdx, photoIdx) {
+            if (!currentLeadId) return;
+            let lead = leadsDB[currentLeadId];
+            if (!lead || !lead.events || !lead.events[evIdx]) return;
+            if (confirm('Delete this photo?')) {
+                lead.events[evIdx].photos.splice(photoIdx, 1);
+                saveDataLocally();
+                updateDataAndUI();
+                let photosHtml = renderLeadEventPhotosHtml(lead);
+                let photosContainer = document.querySelector('#detailPanelBody .panel-section-title:last-of-type');
+                if (photosContainer) {
+                    let wrapper = photosContainer.nextElementSibling;
+                    if (wrapper) wrapper.innerHTML = photosHtml;
+                }
+            }
+        }
+
         function openPanel(id) {
             hideNavAndFabs();
             currentLeadId = id;
@@ -10379,10 +10512,10 @@
                     });
                     crmEventsHtml += '</div>';
                 }
-                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div><div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid var(--border-color);"><label class="upload-btn">+ Upload Images<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label><div class="thumb-grid" id="p_thumbnails"></div></div>`;
+                let crmBodyHtml = crmEventsHtml + `<div class="action-grid"><button id="p_btn_call" class="btn-action btn-call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞 Call</button><button id="p_btn_wa" class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${sanitize(lead.phone)}', '_blank')">WhatsApp</button></div><div class="form-group"><label class="form-label">Change Status</label><select id="p_status" class="form-select" onchange="updateLeadStatus()"><option value="New" ${lead.status === 'New' ? 'selected' : ''}>New Inquiry</option><option value="Hot" ${lead.status === 'Hot' ? 'selected' : ''}>Interested (Hot)</option><option value="Thinking" ${lead.status === 'Thinking' ? 'selected' : ''}>Thinking / Follow-up</option><option value="Meeting Scheduled" ${lead.status === 'Meeting Scheduled' ? 'selected' : ''}>Meeting Scheduled</option><option value="Meeting Completed" ${lead.status === 'Meeting Completed' ? 'selected' : ''}>Meeting Completed</option><option value="Won" ${lead.status === 'Won' ? 'selected' : ''}>Won (Event Booked)</option><option value="Lost" ${lead.status === 'Lost' ? 'selected' : ''}>Not Interested (Lost)</option></select></div><div class="form-group" style="margin-top:10px;"><label class="form-label">Assign / Transfer To</label><select id="p_assign_to" class="form-select" onchange="transferLead('${currentLeadId}', this.value)"><option value="">-- Select Staff --</option>${getStaffOptions(lead.assignedTo)}</select></div><div class="panel-section-title">Follow-up History & Notes</div><div class="timeline-container" id="p_notes_list"></div><div class="note-input-row"><input type="text" id="p_new_note" class="form-input" placeholder="Type discussion summary..."><button class="btn-save-note" onclick="addNote()">Save Note</button></div><div class="panel-section-title">Reference Photos</div>` + renderLeadEventPhotosHtml(lead) + `</div>`;
                 let crmFooterHtml = `<button class="btn-p-save" style="background: var(--text-secondary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1;" onclick="saveAndClosePanel()">Close</button><button class="btn-main" style="background: var(--accent-color); flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="createQuoteFromLead()">📝 Quote</button><button class="btn-p-won" style="background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; flex: 1.5; display: flex; justify-content: center; align-items: center; gap: 6px;" onclick="convertToEvent()">Mark Won</button>`;
                 document.getElementById('detailPanelBody').innerHTML = crmBodyHtml; document.getElementById('detailPanelFooter').innerHTML = crmFooterHtml;
-                renderNotes(); renderPhotos();
+                renderNotes();
             }
             document.getElementById('panelOverlay').style.display = 'block';
             setTimeout(() => {
@@ -10438,8 +10571,9 @@
             currentQuoteSourceLeadId = currentLeadId;
             closePanel();
 
+            let quoteEvents = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] })) : [];
             setTimeout(() => {
-                openQuotationModal(partyId, lead.func, lead.date, lead.eventTitle, lead.events);
+                openQuotationModal(partyId, lead.func, lead.date, lead.eventTitle, quoteEvents);
             }, 400);
         }
 
@@ -13110,7 +13244,7 @@
             let etEl = document.getElementById('q_event_title');
             if (etEl) etEl.value = preFillEventTitle || '';
             if (preFillEvents && preFillEvents.length > 0) {
-                quoteEventsData = preFillEvents.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '' }));
+                quoteEventsData = preFillEvents.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] }));
             } else if (preFillEvent || preFillDate) {
                 quoteEventsData.push({ name: preFillEvent || '', date: preFillDate || '', time: '', venue: '' });
             }
@@ -13207,8 +13341,8 @@
             let name = document.getElementById('qev_name').value.trim();
             if (!name) { alert('Please enter event name!'); return; }
             let userColor = document.getElementById('qev_color') ? document.getElementById('qev_color').value : '';
-            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim(), color: userColor || '' };
-            if (editingQuoteEventIdx >= 0) { quoteEventsData[editingQuoteEventIdx] = ev; editingQuoteEventIdx = -1; }
+            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim(), color: userColor || '', photos: [] };
+            if (editingQuoteEventIdx >= 0) { ev.photos = quoteEventsData[editingQuoteEventIdx].photos || []; quoteEventsData[editingQuoteEventIdx] = ev; editingQuoteEventIdx = -1; }
             else { quoteEventsData.push(ev); }
             quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
             document.getElementById('qev_name').value = ''; document.getElementById('qev_date').value = ''; document.getElementById('qev_time').value = ''; document.getElementById('qev_venue').value = '';
@@ -13497,6 +13631,23 @@
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="qiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
             html += '<button type="button" class="btn-main" onclick="saveQuoteItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>';
             html += '</div></div>';
+            // EVENT PHOTOS SECTION
+            let evPhotos = (ev.photos || []);
+            html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Reference Photos (' + evPhotos.length + ')</div>';
+            html += '<label style="display:inline-block; background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; margin-bottom:6px;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handleQuoteEventPhotoUpload(event)"></label>';
+            html += '<div id="qiv_photos_grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+            evPhotos.forEach((photoData, index) => {
+                let url = typeof photoData === 'string' ? photoData : photoData.url;
+                let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                html += '<div style="position:relative;">';
+                html += '<img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                html += '<button onclick="deleteQIVPhoto(' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
+                html += '<input type="text" value="' + label + '" placeholder="Name (optional)" onchange="updateQIVPhotoLabel(' + index + ', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
             document.getElementById('quoteItemViewBody').innerHTML = html;
             // Auto-scroll to bottom so latest item is visible
             if (scrollToBottom) {
@@ -13531,7 +13682,37 @@
         }
         function deleteQuoteItemFromView(idx) {
             quoteItemsData.splice(idx, 1);
-            renderQuoteItemView();
+            renderQuoteItemView(false);
+        }
+        async function handleQuoteEventPhotoUpload(event) {
+            let files = event.target.files;
+            if (!files.length) return;
+            let ev = quoteEventsData[quoteViewEvIdx];
+            if (!ev) return;
+            if (!ev.photos) ev.photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
+                    else { alert('Cloudinary did not return a URL!'); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            renderQuoteItemView(false);
+            event.target.value = '';
+        }
+        function updateQIVPhotoLabel(photoIdx, val) {
+            let ev = quoteEventsData[quoteViewEvIdx];
+            if (!ev || !ev.photos) return;
+            let p = ev.photos[photoIdx];
+            if (typeof p === 'string') { ev.photos[photoIdx] = { url: p, label: val }; }
+            else { p.label = val; }
+        }
+        function deleteQIVPhoto(photoIdx) {
+            let ev = quoteEventsData[quoteViewEvIdx];
+            if (!ev || !ev.photos) return;
+            if (confirm('Delete this photo?')) { ev.photos.splice(photoIdx, 1); renderQuoteItemView(false); }
         }
 
         function calculateQuoteTotal() {
@@ -13608,6 +13789,33 @@
                 html += '</div>';
             });
             html += '</div>';
+            // EVENT PHOTOS PREVIEW
+            let hasAnyPhotos = quoteEventsData.some(ev => ev.photos && ev.photos.length > 0);
+            if (hasAnyPhotos) {
+                html += '<div style="margin-top:12px;">';
+                html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
+                html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
+                quoteEventsData.forEach(ev => {
+                    let evPhotos = ev.photos || [];
+                    if (evPhotos.length === 0) return;
+                    let evColor = getEventColor(ev);
+                    let textColor = getContrastColor(evColor);
+                    html += '<div style="margin-bottom:10px;">';
+                    html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block; margin-bottom:6px;">' + ev.name + ' (' + evPhotos.length + ')</div>';
+                    html += '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">';
+                    evPhotos.forEach(photoData => {
+                        let url = typeof photoData === 'string' ? photoData : photoData.url;
+                        let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                        html += '<div style="text-align:center;">';
+                        html += '<img src="' + url + '" style="width:100%; height:60px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                        if (label) html += '<div style="font-size:9px; font-weight:600; color:var(--text-primary); margin-top:2px;">' + label + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            }
             // SUMMARY
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
@@ -15097,7 +15305,7 @@
                 if (etEl) etEl.value = record.eventTitle || '';
                 quoteEventsData = []; quoteItemsData = [];
                 if (record.events && record.events.length > 0) {
-                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0 }));
+                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, photos: ev.photos || [] }));
                 } else if (record.event) {
                     quoteEventsData.push({ name: record.event, date: record.date || '', time: '', venue: '' });
                 }
@@ -16080,7 +16288,7 @@
                     }
                 }
 
-                // QUOTATION PRINT - Event Schedule table + Event-grouped items
+                // QUOTATION PRINT - Cover page with summary + per-event detail pages
                 let subtotal = 0;
                 if (record.type === 'Quotation' && record.events && record.events.length > 0) {
                     // FUNCTION SCHEDULE TABLE (with event colors)
@@ -16094,30 +16302,20 @@
                         html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;"><strong>' + sanitize(ev.name) + '</strong></td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right" style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td></tr>';
                     });
                     html += '</table>';
-                    // EVENT-GROUPED ITEMS
-                    html += '<span class="section-label">Particulars</span>';
+                    // EVENT-WISE SUMMARY (name + total only, no item details)
+                    html += '<span class="section-label">Event-wise Summary</span>';
+                    html += '<table style="margin-bottom:15px; font-size:12px;">';
+                    html += '<tr><th style="width:70%; border:1px solid #E2E8F0; padding:6px 8px;">Function</th><th class="right" style="width:30%; border:1px solid #E2E8F0; padding:6px 8px;">Amount</th></tr>';
                     record.events.forEach(ev => {
                         let evItems = (record.items || []).filter(i => i.event === ev.name);
-                        if (evItems.length === 0) return;
                         let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
                         let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                        subtotal += evDisplayTotal;
                         let evColor = getEventColor(ev);
                         let textColor = getContrastColor(evColor);
-                        html += '<div style="margin:10px 0; border:1px solid #E2E8F0; border-radius:6px; overflow:hidden;">';
-                        html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:6px 10px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; border-bottom:1px solid #E2E8F0;">';
-                        html += '<span>' + sanitize(ev.name) + '</span>';
-                        html += '<span>₹' + evDisplayTotal.toLocaleString('en-IN') + '</span></div>';
-                        evItems.forEach((item, itemIdx) => {
-                            subtotal += item.amount;
-                            let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
-                            let unitHtml = item.unit ? item.unit : 'Pcs';
-                            html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #F3F4F6; font-size:11px;">';
-                            html += '<div><strong>' + (itemIdx + 1) + '. ' + sanitize(item.name) + '</strong>' + descHtml + '<br><span style="font-size:9px; color:#64748b;">' + item.qty + ' ' + unitHtml + ' × ₹' + item.rate.toLocaleString('en-IN') + '</span></div>';
-                            html += '<div style="font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</div>';
-                            html += '</div>';
-                        });
-                        html += '</div>';
+                        html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + textColor + '; border:1px solid #E2E8F0; padding:5px 8px;"><strong>' + sanitize(ev.name) + '</strong> <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></td><td class="right" style="color:' + textColor + '; border:1px solid #E2E8F0; padding:5px 8px; font-weight:800;">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                     });
+                    html += '</table>';
                 } else {
                     // EVENT SCHEDULE BOX (for non-quotation or non-grouped)
                     if (record.events && record.events.length > 0) {
@@ -16301,12 +16499,63 @@
             // Iske baad aage ka Photos / Collage wala logic waisa hi rahega jaisa purane code mein tha...
 
             // ==========================================
-            // 🚀 SMART PHOTO COLLAGE LOGIC (Up to 6 per page)
+            // PER-EVENT DETAIL PAGES (items + photos)
             // ==========================================
+            if (record.type === 'Quotation' && record.events && record.events.length > 0) {
+                record.events.forEach(ev => {
+                    let evItems = (record.items || []).filter(i => i.event === ev.name);
+                    let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                    let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                    let evColor = getEventColor(ev);
+                    let textColor = getContrastColor(evColor);
+                    let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
+                    let evPhotos = ev.photos || [];
+
+                    html += '<div style="page-break-before: always; padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
+                    // EVENT HEADER
+                    html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:15px 20px; border-radius:8px; margin-bottom:15px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;">';
+                    html += '<div style="font-size:20px; font-weight:900; text-transform:uppercase;">' + sanitize(ev.name) + '</div>';
+                    html += '<div style="font-size:11px; margin-top:4px; opacity:0.9;">';
+                    if (evDate && evDate !== '-') html += 'Date: ' + evDate;
+                    if (ev.time) html += ' &nbsp;|&nbsp; Time: ' + ev.time;
+                    if (ev.venue) html += ' &nbsp;|&nbsp; Venue: ' + sanitize(ev.venue);
+                    html += '</div>';
+                    html += '</div>';
+                    // ITEMS TABLE
+                    if (evItems.length > 0) {
+                        html += '<table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:12px;">';
+                        html += '<tr><th style="width:8%; border:1px solid #E2E8F0; padding:6px; text-align:center;">#</th><th style="width:52%; border:1px solid #E2E8F0; padding:6px;">Item / Service</th><th style="width:13%; border:1px solid #E2E8F0; padding:6px; text-align:center;">Qty</th><th style="width:13%; border:1px solid #E2E8F0; padding:6px; text-align:right;">Rate</th><th style="width:14%; border:1px solid #E2E8F0; padding:6px; text-align:right;">Amount</th></tr>';
+                        evItems.forEach((item, itemIdx) => {
+                            let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
+                            let unitHtml = item.unit ? item.unit : 'Pcs';
+                            html += '<tr><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + (itemIdx + 1) + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px;"><strong>' + sanitize(item.name) + '</strong>' + descHtml + '<div style="font-size:9px; color:#64748b;">' + item.qty + ' ' + unitHtml + '</div></td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + item.qty + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">₹' + item.rate.toLocaleString('en-IN') + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right; font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                        });
+                        html += '<tr style="background:#F8FAFC;"><td colspan="4" style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800;">Event Total:</td><td style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800; font-size:14px; color:#2563eb;">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
+                        html += '</table>';
+                    }
+                    // EVENT PHOTOS
+                    if (evPhotos.length > 0) {
+                        html += '<div style="margin-top:15px;"><div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:8px; border-bottom:1px solid #E2E8F0; padding-bottom:4px;">Reference Photos (' + evPhotos.length + ')</div>';
+                        html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">';
+                        evPhotos.forEach(photo => {
+                            let url = typeof photo === 'string' ? photo : photo.url;
+                            let label = typeof photo === 'string' ? '' : (photo.label || '');
+                            html += '<div style="text-align:center; border:1px solid #E2E8F0; border-radius:6px; padding:5px; background:#f8fafc;">';
+                            html += '<img src="' + url + '" style="width:100%; height:150px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff;">';
+                            if (label) html += '<div style="font-size:10px; font-weight:700; color:#0f172a; text-transform:uppercase; margin-top:4px;">' + sanitize(label) + '</div>';
+                            html += '</div>';
+                        });
+                        html += '</div></div>';
+                    }
+                    html += '<div style="margin-top:20px; display:flex; justify-content:space-between; font-size:10px; font-weight:600; color:#64748b; border-top:1px solid #e2e8f0; padding-top:10px;"><div>' + cName + '</div><div>UTSAVhq ERP</div></div>';
+                    html += '</div>';
+                });
+            }
+            // OLD PHOTO COLLAGE FOR INVOICES (unchanged)
             let photosToPrint = [];
             let collageTitle = "Reference Images";
 
-            if ((record.type === 'Invoice' || record.type === 'Quotation') && record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
+            if (record.type === 'Invoice' && record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
                 let ev = leadsDB[record.eventId];
                 if (ev.photos && ev.photos.length > 0) {
                     photosToPrint = ev.photos;
