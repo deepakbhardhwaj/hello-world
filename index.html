@@ -3369,6 +3369,11 @@
                 .crm-card-name{font-size:14px;font-weight:900;color:#0F172A;line-height:1.2;}
                 .crm-card-func{font-size:11px;color:#64748B;font-weight:600;margin-top:2px;}
                 .crm-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+                .crm-card-events{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+                .crm-event-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F1F5F9;}
+                .crm-event-row:last-child{border-bottom:none;}
+                .crm-event-badge{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;min-width:55px;text-align:center;flex-shrink:0;}
+                .crm-event-date{font-size:10px;color:#64748B;flex:1;line-height:1.3;}
                 .crm-tag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:8px;}
                 .crm-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-radius:0 0 14px 14px;}
                 .crm-foot-budget{font-size:12px;font-weight:900;color:#0F172A;}
@@ -10325,7 +10330,13 @@
                 }
                 let waPhone = (lead.phone||'').toString().replace(/\D/g,'').slice(-10);
                 let budgetFmt = lead.budget && lead.budget!=='0' ? '₹'+parseFloat(lead.budget).toLocaleString('en-IN') : '';
-                let dateFmt = lead.date ? new Date(lead.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '';
+                let firstEvDate = '';
+                if (lead.events && lead.events.length > 0 && lead.events[0].date) {
+                    firstEvDate = lead.events[0].date;
+                } else if (lead.date) {
+                    firstEvDate = lead.date;
+                }
+                let dateFmt = firstEvDate ? new Date(firstEvDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '';
 
                 let staffTag = staffName ? `<span class="crm-tag" style="background:#EFF6FF;color:#2563EB;">👤 ${sanitize(staffName)}</span>` : '';
                 let sourceTag = lead.source ? `<span class="crm-tag" style="background:#F8FAFC;color:#64748B;">📍 ${sanitize(lead.source)}</span>` : '';
@@ -10347,18 +10358,37 @@
                             <div class="crm-avatar av-${sc}">${initials}</div>
                             <div style="flex:1;min-width:0;">
                                 <div class="crm-card-name">${sanitize(lead.name)}</div>
-                                <div class="crm-card-func">${sanitize(lead.func||'')}${lead.cat?' · '+sanitize(lead.cat):''}</div>
+                                <div class="crm-card-func">${sanitize(lead.eventTitle||lead.func||'')}</div>
                             </div>
                             <span class="crm-tag tag-${sc}" style="flex-shrink:0;margin-top:2px;">${sanitize(lead.status)}</span>
                         </div>
                         <div class="crm-card-tags">
                             ${staffTag}${sourceTag}${taskTag}${meetingTag}
                         </div>
+                        ${(() => {
+                            let evs = lead.events || [];
+                            if (!evs.length) return '';
+                            let html = '<div class="crm-card-events">';
+                            evs.forEach(ev => {
+                                let evColor = getEventColor(ev);
+                                let tc = getContrastColor(evColor);
+                                let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'2-digit'}) : '';
+                                let evInfo = evDate;
+                                if (ev.time) evInfo += ' • ' + ev.time;
+                                if (ev.venue) evInfo += ' • ' + sanitize(ev.venue);
+                                html += '<div class="crm-event-row">';
+                                html += '<span class="crm-event-badge" style="background:' + evColor + ';color:' + tc + ';">' + sanitize(ev.name||'') + '</span>';
+                                html += '<span class="crm-event-date">' + evInfo + '</span>';
+                                html += '</div>';
+                            });
+                            html += '</div>';
+                            return html;
+                        })()}
                     </div>
                     <div class="crm-card-foot">
                         <div>
                             <div class="crm-foot-budget">${budgetFmt||'No budget set'}</div>
-                            <div class="crm-foot-date">${dateFmt?'📅 '+dateFmt:''}</div>
+                            <div class="crm-foot-date">${dateFmt?'📅 '+dateFmt:''} ${lead.phone?' • 📞 +91 '+sanitize(lead.phone):''}</div>
                         </div>
                         <div class="crm-quick-btns" onclick="event.stopPropagation()">
                             <button class="crm-qbtn" title="Call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞</button>
