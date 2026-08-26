@@ -7750,7 +7750,11 @@
                 </div>
                 <div style="background:white; border-radius:16px 16px 0 0; margin-top:0; padding:14px 16px 10px; box-shadow:0 -4px 20px rgba(0,0,0,.06); position:relative; z-index:6;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                        <p id="p_phone" style="margin:0; color:var(--accent-color); cursor:pointer; font-weight:700; font-size:13px;" onclick="showPhonePopup()">Phone</p>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <p id="p_phone" style="margin:0; color:var(--accent-color); font-weight:700; font-size:13px;">Phone</p>
+                            <button id="p_call_btn" title="Call" style="background:#EFF6FF; border:none; color:#2563EB; border-radius:8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px;">&#128222;</button>
+                            <button id="p_wa_btn" title="WhatsApp" style="background:#F0FDF4; border:none; color:#16A34A; border-radius:8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px;">&#128172;</button>
+                        </div>
                         <div class="budget-display" id="p_budget" style="margin:0; font-size:18px; font-weight:900; color:var(--success);">₹0</div>
                     </div>
                 </div>
@@ -10642,7 +10646,12 @@
             else {
                 document.getElementById('p_name').innerText = lead.name;
                 document.getElementById('p_event_title').innerText = lead.eventTitle || '';
-                document.getElementById('p_phone').innerHTML = '&#128222; +91 ' + sanitize(lead.phone);
+                let waPhone = String(lead.phone||'').replace(/\D/g,'').slice(-10);
+                document.getElementById('p_phone').innerText = '+91 ' + sanitize(lead.phone);
+                let pCallBtn = document.getElementById('p_call_btn');
+                let pWaBtn = document.getElementById('p_wa_btn');
+                if (pCallBtn) pCallBtn.onclick = function() { window.location.href='tel:' + sanitize(lead.phone); };
+                if (pWaBtn) pWaBtn.onclick = function() { window.open('https://wa.me/91' + waPhone, '_blank'); };
                 document.getElementById('p_budget').innerHTML = '₹' + (lead.budget || '0');
                 // Set cover photo from first event's first photo
                 let coverDiv = document.getElementById('panel-cover');
@@ -11191,7 +11200,12 @@
             document.getElementById('p_name').innerText = ev.name;
             let evTitleEl = document.getElementById('p_event_title');
             if (evTitleEl) evTitleEl.innerText = ev.func || '';
-            document.getElementById('p_phone').innerHTML = '&#128222; +91 ' + sanitize(ev.phone) + ' <span style="font-size:10px; opacity:0.6;">(tap for options)</span>';
+            let evWaPhone = String(ev.phone||'').replace(/\D/g,'').slice(-10);
+            document.getElementById('p_phone').innerText = '+91 ' + sanitize(ev.phone);
+            let evCallBtn = document.getElementById('p_call_btn');
+            let evWaBtn = document.getElementById('p_wa_btn');
+            if (evCallBtn) evCallBtn.onclick = function() { window.location.href='tel:' + sanitize(ev.phone); };
+            if (evWaBtn) evWaBtn.onclick = function() { window.open('https://wa.me/91' + evWaPhone, '_blank'); };
             
             let formattedDate = ev.dates && ev.dates[0] ? new Date(ev.dates[0].date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
             let evCode = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date);
