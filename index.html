@@ -3369,11 +3369,9 @@
                 .crm-card-name{font-size:14px;font-weight:900;color:#0F172A;line-height:1.2;}
                 .crm-card-func{font-size:11px;color:#64748B;font-weight:600;margin-top:2px;}
                 .crm-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
-                .crm-card-events{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
-                .crm-event-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F1F5F9;}
-                .crm-event-row:last-child{border-bottom:none;}
-                .crm-event-badge{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;min-width:55px;text-align:center;flex-shrink:0;}
-                .crm-event-date{font-size:10px;color:#64748B;flex:1;line-height:1.3;}
+                .crm-card-events{margin-top:6px;padding-top:6px;border-top:1px solid #F1F5F9;}
+                .crm-event-names{font-size:11px;font-weight:700;color:#475569;line-height:1.3;}
+                .crm-event-dates{font-size:10px;font-weight:600;color:#94A3B8;margin-top:2px;line-height:1.3;}
                 .crm-tag{font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:8px;}
                 .crm-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#F8FAFC;border-top:1px solid #F1F5F9;border-radius:0 0 14px 14px;}
                 .crm-foot-budget{font-size:12px;font-weight:900;color:#0F172A;}
@@ -10366,30 +10364,42 @@
                             ${staffTag}${sourceTag}${taskTag}${meetingTag}
                         </div>
                         ${(() => {
-                            let evs = lead.events || [];
-                            if (!evs.length) return '';
-                            let html = '<div class="crm-card-events">';
-                            evs.forEach(ev => {
-                                let evColor = getEventColor(ev);
-                                let tc = getContrastColor(evColor);
-                                let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'2-digit'}) : '';
-                                let evInfo = evDate;
-                                if (ev.time) evInfo += ' • ' + ev.time;
-                                if (ev.venue) evInfo += ' • ' + sanitize(ev.venue);
-                                html += '<div class="crm-event-row">';
-                                html += '<span class="crm-event-badge" style="background:' + evColor + ';color:' + tc + ';">' + sanitize(ev.name||'') + '</span>';
-                                html += '<span class="crm-event-date">' + evInfo + '</span>';
-                                html += '</div>';
-                            });
-                            html += '</div>';
-                            return html;
-                        })()}
+    let evs = lead.events || [];
+    if (!evs.length) return '';
+    let names = evs.map(ev => sanitize(ev.name||'')).join(' - ');
+    let dates = evs.map(ev => ev.date).filter(d => d).sort((a,b) => new Date(a) - new Date(b));
+    let dateStr = '';
+    if (dates.length === 1) {
+        dateStr = new Date(dates[0]).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+    } else if (dates.length > 1) {
+        let first = new Date(dates[0]);
+        let last = new Date(dates[dates.length-1]);
+        let allSameMonth = first.getMonth() === last.getMonth() && first.getFullYear() === last.getFullYear();
+        let consecutive = true;
+        for (let i = 1; i < dates.length; i++) {
+            let prev = new Date(dates[i-1]);
+            let curr = new Date(dates[i]);
+            let diff = Math.round((curr - prev) / (1000*60*60*24));
+            if (diff !== 1) { consecutive = false; break; }
+        }
+        if (consecutive && allSameMonth) {
+            dateStr = first.getDate() + ' to ' + last.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+        } else if (allSameMonth) {
+            let days = dates.map(d => new Date(d).getDate()).join(', ');
+            dateStr = days + ' ' + first.toLocaleDateString('en-IN', {month:'short',year:'numeric'});
+        } else {
+            dateStr = dates.map(d => new Date(d).toLocaleDateString('en-IN', {day:'2-digit',month:'short'})).join(', ');
+        }
+    }
+    let html = '<div class="crm-card-events">';
+    html += '<div class="crm-event-names">' + names + '</div>';
+    if (dateStr) html += '<div class="crm-event-dates">' + dateStr + '</div>';
+    html += '</div>';
+    return html;
+})()}
                     </div>
                     <div class="crm-card-foot">
-                        <div>
-                            <div class="crm-foot-budget">${budgetFmt||'No budget set'}</div>
-                            <div class="crm-foot-date">${dateFmt?'📅 '+dateFmt:''} ${lead.phone?' • 📞 +91 '+sanitize(lead.phone):''}</div>
-                        </div>
+                        <div class="crm-foot-budget" style="font-size:16px;">${budgetFmt||'No budget set'}</div>
                         <div class="crm-quick-btns" onclick="event.stopPropagation()">
                             <button class="crm-qbtn" title="Call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞</button>
                             <button class="crm-qbtn" title="WhatsApp" onclick="window.open('https://wa.me/91${waPhone}','_blank')">💬</button>
