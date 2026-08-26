@@ -10743,6 +10743,10 @@
         // nahi tha. Asli detail-panel function neeche wala openPanel(id) hi hai,
         // isliye seedha usी ko alias kar diya.
         window.openLeadDetail = function (id) { openPanel(id); };
+        // Expose cover functions on window so inline onclick handlers can reach them
+        window.openCoverPicker = openCoverPicker;
+        window.setAsCoverPhoto = setAsCoverPhoto;
+        window.removeCoverPhoto = removeCoverPhoto;
 
         function renderLeadEventPhotosHtml(lead) {
             if (!lead || !lead.events || lead.events.length === 0) {
