@@ -1747,17 +1747,19 @@
         }
 
         .panel-header h2 {
-            margin: 0 0 4px 0;
-            font-size: 16px;
+            margin: 0 0 6px 0;
+            font-size: 17px;
             font-weight: 800;
             color: var(--text-primary);
+            line-height: 1.3;
         }
 
         .panel-header p {
-            margin: 0;
-            font-size: 12px;
+            margin: 0 0 6px 0;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
+            line-height: 1.4;
         }
 
         .budget-display {
@@ -3325,6 +3327,9 @@
                 .crm-kpi.active-kpi .ck-lbl{color:#64748B;}
                 .ck-val{font-size:16px;font-weight:900;color:white;line-height:1;margin-bottom:3px;}
                 .ck-lbl{font-size:8.5px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.3px;}
+                .crm-sub-pill{transition:.15s; opacity:.6;}
+                .crm-sub-pill.active-sub{opacity:1; transform:scale(1.05); box-shadow:0 2px 8px rgba(0,0,0,.2);}
+                .crm-sub-pill:hover{opacity:.85;}
                 .crm-search-wrap{background:white;padding:10px 16px;border-bottom:1px solid #E2E8F0;position:sticky;top:56px;z-index:100;}
                 .crm-card-v3{background:white;border:1.5px solid #E2E8F0;border-radius:16px;margin:0 16px 10px;overflow:hidden;transition:.22s;box-shadow:0 2px 8px rgba(0,0,0,.03);}
                 .crm-card-v3:hover{border-color:#CBD5E1;box-shadow:0 8px 24px rgba(0,0,0,.09);}
@@ -3386,7 +3391,7 @@
                         <div class="ck-val" id="crm-stat-lost" style="color:#CBD5E1;">0</div><div class="ck-lbl">Lost</div>
                     </div>
                 </div>
-                <div id="crm-sub-filters" style="display:none; padding:4px 16px 12px; gap:6px; position:relative; z-index:1;">
+                <div id="crm-sub-filters" style="display:flex; padding:4px 16px 12px; gap:6px; position:relative; z-index:1;">
                     <button class="crm-sub-pill active-sub" onclick="setCrmSubFilter('All',this)" style="background:white; border:1px solid rgba(255,255,255,.4); color:#0F172A; padding:5px 12px; border-radius:16px; font-size:10px; font-weight:800; cursor:pointer;">All</button>
                     <button class="crm-sub-pill" onclick="setCrmSubFilter('New',this)" style="background:#3B82F6; border:1px solid #3B82F6; color:white; padding:5px 12px; border-radius:16px; font-size:10px; font-weight:800; cursor:pointer;">New</button>
                     <button class="crm-sub-pill" onclick="setCrmSubFilter('Hot',this)" style="background:#EF4444; border:1px solid #EF4444; color:white; padding:5px 12px; border-radius:16px; font-size:10px; font-weight:800; cursor:pointer;">Hot</button>
@@ -7700,14 +7705,14 @@
         <div class="side-panel" id="detailPanel">
             <div id="panel-cover" class="panel-cover"></div>
             <div class="panel-header">
-                <div>
+                <div style="flex:1; padding-right:12px;">
                     <h2 id="p_name">Name</h2>
-                    <p id="p_phone" style="margin:2px 0; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="showPhonePopup()">Phone</p>
+                    <p id="p_phone" style="margin:4px 0; color:var(--accent-color); cursor:pointer; font-weight:600; font-size:13px;" onclick="showPhonePopup()">Phone</p>
                     <div id="p_category"
-                        style="font-size:10px; font-weight:800; color:var(--accent-color); text-transform:uppercase; letter-spacing:0.5px;">
+                        style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-top:6px;">
                         CAT</div>
-                    <div class="budget-display" id="p_budget">₹0</div>
-                </div><button class="modal-close" onclick="saveAndClosePanel()">&times;</button>
+                    <div class="budget-display" id="p_budget" style="margin-top:8px;">₹0</div>
+                </div><button class="modal-close" onclick="saveAndClosePanel()" style="flex-shrink:0; margin-left:8px;">&times;</button>
             </div>
             <div class="panel-body" id="detailPanelBody"></div>
             <div class="panel-footer" id="detailPanelFooter" style="padding: 12px 16px;"></div>
