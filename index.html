@@ -14251,11 +14251,18 @@
                 html += '</div>';
             }
             html += '</div>';
-            // Collect existing categories for quick chips + datalist
+            // Collect categories — merge event-specific + globally saved categories
             let existingCats = getEventCategories(ev.name);
-            let datalistHtml = existingCats.map(c => '<option value="' + sanitize(c) + '">').join('');
-            // Build quick-select chips for existing categories
+            let savedCats = (appSettings.savedCategories || []);
+            // Merge without duplicates
+            let allCats = existingCats.slice();
+            savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            let datalistHtml = allCats.map(c => '<option value="' + sanitize(c) + '">').join('');
+            // Build quick-select chips — event-specific first (blue), then global (lighter)
             let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'qiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            // Add saved categories that aren't in this event yet
+            let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'qiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            if (globalChipsHtml) chipsHtml += globalChipsHtml;
             // Inline Add Item form (always visible at bottom)
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
@@ -14321,6 +14328,12 @@
             let unit = document.getElementById('qiv_unit') ? document.getElementById('qiv_unit').value : 'Pcs';
             let desc = document.getElementById('qiv_desc').value.trim();
             quoteItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty * rate, event: ev.name, category: category });
+            // Persist category globally for future suggestions
+            if (!appSettings.savedCategories) appSettings.savedCategories = [];
+            if (!appSettings.savedCategories.includes(category)) {
+                appSettings.savedCategories.push(category);
+                saveDataLocally();
+            }
             // Reset form for next item
             document.getElementById('qiv_name').value = '';
             document.getElementById('qiv_qty').value = '1';
@@ -14402,6 +14415,8 @@
             return catItems.reduce((s,i) => s + (i.amount||0), 0);
         }
         // Update a category's override amount
+        // Debounced version — prevents re-render while user is typing
+        let _updateCategoryTimer = null;
         function updateCategoryAmount(evIdx, catName, val) {
             let ev = quoteEventsData[evIdx];
             if (!ev) return;
@@ -14420,8 +14435,11 @@
                 }
             });
             ev.manualGross = totalFromCats;
-            renderQuoteItemView(false);
+            // Immediately update gross + net totals
             syncQuoteGrossFromItems();
+            // Debounced re-render of compact summary (avoids focus loss while typing)
+            clearTimeout(_updateCategoryTimer);
+            _updateCategoryTimer = setTimeout(function() { renderQuoteItems(); }, 400);
         }
 
         // PREVIEW SCREEN
@@ -14497,6 +14515,26 @@
                 html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
                 quoteEventsData.forEach(ev => {
                     let evPhotos = ev.photos || [];
+                    // Auto-attach photos from lead if added after quotation creation
+                    if (typeof leadsDB !== 'undefined') {
+                        let matchingLead = Object.values(leadsDB).find(l => l.status !== 'Lost' && l.dates && l.dates.some(d => d.name === ev.name && d.photos && d.photos.length > 0));
+                        if (matchingLead) {
+                            matchingLead.dates.forEach(d => {
+                                if (d.name === ev.name && d.photos && d.photos.length > 0) {
+                                    d.photos.forEach(p => {
+                                        let url = typeof p === 'string' ? p : p.url;
+                                        if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
+                                    });
+                                }
+                            });
+                        }
+                        if (matchingLead && matchingLead.photos && matchingLead.photos.length > 0) {
+                            matchingLead.photos.forEach(p => {
+                                let url = typeof p === 'string' ? p : p.url;
+                                if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
+                            });
+                        }
+                    }
                     if (evPhotos.length === 0) return;
                     let evColor = getEventColor(ev);
                     let textColor = getContrastColor(evColor);
@@ -17245,8 +17283,27 @@
                     let textColor = getContrastColor(evColor);
                     let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                     let evPhotos = ev.photos || [];
+                    // Auto-attach photos from lead if added after quotation creation
+                    if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
+                        let lead = leadsDB[record.eventId];
+                        if (lead.dates) {
+                            lead.dates.forEach(d => {
+                                if (d.name === ev.name && d.photos && d.photos.length > 0) {
+                                    d.photos.forEach(p => {
+                                        let url = typeof p === 'string' ? p : p.url;
+                                        if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
+                                    });
+                                }
+                            });
+                        }
+                        if (lead.photos && lead.photos.length > 0) {
+                            lead.photos.forEach(p => {
+                                let url = typeof p === 'string' ? p : p.url;
+                                if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
+                            });
+                        }
+                    }
 
-                    html += '<div style="page-break-before: always; padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
                     // EVENT HEADER
                     html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:15px 20px; border-radius:8px; margin-bottom:15px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;">';
                     html += '<div style="font-size:20px; font-weight:900; text-transform:uppercase;">' + sanitize(ev.name) + '</div>';
