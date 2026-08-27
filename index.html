@@ -17284,10 +17284,18 @@
                     let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                     let evPhotos = ev.photos || [];
                     // Auto-attach photos from lead if added after quotation creation
+                    // Try by eventId first, then by matching event name across all leads
+                    let matchingLead = null;
                     if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
-                        let lead = leadsDB[record.eventId];
-                        if (lead.dates) {
-                            lead.dates.forEach(d => {
+                        matchingLead = leadsDB[record.eventId];
+                    } else if (typeof leadsDB !== 'undefined') {
+                        // Search by event name in lead.dates
+                        matchingLead = Object.values(leadsDB).find(l => l.status !== 'Lost' && l.dates && l.dates.some(d => d.name === ev.name));
+                    }
+                    if (matchingLead) {
+                        // Date-wise photos matching event name
+                        if (matchingLead.dates) {
+                            matchingLead.dates.forEach(d => {
                                 if (d.name === ev.name && d.photos && d.photos.length > 0) {
                                     d.photos.forEach(p => {
                                         let url = typeof p === 'string' ? p : p.url;
@@ -17296,13 +17304,17 @@
                                 }
                             });
                         }
-                        if (lead.photos && lead.photos.length > 0) {
-                            lead.photos.forEach(p => {
+                        // Lead-level photos (cover photos, general reference)
+                        if (matchingLead.photos && matchingLead.photos.length > 0) {
+                            matchingLead.photos.forEach(p => {
                                 let url = typeof p === 'string' ? p : p.url;
                                 if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
                             });
                         }
                     }
+
+                    // PAGE BREAK + EVENT WRAPPER
+                    html += '<div style="page-break-before: always; padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
 
                     // EVENT HEADER
                     html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:15px 20px; border-radius:8px; margin-bottom:15px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;">';
