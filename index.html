@@ -14067,7 +14067,7 @@
                         let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                         let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
                         html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 10px 3px 20px; background:var(--surface-color); border-top:1px solid var(--bg-color);">';
-                        html += '<div style="font-size:10px; font-weight:600; color:var(--text-secondary);">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px;">(' + catItems.length + ')</span></div>';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ')</span></div>';
                         html += '<div style="font-size:10px; font-weight:700; color:var(--text-primary);">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
                         html += '</div>';
                     });
@@ -14112,9 +14112,9 @@
                 cats.forEach(catName => {
                     let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                     let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); padding:6px 10px; border-radius:6px; margin-bottom:4px;">';
-                    html += '<div style="font-size:11px; font-weight:800; color:var(--text-primary);">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:var(--text-secondary); font-weight:600;">(' + catItems.length + ' items)</span></div>';
-                    html += '<div style="font-size:11px; font-weight:800; color:var(--accent-color);">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 10px; border-radius:6px; margin-bottom:4px;">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
                     html += '</div>';
                     html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:8px;">';
                     html += '<tr style="background:var(--bg-color);"><th style="padding:4px 4px; text-align:center; width:20px; border-bottom:1px solid var(--border-color);">#</th><th style="padding:4px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Item / Service</th><th style="padding:4px 4px; text-align:center; width:40px; border-bottom:1px solid var(--border-color);">Qty</th><th style="padding:4px 4px; text-align:right; width:50px; border-bottom:1px solid var(--border-color);">Rate</th><th style="padding:4px 4px; text-align:right; width:60px; border-bottom:1px solid var(--border-color);">Amount</th></tr>';
@@ -14155,9 +14155,9 @@
                 cats.forEach(catName => {
                     let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                     let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); padding:6px 10px; border-radius:6px; margin-bottom:4px;">';
-                    html += '<div style="font-size:11px; font-weight:800; color:var(--text-primary);">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:var(--text-secondary); font-weight:600;">(' + catItems.length + ' items)</span></div>';
-                    html += '<div style="font-size:11px; font-weight:800; color:var(--accent-color);">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 10px; border-radius:6px; margin-bottom:4px;">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
                     html += '</div>';
                     html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:8px;">';
                     html += '<tr style="background:var(--bg-color);"><th style="padding:4px 4px; text-align:center; width:20px; border-bottom:1px solid var(--border-color);">#</th><th style="padding:4px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Item / Service</th><th style="padding:4px 4px; text-align:center; width:40px; border-bottom:1px solid var(--border-color);">Qty</th><th style="padding:4px 4px; text-align:right; width:50px; border-bottom:1px solid var(--border-color);">Rate</th><th style="padding:4px 4px; text-align:right; width:60px; border-bottom:1px solid var(--border-color);">Amount</th></tr>';
@@ -14211,10 +14211,10 @@
                 categories.forEach(catName => {
                     let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                     let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    // Category header
-                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-color); padding:6px 8px; border-bottom:1px solid var(--border-color);">';
-                    html += '<div style="font-size:11px; font-weight:800; color:var(--text-primary);">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:var(--text-secondary); font-weight:600;">(' + catItems.length + ' items)</span></div>';
-                    html += '<div style="font-size:11px; font-weight:800; color:var(--accent-color);">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
+                    // Category header — blue tint with left accent border
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 8px; border-bottom:1px solid var(--border-color);">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
                     html += '</div>';
                     // Category items table
                     html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
@@ -14241,20 +14241,27 @@
                 html += '</div>';
             }
             html += '</div>';
-            // Collect existing categories for datalist suggestions
+            // Collect existing categories for quick chips + datalist
             let existingCats = getEventCategories(ev.name);
             let datalistHtml = existingCats.map(c => '<option value="' + sanitize(c) + '">').join('');
+            // Build quick-select chips for existing categories
+            let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'qiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
             // Inline Add Item form (always visible at bottom)
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
+            // Category selector — prominent, at top, with quick chips
+            html += '<div class="form-group" style="margin-bottom:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
+            html += '<input type="text" id="qiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="qiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<datalist id="qiv_category_list">' + datalistHtml + '</datalist>';
+            if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
+            html += '</div>';
             html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="qiv_name" class="form-input" placeholder="Enter item name"></div>';
             html += '<div class="form-row">';
             html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="qiv_qty" class="form-input" value="1" oninput="updateQIVGross()"></div>';
             html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="qiv_unit" class="form-select">' + getUnitOptions() + '</select></div>';
             html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="qiv_rate" class="form-input" value="0" oninput="updateQIVGross()"></div>';
             html += '</div>';
-            // Category input with datalist for suggestions
-            html += '<div class="form-group"><label class="form-label">Category</label><input type="text" id="qiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="qiv_category_list" style="font-size:11px;"><datalist id="qiv_category_list">' + datalistHtml + '</datalist></div>';
             html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="qiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
             html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="qiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
@@ -14297,12 +14304,12 @@
             if (!ev) return;
             let name = document.getElementById('qiv_name').value.trim();
             if (!name) { alert('Please enter item name!'); return; }
+            let category = document.getElementById('qiv_category') ? document.getElementById('qiv_category').value.trim() : '';
+            if (!category) { alert('Please enter a category (e.g. Mandap, Floral, Catering)!'); document.getElementById('qiv_category').focus(); return; }
             let qty = parseFloat(document.getElementById('qiv_qty').value) || 0;
             let rate = parseFloat(document.getElementById('qiv_rate').value) || 0;
             let unit = document.getElementById('qiv_unit') ? document.getElementById('qiv_unit').value : 'Pcs';
             let desc = document.getElementById('qiv_desc').value.trim();
-            let category = document.getElementById('qiv_category') ? document.getElementById('qiv_category').value.trim() : '';
-            if (!category) category = 'General';
             quoteItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty * rate, event: ev.name, category: category });
             // Reset form for next item
             document.getElementById('qiv_name').value = '';
@@ -14310,7 +14317,7 @@
             document.getElementById('qiv_rate').value = '0';
             document.getElementById('qiv_desc').value = '';
             // Preserve category value so user can add multiple items in same category
-            let savedCat = document.getElementById('qiv_category') ? document.getElementById('qiv_category').value : '';
+            let savedCat = category;
             renderQuoteItemView(true);
             let catInput = document.getElementById('qiv_category');
             if (catInput && savedCat) catInput.value = savedCat;
@@ -14431,7 +14438,7 @@
                         let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                         let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
                         html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 10px 3px 20px; background:var(--surface-color); border-top:1px solid var(--bg-color);">';
-                        html += '<div style="font-size:10px; font-weight:600; color:var(--text-secondary);">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px;">(' + catItems.length + ')</span></div>';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ')</span></div>';
                         html += '<div style="font-size:10px; font-weight:700; color:var(--text-primary);">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
                         html += '</div>';
                     });
@@ -16977,7 +16984,7 @@
                             cats.forEach(catName => {
                                 let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                                 let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                                html += '<tr style="background:#F8FAFC;"><td style="border:1px solid #E2E8F0; padding:3px 8px 3px 20px; font-size:11px; color:#475569;">↳ ' + sanitize(catName) + ' <span style="font-size:9px; color:#94A3B8;">(' + catItems.length + ' items)</span></td><td class="right" style="border:1px solid #E2E8F0; padding:3px 8px; font-size:11px; font-weight:700; color:#0f172a;">₹' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                                html += '<tr style="background:#EFF6FF;"><td style="border:1px solid #E2E8F0; padding:3px 8px 3px 20px; font-size:11px; color:#1E40AF; font-weight:700;">↳ ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ' items)</span></td><td class="right" style="border:1px solid #E2E8F0; padding:3px 8px; font-size:11px; font-weight:800; color:#1E40AF;">₹' + catTotal.toLocaleString('en-IN') + '</td></tr>';
                             });
                         }
                     });
@@ -17202,7 +17209,7 @@
                             let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
                             // Category header row
                             html += '<table style="width:100%; border-collapse:collapse; margin-bottom:4px; font-size:12px;">';
-                            html += '<tr style="background:#F1F5F9;"><td colspan="5" style="border:1px solid #E2E8F0; padding:6px 8px; font-weight:800; color:#0f172a; text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">' + sanitize(catName) + ' <span style="font-size:9px; color:#64748b; font-weight:600;">(' + catItems.length + ' items)</span></td></tr>';
+                            html += '<tr style="background:#EFF6FF; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td colspan="5" style="border:1px solid #BFDBFE; border-left:3px solid #3B82F6; padding:6px 8px; font-weight:800; color:#1E40AF; text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></td></tr>';
                             html += '<tr><th style="width:8%; border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">#</th><th style="width:52%; border:1px solid #E2E8F0; padding:5px 6px; text-align:left;">Item / Service</th><th style="width:13%; border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">Qty</th><th style="width:13%; border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">Rate</th><th style="width:14%; border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">Amount</th></tr>';
                             catItems.forEach((item) => {
                                 printItemNum++;
