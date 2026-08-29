@@ -17721,17 +17721,18 @@
                             <tr>
                                 <th style="width:25%">Function Name</th>
                                 <th style="width:20%">Date</th>
-                                <th style="width:40%">Venue</th>
-                                <th style="width:12%">Guests</th>
                                 <th class="right" style="width:15%">Time</th>
+                                <th style="width:33%">Venue</th>
+                                <th style="width:12%">Guests</th>
                             </tr>`;
 
                         datesToPrint.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => {
                             html += `<tr>
                                 <td><strong style="color:#0f172a;">${d.name}</strong></td>
                                 <td>${new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                                <td>${d.venue || '-'}</td>
                                 <td class="right">${d.time || 'TBD'}</td>
+                                <td>${d.venue || '-'}</td>
+                                <td>${d.guests ? d.guests.toLocaleString('en-IN') : '-'}</td>
                             </tr>`;
                         });
                         html += `</table>`;
@@ -17744,12 +17745,12 @@
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     html += '<span class="section-label">Function Schedule</span>';
                     html += '<table style="margin-bottom:15px; font-size:11px;">';
-                    html += '<tr><th style="width:25%; border:1px solid #E2E8F0; padding:4px 6px;">Function Name</th><th style="width:20%; border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th style="width:40%; border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th style="width:12%; border:1px solid #E2E8F0; padding:4px 6px;">Guests</th><th class="right" style="width:15%; border:1px solid #E2E8F0; padding:4px 6px;">Time</th></tr>';
+                    html += '<tr><th style="width:25%; border:1px solid #E2E8F0; padding:4px 6px;">Function Name</th><th style="width:20%; border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th class="right" style="width:15%; border:1px solid #E2E8F0; padding:4px 6px;">Time</th><th style="width:33%; border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th style="width:12%; border:1px solid #E2E8F0; padding:4px 6px;">Guests</th></tr>';
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
                         let tc = getContrastColor(evColor);
-                        html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;"><strong>' + sanitize(ev.name) + '</strong></td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td><td class="right" style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td></tr>';
+                        html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;"><strong>' + sanitize(ev.name) + '</strong></td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
                     });
                     html += '</table>';
                     // EVENT-WISE SUMMARY (with category breakdown)
