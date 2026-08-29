@@ -14139,6 +14139,21 @@
                 html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
                 html += '</div>';
             }
+            // AUTO-ATTACH reference photos from lead
+            let evPhotos = getLeadEventPhotos(record, ev.name, ev.photos);
+            if (evPhotos.length > 0) {
+                html += '<div style="margin-top:10px;"><div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">Reference Photos (' + evPhotos.length + ')</div>';
+                html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">';
+                evPhotos.forEach(photo => {
+                    let url = typeof photo === 'string' ? photo : photo.url;
+                    let label = typeof photo === 'string' ? '' : (photo.label || '');
+                    html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
+                    html += '<img src="' + url + '" style="width:100%; height:120px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
+                    if (label) html += '<div style="font-size:10px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            }
             document.getElementById('quoteItemReadBody').innerHTML = html;
             let rModal = document.getElementById('quoteItemReadModal');
             rModal.style.setProperty('z-index', '10700', 'important');
@@ -14182,6 +14197,22 @@
                 html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
                 html += '</div>';
             }
+            // AUTO-ATTACH reference photos from lead
+            let prevQuoteRec = (typeof editingSalesId !== 'undefined' && editingSalesId && salesDB[editingSalesId]) ? salesDB[editingSalesId] : null;
+            let prevPhotos = getLeadEventPhotos(prevQuoteRec, ev.name, ev.photos);
+            if (prevPhotos.length > 0) {
+                html += '<div style="margin-top:10px;"><div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">Reference Photos (' + prevPhotos.length + ')</div>';
+                html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">';
+                prevPhotos.forEach(photo => {
+                    let url = typeof photo === 'string' ? photo : photo.url;
+                    let label = typeof photo === 'string' ? '' : (photo.label || '');
+                    html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
+                    html += '<img src="' + url + '" style="width:100%; height:120px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
+                    if (label) html += '<div style="font-size:10px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            }
             document.getElementById('quoteItemReadBody').innerHTML = html;
             let rModal = document.getElementById('quoteItemReadModal');
             rModal.style.setProperty('z-index', '10700', 'important');
@@ -14197,6 +14228,42 @@
             });
             return cats;
         }
+
+        // 📸 AUTO-ATTACH: Merges reference photos from a lead into the given photo array.
+        // Tries by eventId first, then by matching event name across all leads.
+        // Lead stores event-wise photos in lead.events[].photos (NOT lead.dates).
+        function getLeadEventPhotos(record, evName, existingPhotos) {
+            let photos = (existingPhotos || []).slice();
+            if (typeof leadsDB === 'undefined') return photos;
+            let matchingLead = null;
+            if (record && record.eventId && leadsDB[record.eventId]) {
+                matchingLead = leadsDB[record.eventId];
+            } else {
+                matchingLead = Object.values(leadsDB).find(l =>
+                    l.status !== 'Lost' && l.events &&
+                    l.events.some(d => d.name === evName && d.photos && d.photos.length > 0));
+            }
+            if (!matchingLead) return photos;
+            // Event-wise photos matching event name
+            let eventList = matchingLead.events || matchingLead.dates || [];
+            eventList.forEach(d => {
+                if (d.name === evName && d.photos && d.photos.length > 0) {
+                    d.photos.forEach(p => {
+                        let url = typeof p === 'string' ? p : p.url;
+                        if (!photos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) photos.push(p);
+                    });
+                }
+            });
+            // Lead-level photos (cover photos, general reference)
+            if (matchingLead.photos && matchingLead.photos.length > 0) {
+                matchingLead.photos.forEach(p => {
+                    let url = typeof p === 'string' ? p : p.url;
+                    if (!photos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) photos.push(p);
+                });
+            }
+            return photos;
+        }
+
         function renderQuoteItemView(scrollToBottom) {
             let ev = quoteEventsData[quoteViewEvIdx];
             if (!ev) return;
@@ -14507,34 +14574,15 @@
                 html += '</div>';
             });
             html += '</div>';
-            // EVENT PHOTOS PREVIEW
-            let hasAnyPhotos = quoteEventsData.some(ev => ev.photos && ev.photos.length > 0);
+            // EVENT PHOTOS PREVIEW — auto-attach from lead BEFORE checking if any exist
+            let quoteRec = (typeof editingSalesId !== 'undefined' && editingSalesId && salesDB[editingSalesId]) ? salesDB[editingSalesId] : null;
+            let hasAnyPhotos = quoteEventsData.some(ev => getLeadEventPhotos(quoteRec, ev.name, ev.photos).length > 0);
             if (hasAnyPhotos) {
                 html += '<div style="margin-top:12px;">';
                 html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
                 html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
                 quoteEventsData.forEach(ev => {
-                    let evPhotos = ev.photos || [];
-                    // Auto-attach photos from lead if added after quotation creation
-                    if (typeof leadsDB !== 'undefined') {
-                        let matchingLead = Object.values(leadsDB).find(l => l.status !== 'Lost' && l.dates && l.dates.some(d => d.name === ev.name && d.photos && d.photos.length > 0));
-                        if (matchingLead) {
-                            matchingLead.dates.forEach(d => {
-                                if (d.name === ev.name && d.photos && d.photos.length > 0) {
-                                    d.photos.forEach(p => {
-                                        let url = typeof p === 'string' ? p : p.url;
-                                        if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
-                                    });
-                                }
-                            });
-                        }
-                        if (matchingLead && matchingLead.photos && matchingLead.photos.length > 0) {
-                            matchingLead.photos.forEach(p => {
-                                let url = typeof p === 'string' ? p : p.url;
-                                if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
-                            });
-                        }
-                    }
+                    let evPhotos = getLeadEventPhotos(quoteRec, ev.name, ev.photos);
                     if (evPhotos.length === 0) return;
                     let evColor = getEventColor(ev);
                     let textColor = getContrastColor(evColor);
@@ -16048,7 +16096,7 @@
                 if (etEl) etEl.value = record.eventTitle || '';
                 quoteEventsData = []; quoteItemsData = [];
                 if (record.events && record.events.length > 0) {
-                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] }));
+                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: getLeadEventPhotos(record, ev.name || '', ev.photos || []) }));
                 } else if (record.event) {
                     quoteEventsData.push({ name: record.event, date: record.date || '', time: '', venue: '' });
                 }
@@ -17282,36 +17330,7 @@
                     let evColor = getEventColor(ev);
                     let textColor = getContrastColor(evColor);
                     let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
-                    let evPhotos = ev.photos || [];
-                    // Auto-attach photos from lead if added after quotation creation
-                    // Try by eventId first, then by matching event name across all leads
-                    let matchingLead = null;
-                    if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
-                        matchingLead = leadsDB[record.eventId];
-                    } else if (typeof leadsDB !== 'undefined') {
-                        // Search by event name in lead.dates
-                        matchingLead = Object.values(leadsDB).find(l => l.status !== 'Lost' && l.dates && l.dates.some(d => d.name === ev.name));
-                    }
-                    if (matchingLead) {
-                        // Date-wise photos matching event name
-                        if (matchingLead.dates) {
-                            matchingLead.dates.forEach(d => {
-                                if (d.name === ev.name && d.photos && d.photos.length > 0) {
-                                    d.photos.forEach(p => {
-                                        let url = typeof p === 'string' ? p : p.url;
-                                        if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
-                                    });
-                                }
-                            });
-                        }
-                        // Lead-level photos (cover photos, general reference)
-                        if (matchingLead.photos && matchingLead.photos.length > 0) {
-                            matchingLead.photos.forEach(p => {
-                                let url = typeof p === 'string' ? p : p.url;
-                                if (!evPhotos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) evPhotos.push(p);
-                            });
-                        }
-                    }
+                    let evPhotos = getLeadEventPhotos(record, ev.name, ev.photos);
 
                     // PAGE BREAK + EVENT WRAPPER
                     html += '<div style="page-break-before: always; padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
