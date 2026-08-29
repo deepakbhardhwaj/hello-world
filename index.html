@@ -6957,17 +6957,9 @@
                         <div class="form-group"><label class="form-label">Invoice Date</label><input type="date" id="di_date" class="form-input" required></div>
                     </div>
 
-                    <!-- EVENT MANAGEMENT SECTION FOR INVOICE -->
-                    <div id="inv_events_section" style="margin: 12px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #F0F9FF; display:none;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label class="form-label" style="margin:0; color:#1D4ED8; font-weight:800;">Functions / Events</label>
-                            <button type="button" style="background:#1D4ED8; color:white; border:none; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="addInvEvent()">+ Add Function</button>
-                        </div>
-                        <div id="inv_events_list"></div>
-                    </div>
-                    <div id="inv_events_toggle" style="margin:8px 0; text-align:center;">
-                        <button type="button" onclick="document.getElementById('inv_events_section').style.display='block'; document.getElementById('inv_events_toggle').style.display='none'; addInvEvent();" style="background:none; border:1px dashed var(--accent-color); color:var(--accent-color); border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer; font-weight:700; width:100%;">+ Enable Event-Wise Breakdown</button>
-                    </div>
+                    <!-- EVENT-WISE MANAGEMENT SECTION FOR INVOICE (mirrors quotation UI) -->
+                    <div id="inv_events_container"></div>
+                    <div id="inv_items_container"></div>
 
                     <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
                         <div class="form-group" style="margin-bottom: 12px;">
@@ -6993,10 +6985,9 @@
                             <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
                             <div style="display: flex; gap: 8px;">
                                 <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Stock</button>
-                                <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addInvoiceItem()">+ Add Item</button>
+                                <button type="button" style="background: var(--accent-color); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="showInvPreview()">👁 Preview & Save</button>
                             </div>
                         </div>
-                        <div id="inv_items_container"></div>
                     </div>
 
                     <div class="form-row" style="margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
@@ -7031,6 +7022,59 @@
                     </div>
                     <div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="di_remarks" class="form-input" rows="2" placeholder="Optional remarks for this invoice" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" style="background: var(--success);" onclick="saveDirectInvoiceData()">Save Invoice</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- INVOICE EVENT PANEL (side panel, mirrors quoteEventPanel) -->
+        <div id="invEventPanel" class="modal-overlay" style="display:none; z-index:10600;">
+            <div style="position:absolute; right:0; top:0; bottom:0; width:90%; max-width:400px; background:var(--bg-color); display:flex; flex-direction:column; animation:slideIn 0.3s ease; box-shadow:var(--shadow-lg);">
+                <div class="modal-header" style="padding:12px 16px; background:var(--bg-color); position:relative; top:0;">
+                    <h3>Function Details</h3>
+                    <button class="modal-close" onclick="closeInvEventPanel()">&times;</button>
+                </div>
+                <div style="padding:16px; overflow-y:auto; flex:1;">
+                    <div id="iev_list" style="margin-bottom:12px;"></div>
+                    <div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">
+                        <div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;" id="iev_form_title">Add New Function</div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1;"><label class="form-label">Function Name</label><input type="text" id="iev_name" class="form-input" placeholder="e.g. Haldi Ceremony"></div>
+                            <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="iev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Date</label><input type="date" id="iev_date" class="form-input"></div>
+                            <div class="form-group"><label class="form-label">Time</label><input type="time" id="iev_time" class="form-input"></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">Venue</label><input type="text" id="iev_venue" class="form-input" placeholder="e.g. Royal Palace Lawn"></div>
+                        <button type="button" class="btn-main" onclick="saveInvEvent()" style="font-size:12px; padding:8px;">Save Function</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVOICE PREVIEW MODAL (mirrors quotePreviewModal) -->
+        <div id="invPreviewModal" class="modal-overlay" style="display:none; z-index:10600;">
+            <div class="modal-content" style="max-width:550px;">
+                <div class="modal-header">
+                    <h3>Invoice Preview</h3>
+                    <button class="modal-close" onclick="document.getElementById('invPreviewModal').style.display='none';">&times;</button>
+                </div>
+                <div id="invPreviewBody" style="padding:0 0 12px 0;"></div>
+                <div style="display:flex; gap:8px; padding-top:8px;">
+                    <button onclick="document.getElementById('invPreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">Edit</button>
+                    <button onclick="saveDirectInvoiceData()" class="btn-main" style="flex:2; font-size:12px;">Confirm & Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVOICE ITEM VIEW MODAL (mini popup, mirrors quoteItemViewModal) -->
+        <div id="invItemViewModal" class="modal-overlay" style="display:none; z-index:10600;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+                <div class="modal-header">
+                    <h3>Item Details</h3>
+                    <button class="modal-close" onclick="closeInvItemViewPanel()">&times;</button>
+                </div>
+                <div id="invItemViewBody" style="padding:0 0 12px 0;"></div>
+                <button onclick="closeInvItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
 
@@ -8549,7 +8593,7 @@
             return false;
         }
 
-        let quoteItemCount = 0; let invItemCount = 0; let poItemCount = 0; let pbItemCount = 0; let currentCalDate = new Date(); let invEventsData = [];
+        let quoteItemCount = 0; let invItemCount = 0; let poItemCount = 0; let pbItemCount = 0; let currentCalDate = new Date(); let invEventsData = []; let invItemsData = []; let editingInvEventIdx = -1; let invViewEvIdx = -1;
         let tempEventIdForInvoice = null; let tempEventIdForPurchase = null; let convertingPOId = null;
         let targetInvoiceId = null; let targetReceiptId = null; let targetInvoiceToAttach = null;
 
@@ -14690,8 +14734,8 @@
             loadPartiesIntoSelect('di_party', preFillPartyId); 
             document.getElementById('diForm').reset(); 
             document.getElementById('di_date').valueAsDate = new Date(); 
-            document.getElementById('inv_items_container').innerHTML = ''; 
-            addInvoiceItem(); 
+            invEventsData = []; invItemsData = []; editingInvEventIdx = -1; invViewEvIdx = -1;
+            renderInvEvents(); renderInvItems(); 
             calculateDirectInvoiceTotal(); 
             handlePartySelectionForInvoice(); 
             
@@ -14719,57 +14763,499 @@
         function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display:flex; gap:4px; align-items:center;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">CAT</span><input type="text" class="form-input i-item-category" placeholder="Category (e.g. Mandap, Floral)" style="flex:1; font-size:11px; font-weight:700; border:2px solid #3B82F6; border-radius:6px; padding:4px 8px;"></div><div style="display:flex; gap:4px; align-items:center; margin-top:2px;"><span style="background:#8B5CF6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">EVT</span><select class="form-select i-item-event" style="flex:1; font-size:11px; font-weight:600; border:1px solid #8B5CF6; border-radius:6px; padding:4px 8px;" onchange="updateInvItemEventOptions()"><option value="">No Event</option></select></div><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function handlePartySelectionForInvoice() { if (editingSalesId) return; let pId = document.getElementById('di_party').value; let advanceGroup = document.getElementById('available_advance_group'); let advanceSelect = document.getElementById('di_use_advance'); advanceSelect.innerHTML = '<option value="0">Do not use advance</option>'; let hasAdvance = false; if (pId) { Object.values(salesDB).forEach(s => { if (s.type === 'Receipt' && s.partyId === pId && s.availableAmount > 0) { advanceSelect.innerHTML += `<option value="${s.id}">Use Available: ₹${s.availableAmount.toLocaleString('en-IN')}</option>`; hasAdvance = true; } }); } advanceGroup.style.display = hasAdvance ? 'block' : 'none'; calculateDirectInvoiceTotal(); }
 
-        // 📋 INVOICE EVENT MANAGEMENT FUNCTIONS
-        function addInvEvent() {
-            let evName = prompt('Enter function/event name:');
-            if (!evName || !evName.trim()) return;
-            invEventsData.push({ name: evName.trim(), date: '', time: '', venue: '', color: '', manualGross: 0, catOverrides: {}, photos: [] });
+        // 📋 INVOICE EVENT MANAGEMENT FUNCTIONS (quotation-style event-wise UI)
+        // Side panel for add/edit invoice functions (mirrors quoteEventPanel)
+        function openInvEventPanel() {
+            let epModal = document.getElementById('invEventPanel');
+            if (epModal) epModal.style.setProperty('z-index', '10600', 'important');
+            document.getElementById('iev_name').value = '';
+            document.getElementById('iev_date').value = '';
+            document.getElementById('iev_time').value = '';
+            document.getElementById('iev_venue').value = '';
+            if (document.getElementById('iev_color')) document.getElementById('iev_color').value = '#FFFFFF';
+            document.getElementById('iev_form_title').innerText = 'Add New Function';
+            editingInvEventIdx = -1;
+            renderIEVList();
+            document.getElementById('invEventPanel').style.display = 'flex';
+        }
+        function closeInvEventPanel() {
+            document.getElementById('invEventPanel').style.display = 'none';
             renderInvEvents();
-            updateInvItemEventOptions();
+            renderInvItems();
+            syncInvGrossFromItems();
+        }
+        function autoAssignInvEventColor(name) {
+            let n = (name || '').toLowerCase();
+            if (n.includes('haldi') || n.includes('turmeric')) return '#FEF3C7';
+            if (n.includes('mehndi') || n.includes('mehendi') || n.includes('henna')) return '#D1FAE5';
+            if (n.includes('wedding') || n.includes('shaadi') || n.includes('vidaai')) return '#FCE7F3';
+            if (n.includes('engagement') || n.includes('ring')) return '#E0E7FF';
+            if (n.includes('sangeet') || n.includes('music')) return '#F3E8FF';
+            if (n.includes('reception') || n.includes('dinner')) return '#DBEAFE';
+            if (n.includes('barat') || n.includes('baraat')) return '#FFEDD5';
+            if (n.includes(' tilak') || n.includes('roka')) return '#FEE2E2';
+            let palette = ['#DBEAFE','#E0E7FF','#FCE7F3','#D1FAE5','#FEF3C7','#CFFAFE','#FEE2E2','#E0E7FF'];
+            return palette[invEventsData.length % palette.length];
+        }
+        function saveInvEvent() {
+            let name = document.getElementById('iev_name').value.trim();
+            if (!name) { alert('Please enter event name!'); return; }
+            let userColor = document.getElementById('iev_color') ? document.getElementById('iev_color').value : '';
+            let ev = { name: name, date: document.getElementById('iev_date').value, time: document.getElementById('iev_time').value, venue: document.getElementById('iev_venue').value.trim(), color: userColor || '', photos: [] };
+            if (editingInvEventIdx >= 0) { ev.photos = invEventsData[editingInvEventIdx].photos || []; invEventsData[editingInvEventIdx] = ev; editingInvEventIdx = -1; }
+            else { invEventsData.push(ev); }
+            invEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+            document.getElementById('iev_name').value = ''; document.getElementById('iev_date').value = ''; document.getElementById('iev_time').value = ''; document.getElementById('iev_venue').value = '';
+            if (document.getElementById('iev_color')) document.getElementById('iev_color').value = '#FFFFFF';
+            document.getElementById('iev_form_title').innerText = 'Add New Function';
+            renderIEVList();
+        }
+        function editInvEvent(idx) {
+            let ev = invEventsData[idx];
+            document.getElementById('iev_name').value = ev.name;
+            document.getElementById('iev_date').value = ev.date;
+            document.getElementById('iev_time').value = ev.time;
+            document.getElementById('iev_venue').value = ev.venue;
+            if (document.getElementById('iev_color')) document.getElementById('iev_color').value = ev.color || '#FFFFFF';
+            document.getElementById('iev_form_title').innerText = 'Edit Function: ' + ev.name;
+            editingInvEventIdx = idx;
+            renderIEVList();
         }
         function deleteInvEvent(idx) {
-            if (!confirm('Remove this event? Items linked to it will become unlinked.')) return;
+            let evName = invEventsData[idx].name;
+            let itemCount = invItemsData.filter(i => i.event === evName).length;
+            if (itemCount > 0) { if (!confirm(evName + ' has ' + itemCount + ' items linked. Delete anyway?')) return; }
             invEventsData.splice(idx, 1);
-            renderInvEvents();
-            updateInvItemEventOptions();
+            invItemsData = invItemsData.filter(i => i.event !== evName);
+            renderIEVList();
         }
-        function editInvEventDetails(idx, field, value) {
-            if (!invEventsData[idx]) return;
-            invEventsData[idx][field] = value;
+        function renderIEVList() {
+            let html = '';
+            if (invEventsData.length === 0) { html = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px 0;">No functions added yet.</p>'; }
+            invEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
+                html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:700;">' + ev.name + '</span>';
+                html += '<div><button onclick="editInvEvent(' + i + ')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; margin-right:4px;">Edit</button>';
+                html += '<button onclick="deleteInvEvent(' + i + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer;">Delete</button></div>';
+                html += '</div>';
+                if (d || ev.time || ev.venue) {
+                    html += '<div style="font-size:11px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            document.getElementById('iev_list').innerHTML = html;
         }
         function renderInvEvents() {
-            let container = document.getElementById('inv_events_list');
+            let container = document.getElementById('inv_events_container');
             if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
+            html += '<button type="button" onclick="openInvEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>';
+            html += '</div>';
             if (invEventsData.length === 0) {
-                container.innerHTML = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet.</p>';
-                return;
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function" to get started.</p>';
             }
-            let html = '';
             invEventsData.forEach((ev, i) => {
-                let evColor = ev.color || '#3B82F6';
-                html += '<div style="background:white; border:1px solid #BFDBFE; border-left:3px solid ' + evColor + '; border-radius:6px; padding:8px; margin-bottom:6px;">';
-                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
-                html += '<input type="text" value="' + sanitize(ev.name) + '" style="flex:1; border:none; font-weight:800; font-size:13px; color:#1E40AF; background:transparent; outline:none;" onchange="editInvEventDetails(' + i + ', \'name\', this.value); updateInvItemEventOptions()">';
-                html += '<button type="button" onclick="deleteInvEvent(' + i + ')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:16px; padding:0 4px;">×</button>';
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
+                html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
+                html += '<button onclick="openInvEventPanel(); setTimeout(()=>{editInvEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
                 html += '</div>';
-                html += '<div style="display:flex; gap:6px; flex-wrap:wrap;">';
-                html += '<input type="date" value="' + (ev.date || '') + '" style="border:1px solid #E2E8F0; border-radius:4px; padding:3px 6px; font-size:10px; flex:1; min-width:100px;" onchange="editInvEventDetails(' + i + ', \'date\', this.value)">';
-                html += '<input type="text" placeholder="Time" value="' + sanitize(ev.time || '') + '" style="border:1px solid #E2E8F0; border-radius:4px; padding:3px 6px; font-size:10px; width:60px;" onchange="editInvEventDetails(' + i + ', \'time\', this.value)">';
-                html += '<input type="text" placeholder="Venue" value="' + sanitize(ev.venue || '') + '" style="border:1px solid #E2E8F0; border-radius:4px; padding:3px 6px; font-size:10px; flex:2; min-width:100px;" onchange="editInvEventDetails(' + i + ', \'venue\', this.value)">';
-                html += '<input type="color" value="' + evColor + '" style="border:none; border-radius:4px; width:28px; height:28px; cursor:pointer;" onchange="editInvEventDetails(' + i + ', \'color\', this.value); renderInvEvents()">';
-                html += '</div>';
+                if (d || ev.time || ev.venue) {
+                    html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
+                    html += '</div>';
+                }
                 html += '</div>';
             });
+            html += '</div>';
             container.innerHTML = html;
         }
-        function updateInvItemEventOptions() {
-            let opts = '<option value="">No Event</option>';
-            invEventsData.forEach(ev => { opts += '<option value="' + sanitize(ev.name) + '">' + sanitize(ev.name) + '</option>'; });
-            document.querySelectorAll('#inv_items_container .i-item-event').forEach(sel => {
-                let currentVal = sel.value;
-                sel.innerHTML = opts;
-                sel.value = currentVal;
+        function renderInvItems() {
+            let container = document.getElementById('inv_items_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--success); font-size:11px;">Services / Items</label>';
+            html += '</div>';
+            if (invItemsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Use "Add" button to add items per function.</p>';
+            }
+            invEventsData.forEach((ev, evIdx) => {
+                let evItems = invItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                let evManual = ev.manualGross || 0;
+                let evDisplayTotal = evManual > 0 ? evManual : evTotal;
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                // Event header row
+                html += '<div style="border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; overflow:hidden;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+                html += '<input type="number" value="' + evDisplayTotal + '" oninput="updateInvEventManualGross(' + evIdx + ', this.value)" placeholder="' + evTotal + '" style="width:80px; padding:5px 6px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color); border:none; border-left:1px solid var(--border-color); text-align:right;">';
+                html += '<button type="button" onclick="openInvItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">Add</button>';
+                html += '</div>';
+                // Category breakdown within this event
+                if (evItems.length > 0) {
+                    let cats = getInvEventCategories(ev.name);
+                    cats.forEach(catName => {
+                        let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                        let catDisplayTotal = getInvCategoryDisplayTotal(ev, catName, catItems);
+                        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 10px 3px 20px; background:var(--surface-color); border-top:1px solid var(--bg-color);">';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ')</span></div>';
+                        if (catDisplayTotal > 0) {
+                            html += '<input type="number" value="' + catDisplayTotal + '" oninput="updateInvCategoryAmount(' + evIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:70px; padding:2px 4px; font-size:10px; font-weight:700; color:#1E40AF; background:var(--surface-color); border:1px solid #BFDBFE; border-radius:3px; text-align:right;">';
+                        } else {
+                            html += '<input type="number" value="" placeholder="Enter Amount" oninput="updateInvCategoryAmount(' + evIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:70px; padding:2px 4px; font-size:9px; font-weight:600; color:#94A3B8; background:var(--surface-color); border:1px dashed #3B82F6; border-radius:3px; text-align:right;">';
+                        }
+                        html += '</div>';
+                    });
+                }
+                html += '</div>';
             });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        // VIEW PANEL: shows event-wise item details for invoice (mirrors quoteItemViewModal)
+        function openInvItemViewPanel(evIdx) {
+            invViewEvIdx = evIdx;
+            let ivModal = document.getElementById('invItemViewModal');
+            if (ivModal) ivModal.style.setProperty('z-index', '10600', 'important');
+            renderInvItemView(false);
+            document.getElementById('invItemViewModal').style.display = 'flex';
+        }
+        function closeInvItemViewPanel() {
+            document.getElementById('invItemViewModal').style.display = 'none';
+            renderInvItems(); syncInvGrossFromItems();
+        }
+        function openInvItemPreviewView(evIdx) {
+            let ev = invEventsData[evIdx];
+            if (!ev) return;
+            let evItems = invItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
+            } else {
+                let cats = getInvEventCategories(ev.name);
+                let itemNum = 0;
+                cats.forEach(catName => {
+                    let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 10px; border-radius:6px; margin-bottom:4px;">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
+                    html += '</div>';
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:8px;">';
+                    html += '<tr style="background:var(--bg-color);"><th style="padding:4px 4px; text-align:center; width:20px; border-bottom:1px solid var(--border-color);">#</th><th style="padding:4px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Item / Service</th><th style="padding:4px 4px; text-align:center; width:40px; border-bottom:1px solid var(--border-color);">Qty</th><th style="padding:4px 4px; text-align:right; width:50px; border-bottom:1px solid var(--border-color);">Rate</th><th style="padding:4px 4px; text-align:right; width:60px; border-bottom:1px solid var(--border-color);">Amount</th></tr>';
+                    catItems.forEach((item) => {
+                        itemNum++;
+                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:4px 4px; text-align:center; color:var(--text-secondary);">' + itemNum + '</td><td style="padding:4px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                        html += '</td>';
+                        html += '<td style="padding:4px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:4px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:4px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                    });
+                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:10px; font-weight:700; color:var(--text-secondary);">' + sanitize(catName) + ' Subtotal:</td><td style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:var(--text-primary);">\u20B9' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</table>';
+                });
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:6px 10px; display:flex; justify-content:space-between; align-items:center; border-radius:6px;">';
+                html += '<div style="font-size:12px; font-weight:800; color:var(--text-primary);">Event Total:</div>';
+                html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
+            }
+            document.getElementById('quoteItemReadBody').innerHTML = html;
+            let rModal = document.getElementById('quoteItemReadModal');
+            rModal.style.setProperty('z-index', '10700', 'important');
+            rModal.style.display = 'flex';
+        }
+        // Helper: get unique categories for an event from invItemsData
+        function getInvEventCategories(evName) {
+            let cats = [];
+            invItemsData.filter(i => i.event === evName).forEach(i => {
+                let c = (i.category || 'General').trim();
+                if (!c) c = 'General';
+                if (!cats.includes(c)) cats.push(c);
+            });
+            return cats;
+        }
+        function renderInvItemView(scrollToBottom) {
+            let ev = invEventsData[invViewEvIdx];
+            if (!ev) return;
+            let evItems = invItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            // Scrollable item list — grouped by category
+            html += '<div id="iiv_scroll_list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px;">';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px 0;">No items for this function yet.</p>';
+            } else {
+                // Group items by category
+                let categories = getInvEventCategories(ev.name);
+                let itemNum = 0;
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    let catDisplayTotal = getInvCategoryDisplayTotal(ev, catName, catItems);
+                    // Category header — blue tint with left accent border + editable amount
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 8px; border-bottom:1px solid var(--border-color);">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    if (catDisplayTotal > 0) {
+                        html += '<input type="number" value="' + catDisplayTotal + '" oninput="updateInvCategoryAmount(' + invViewEvIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:90px; padding:3px 6px; font-size:12px; font-weight:800; color:#1E40AF; background:var(--surface-color); border:1px solid #BFDBFE; border-radius:4px; text-align:right;">';
+                    } else {
+                        html += '<input type="number" value="" placeholder="Enter Amount" oninput="updateInvCategoryAmount(' + invViewEvIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:90px; padding:3px 6px; font-size:10px; font-weight:700; color:#94A3B8; background:var(--surface-color); border:1px dashed #3B82F6; border-radius:4px; text-align:right;">';
+                    }
+                    html += '</div>';
+                    // Category items table
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                    catItems.forEach((item) => {
+                        let realIdx = invItemsData.indexOf(item);
+                        itemNum++;
+                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + itemNum + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                        html += '</td>';
+                        html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td>';
+                        html += '<td style="padding:4px;"><button onclick="deleteInvItemFromView(' + realIdx + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:50%; width:22px; height:22px; padding:0; font-size:14px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;">\u00D7</button></td>';
+                        html += '</tr>';
+                    });
+                    // Category subtotal — uses override if set
+                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:10px; font-weight:700; color:var(--text-secondary);">' + sanitize(catName) + ' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:var(--text-primary);">\u20B9' + catDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</table>';
+                });
+                // Event grand total
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:6px 8px; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="font-size:12px; font-weight:800; color:var(--text-primary);">Event Total:</div>';
+                html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            // Collect categories — merge event-specific + globally saved categories
+            let existingCats = getInvEventCategories(ev.name);
+            let savedCats = (appSettings.savedCategories || []);
+            let allCats = existingCats.slice();
+            savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            let datalistHtml = allCats.map(c => '<option value="' + sanitize(c) + '">').join('');
+            let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'iiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'iiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            if (globalChipsHtml) chipsHtml += globalChipsHtml;
+            // Inline Add Item form (always visible at bottom)
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
+            html += '<div class="form-group" style="margin-bottom:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
+            html += '<input type="text" id="iiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="iiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<datalist id="iiv_category_list">' + datalistHtml + '</datalist>';
+            if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="iiv_name" class="form-input" placeholder="Enter item name"></div>';
+            html += '<div class="form-row">';
+            html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="iiv_qty" class="form-input" value="1" oninput="updateIIVGross()"></div>';
+            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="iiv_unit" class="form-select">' + getUnitOptions() + '</select></div>';
+            html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="iiv_rate" class="form-input" value="0" oninput="updateIIVGross()"></div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="iiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="iiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
+            html += '<button type="button" class="btn-main" onclick="saveInvItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>';
+            html += '</div></div>';
+            document.getElementById('invItemViewBody').innerHTML = html;
+            if (scrollToBottom) {
+                let scrollEl = document.getElementById('iiv_scroll_list');
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+            }
+            let nameInput = document.getElementById('iiv_name');
+            if (nameInput) { nameInput.focus(); }
+        }
+        function updateIIVGross() {
+            let qty = parseFloat(document.getElementById('iiv_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('iiv_rate').value) || 0;
+            document.getElementById('iiv_gross').innerText = '\u20B9' + (qty * rate).toLocaleString('en-IN');
+        }
+        function saveInvItemFromView() {
+            let ev = invEventsData[invViewEvIdx];
+            if (!ev) return;
+            let name = document.getElementById('iiv_name').value.trim();
+            if (!name) { alert('Please enter item name!'); return; }
+            let category = document.getElementById('iiv_category') ? document.getElementById('iiv_category').value.trim() : '';
+            if (!category) { alert('Please enter a category (e.g. Mandap, Floral, Catering)!'); document.getElementById('iiv_category').focus(); return; }
+            let qty = parseFloat(document.getElementById('iiv_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('iiv_rate').value) || 0;
+            let unit = document.getElementById('iiv_unit') ? document.getElementById('iiv_unit').value : 'Pcs';
+            let desc = document.getElementById('iiv_desc').value.trim();
+            invItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty * rate, event: ev.name, category: category });
+            // Persist category globally for future suggestions
+            if (!appSettings.savedCategories) appSettings.savedCategories = [];
+            if (!appSettings.savedCategories.includes(category)) {
+                appSettings.savedCategories.push(category);
+                saveDataLocally();
+            }
+            document.getElementById('iiv_name').value = '';
+            document.getElementById('iiv_qty').value = '1';
+            document.getElementById('iiv_rate').value = '0';
+            document.getElementById('iiv_desc').value = '';
+            let savedCat = category;
+            renderInvItemView(true);
+            let catInput = document.getElementById('iiv_category');
+            if (catInput && savedCat) catInput.value = savedCat;
+        }
+        function deleteInvItemFromView(idx) {
+            invItemsData.splice(idx, 1);
+            renderInvItemView(false);
+        }
+        function syncInvGrossFromItems() {
+            let gross = 0;
+            invEventsData.forEach(ev => {
+                let evItems = invItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                gross += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
+            calculateDirectInvoiceTotal();
+        }
+        function updateInvEventManualGross(evIdx, val) {
+            let ev = invEventsData[evIdx];
+            if (!ev) return;
+            ev.manualGross = parseFloat(val) || 0;
+            syncInvGrossFromItems();
+        }
+        // Helper: get display total for a category (override or calculated)
+        function getInvCategoryDisplayTotal(ev, catName, catItems) {
+            if (ev.catOverrides && ev.catOverrides[catName] !== undefined && ev.catOverrides[catName] > 0) {
+                return ev.catOverrides[catName];
+            }
+            return catItems.reduce((s,i) => s + (i.amount||0), 0);
+        }
+        // Update a category's override amount for invoice (debounced re-render)
+        let _updateInvCategoryTimer = null;
+        function updateInvCategoryAmount(evIdx, catName, val) {
+            let ev = invEventsData[evIdx];
+            if (!ev) return;
+            if (!ev.catOverrides) ev.catOverrides = {};
+            ev.catOverrides[catName] = parseFloat(val) || 0;
+            let evItems = invItemsData.filter(i => i.event === ev.name);
+            let cats = getInvEventCategories(ev.name);
+            let totalFromCats = 0;
+            cats.forEach(c => {
+                let catItems = evItems.filter(i => (i.category || 'General').trim() === c || (!i.category && c === 'General'));
+                if (ev.catOverrides[c] !== undefined && ev.catOverrides[c] > 0) {
+                    totalFromCats += ev.catOverrides[c];
+                } else {
+                    totalFromCats += catItems.reduce((s,i) => s + (i.amount||0), 0);
+                }
+            });
+            ev.manualGross = totalFromCats;
+            syncInvGrossFromItems();
+            clearTimeout(_updateInvCategoryTimer);
+            _updateInvCategoryTimer = setTimeout(function() { renderInvItems(); }, 400);
+        }
+        // Preview screen for invoice (mirrors showQuotePreview)
+        function showInvPreview() {
+            hideNavAndFabs();
+            let pModal = document.getElementById('invPreviewModal');
+            if (pModal) pModal.style.setProperty('z-index', '10600', 'important');
+            let partyId = document.getElementById('di_party').value;
+            if (!partyId) { alert('Please select a client/party!'); return; }
+            if (invEventsData.length === 0) { alert('Please add at least one function!'); return; }
+            if (invItemsData.length === 0) { alert('Please add at least one item!'); return; }
+            let party = partiesDB[partyId];
+            let partyName = party ? party.name : 'Unknown';
+            let gross = 0;
+            invEventsData.forEach(ev => {
+                let evItems = invItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                gross += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
+            let labour = parseFloat(document.getElementById('di_labour') ? document.getElementById('di_labour').value : 0) || 0;
+            let transport = parseFloat(document.getElementById('di_transport') ? document.getElementById('di_transport').value : 0) || 0;
+            let discount = parseFloat(document.getElementById('di_discount') ? document.getElementById('di_discount').value : 0) || 0;
+            let gstPercent = parseFloat(document.getElementById('di_gst') ? document.getElementById('di_gst').value : 0) || 0;
+            let baseTotal = gross + labour + transport;
+            let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0;
+            let taxAmount = (totalAfterDiscount * gstPercent) / 100;
+            let net = totalAfterDiscount + taxAmount;
+            let eventTitleVal = document.getElementById('di_event') ? document.getElementById('di_event').value : '';
+            let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
+            if (eventTitleVal) html += '<p style="font-size:12px; font-weight:700; color:var(--accent-color); margin:0 0 2px;">' + eventTitleVal + '</p>';
+            html += '<p style="font-size:11px; color:var(--text-secondary); margin:0;">' + invEventsData.length + ' Events \u00B7 ' + invItemsData.length + ' Items \u00B7 Gross \u20B9' + gross.toLocaleString('en-IN') + ' \u00B7 Net \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
+            // FUNCTION SCHEDULE TABLE (with event colors)
+            html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
+            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden;">';
+            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th></tr>';
+            invEventsData.forEach(ev => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
+                let evColor = getEventColor(ev);
+                let tc = getContrastColor(evColor);
+                html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:' + tc + '; border:1px solid var(--border-color);">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue || '-') + '</td></tr>';
+            });
+            html += '</table>';
+            // COMPACT EVENT-WISE ITEM SUMMARY
+            html += '<div style="margin-top:14px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Items / Services</div>';
+            html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden; margin-bottom:12px;">';
+            invEventsData.forEach((ev, evIdx) => {
+                let evItems = invItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="border-bottom:1px solid var(--border-color);">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+                html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '<button onclick="document.getElementById(\'invPreviewModal\').style.display=\'none\'; openInvItemPreviewView(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '</div>';
+                if (evItems.length > 0) {
+                    let cats = getInvEventCategories(ev.name);
+                    cats.forEach(catName => {
+                        let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                        let catDisplayTotal = getInvCategoryDisplayTotal(ev, catName, catItems);
+                        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 10px 3px 20px; background:var(--surface-color); border-top:1px solid var(--bg-color);">';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ')</span></div>';
+                        if (catDisplayTotal > 0) {
+                            html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u20B9' + catDisplayTotal.toLocaleString('en-IN') + '</div>';
+                        } else {
+                            html += '<div style="font-size:9px; font-weight:600; color:#94A3B8; font-style:italic;">Enter Amount</div>';
+                        }
+                        html += '</div>';
+                    });
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            // SUMMARY
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
+            html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
+            if (labour > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Labour</span><span>+\u20B9' + labour.toLocaleString('en-IN') + '</span></div>';
+            if (transport > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Transport</span><span>+\u20B9' + transport.toLocaleString('en-IN') + '</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
+            if (taxAmount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>GST (' + gstPercent + '%)</span><span>+\u20B9' + taxAmount.toLocaleString('en-IN') + '</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
+            html += '</div>';
+            let remarks = document.getElementById('di_remarks') ? document.getElementById('di_remarks').value : '';
+            if (remarks) html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; font-size:11px; margin-top:8px;"><strong style="color:var(--text-secondary);">Remarks:</strong> ' + remarks + '</div>';
+            document.getElementById('invPreviewBody').innerHTML = html;
+            document.getElementById('invPreviewModal').style.display = 'flex';
+        }
+        function updateInvItemEventOptions() {
+            // No-op for quotation-style UI (events are selected via mini popup, not per-row selects).
+            // Retained for backward compatibility with older DOM-row callers.
         }
         document.getElementById('di_party').addEventListener('change', handlePartySelectionForInvoice);
 
@@ -15091,41 +15577,10 @@
             
             // Copy events array from quotation for event-wise invoice
             invEventsData = (quote.events && quote.events.length > 0) ? quote.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
-            // Show events section if events were copied
-            if (invEventsData.length > 0) {
-                document.getElementById('inv_events_section').style.display = 'block';
-                let toggle = document.getElementById('inv_events_toggle'); if (toggle) toggle.style.display = 'none';
-                renderInvEvents();
-            }
-            
-            let itemsContainer = document.getElementById('inv_items_container');
-            itemsContainer.innerHTML = ''; 
-            invItemCount = 0; 
-            
-            if(quote.items && quote.items.length > 0) {
-                quote.items.forEach(item => { 
-                    addInvoiceItem(); 
-                    let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); 
-                    if(rows.length > 0) {
-                        let lastRow = rows[rows.length - 1]; 
-                        let nameInp = lastRow.querySelector('.i-item-name');
-                        let qtyInp = lastRow.querySelector('.i-item-qty');
-                        let rateInp = lastRow.querySelector('.i-item-rate');
-                        let unitInp = lastRow.querySelector('.i-item-unit');
-                        let descInp = lastRow.querySelector('.i-item-desc');                    if(nameInp) nameInp.value = item.name || ''; 
-                    if(qtyInp) qtyInp.value = item.qty || 1; 
-                    if(rateInp) rateInp.value = item.rate || 0; 
-                    if(unitInp && item.unit) unitInp.value = item.unit;
-                    if(descInp && item.desc) descInp.value = item.desc;
-                    let catInp = lastRow.querySelector('.i-item-category');
-                    if (catInp) catInp.value = item.category || '';
-                    let evInp = lastRow.querySelector('.i-item-event');
-                    if (evInp) { updateInvItemEventOptions(); evInp.value = item.event || ''; }
-                    }
-                }); 
-            } else {
-                addInvoiceItem();
-            }
+            // Copy items from quotation into invItemsData (event-wise data model)
+            invItemsData = (quote.items && quote.items.length > 0) ? quote.items.map(item => ({ name: item.name, desc: item.desc || '', unit: item.unit || 'Pcs', qty: item.qty, rate: item.rate, amount: item.amount, event: item.event || (invEventsData.length > 0 ? invEventsData[0].name : ''), category: item.category || 'General' })) : [];
+            editingInvEventIdx = -1; invViewEvIdx = -1; invItemCount = 0;
+            renderInvEvents(); renderInvItems();
             
             handlePartySelectionForInvoice(); 
             calculateDirectInvoiceTotal(); 
@@ -15146,14 +15601,15 @@
         function confirmApplyToBills() { let rec = salesDB[targetReceiptId]; let checkboxes = document.querySelectorAll('.bill-checkbox:checked'); if (checkboxes.length === 0) { alert("Please select at least one bill!"); return; } let totalApplied = 0; checkboxes.forEach(cb => { let billId = cb.value; let bill = salesDB[billId]; if (rec.availableAmount > 0 && bill.balanceDue > 0) { let applyAmt = Math.min(rec.availableAmount, bill.balanceDue); bill.advance += applyAmt; bill.balanceDue -= applyAmt; if (bill.balanceDue <= 0) bill.status = 'Paid'; else bill.status = 'Partial'; rec.usedAmount += applyAmt; rec.availableAmount -= applyAmt; if (!rec.linkedInvoices) rec.linkedInvoices = []; if (!rec.linkedInvoices.includes(bill.id)) rec.linkedInvoices.push(bill.id); totalApplied += applyAmt; } }); updateDataAndUI(); document.getElementById('applyBillsModal').style.display = 'none'; viewDetails(targetReceiptId, 'sales'); alert(`Success! ₹${totalApplied.toLocaleString('en-IN')} applied to pending bills.`); }
 
         function calculateDirectInvoiceTotal() { 
+            // Calculate gross from invItemsData (event-wise data model), respecting manual overrides
             let baseTotal = 0; 
-            document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
-                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
-                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
-                baseTotal += (qty * rate); 
-            }); 
+            invEventsData.forEach(ev => {
+                let evItems = invItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                baseTotal += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
             
-            // 🚀 NAYA: Labour aur Transport charge add karna
+            // Labour and Transport charges
             let labour = parseFloat(document.getElementById('di_labour')?.value) || 0;
             let transport = parseFloat(document.getElementById('di_transport')?.value) || 0;
             baseTotal += (labour + transport);
@@ -15201,19 +15657,12 @@
             if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
             if (invoiceType === 'Rental' && !returnDate) { return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); }
 
-            let items = []; 
-            document.querySelectorAll('#inv_items_container .quote-item-row').forEach(row => { 
-                let name = row.querySelector('.i-item-name').value.trim(); 
-                let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; 
-                let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; 
-                let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; 
-                let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
-                let category = row.querySelector('.i-item-category') ? row.querySelector('.i-item-category').value.trim() : '';
-                if (!category) category = 'General';
-                let eventName = row.querySelector('.i-item-event') ? row.querySelector('.i-item-event').value : '';
-                if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate, category, event: eventName });
-            }); 
-            if (items.length === 0) return alert("Please add at least one valid item!"); 
+            // Collect items from invItemsData (event-wise data model)
+            let items = invItemsData.filter(i => i.name && i.qty > 0).map(i => ({
+                name: i.name, desc: i.desc || '', unit: i.unit || 'Pcs', qty: i.qty, rate: i.rate,
+                amount: i.amount, category: i.category || 'General', event: i.event || ''
+            }));
+            if (items.length === 0) return alert("Please add at least one valid item!");
 
             // ♻️ REVERT OLD STOCK IF EDITING RENTAL
             if (invoiceType === 'Rental' && editingSalesId) {
@@ -15293,7 +15742,12 @@
                 });
             }
 
-            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); 
+            let baseTotal = 0;
+            invEventsData.forEach(ev => {
+                let evItems = invItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                baseTotal += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
             baseTotal += (labourAmt + transportAmt);
 
             let discount = parseFloat(document.getElementById('di_discount').value) || 0; 
@@ -16189,23 +16643,16 @@
                 renderQuoteEvents(); renderQuoteItems(); calculateQuoteTotal();
                 document.getElementById('quotationModal').style.display = 'flex';
             } else if (record.type === 'Invoice') {
-                document.getElementById('di-modal-title').innerText = "Edit Tax Invoice"; loadPartiesIntoSelect('di_party', record.partyId); document.getElementById('di_event').value = record.event; document.getElementById('di_date').value = record.date; document.getElementById('di_discount').value = record.discount; if (document.getElementById('di_remarks')) document.getElementById('di_remarks').value = record.remarks || ''; document.getElementById('di_gst').value = record.gstPercent; document.getElementById('di_advance').value = record.advance; document.getElementById('di_advance').setAttribute('readonly', true); document.getElementById('di_advance').style.background = '#F1F5F9'; document.getElementById('available_advance_group').style.display = 'none'; document.getElementById('inv_items_container').innerHTML = ''; invItemCount = 0;
-                record.items.forEach(item => {
-                    addInvoiceItem(); let rows = document.querySelectorAll('#inv_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
-                    lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
-                    if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
-                    if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
-                    if (lastRow.querySelector('.i-item-category')) lastRow.querySelector('.i-item-category').value = item.category || "";
-                    let evInpEdit = lastRow.querySelector('.i-item-event'); if (evInpEdit) { updateInvItemEventOptions(); evInpEdit.value = item.event || ''; }
-                });
+                document.getElementById('di-modal-title').innerText = "Edit Tax Invoice"; loadPartiesIntoSelect('di_party', record.partyId); document.getElementById('di_event').value = record.event; document.getElementById('di_date').value = record.date; document.getElementById('di_discount').value = record.discount; if (document.getElementById('di_remarks')) document.getElementById('di_remarks').value = record.remarks || ''; document.getElementById('di_gst').value = record.gstPercent; document.getElementById('di_advance').value = record.advance; document.getElementById('di_advance').setAttribute('readonly', true); document.getElementById('di_advance').style.background = '#F1F5F9'; document.getElementById('available_advance_group').style.display = 'none';
+                if (document.getElementById('di_labour') && record.labour) document.getElementById('di_labour').value = record.labour;
+                if (document.getElementById('di_transport') && record.transport) document.getElementById('di_transport').value = record.transport;
+                invItemCount = 0;
                 // Load events array if present
                 invEventsData = (record.events && record.events.length > 0) ? record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
-                if (invEventsData.length > 0) {
-                    document.getElementById('inv_events_section').style.display = 'block';
-                    let toggle = document.getElementById('inv_events_toggle'); if (toggle) toggle.style.display = 'none';
-                    renderInvEvents();
-                    updateInvItemEventOptions();
-                }
+                // Load items into invItemsData (event-wise data model)
+                invItemsData = (record.items && record.items.length > 0) ? record.items.map(item => ({ name: item.name, desc: item.desc || '', unit: item.unit || 'Pcs', qty: item.qty, rate: item.rate, amount: item.amount, event: item.event || (invEventsData.length > 0 ? invEventsData[0].name : ''), category: item.category || 'General' })) : [];
+                editingInvEventIdx = -1; invViewEvIdx = -1;
+                renderInvEvents(); renderInvItems();
                 calculateDirectInvoiceTotal(); document.getElementById('di_autopilot_badge').style.display = 'none'; document.getElementById('directInvoiceModal').style.display = 'flex';
             } else if (record.type === 'Receipt') {
                 document.getElementById('pay-modal-title').innerText = "Edit Receipt"; loadPartiesIntoSelect('pay_party', record.partyId); document.getElementById('pay_amount').value = record.amount; document.getElementById('pay_date').value = record.date; document.getElementById('pay_mode').value = record.mode; document.getElementById('pay_ref').value = record.ref || ""; document.getElementById('pending_bills_group').style.display = 'none'; document.getElementById('paymentModal').style.display = 'flex';
@@ -22192,31 +22639,19 @@
             let rentalFields = document.getElementById('di_rental_fields');
             let eventLinkGroup = document.getElementById('di_event_group');
             let tncBox = document.getElementById('di_tnc');
-            let manualAddBtn = document.querySelector('#diForm button[onclick="addInvoiceItem()"]');
-            let itemsContainer = document.getElementById('inv_items_container');
 
             if (type && type.value === 'Rental') {
                 if (btnGodown) btnGodown.style.display = 'block';
                 if (rentalFields) rentalFields.style.display = 'flex';
                 if (eventLinkGroup) eventLinkGroup.style.display = 'none'; 
-                if (manualAddBtn) manualAddBtn.style.display = 'none'; 
                 if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
-                
-                // 🚀 FIX: Rent Invoice khulte hi empty row clear ho jayegi!
-                if (itemsContainer) itemsContainer.innerHTML = '';
                 
                 if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
             } else {
                 if (btnGodown) btnGodown.style.display = 'none';
                 if (rentalFields) rentalFields.style.display = 'none';
                 if (eventLinkGroup) eventLinkGroup.style.display = 'block'; 
-                if (manualAddBtn) manualAddBtn.style.display = 'inline-block'; 
                 if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
-                
-                // 🚀 Wapas normal invoice pe jaane par ek empty row de do
-                if (itemsContainer && itemsContainer.innerHTML.trim() === '') {
-                    if(typeof addInvoiceItem === 'function') addInvoiceItem();
-                }
             }
         };
 
@@ -23079,20 +23514,13 @@
                         }
                     }
                 } else if (context === 'di') {
-                    if (typeof addInvoiceItem === 'function') {
-                        addInvoiceItem();
-                        let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
-                        if(rows.length > 0) {
-                            let lastRow = rows[rows.length - 1];
-                            let nameInp = lastRow.querySelector('.i-item-name');
-                            let qtyInp = lastRow.querySelector('.i-item-qty');
-                            let rateInp = lastRow.querySelector('.i-item-rate');
-                            
-                            if (nameInp) nameInp.value = name;
-                            if (qtyInp) { qtyInp.value = qty; qtyInp.setAttribute('value', qty); }
-                            if (rateInp) rateInp.value = rate;
-                        }
+                    // Add rental item directly to invItemsData (event-wise UI)
+                    let evName = (invEventsData.length > 0) ? invEventsData[0].name : '';
+                    invItemsData.push({ name: name, desc: '', unit: 'Pcs', qty: qty, rate: rate, amount: qty * rate, event: evName, category: 'Rental' });
+                    if (invEventsData.length === 0) {
+                        invEventsData.push({ name: 'General', date: '', time: '', venue: '', color: '', manualGross: 0, catOverrides: {}, photos: [] });
                     }
+                    if (typeof renderInvItems === 'function') renderInvItems();
                 }
             });
             
@@ -24630,22 +25058,15 @@
                     let diDate = document.getElementById('di_date');
                     if(diDate) diDate.value = o.dispatchDate || o.date;
                     
-                    let itemsContainer = document.getElementById('inv_items_container');
-                    if (itemsContainer) itemsContainer.innerHTML = '';
-                    window.invItemCount = 0; 
-                    
+                    // Populate invItemsData from order book items (event-wise data model)
+                    invItemsData = [];
+                    invEventsData = [{ name: 'General', date: '', time: '', venue: '', color: '', manualGross: 0, catOverrides: {}, photos: [] }];
                     if (o.items && o.items.length > 0) {
                         o.items.forEach(item => {
-                            window.addInvoiceItem();
-                            let rows = document.querySelectorAll('#inv_items_container .quote-item-row');
-                            let lastRow = rows[rows.length - 1];
-                            if (lastRow) {
-                                let n = lastRow.querySelector('.i-item-name'); if(n) n.value = item.name;
-                                let q = lastRow.querySelector('.i-item-qty'); if(q) { q.value = item.qty; q.setAttribute('value', item.qty); }
-                                let r = lastRow.querySelector('.i-item-rate'); if(r) r.value = item.rate || 0;
-                            }
+                            invItemsData.push({ name: item.name, desc: '', unit: 'Pcs', qty: item.qty, rate: item.rate || 0, amount: (item.qty * (item.rate || 0)), event: 'General', category: 'Rental' });
                         });
                     }
+                    renderInvEvents(); renderInvItems();
                     if(typeof window.calculateDirectInvoiceTotal === 'function') window.calculateDirectInvoiceTotal();
                 }, 250);
             }, 100);
