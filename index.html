@@ -17323,7 +17323,7 @@
             // PER-EVENT DETAIL PAGES (items + photos)
             // ==========================================
             if (record.type === 'Quotation' && record.events && record.events.length > 0) {
-                record.events.forEach(ev => {
+                record.events.forEach((ev, evLoopIdx) => {
                     let evItems = (record.items || []).filter(i => i.event === ev.name);
                     let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
                     let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
@@ -17332,8 +17332,13 @@
                     let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                     let evPhotos = getLeadEventPhotos(record, ev.name, ev.photos);
 
-                    // PAGE BREAK + EVENT WRAPPER — allows internal page breaks for long item lists
-                    html += '<div style="page-break-before: always; padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
+                    // Skip events with no items and no photos — no point printing empty pages
+                    if (evItems.length === 0 && evPhotos.length === 0) return;
+
+                    // EVENT WRAPPER — first event gets a page break from summary page,
+                    // subsequent events flow naturally to fill available space
+                    let breakStyle = (evLoopIdx === 0) ? 'page-break-before: always;' : '';
+                    html += '<div style="' + breakStyle + ' padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
 
                     // EVENT HEADER
                     html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:15px 20px; border-radius:8px; margin-bottom:15px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;">';
@@ -17372,13 +17377,15 @@
                         html += '<tr style="background:#F8FAFC;"><td colspan="4" style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800;">Event Total:</td><td style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800; font-size:14px; color:#2563eb;">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                         html += '</table>';
                     }
-                    // EVENT PHOTOS — compact layout to fill available space, with event name header
+                    // EVENT PHOTOS — large layout to fill page space, with event name header
                     if (evPhotos.length > 0) {
                         let photoCount = evPhotos.length;
-                        // Use 2 columns for 1-2 photos (larger), 3 columns for 3+ (compact)
-                        let gridCols = photoCount <= 2 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)';
-                        // Adaptive height: fewer photos = taller, more photos = compact
-                        let imgHeight = photoCount <= 2 ? '220px' : (photoCount <= 4 ? '180px' : '150px');
+                        // 1 photo = full width large; 2 = side by side; 3-4 = 2x2 grid; 5+ = 3 cols
+                        let gridCols, imgHeight;
+                        if (photoCount === 1) { gridCols = '1fr'; imgHeight = '380px'; }
+                        else if (photoCount === 2) { gridCols = 'repeat(2, 1fr)'; imgHeight = '300px'; }
+                        else if (photoCount <= 4) { gridCols = 'repeat(2, 1fr)'; imgHeight = '220px'; }
+                        else { gridCols = 'repeat(3, 1fr)'; imgHeight = '160px'; }
                         html += '<div style="margin-top:10px; break-inside: avoid;">';
                         html += '<div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid ' + evColor + '; padding-bottom:3px;">' + sanitize(ev.name) + ' — Reference Photos (' + photoCount + ')</div>';
                         html += '<div style="display:grid; grid-template-columns:' + gridCols + '; gap:8px;">';
@@ -17392,9 +17399,27 @@
                         });
                         html += '</div></div>';
                     }
-                    html += '<div style="margin-top:20px; display:flex; justify-content:space-between; font-size:10px; font-weight:600; color:#64748b; border-top:1px solid #e2e8f0; padding-top:10px;"><div>' + cName + '</div><div>UTSAVhq ERP</div></div>';
                     html += '</div>';
                 });
+                // Single footer + Client signature section at the end of all event detail pages
+                html += '<div style="padding:25px; max-width:800px; margin:0 auto; break-inside:avoid;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:30px;">';
+                // Client signature (left)
+                html += '<div style="text-align:center; width:200px;">';
+                html += '<div style="height:50px;"></div>';
+                html += '<div style="border-top:1.5px solid #0f172a; padding-top:6px; font-weight:800; font-size:12px; color:#0f172a;">Client Signature</div>';
+                html += '<div style="font-size:10px; color:#94a3b8; margin-top:3px;">' + sanitize(partyName || '') + '</div>';
+                html += '</div>';
+                // Company signature (right)
+                let sigImgHtml2 = (typeof profileDB !== 'undefined' && profileDB.signature) ? '<img loading="lazy" src="' + profileDB.signature + '" style="height:45px; object-fit:contain; margin-bottom:5px; display:block; margin:0 auto;">' : '<div style="height:45px; margin-bottom:5px;"></div>';
+                html += '<div style="text-align:center; width:200px;">';
+                html += '<div style="font-size:12px; margin-bottom:5px; color:#475569;">For <strong style="color:#0f172a;">' + cName + '</strong></div>';
+                html += sigImgHtml2;
+                html += '<div style="border-top:1.5px solid #0f172a; padding-top:6px; font-weight:800; font-size:12px; color:#0f172a;">Authorized Signatory</div>';
+                html += '</div>';
+                html += '</div>';
+                html += '<div style="margin-top:20px; display:flex; justify-content:space-between; font-size:10px; font-weight:600; color:#64748b; border-top:1px solid #e2e8f0; padding-top:10px;"><div>' + cName + '</div><div>UTSAVhq ERP</div></div>';
+                html += '</div>';
             }
             // OLD PHOTO COLLAGE FOR INVOICES (unchanged)
             let photosToPrint = [];
