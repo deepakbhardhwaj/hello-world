@@ -10502,7 +10502,7 @@
                 container.innerHTML += `<div class="note-item"><div class="note-time">${sanitize(note.time)}</div><div class="note-text">${noteHtml}</div></div>`;
             });
         }
-        function openImgPreview(url, event) { if (event) { event.stopPropagation(); } document.getElementById('fullSizeImg').src = url; let imgModal = document.getElementById('imgPreviewModal'); imgModal.style.zIndex = '20000'; imgModal.style.display = 'flex'; }
+        function openImgPreview(url, event) { if (event) { event.stopPropagation(); } document.getElementById('fullSizeImg').src = url; let imgModal = document.getElementById('imgPreviewModal'); imgModal.style.setProperty('z-index', '40000', 'important'); imgModal.style.display = 'flex'; }
         async function handlePhotoUpload(event) {
             let files = event.target.files;
             if (!files.length || !currentLeadId) return;
