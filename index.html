@@ -5566,10 +5566,13 @@
                 .lf-chip{background:white;border:1.5px solid #E2E8F0;color:#475569;padding:6px 11px;border-radius:20px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s;}
                 .lf-chip:hover{border-color:#CBD5E1;}
                 .lf-chip.active{border-color:transparent;color:white;}
-                .lf-chip[data-val="Birthday"].active,.lf-chip[data-val="Baby Shower"].active,.lf-chip[data-val="Welcome Baby"].active{background:linear-gradient(135deg,#3B82F6,#1D4ED8);}
-                .lf-chip[data-val="Wedding"].active,.lf-chip[data-val="Anniversary"].active{background:linear-gradient(135deg,#DB2777,#9D174D);}
-                .lf-chip[data-val="Shop Opening"].active{background:linear-gradient(135deg,#D97706,#92400E);}
-                .lf-chip[data-val="Other"].active{background:linear-gradient(135deg,#64748B,#475569);}
+                .lf-chip[data-val="Balloon"].active{background:linear-gradient(135deg,#3B82F6,#1D4ED8);}
+                .lf-chip[data-val="Wedding"].active{background:linear-gradient(135deg,#DB2777,#9D174D);}
+                .lf-chip[data-val="Festival"].active{background:linear-gradient(135deg,#D97706,#92400E);}
+                .lf-chip[data-val="Corporate"].active{background:linear-gradient(135deg,#059669,#065F46);}
+                .lf-chip[data-val="Concert"].active{background:linear-gradient(135deg,#7C3AED,#5B21B6);}
+                .lf-chip[data-val="Traditional Events"].active{background:linear-gradient(135deg,#DC2626,#991B1B);}
+                .lf-chip[data-val="Others"].active{background:linear-gradient(135deg,#64748B,#475569);}
                 .lf-chip[data-status="New"].active{background:linear-gradient(135deg,#3B82F6,#1D4ED8);}
                 .lf-chip[data-status="Hot"].active{background:linear-gradient(135deg,#EF4444,#DC2626);}
                 .lf-chip[data-status="Thinking"].active{background:linear-gradient(135deg,#F59E0B,#D97706);}
@@ -5624,22 +5627,22 @@
                             <div class="form-group">
                                 <label class="form-label">Category</label>
                                 <div class="lf-chip-row" id="l_category_chips">
-                                    <button type="button" class="lf-chip" data-val="Birthday" onclick="setCategoryChip('Birthday')">🎂 Birthday</button>
-                                    <button type="button" class="lf-chip" data-val="Baby Shower" onclick="setCategoryChip('Baby Shower')">👶 Baby Shower</button>
-                                    <button type="button" class="lf-chip" data-val="Welcome Baby" onclick="setCategoryChip('Welcome Baby')">🍼 Welcome Baby</button>
-                                    <button type="button" class="lf-chip" data-val="Shop Opening" onclick="setCategoryChip('Shop Opening')">🏪 Shop Opening</button>
-                                    <button type="button" class="lf-chip" data-val="Anniversary" onclick="setCategoryChip('Anniversary')">💍 Anniversary</button>
-                                    <button type="button" class="lf-chip" data-val="Wedding" onclick="setCategoryChip('Wedding')">👰 Wedding</button>
-                                    <button type="button" class="lf-chip" data-val="Other" onclick="setCategoryChip('Other')">✨ Other</button>
+                                    <button type="button" class="lf-chip" data-val="Balloon" onclick="setCategoryChip('Balloon')">🎈 Balloon</button>
+                                    <button type="button" class="lf-chip" data-val="Wedding" onclick="setCategoryChip('Wedding')">💒 Wedding</button>
+                                    <button type="button" class="lf-chip" data-val="Festival" onclick="setCategoryChip('Festival')">🎉 Festival</button>
+                                    <button type="button" class="lf-chip" data-val="Corporate" onclick="setCategoryChip('Corporate')">🏢 Corporate</button>
+                                    <button type="button" class="lf-chip" data-val="Concert" onclick="setCategoryChip('Concert')">🎤 Concert</button>
+                                    <button type="button" class="lf-chip" data-val="Traditional Events" onclick="setCategoryChip('Traditional Events')">🪔 Traditional Events</button>
+                                    <button type="button" class="lf-chip" data-val="Others" onclick="setCategoryChip('Others')">✨ Others</button>
                                 </div>
                                 <select id="l_category" class="form-select" style="display:none;" onchange="syncCategoryChips()">
-                                    <option>Birthday</option>
-                                    <option>Baby Shower</option>
-                                    <option>Welcome Baby</option>
-                                    <option>Shop Opening</option>
-                                    <option>Anniversary</option>
+                                    <option>Balloon</option>
                                     <option>Wedding</option>
-                                    <option>Other</option>
+                                    <option>Festival</option>
+                                    <option>Corporate</option>
+                                    <option>Concert</option>
+                                    <option>Traditional Events</option>
+                                    <option>Others</option>
                                 </select>
                             </div>
                             <div class="form-row">
@@ -5728,6 +5731,7 @@
                         <div class="form-group"><label class="form-label">Time</label><input type="time" id="lev_time" class="form-input"></div>
                     </div>
                     <div class="form-group"><label class="form-label">Venue</label><input type="text" id="lev_venue" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="lev_guests" class="form-input" placeholder="e.g. 200" min="0"></div>
                     <div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="lev_color" class="form-input" value="#FFFFFF" style="height:34px; padding:2px; cursor:pointer;"></div>
                     <button onclick="saveLeadEvent()" class="btn-main" style="width:100%; font-size:12px; margin-top:8px;">Save Function</button>
                     <div id="lev_photos_section" style="margin-top:10px;"></div>
@@ -6373,11 +6377,13 @@
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Event Category</label><select id="de_cat"
                                 class="form-select">
+                                <option>Balloon</option>
                                 <option>Wedding</option>
-                                <option>Birthday</option>
-                                <option>Anniversary</option>
+                                <option>Festival</option>
                                 <option>Corporate</option>
-                                <option>Other</option>
+                                <option>Concert</option>
+                                <option>Traditional Events</option>
+                                <option>Others</option>
                             </select></div>
                         <div class="form-group"><label class="form-label">Est. Budget (₹)</label><input type="number"
                                 id="de_budget" class="form-input" placeholder="0"></div>
@@ -6900,6 +6906,7 @@
                             <div class="form-group"><label class="form-label">Time</label><input type="time" id="qev_time" class="form-input"></div>
                         </div>
                         <div class="form-group"><label class="form-label">Venue</label><input type="text" id="qev_venue" class="form-input" placeholder="e.g. Royal Palace Lawn"></div>
+                        <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="qev_guests" class="form-input" placeholder="e.g. 200" min="0"></div>
                         <button type="button" class="btn-main" onclick="saveQuoteEvent()" style="font-size:12px; padding:8px;">Save Function</button>
                     </div>
                 </div>
@@ -7062,6 +7069,7 @@
                             <div class="form-group"><label class="form-label">Time</label><input type="time" id="iev_time" class="form-input"></div>
                         </div>
                         <div class="form-group"><label class="form-label">Venue</label><input type="text" id="iev_venue" class="form-input" placeholder="e.g. Royal Palace Lawn"></div>
+                        <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="iev_guests" class="form-input" placeholder="e.g. 200" min="0"></div>
                         <button type="button" class="btn-main" onclick="saveInvEvent()" style="font-size:12px; padding:8px;">Save Function</button>
                     </div>
                 </div>
@@ -10031,6 +10039,7 @@
             document.getElementById('lev_date').value = '';
             document.getElementById('lev_time').value = '';
             document.getElementById('lev_venue').value = '';
+            document.getElementById('lev_guests').value = '';
             if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
             document.getElementById('lev_form_title').innerText = 'Add New Function';
             editingLeadEventIdx = -1;
@@ -10050,16 +10059,17 @@
             let name = document.getElementById('lev_name').value.trim();
             if (!name) { alert('Please enter function name!'); return; }
             let userColor = document.getElementById('lev_color') ? document.getElementById('lev_color').value : '';
-            let ev = { name: name, date: document.getElementById('lev_date').value, time: document.getElementById('lev_time').value, venue: document.getElementById('lev_venue').value.trim(), color: userColor || '', photos: [] };
+            let ev = { name: name, date: document.getElementById('lev_date').value, time: document.getElementById('lev_time').value, venue: document.getElementById('lev_venue').value.trim(), guests: parseInt(document.getElementById('lev_guests').value) || 0, color: userColor || '', photos: [] };
             if (editingLeadEventIdx >= 0) { ev.photos = leadEventsData[editingLeadEventIdx].photos || []; leadEventsData[editingLeadEventIdx] = ev; editingLeadEventIdx = -1; }
             else { leadEventsData.push(ev); }
             leadEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
             document.getElementById('lev_name').value = ''; document.getElementById('lev_date').value = ''; document.getElementById('lev_time').value = ''; document.getElementById('lev_venue').value = '';
+            document.getElementById('lev_guests').value = '';
             if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
             document.getElementById('lev_form_title').innerText = 'Add New Function';
             renderLEVList();
             if (editingLeadId && leadsDB[editingLeadId]) {
-                leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, color: ev.color, photos: ev.photos || [] }));
+                leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color, photos: ev.photos || [] }));
                 saveDataLocally();
                 updateDataAndUI();
             }
@@ -10070,6 +10080,7 @@
             document.getElementById('lev_date').value = ev.date;
             document.getElementById('lev_time').value = ev.time;
             document.getElementById('lev_venue').value = ev.venue;
+            document.getElementById('lev_guests').value = ev.guests || '';
             if (document.getElementById('lev_color')) document.getElementById('lev_color').value = ev.color || '#FFFFFF';
             document.getElementById('lev_form_title').innerText = 'Edit Function: ' + ev.name;
             editingLeadEventIdx = idx;
@@ -10152,7 +10163,8 @@
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
-                    if (photoCount > 0) html += (d || ev.time || ev.venue ? ' &nbsp; ' : '') + photoCount + ' photo' + (photoCount > 1 ? 's' : '');
+                    if (ev.guests) html += (d || ev.time || ev.venue ? ' &nbsp; ' : '') + '👥 ' + ev.guests;
+                    if (photoCount > 0) html += (d || ev.time || ev.venue || ev.guests ? ' &nbsp; ' : '') + photoCount + ' photo' + (photoCount > 1 ? 's' : '');
                     html += '</div>';
                 }
                 html += '</div>';
@@ -10184,6 +10196,7 @@
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
+                    if (ev.guests) html += ' &nbsp; 👥 ' + ev.guests;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -10209,7 +10222,7 @@
                 document.getElementById('l_date').value = l.date || "";
                 document.getElementById('l_category').value = l.cat;
                 document.getElementById('l_budget').value = l.budget;
-                leadEventsData = (l.events && l.events.length > 0) ? l.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] })) : [];
+                leadEventsData = (l.events && l.events.length > 0) ? l.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
 
                 statusEl.value = l.status;
                 if (l.status === 'Won') {
@@ -10220,7 +10233,7 @@
                     statusEl.style.background = 'white';
                 }
 
-                document.getElementById('l_venue').value = l.venue;
+                document.getElementById('l_guests').value = l.guests || '';
                 document.getElementById('l_source').value = l.source || "Direct";
             } else {
                 document.getElementById('modal-title').innerText = "Add New Lead";
@@ -10329,7 +10342,7 @@
                 budget: document.getElementById('l_budget').value || "0",
                 status: status,
                 assignedTo: finalAssignee,
-                venue: document.getElementById('l_venue').value,
+                guests: document.getElementById('l_guests').value,
                 source: document.getElementById('l_source').value,
                 notes: editingLeadId ? leadsDB[id].notes : [{ time: new Date().toLocaleString('en-IN'), text: "Lead created in system." }],
                 photos: editingLeadId ? leadsDB[id].photos : [],
@@ -10432,6 +10445,7 @@
                 }
                 let waPhone = (lead.phone||'').toString().replace(/\D/g,'').slice(-10);
                 let budgetFmt = lead.budget && lead.budget!=='0' ? '₹'+parseFloat(lead.budget).toLocaleString('en-IN') : '';
+                let guestsFmt = lead.guests && lead.guests!=='0' ? '👥 '+parseInt(lead.guests).toLocaleString('en-IN') : '';
                 let firstEvDate = '';
                 if (lead.events && lead.events.length > 0 && lead.events[0].date) {
                     firstEvDate = lead.events[0].date;
@@ -10511,7 +10525,7 @@
 })()}
                     </div>
                     <div class="crm-card-foot">
-                        <div class="crm-foot-budget" style="font-size:16px;">${budgetFmt||'No budget set'}</div>
+                        <div class="crm-foot-budget" style="font-size:16px;">${budgetFmt||'No budget set'}${guestsFmt ? ' · '+guestsFmt : ''}</div>
                         <div class="crm-quick-btns" onclick="event.stopPropagation()">
                             <button class="crm-qbtn" title="Call" onclick="window.location.href='tel:${sanitize(lead.phone)}'">📞</button>
                             <button class="crm-qbtn" title="WhatsApp" onclick="window.open('https://wa.me/91${waPhone}','_blank')">💬</button>
@@ -10526,7 +10540,7 @@
                 // Hot leads on home
                 if (lead.status==='Hot' && homeContainer) {
                     homeContainer.innerHTML += `<div class="list-row" style="cursor:pointer;" onclick="openTab('crm',document.getElementById('btn-crm')); setTimeout(()=>openLeadDetail('${lead.id}'),200);">
-                        <div><strong>${sanitize(lead.name)}</strong><br><span style="font-size:11px;color:var(--text-secondary);">${sanitize(lead.func||'')} · ${budgetFmt}</span></div>
+                        <div><strong>${sanitize(lead.name)}</strong><br><span style="font-size:11px;color:var(--text-secondary);">${sanitize(lead.func||'')} · ${budgetFmt}${guestsFmt ? ' · '+guestsFmt : ''}</span></div>
                         <span class="status-badge" style="background:#FEF2F2;color:#DC2626;">🔥 Hot</span>
                     </div>`;
                 }
@@ -11132,7 +11146,7 @@
         function addFunctionFromPanel() {
             if (!currentLeadId) return;
             let lead = leadsDB[currentLeadId];
-            leadEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] })) : [];
+            leadEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
             editingLeadId = currentLeadId;
             let leModal = document.getElementById('leadEventPanel');
             if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
@@ -11140,6 +11154,7 @@
             document.getElementById('lev_date').value = '';
             document.getElementById('lev_time').value = '';
             document.getElementById('lev_venue').value = '';
+            document.getElementById('lev_guests').value = '';
             if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
             document.getElementById('lev_form_title').innerText = 'Add New Function';
             editingLeadEventIdx = -1;
@@ -11158,7 +11173,7 @@
         function convertToEvent() {
             if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming"; if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
             let partyExists = false; for (let id in partiesDB) { if (String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === "Customer") { partyExists = true; break; } }
-            if (!partyExists) { let newPartyId = "P" + Date.now(); partiesDB[newPartyId] = { id: newPartyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; }
+            if (!partyExists) { let newPartyId = "P" + Date.now(); partiesDB[newPartyId] = { id: newPartyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; }
             updateDataAndUI(); document.getElementById('detailPanel').classList.remove('open'); setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; openTab('events', document.getElementById('btn-events')); alert("Deal Won! Added to Events."); }, 300);
         }
         function createQuoteFromLead() {
@@ -11172,7 +11187,7 @@
                 partyId = "P" + Date.now();
                 partiesDB[partyId] = {
                     id: partyId, name: lead.name, phone: cleanPhone, type: "Customer",
-                    subCategory: "", address: lead.venue || "", gst: "", balance: 0,
+                    subCategory: "", address: "", gst: "", balance: 0,
                     balType: "Receivable", transactions: []
                 };
                 updateDataAndUI();
@@ -11181,7 +11196,7 @@
             currentQuoteSourceLeadId = currentLeadId;
             closePanel();
 
-            let quoteEvents = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] })) : [];
+            let quoteEvents = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
             setTimeout(() => {
                 openQuotationModal(partyId, lead.func, lead.date, lead.eventTitle, quoteEvents);
             }, 400);
@@ -11806,12 +11821,14 @@
                     let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                     let btmBorder = index === sortedDates.length - 1 ? '' : 'border-bottom:1px dashed #E2E8F0;';
                     let finalVenue = d.venue || ev.venue || 'Venue details not added';
+                    let finalGuests = d.guests || ev.guests || 0;
 
                     html += `<tr style="${btmBorder}">
                                 <td style="padding:10px; font-weight:700; color:var(--text-primary); width:30%; vertical-align:top; word-wrap:break-word;">${d.name}</td>
                                 <td style="padding:10px; width:30%; vertical-align:top; line-height:1.4;">
                                     <div style="font-weight:800; color:var(--accent-color); font-size:11px;">${fDate}</div>
                                     <div style="color:var(--danger); font-size:10px; font-weight:bold; margin-top:2px;">⏰ ${d.time || 'TBD'}</div>
+                                    ${finalGuests ? `<div style="color:var(--success); font-size:10px; font-weight:bold; margin-top:2px;">👥 ${finalGuests} guests</div>` : ''}
                                 </td>
                                 <td style="padding:10px; width:40%; vertical-align:top; color:#334155; line-height:1.4;">
                                     <div style="display:flex; align-items:flex-start; gap:4px;">
@@ -13859,7 +13876,7 @@
             let etEl = document.getElementById('q_event_title');
             if (etEl) etEl.value = preFillEventTitle || '';
             if (preFillEvents && preFillEvents.length > 0) {
-                quoteEventsData = preFillEvents.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', photos: ev.photos || [] }));
+                quoteEventsData = preFillEvents.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] }));
             } else if (preFillEvent || preFillDate) {
                 quoteEventsData.push({ name: preFillEvent || '', date: preFillDate || '', time: '', venue: '' });
             }
@@ -13875,6 +13892,7 @@
             document.getElementById('qev_date').value = '';
             document.getElementById('qev_time').value = '';
             document.getElementById('qev_venue').value = '';
+            document.getElementById('qev_guests').value = '';
             if (document.getElementById('qev_color')) document.getElementById('qev_color').value = '#FFFFFF';
             document.getElementById('qev_form_title').innerText = 'Add New Function';
             editingQuoteEventIdx = -1;
@@ -13956,11 +13974,12 @@
             let name = document.getElementById('qev_name').value.trim();
             if (!name) { alert('Please enter event name!'); return; }
             let userColor = document.getElementById('qev_color') ? document.getElementById('qev_color').value : '';
-            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim(), color: userColor || '', photos: [] };
+            let ev = { name: name, date: document.getElementById('qev_date').value, time: document.getElementById('qev_time').value, venue: document.getElementById('qev_venue').value.trim(), guests: parseInt(document.getElementById('qev_guests').value) || 0, color: userColor || '', photos: [] };
             if (editingQuoteEventIdx >= 0) { ev.photos = quoteEventsData[editingQuoteEventIdx].photos || []; quoteEventsData[editingQuoteEventIdx] = ev; editingQuoteEventIdx = -1; }
             else { quoteEventsData.push(ev); }
             quoteEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
             document.getElementById('qev_name').value = ''; document.getElementById('qev_date').value = ''; document.getElementById('qev_time').value = ''; document.getElementById('qev_venue').value = '';
+            document.getElementById('qev_guests').value = '';
             if (document.getElementById('qev_color')) document.getElementById('qev_color').value = '#FFFFFF';
             document.getElementById('qev_form_title').innerText = 'Add New Event';
             renderQEVList();
@@ -13971,6 +13990,7 @@
             document.getElementById('qev_date').value = ev.date;
             document.getElementById('qev_time').value = ev.time;
             document.getElementById('qev_venue').value = ev.venue;
+            document.getElementById('qev_guests').value = ev.guests || '';
             if (document.getElementById('qev_color')) document.getElementById('qev_color').value = ev.color || '#FFFFFF';
             document.getElementById('qev_form_title').innerText = 'Edit Function: ' + ev.name;
             editingQuoteEventIdx = idx;
@@ -14002,6 +14022,7 @@
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
+                    if (ev.guests) html += ' &nbsp; 👥 ' + ev.guests;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -14032,6 +14053,7 @@
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
+                    if (ev.guests) html += ' &nbsp; 👥 ' + ev.guests;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -14604,12 +14626,12 @@
             // FUNCTION SCHEDULE TABLE (with event colors)
             html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
             html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden;">';
-            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th></tr>';
+            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr>';
             quoteEventsData.forEach(ev => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                 let evColor = getEventColor(ev);
                 let tc = getContrastColor(evColor);
-                html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:' + tc + '; border:1px solid var(--border-color);">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue || '-') + '</td></tr>';
+                html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:' + tc + '; border:1px solid var(--border-color);">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
             });
             html += '</table>';
             // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button) — boxed like function schedule
@@ -14808,6 +14830,7 @@
             document.getElementById('iev_date').value = '';
             document.getElementById('iev_time').value = '';
             document.getElementById('iev_venue').value = '';
+            document.getElementById('iev_guests').value = '';
             if (document.getElementById('iev_color')) document.getElementById('iev_color').value = '#FFFFFF';
             document.getElementById('iev_form_title').innerText = 'Add New Function';
             editingInvEventIdx = -1;
@@ -14837,11 +14860,12 @@
             let name = document.getElementById('iev_name').value.trim();
             if (!name) { alert('Please enter event name!'); return; }
             let userColor = document.getElementById('iev_color') ? document.getElementById('iev_color').value : '';
-            let ev = { name: name, date: document.getElementById('iev_date').value, time: document.getElementById('iev_time').value, venue: document.getElementById('iev_venue').value.trim(), color: userColor || '', photos: [] };
+            let ev = { name: name, date: document.getElementById('iev_date').value, time: document.getElementById('iev_time').value, venue: document.getElementById('iev_venue').value.trim(), guests: parseInt(document.getElementById('iev_guests').value) || 0, color: userColor || '', photos: [] };
             if (editingInvEventIdx >= 0) { ev.photos = invEventsData[editingInvEventIdx].photos || []; invEventsData[editingInvEventIdx] = ev; editingInvEventIdx = -1; }
             else { invEventsData.push(ev); }
             invEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
             document.getElementById('iev_name').value = ''; document.getElementById('iev_date').value = ''; document.getElementById('iev_time').value = ''; document.getElementById('iev_venue').value = '';
+            document.getElementById('iev_guests').value = '';
             if (document.getElementById('iev_color')) document.getElementById('iev_color').value = '#FFFFFF';
             document.getElementById('iev_form_title').innerText = 'Add New Function';
             renderIEVList();
@@ -14852,6 +14876,7 @@
             document.getElementById('iev_date').value = ev.date;
             document.getElementById('iev_time').value = ev.time;
             document.getElementById('iev_venue').value = ev.venue;
+            document.getElementById('iev_guests').value = ev.guests || '';
             if (document.getElementById('iev_color')) document.getElementById('iev_color').value = ev.color || '#FFFFFF';
             document.getElementById('iev_form_title').innerText = 'Edit Function: ' + ev.name;
             editingInvEventIdx = idx;
@@ -14883,6 +14908,7 @@
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
+                    if (ev.guests) html += ' &nbsp; 👥 ' + ev.guests;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -14914,6 +14940,7 @@
                     if (d) html += d + ' &nbsp; ';
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
+                    if (ev.guests) html += ' &nbsp; 👥 ' + ev.guests;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -15234,12 +15261,12 @@
             // FUNCTION SCHEDULE TABLE (with event colors)
             html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
             html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden;">';
-            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th></tr>';
+            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr>';
             invEventsData.forEach(ev => {
                 let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                 let evColor = getEventColor(ev);
                 let tc = getContrastColor(evColor);
-                html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:' + tc + '; border:1px solid var(--border-color);">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue || '-') + '</td></tr>';
+                html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:' + tc + '; border:1px solid var(--border-color);">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
             });
             html += '</table>';
             // COMPACT EVENT-WISE ITEM SUMMARY
@@ -15645,7 +15672,7 @@
             document.getElementById('di_discount').value = quote.discount || 0; 
             
             // Copy events array from quotation for event-wise invoice
-            invEventsData = (quote.events && quote.events.length > 0) ? quote.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
+            invEventsData = (quote.events && quote.events.length > 0) ? quote.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
             // Copy items from quotation into invItemsData (event-wise data model)
             invItemsData = (quote.items && quote.items.length > 0) ? quote.items.map(item => ({ name: item.name, desc: item.desc || '', unit: item.unit || 'Pcs', qty: item.qty, rate: item.rate, amount: item.amount, event: item.event || (invEventsData.length > 0 ? invEventsData[0].name : ''), category: item.category || 'General' })) : [];
             editingInvEventIdx = -1; invViewEvIdx = -1; invItemCount = 0;
@@ -16721,7 +16748,7 @@
                 if (etEl) etEl.value = record.eventTitle || '';
                 quoteEventsData = []; quoteItemsData = [];
                 if (record.events && record.events.length > 0) {
-                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: getLeadEventPhotos(record, ev.name || '', ev.photos || []) }));
+                    quoteEventsData = record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: getLeadEventPhotos(record, ev.name || '', ev.photos || []) }));
                 } else if (record.event) {
                     quoteEventsData.push({ name: record.event, date: record.date || '', time: '', venue: '' });
                 }
@@ -16741,7 +16768,7 @@
                 if (document.getElementById('di_transport') && record.transport) document.getElementById('di_transport').value = record.transport;
                 invItemCount = 0;
                 // Load events array if present
-                invEventsData = (record.events && record.events.length > 0) ? record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
+                invEventsData = (record.events && record.events.length > 0) ? record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
                 // Load items into invItemsData (event-wise data model)
                 invItemsData = (record.items && record.items.length > 0) ? record.items.map(item => ({ name: item.name, desc: item.desc || '', unit: item.unit || 'Pcs', qty: item.qty, rate: item.rate, amount: item.amount, event: item.event || (invEventsData.length > 0 ? invEventsData[0].name : ''), category: item.category || 'General' })) : [];
                 editingInvEventIdx = -1; invViewEvIdx = -1;
@@ -17283,12 +17310,12 @@
                 if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     bodyHtml += `<div style="margin-bottom:12px;"><div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>`;
-                    bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th></tr>`;
+                    bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr>`;
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
                         let tc = getContrastColor(evColor);
-                        bodyHtml += `<tr style="background:${evColor};"><td style="padding:6px 8px; font-weight:700; color:${tc}; border:1px solid var(--border-color);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${evDate}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${ev.time || '-'}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${ev.venue ? sanitize(ev.venue) : '-'}</td></tr>`;
+                        bodyHtml += `<tr style="background:${evColor};"><td style="padding:6px 8px; font-weight:700; color:${tc}; border:1px solid var(--border-color);">${sanitize(ev.name)}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${evDate}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${ev.time || '-'}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${ev.venue ? sanitize(ev.venue) : '-'}</td><td style="padding:6px 8px; color:${tc}; opacity:0.9; border:1px solid var(--border-color);">${ev.guests ? ev.guests.toLocaleString('en-IN') : '-'}</td></tr>`;
                     });
                     bodyHtml += `</table></div>`;
                     // COMPACT EVENT-WISE ITEM SUMMARY (boxed like function schedule)
@@ -17398,7 +17425,7 @@
                         bodyHtml += '<strong style="color:var(--accent-color);">Event Schedule:</strong><br>';
                         record.events.forEach(ev => {
                             let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
-                            bodyHtml += '<div style="margin-top:4px; padding:4px 0; border-bottom:1px dashed #E2E8F0;"><strong>' + sanitize(ev.name) + '</strong>' + (evDate ? ' - ' + evDate : '') + (ev.time ? ' at ' + ev.time : '') + (ev.venue ? ' | ' + sanitize(ev.venue) : '') + '</div>';
+                            bodyHtml += '<div style="margin-top:4px; padding:4px 0; border-bottom:1px dashed #E2E8F0;"><strong>' + sanitize(ev.name) + '</strong>' + (evDate ? ' - ' + evDate : '') + (ev.time ? ' at ' + ev.time : '') + (ev.venue ? ' | ' + sanitize(ev.venue) : '') + (ev.guests ? ' | 👥 ' + ev.guests : '') + '</div>';
                         });
                         bodyHtml += '</div>';
                     }
@@ -17693,6 +17720,7 @@
                                 <th style="width:25%">Function Name</th>
                                 <th style="width:20%">Date</th>
                                 <th style="width:40%">Venue</th>
+                                <th style="width:12%">Guests</th>
                                 <th class="right" style="width:15%">Time</th>
                             </tr>`;
 
@@ -17714,12 +17742,12 @@
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     html += '<span class="section-label">Function Schedule</span>';
                     html += '<table style="margin-bottom:15px; font-size:11px;">';
-                    html += '<tr><th style="width:25%; border:1px solid #E2E8F0; padding:4px 6px;">Function Name</th><th style="width:20%; border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th style="width:40%; border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th class="right" style="width:15%; border:1px solid #E2E8F0; padding:4px 6px;">Time</th></tr>';
+                    html += '<tr><th style="width:25%; border:1px solid #E2E8F0; padding:4px 6px;">Function Name</th><th style="width:20%; border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th style="width:40%; border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th style="width:12%; border:1px solid #E2E8F0; padding:4px 6px;">Guests</th><th class="right" style="width:15%; border:1px solid #E2E8F0; padding:4px 6px;">Time</th></tr>';
                     record.events.forEach(ev => {
                         let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                         let evColor = getEventColor(ev);
                         let tc = getContrastColor(evColor);
-                        html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;"><strong>' + sanitize(ev.name) + '</strong></td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td class="right" style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td></tr>';
+                        html += '<tr style="background:' + evColor + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;"><strong>' + sanitize(ev.name) + '</strong></td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td><td class="right" style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td></tr>';
                     });
                     html += '</table>';
                     // EVENT-WISE SUMMARY (with category breakdown)
@@ -17761,6 +17789,7 @@
                             if (evDate) html += ' | ' + evDate;
                             if (ev.time) html += ' | ' + ev.time;
                             if (ev.venue) html += ' | ' + sanitize(ev.venue);
+                            if (ev.guests) html += ' | 👥 ' + ev.guests;
                             html += '</div>';
                         });
                         html += '</div>';
@@ -17975,6 +18004,7 @@
                     if (evDate && evDate !== '-') html += 'Date: ' + evDate;
                     if (ev.time) html += ' &nbsp;|&nbsp; Time: ' + ev.time;
                     if (ev.venue) html += ' &nbsp;|&nbsp; Venue: ' + sanitize(ev.venue);
+                    if (ev.guests) html += ' &nbsp;|&nbsp; 👥 Guests: ' + ev.guests;
                     html += '</div>';
                     html += '</div>';
                     // ITEMS TABLE — grouped by category
@@ -20215,12 +20245,12 @@
         // ==========================================
 
         // 🚀 FAST UI FIX: Removed closePanel() so Workspace stays open behind the modal!
-        function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 50); }
+        function createBillFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } tempEventIdForInvoice = leadId; setTimeout(() => { openDirectInvoiceModal(partyId); document.getElementById('di_event').value = lead.func; }, 50); }
         function createPurchaseBillFromEvent(leadId) { tempEventIdForPurchase = leadId; setTimeout(() => { openPurchaseBillModal(); }, 50); }
         function createPOFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; setTimeout(() => { openPurchaseOrderModal(); }, 50); }
         function createPBFromEvent() { document.getElementById('poPbChoiceModal').style.display = 'none'; setTimeout(() => { openPurchaseBillModal(); }, 50); }
         function createExpenseFromEvent(leadId) { setTimeout(() => { openExpenseModal(leadId); }, 50); }
-        function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: lead.venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } setTimeout(() => { openPaymentModal(partyId); }, 50); }
+        function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } setTimeout(() => { openPaymentModal(partyId); }, 50); }
 
         // App exit — never call window.close() in browser; it fails silently or closes tab
         function confirmExitApp() {
@@ -22839,7 +22869,7 @@
             
             let lead = leadsDB[evId];
             document.getElementById('out_date').value = lead.date || '';
-            let note = document.getElementById('out_note'); if(note && lead.venue) note.value = `Venue: ${lead.venue}`;
+            let note = document.getElementById('out_note'); if(note && lead.guests) note.value = `Expected Guests: ${lead.guests}`;
 
             if(lead.dates && lead.dates.length > 0) {
                 funcGroup.style.display = 'block';
