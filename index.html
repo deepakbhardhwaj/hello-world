@@ -6957,6 +6957,18 @@
                         <div class="form-group"><label class="form-label">Invoice Date</label><input type="date" id="di_date" class="form-input" required></div>
                     </div>
 
+                    <!-- EVENT MANAGEMENT SECTION FOR INVOICE -->
+                    <div id="inv_events_section" style="margin: 12px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #F0F9FF; display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" style="margin:0; color:#1D4ED8; font-weight:800;">Functions / Events</label>
+                            <button type="button" style="background:#1D4ED8; color:white; border:none; border-radius:4px; padding:3px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="addInvEvent()">+ Add Function</button>
+                        </div>
+                        <div id="inv_events_list"></div>
+                    </div>
+                    <div id="inv_events_toggle" style="margin:8px 0; text-align:center;">
+                        <button type="button" onclick="document.getElementById('inv_events_section').style.display='block'; document.getElementById('inv_events_toggle').style.display='none'; addInvEvent();" style="background:none; border:1px dashed var(--accent-color); color:var(--accent-color); border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer; font-weight:700; width:100%;">+ Enable Event-Wise Breakdown</button>
+                    </div>
+
                     <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
                         <div class="form-group" style="margin-bottom: 12px;">
                             <label class="form-label" style="color:var(--accent-color);">Invoice Type</label>
@@ -8537,7 +8549,7 @@
             return false;
         }
 
-        let quoteItemCount = 0; let invItemCount = 0; let poItemCount = 0; let pbItemCount = 0; let currentCalDate = new Date();
+        let quoteItemCount = 0; let invItemCount = 0; let poItemCount = 0; let pbItemCount = 0; let currentCalDate = new Date(); let invEventsData = [];
         let tempEventIdForInvoice = null; let tempEventIdForPurchase = null; let convertingPOId = null;
         let targetInvoiceId = null; let targetReceiptId = null; let targetInvoiceToAttach = null;
 
@@ -14704,8 +14716,61 @@
             toggleInvoiceType(); // Refresh fields view
             document.getElementById('directInvoiceModal').style.display = 'flex'; 
         }
-        function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display:flex; gap:4px; align-items:center;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">CAT</span><input type="text" class="form-input i-item-category" placeholder="Category (e.g. Mandap, Floral)" style="flex:1; font-size:11px; font-weight:700; border:2px solid #3B82F6; border-radius:6px; padding:4px 8px;"></div><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
+        function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display:flex; gap:4px; align-items:center;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">CAT</span><input type="text" class="form-input i-item-category" placeholder="Category (e.g. Mandap, Floral)" style="flex:1; font-size:11px; font-weight:700; border:2px solid #3B82F6; border-radius:6px; padding:4px 8px;"></div><div style="display:flex; gap:4px; align-items:center; margin-top:2px;"><span style="background:#8B5CF6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">EVT</span><select class="form-select i-item-event" style="flex:1; font-size:11px; font-weight:600; border:1px solid #8B5CF6; border-radius:6px; padding:4px 8px;" onchange="updateInvItemEventOptions()"><option value="">No Event</option></select></div><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function handlePartySelectionForInvoice() { if (editingSalesId) return; let pId = document.getElementById('di_party').value; let advanceGroup = document.getElementById('available_advance_group'); let advanceSelect = document.getElementById('di_use_advance'); advanceSelect.innerHTML = '<option value="0">Do not use advance</option>'; let hasAdvance = false; if (pId) { Object.values(salesDB).forEach(s => { if (s.type === 'Receipt' && s.partyId === pId && s.availableAmount > 0) { advanceSelect.innerHTML += `<option value="${s.id}">Use Available: ₹${s.availableAmount.toLocaleString('en-IN')}</option>`; hasAdvance = true; } }); } advanceGroup.style.display = hasAdvance ? 'block' : 'none'; calculateDirectInvoiceTotal(); }
+
+        // 📋 INVOICE EVENT MANAGEMENT FUNCTIONS
+        function addInvEvent() {
+            let evName = prompt('Enter function/event name:');
+            if (!evName || !evName.trim()) return;
+            invEventsData.push({ name: evName.trim(), date: '', time: '', venue: '', color: '', manualGross: 0, catOverrides: {}, photos: [] });
+            renderInvEvents();
+            updateInvItemEventOptions();
+        }
+        function deleteInvEvent(idx) {
+            if (!confirm('Remove this event? Items linked to it will become unlinked.')) return;
+            invEventsData.splice(idx, 1);
+            renderInvEvents();
+            updateInvItemEventOptions();
+        }
+        function editInvEventDetails(idx, field, value) {
+            if (!invEventsData[idx]) return;
+            invEventsData[idx][field] = value;
+        }
+        function renderInvEvents() {
+            let container = document.getElementById('inv_events_list');
+            if (!container) return;
+            if (invEventsData.length === 0) {
+                container.innerHTML = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet.</p>';
+                return;
+            }
+            let html = '';
+            invEventsData.forEach((ev, i) => {
+                let evColor = ev.color || '#3B82F6';
+                html += '<div style="background:white; border:1px solid #BFDBFE; border-left:3px solid ' + evColor + '; border-radius:6px; padding:8px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
+                html += '<input type="text" value="' + sanitize(ev.name) + '" style="flex:1; border:none; font-weight:800; font-size:13px; color:#1E40AF; background:transparent; outline:none;" onchange="editInvEventDetails(' + i + ', \'name\', this.value); updateInvItemEventOptions()">';
+                html += '<button type="button" onclick="deleteInvEvent(' + i + ')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:16px; padding:0 4px;">×</button>';
+                html += '</div>';
+                html += '<div style="display:flex; gap:6px; flex-wrap:wrap;">';
+                html += '<input type="date" value="' + (ev.date || '') + '" style="border:1px solid #E2E8F0; border-radius:4px; padding:3px 6px; font-size:10px; flex:1; min-width:100px;" onchange="editInvEventDetails(' + i + ', \'date\', this.value)">';
+                html += '<input type="text" placeholder="Time" value="' + sanitize(ev.time || '') + '" style="border:1px solid #E2E8F0; border-radius:4px; padding:3px 6px; font-size:10px; width:60px;" onchange="editInvEventDetails(' + i + ', \'time\', this.value)">';
+                html += '<input type="text" placeholder="Venue" value="' + sanitize(ev.venue || '') + '" style="border:1px solid #E2E8F0; border-radius:4px; padding:3px 6px; font-size:10px; flex:2; min-width:100px;" onchange="editInvEventDetails(' + i + ', \'venue\', this.value)">';
+                html += '<input type="color" value="' + evColor + '" style="border:none; border-radius:4px; width:28px; height:28px; cursor:pointer;" onchange="editInvEventDetails(' + i + ', \'color\', this.value); renderInvEvents()">';
+                html += '</div>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+        function updateInvItemEventOptions() {
+            let opts = '<option value="">No Event</option>';
+            invEventsData.forEach(ev => { opts += '<option value="' + sanitize(ev.name) + '">' + sanitize(ev.name) + '</option>'; });
+            document.querySelectorAll('#inv_items_container .i-item-event').forEach(sel => {
+                let currentVal = sel.value;
+                sel.innerHTML = opts;
+                sel.value = currentVal;
+            });
+        }
         document.getElementById('di_party').addEventListener('change', handlePartySelectionForInvoice);
 
         function openPaymentModal(preFillPartyId = null) { editingSalesId = null; if (window.pendingDocUploads) window.pendingDocUploads['Receipt'] = []; if (document.getElementById('pay_file_preview')) { document.getElementById('pay_file_preview').innerHTML = ''; document.getElementById('pay_file_preview').style.display = 'none'; } let titleEl = document.getElementById('pay-modal-title'); if (titleEl) titleEl.innerText = "Receive Payment"; loadPartiesIntoSelect('pay_party', preFillPartyId); let formEl = document.getElementById('payForm'); if (formEl) formEl.reset(); let dateEl = document.getElementById('pay_date'); if (dateEl) dateEl.valueAsDate = new Date(); let pendingGroup = document.getElementById('pending_bills_group'); if (pendingGroup) pendingGroup.style.display = 'none'; document.getElementById('paymentModal').style.display = 'flex'; if (preFillPartyId) handlePartySelectionForPayment(); }
@@ -15024,6 +15089,15 @@
             document.getElementById('di_date').value = new Date().toISOString().split('T')[0]; 
             document.getElementById('di_discount').value = quote.discount || 0; 
             
+            // Copy events array from quotation for event-wise invoice
+            invEventsData = (quote.events && quote.events.length > 0) ? quote.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
+            // Show events section if events were copied
+            if (invEventsData.length > 0) {
+                document.getElementById('inv_events_section').style.display = 'block';
+                let toggle = document.getElementById('inv_events_toggle'); if (toggle) toggle.style.display = 'none';
+                renderInvEvents();
+            }
+            
             let itemsContainer = document.getElementById('inv_items_container');
             itemsContainer.innerHTML = ''; 
             invItemCount = 0; 
@@ -15045,6 +15119,8 @@
                     if(descInp && item.desc) descInp.value = item.desc;
                     let catInp = lastRow.querySelector('.i-item-category');
                     if (catInp) catInp.value = item.category || '';
+                    let evInp = lastRow.querySelector('.i-item-event');
+                    if (evInp) { updateInvItemEventOptions(); evInp.value = item.event || ''; }
                     }
                 }); 
             } else {
@@ -15134,7 +15210,8 @@
                 let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; 
                 let category = row.querySelector('.i-item-category') ? row.querySelector('.i-item-category').value.trim() : '';
                 if (!category) category = 'General';
-                if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate, category }); 
+                let eventName = row.querySelector('.i-item-event') ? row.querySelector('.i-item-event').value : '';
+                if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate, category, event: eventName });
             }); 
             if (items.length === 0) return alert("Please add at least one valid item!"); 
 
@@ -15260,7 +15337,8 @@
             salesDB[id] = { 
                 id, type: 'Invoice', partyId, eventId: targetEventId, event: eventTitle, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, remarks: diRemarks,
                 invoiceType: invoiceType, returnDate: returnDate, godownId: 'AUTO_MULTI', rentalStatus: 'Deployed', labour: labourAmt, transport: transportAmt,
-                convertingQuoteId: convertingQuoteId || null
+                convertingQuoteId: convertingQuoteId || null,
+                events: invEventsData.length > 0 ? invEventsData : (salesDB[id] && salesDB[id].events ? salesDB[id].events : [])
             }; 
             
             party.balance += finalGrandTotal; 
@@ -16118,7 +16196,17 @@
                     if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
                     if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
                     if (lastRow.querySelector('.i-item-category')) lastRow.querySelector('.i-item-category').value = item.category || "";
-                }); calculateDirectInvoiceTotal(); document.getElementById('di_autopilot_badge').style.display = 'none'; document.getElementById('directInvoiceModal').style.display = 'flex';
+                    let evInpEdit = lastRow.querySelector('.i-item-event'); if (evInpEdit) { updateInvItemEventOptions(); evInpEdit.value = item.event || ''; }
+                });
+                // Load events array if present
+                invEventsData = (record.events && record.events.length > 0) ? record.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] })) : [];
+                if (invEventsData.length > 0) {
+                    document.getElementById('inv_events_section').style.display = 'block';
+                    let toggle = document.getElementById('inv_events_toggle'); if (toggle) toggle.style.display = 'none';
+                    renderInvEvents();
+                    updateInvItemEventOptions();
+                }
+                calculateDirectInvoiceTotal(); document.getElementById('di_autopilot_badge').style.display = 'none'; document.getElementById('directInvoiceModal').style.display = 'flex';
             } else if (record.type === 'Receipt') {
                 document.getElementById('pay-modal-title').innerText = "Edit Receipt"; loadPartiesIntoSelect('pay_party', record.partyId); document.getElementById('pay_amount').value = record.amount; document.getElementById('pay_date').value = record.date; document.getElementById('pay_mode').value = record.mode; document.getElementById('pay_ref').value = record.ref || ""; document.getElementById('pending_bills_group').style.display = 'none'; document.getElementById('paymentModal').style.display = 'flex';
             }
@@ -17320,9 +17408,9 @@
             // Iske baad aage ka Photos / Collage wala logic waisa hi rahega jaisa purane code mein tha...
 
             // ==========================================
-            // PER-EVENT DETAIL PAGES (items + photos)
+            // PER-EVENT DETAIL PAGES (items + photos) — Quotation + Event-Wise Invoice
             // ==========================================
-            if (record.type === 'Quotation' && record.events && record.events.length > 0) {
+            if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
                 record.events.forEach((ev, evLoopIdx) => {
                     let evItems = (record.items || []).filter(i => i.event === ev.name);
                     let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
