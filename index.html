@@ -6934,6 +6934,28 @@
         </div>
 
 
+        <div id="invTypeSelectModal" class="modal-overlay" style="display:none; z-index:9000;">
+            <div class="modal-content" style="max-width:380px; text-align:center;">
+                <div class="modal-header">
+                    <h3>Select Invoice Type</h3>
+                    <button class="modal-close" onclick="document.getElementById('invTypeSelectModal').style.display='none';">&times;</button>
+                </div>
+                <div style="padding:20px;">
+                    <div style="display:flex; gap:12px; justify-content:center;">
+                        <div onclick="selectInvType('Event')" style="flex:1; padding:20px 12px; border:2px solid #3B82F6; border-radius:12px; cursor:pointer; background:#EFF6FF; transition:all 0.2s;">
+                            <div style="font-size:36px; margin-bottom:8px;">🎉</div>
+                            <div style="font-size:14px; font-weight:800; color:#1E40AF;">Event Invoice</div>
+                            <div style="font-size:10px; color:#64748b; margin-top:4px;">Services, Packages, Event-wise breakdown</div>
+                        </div>
+                        <div onclick="selectInvType('Rental')" style="flex:1; padding:20px 12px; border:2px solid #F59E0B; border-radius:12px; cursor:pointer; background:#FFFBEB; transition:all 0.2s;">
+                            <div style="font-size:36px; margin-bottom:8px;">📦</div>
+                            <div style="font-size:14px; font-weight:800; color:#92400E;">Rental Invoice</div>
+                            <div style="font-size:10px; color:#64748b; margin-top:4px;">Material outward, Stock tracking, Return date</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="directInvoiceModal" class="modal-overlay" style="z-index: 5500;">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
@@ -6962,13 +6984,8 @@
                     <div id="inv_items_container"></div>
 
                     <div style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #F8FAFC;">
-                        <div class="form-group" style="margin-bottom: 12px;">
-                            <label class="form-label" style="color:var(--accent-color);">Invoice Type</label>
-                            <select id="di_invoice_type" class="form-select" onchange="toggleInvoiceType()">
-                                <option value="Event">Standard Event (Services / Packages)</option>
-                                <option value="Rental">Rental / Material Outward (Props & Inventory)</option>
-                            </select>
-                        </div>
+                        <!-- Hidden invoice type field (set from popup) -->
+                        <input type="hidden" id="di_invoice_type" value="Event">
                         
                         <div class="form-row" id="di_rental_fields" style="display:none; margin-bottom:12px; padding:10px; background:#FEF2F2; border:1px dashed #FCA5A5; border-radius:8px;">
                             <div class="form-group" style="margin:0;">
@@ -14726,9 +14743,35 @@
             } 
         }
 
-        function openDirectInvoiceModal(preFillPartyId = null) { 
+        let pendingInvType = 'Event'; let pendingInvPrefillParty = null;
+        function openDirectInvoiceModal(preFillPartyId = null) {
+            // If inventory management is OFF, always go straight to Event invoice (no popup)
+            if (!appSettings.manageInventory) {
+                pendingInvType = 'Event';
+                pendingInvPrefillParty = preFillPartyId;
+                openDirectInvoiceForm();
+                return;
+            }
+            // If preFillPartyId is provided (from event dashboard or party ledger), skip popup and default to Event
+            if (preFillPartyId) {
+                pendingInvType = 'Event';
+                pendingInvPrefillParty = preFillPartyId;
+                openDirectInvoiceForm();
+            } else {
+                // Inventory is ON and no prefill — show type selection popup
+                pendingInvPrefillParty = null;
+                document.getElementById('invTypeSelectModal').style.display = 'flex';
+            }
+        }
+        function selectInvType(type) {
+            pendingInvType = type;
+            document.getElementById('invTypeSelectModal').style.display = 'none';
+            openDirectInvoiceForm();
+        }
+        function openDirectInvoiceForm() {
+            let preFillPartyId = pendingInvPrefillParty;
             editingSalesId = null; 
-            document.getElementById('di-modal-title').innerText = "Create Tax Invoice"; 
+            document.getElementById('di-modal-title').innerText = (pendingInvType === 'Rental') ? "Create Rental Invoice" : "Create Tax Invoice"; 
             document.getElementById('di_advance').removeAttribute('readonly'); 
             document.getElementById('di_advance').style.background = 'var(--surface-color)'; 
             loadPartiesIntoSelect('di_party', preFillPartyId); 
@@ -14739,16 +14782,9 @@
             calculateDirectInvoiceTotal(); 
             handlePartySelectionForInvoice(); 
             
-            // 📦 RENTAL OPTION COMPLIANCE ENGINE
+            // Set invoice type from popup selection
             let typeSel = document.getElementById('di_invoice_type');
-            if (typeSel) {
-                let rentalOpt = typeSel.querySelector('option[value="Rental"]');
-                if (rentalOpt) {
-                    rentalOpt.style.display = (appSettings.manageInventory) ? 'block' : 'none';
-                }
-                // Default drop to 'Event' if inventory is disabled
-                if(!appSettings.manageInventory) typeSel.value = 'Event';
-            }
+            if (typeSel) typeSel.value = pendingInvType;
 
             let badge = document.getElementById('di_autopilot_badge'); 
             if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice]) { 
@@ -14760,7 +14796,7 @@
             toggleInvoiceType(); // Refresh fields view
             document.getElementById('directInvoiceModal').style.display = 'flex'; 
         }
-        function addInvoiceItem() { invItemCount++; let container = document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display:flex; gap:4px; align-items:center;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">CAT</span><input type="text" class="form-input i-item-category" placeholder="Category (e.g. Mandap, Floral)" style="flex:1; font-size:11px; font-weight:700; border:2px solid #3B82F6; border-radius:6px; padding:4px 8px;"></div><div style="display:flex; gap:4px; align-items:center; margin-top:2px;"><span style="background:#8B5CF6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">EVT</span><select class="form-select i-item-event" style="flex:1; font-size:11px; font-weight:600; border:1px solid #8B5CF6; border-radius:6px; padding:4px 8px;" onchange="updateInvItemEventOptions()"><option value="">No Event</option></select></div><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
+        function addInvoiceItem() { invItemCount++; let container = document.getElementById('rental_items_container') || document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display:flex; gap:4px; align-items:center;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">CAT</span><input type="text" class="form-input i-item-category" placeholder="Category (e.g. Mandap, Floral)" style="flex:1; font-size:11px; font-weight:700; border:2px solid #3B82F6; border-radius:6px; padding:4px 8px;"></div><div style="display:flex; gap:4px; align-items:center; margin-top:2px;"><span style="background:#8B5CF6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">EVT</span><select class="form-select i-item-event" style="flex:1; font-size:11px; font-weight:600; border:1px solid #8B5CF6; border-radius:6px; padding:4px 8px;" onchange="updateInvItemEventOptions()"><option value="">No Event</option></select></div><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function handlePartySelectionForInvoice() { if (editingSalesId) return; let pId = document.getElementById('di_party').value; let advanceGroup = document.getElementById('available_advance_group'); let advanceSelect = document.getElementById('di_use_advance'); advanceSelect.innerHTML = '<option value="0">Do not use advance</option>'; let hasAdvance = false; if (pId) { Object.values(salesDB).forEach(s => { if (s.type === 'Receipt' && s.partyId === pId && s.availableAmount > 0) { advanceSelect.innerHTML += `<option value="${s.id}">Use Available: ₹${s.availableAmount.toLocaleString('en-IN')}</option>`; hasAdvance = true; } }); } advanceGroup.style.display = hasAdvance ? 'block' : 'none'; calculateDirectInvoiceTotal(); }
 
         // 📋 INVOICE EVENT MANAGEMENT FUNCTIONS (quotation-style event-wise UI)
@@ -15601,14 +15637,24 @@
         function confirmApplyToBills() { let rec = salesDB[targetReceiptId]; let checkboxes = document.querySelectorAll('.bill-checkbox:checked'); if (checkboxes.length === 0) { alert("Please select at least one bill!"); return; } let totalApplied = 0; checkboxes.forEach(cb => { let billId = cb.value; let bill = salesDB[billId]; if (rec.availableAmount > 0 && bill.balanceDue > 0) { let applyAmt = Math.min(rec.availableAmount, bill.balanceDue); bill.advance += applyAmt; bill.balanceDue -= applyAmt; if (bill.balanceDue <= 0) bill.status = 'Paid'; else bill.status = 'Partial'; rec.usedAmount += applyAmt; rec.availableAmount -= applyAmt; if (!rec.linkedInvoices) rec.linkedInvoices = []; if (!rec.linkedInvoices.includes(bill.id)) rec.linkedInvoices.push(bill.id); totalApplied += applyAmt; } }); updateDataAndUI(); document.getElementById('applyBillsModal').style.display = 'none'; viewDetails(targetReceiptId, 'sales'); alert(`Success! ₹${totalApplied.toLocaleString('en-IN')} applied to pending bills.`); }
 
         function calculateDirectInvoiceTotal() { 
-            // Calculate gross from invItemsData (event-wise data model), respecting manual overrides
-            let baseTotal = 0; 
-            invEventsData.forEach(ev => {
-                let evItems = invItemsData.filter(i => i.event === ev.name);
-                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
-                baseTotal += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
-            });
-            
+            let baseTotal = 0;
+            let invType = document.getElementById('di_invoice_type') ? document.getElementById('di_invoice_type').value : 'Event';
+            if (invType === 'Rental' && document.getElementById('rental_items_container')) {
+                // Rental mode: read from flat DOM rows
+                document.querySelectorAll('#rental_items_container .quote-item-row').forEach(row => {
+                    let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0;
+                    let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0;
+                    baseTotal += (qty * rate);
+                });
+            } else {
+                // Event mode: calculate from invItemsData respecting manual overrides
+                invEventsData.forEach(ev => {
+                    let evItems = invItemsData.filter(i => i.event === ev.name);
+                    let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                    baseTotal += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                });
+            }
+
             // Labour and Transport charges
             let labour = parseFloat(document.getElementById('di_labour')?.value) || 0;
             let transport = parseFloat(document.getElementById('di_transport')?.value) || 0;
@@ -15657,11 +15703,25 @@
             if (!partyId || !eventTitle) { alert("Fill all required fields!"); return; } 
             if (invoiceType === 'Rental' && !returnDate) { return alert("🚨 Return Due Date is mandatory for Rental Invoices!"); }
 
-            // Collect items from invItemsData (event-wise data model)
-            let items = invItemsData.filter(i => i.name && i.qty > 0).map(i => ({
-                name: i.name, desc: i.desc || '', unit: i.unit || 'Pcs', qty: i.qty, rate: i.rate,
-                amount: i.amount, category: i.category || 'General', event: i.event || ''
-            }));
+            // Collect items: from DOM rows for Rental, from invItemsData for Event
+            let items = [];
+            if (invoiceType === 'Rental' && document.getElementById('rental_items_container')) {
+                document.querySelectorAll('#rental_items_container .quote-item-row').forEach(row => {
+                    let name = row.querySelector('.i-item-name') ? row.querySelector('.i-item-name').value.trim() : '';
+                    let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0;
+                    let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0;
+                    let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs';
+                    let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : '';
+                    let category = row.querySelector('.i-item-category') ? row.querySelector('.i-item-category').value.trim() : 'General';
+                    if (!category) category = 'General';
+                    if (name && qty > 0) items.push({ name, desc, unit, qty, rate, amount: qty * rate, category, event: '' });
+                });
+            } else {
+                items = invItemsData.filter(i => i.name && i.qty > 0).map(i => ({
+                    name: i.name, desc: i.desc || '', unit: i.unit || 'Pcs', qty: i.qty, rate: i.rate,
+                    amount: i.amount, category: i.category || 'General', event: i.event || ''
+                }));
+            }
             if (items.length === 0) return alert("Please add at least one valid item!");
 
             // ♻️ REVERT OLD STOCK IF EDITING RENTAL
@@ -22639,19 +22699,38 @@
             let rentalFields = document.getElementById('di_rental_fields');
             let eventLinkGroup = document.getElementById('di_event_group');
             let tncBox = document.getElementById('di_tnc');
+            let invEventsCont = document.getElementById('inv_events_container');
+            let invItemsCont = document.getElementById('inv_items_container');
+            let itemsLabel = document.querySelector('#directInvoiceModal .form-label[style*="Services / Items"]');
 
             if (type && type.value === 'Rental') {
+                // Rental mode: show rental fields, godown button; hide event-wise containers
                 if (btnGodown) btnGodown.style.display = 'block';
                 if (rentalFields) rentalFields.style.display = 'flex';
-                if (eventLinkGroup) eventLinkGroup.style.display = 'none'; 
+                if (eventLinkGroup) eventLinkGroup.style.display = 'none';
                 if (tncBox) tncBox.value = "1. Rental goods must be returned in proper condition.\n2. Any physical damage or loss will be charged extra at original asset value.\n3. Delayed returns will incur daily charges.";
+                // Hide event-wise containers for rental invoices
+                if (invEventsCont) invEventsCont.style.display = 'none';
+                if (invItemsCont) invItemsCont.innerHTML = '';
+                // Show flat item rows for rental
+                if (invItemsCont) { invItemsCont.style.display = 'block'; invItemsCont.innerHTML = '<div id="rental_items_container"></div>'; }
                 
                 if(typeof window.loadGodownsIntoSelect === 'function') window.loadGodownsIntoSelect();
+                // Add one blank rental item row
+                if (document.getElementById('rental_items_container') && document.getElementById('rental_items_container').children.length === 0) {
+                    addInvoiceItem();
+                }
             } else {
+                // Event mode: hide rental fields; show event-wise containers
                 if (btnGodown) btnGodown.style.display = 'none';
                 if (rentalFields) rentalFields.style.display = 'none';
-                if (eventLinkGroup) eventLinkGroup.style.display = 'block'; 
+                if (eventLinkGroup) eventLinkGroup.style.display = 'block';
                 if (tncBox) tncBox.value = "Goods once sold will not be taken back. Subject to Surat jurisdiction.";
+                // Show event-wise containers
+                if (invEventsCont) invEventsCont.style.display = 'block';
+                if (invItemsCont) invItemsCont.style.display = 'block';
+                renderInvEvents();
+                renderInvItems();
             }
         };
 
