@@ -15275,6 +15275,33 @@
                 html += '</div>';
             });
             html += '</div>';
+            // EVENT PHOTOS PREVIEW — auto-attach from lead
+            let invRec = (typeof editingSalesId !== 'undefined' && editingSalesId && salesDB[editingSalesId]) ? salesDB[editingSalesId] : null;
+            let invHasPhotos = invEventsData.some(ev => getLeadEventPhotos(invRec, ev.name, ev.photos).length > 0);
+            if (invHasPhotos) {
+                html += '<div style="margin-top:12px;">';
+                html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
+                html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
+                invEventsData.forEach(ev => {
+                    let evPhotos = getLeadEventPhotos(invRec, ev.name, ev.photos);
+                    if (evPhotos.length === 0) return;
+                    let evColor = getEventColor(ev);
+                    let textColor = getContrastColor(evColor);
+                    html += '<div style="margin-bottom:10px;">';
+                    html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; margin-bottom:6px;">' + sanitize(ev.name) + '</div>';
+                    html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+                    evPhotos.forEach(photo => {
+                        let url = typeof photo === 'string' ? photo : photo.url;
+                        let label = typeof photo === 'string' ? '' : (photo.label || '');
+                        html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
+                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
+                        if (label) html += '<div style="font-size:9px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div></div>';
+                });
+                html += '</div></div>';
+            }
             // SUMMARY
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
@@ -15283,6 +15310,12 @@
             if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
             if (taxAmount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>GST (' + gstPercent + '%)</span><span>+\u20B9' + taxAmount.toLocaleString('en-IN') + '</span></div>';
             html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
+            let advance = parseFloat(document.getElementById('di_advance') ? document.getElementById('di_advance').value : 0) || 0;
+            if (advance > 0) {
+                let balanceDue = net - advance;
+                html += '<div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--text-primary); margin-top:4px;"><span>Advance Received</span><span>-\u20B9' + advance.toLocaleString('en-IN') + '</span></div>';
+                html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--danger); border-top:1px solid var(--border-color); padding-top:4px; margin-top:2px;"><span>Balance Due</span><span>\u20B9' + balanceDue.toLocaleString('en-IN') + '</span></div>';
+            }
             html += '</div>';
             let remarks = document.getElementById('di_remarks') ? document.getElementById('di_remarks').value : '';
             if (remarks) html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; font-size:11px; margin-top:8px;"><strong style="color:var(--text-secondary);">Remarks:</strong> ' + remarks + '</div>';
@@ -17247,7 +17280,7 @@
                 bodyHtml = `<div style="margin-bottom: 15px;"><strong>Party:</strong> ${sanitize(partyName)}<br><strong>Doc ID:</strong> ${record.id}${record.ref ? `<br><strong>Bill No.:</strong> ${sanitize(record.ref)}` : ''}${record.events && record.events.length > 0 ? '' : `<br><strong>Title/Event:</strong> ${sanitize(record.event || '')}`}<br><strong>Date:</strong> ${formattedDate}<br><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700; text-transform:uppercase;">${record.status}</span></div>`;
 
                 let subtotal = 0;
-                if (record.type === 'Quotation' && record.events && record.events.length > 0) {
+                if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     bodyHtml += `<div style="margin-bottom:12px;"><div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>`;
                     bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th></tr>`;
@@ -17677,7 +17710,7 @@
 
                 // QUOTATION PRINT - Cover page with summary + per-event detail pages
                 let subtotal = 0;
-                if (record.type === 'Quotation' && record.events && record.events.length > 0) {
+                if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     html += '<span class="section-label">Function Schedule</span>';
                     html += '<table style="margin-bottom:15px; font-size:11px;">';
