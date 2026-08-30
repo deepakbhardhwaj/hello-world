@@ -11596,7 +11596,7 @@
             let formattedDate = ev.dates && ev.dates[0] ? new Date(ev.dates[0].date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
             let evCode = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date);
             
-            document.getElementById('p_budget').innerHTML = `<span style="color:var(--text-primary); background:#E2E8F0; padding:4px 8px; border-radius:6px; font-size:12px; letter-spacing:1px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">#${evCode}</span>`;
+            document.getElementById('p_budget').innerHTML = `<span style="color:var(--text-primary); background:#E2E8F0; padding:4px 8px; border-radius:6px; font-size:12px; letter-spacing:1px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">#${evCode}</span>` + (ev.guests && ev.guests!=='0' ? '<span style="margin-left:8px; font-size:13px; font-weight:700; color:#D97706;">👥 ' + ev.guests + '</span>' : '');
             
             let partyId = Object.keys(partiesDB).find(pid => String(partiesDB[pid].phone).trim() === String(ev.phone).trim() && partiesDB[pid].type === 'Customer');
             let ledgerBtnHtml = partyId ? `<button onclick="jumpToLedger('${partyId}')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; transition:0.2s;">📖 View Ledger</button>` : '';
@@ -11617,8 +11617,6 @@
                     <button onclick="openEventFunctionPanel('${ev.id}', event)" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>
                 </h4>
                 <div id="ws_func_details" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:0; box-shadow:var(--shadow-sm); overflow:hidden;"></div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📸 Function-wise Reference Pictures</h4>
-                <div id="ws_func_photos" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:12px; box-shadow:var(--shadow-sm);"></div>
             `;
 
             let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
@@ -11661,7 +11659,9 @@
                         <button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button>
                     </div>
                 </div>
-                            `;
+                            
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📸 Function-wise Reference Pictures</h4>
+                <div id="ws_func_photos" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:12px; box-shadow:var(--shadow-sm);"></div>`;
 
             let btnBg = ev.eventStatus === 'Completed' ? 'var(--text-secondary)' : 'var(--success)';
             let btnText = ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback';
@@ -11713,7 +11713,9 @@
                     fdCont.innerHTML = '<div style="padding:24px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">No functions added yet.<br>Tap "+ Add Function" to add function details.</div>';
                 }
             }
-            // 🚀 Render function-wise reference pictures
+            updateCoverPhoto();
+            renderEventTasks(ev);
+            // 🚀 Render function-wise reference pictures (after tasks, at end)
             let fpCont = document.getElementById('ws_func_photos');
             if (fpCont) {
                 fpCont.innerHTML = '';
@@ -11722,8 +11724,7 @@
                 } else {
                     fpCont.innerHTML = '<div style="padding:16px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">Add functions first to upload reference pictures.</div>';
                 }
-            }
-            renderEventTasks(ev); 
+            } 
         }
 
         function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
