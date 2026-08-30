@@ -10365,8 +10365,15 @@
                 photos: editingLeadId ? leadsDB[id].photos : [],
                 tasks: editingLeadId ? leadsDB[id].tasks : [],
                 expenses: editingLeadId ? leadsDB[id].expenses : [],
-                eventStatus: 'Upcoming'
+                eventStatus: editingLeadId ? (leadsDB[id].eventStatus || 'Upcoming') : 'Upcoming',
+                dates: editingLeadId ? (leadsDB[id].dates || []) : [],
+                venue: editingLeadId ? (leadsDB[id].venue || '') : '',
+                coverPhoto: editingLeadId ? leadsDB[id].coverPhoto : undefined
             };
+            // Sync events to dates for Won events
+            if (status === 'Won' && leadEventsData.length > 0) {
+                leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '' }));
+            }
 
             // 🚀 SMART FIX: Lead saved securely to current Workspace ONLY!
             leadsDB[id] = leadObj;
