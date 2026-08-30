@@ -10745,7 +10745,12 @@
                 }
             }
             
-            renderPhotos(); 
+            // Update function-wise photos
+            try {
+                var lead = leadsDB[currentLeadId];
+                var photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
+            } catch(e) { console.error('photo render error:', e); }
             // 🐛 FIX: Cover photo now updates immediately — updateCoverPhoto() is
             // already called inside renderPhotos(), but we also call it here
             // explicitly in case renderPhotos() is refactored later.
@@ -10753,8 +10758,13 @@
             saveDataLocally();
             updateDataAndUI();
             window.hideLoader(); // Loader band
-            // Re-render photos after updateDataAndUI so thumbnails + cover stay in sync
-            renderPhotos();
+            // Re-render function-wise photos after updateDataAndUI
+            try {
+                var lead = leadsDB[currentLeadId];
+                var photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
+            } catch(e) { console.error('photo re-render error:', e); }
+            updateCoverPhoto();
         }
 
         function updatePhotoLabel(index, val) {
@@ -10785,7 +10795,11 @@
                     delete leadsDB[currentLeadId].coverPhoto;
                 }
                 leadsDB[currentLeadId].photos.splice(index, 1);
-                renderPhotos();
+                try {
+                    var lead = leadsDB[currentLeadId];
+                    var photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                    if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
+                } catch(e) { console.error('photo delete render error:', e); }
                 updateDataAndUI();
             }
         }
@@ -10851,7 +10865,6 @@
             // Re-render thumbnails — wrap in try/catch so a render error
             // does not show a false "Could not update cover" toast when the
             // cover was actually updated successfully.
-            try { renderPhotos(); } catch(e) { console.error('renderPhotos error:', e); }
             try {
                 var lead = leadsDB[currentLeadId];
                 var photosWrapper = document.getElementById('lead_event_photos_wrapper');
@@ -10927,6 +10940,7 @@
         function renderPhotos() {
             let photos = leadsDB[currentLeadId].photos || [];
             let thumbContainer = document.getElementById('p_thumbnails');
+            if (!thumbContainer) return;
             thumbContainer.innerHTML = "";
 
             // Update cover photo via unified logic
@@ -11788,11 +11802,8 @@
                         <button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button>
                     </div>
                 </div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Reference Media</h4>
-                <div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);">
-                    <label class="upload-btn" style="padding:12px;">+ Upload Photos<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label>
-                    <div class="thumb-grid" id="p_thumbnails"></div>
-                </div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Function-wise Reference Pictures</h4>
+                <div id="lead_event_photos_wrapper"></div>
             `;
 
             let btnBg = ev.eventStatus === 'Completed' ? 'var(--text-secondary)' : 'var(--success)';
@@ -11818,8 +11829,13 @@
             } else { 
                 tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
             }
-            renderEventTasks(ev); 
-            renderPhotos();
+            renderEventTasks(ev);
+            try {
+                var lead = leadsDB[currentLeadId];
+                var photosWrapper = document.getElementById('lead_event_photos_wrapper');
+                if (photosWrapper && lead) photosWrapper.innerHTML = renderLeadEventPhotosHtml(lead);
+            } catch(e) { console.error('Function photo render error:', e); }
+            updateCoverPhoto();
         }
 
         function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
@@ -12017,7 +12033,7 @@
             };
 
             // === SALES SECTION: Quotations + Invoices ===
-            html += `<h4 style="margin:15px 0 8px; color:var(--accent-color); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Sales (Quotations & Invoices)</h4>`;
+            html += `<div style="margin:15px 0 10px; padding:10px 14px; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:4px solid var(--accent-color); border-radius:8px;"><span style="font-size:13px; font-weight:900; color:var(--accent-color); text-transform:uppercase; letter-spacing:0.5px;">Sales (Quotations & Invoices)</span></div>`;
             
             // Quotations
             let qList = Object.values(salesDB).filter(s => s.type === 'Quotation' && s.eventId === evId);
@@ -12082,7 +12098,7 @@
                      </div>`;
 
             // === PURCHASE & EXPENSES SECTION ===
-            html += `<h4 style="margin:15px 0 8px; color:var(--danger); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Purchase & Expenses</h4>`;
+            html += `<div style="margin:15px 0 10px; padding:10px 14px; background:linear-gradient(135deg,#FEF2F2,#FEE2E2); border-left:4px solid var(--danger); border-radius:8px;"><span style="font-size:13px; font-weight:900; color:var(--danger); text-transform:uppercase; letter-spacing:0.5px;">Purchase & Expenses</span></div>`;
             let totExpPaid = 0; let totExpDue = 0;
 
             // Pending POs
