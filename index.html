@@ -10964,7 +10964,7 @@
                         let tc = getContrastColor(evColor);
                         crmEventsHtml += '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F1F5F9;">';
                         crmEventsHtml += '<span style="background:' + evColor + '; color:' + tc + '; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; min-width:65px; text-align:center;">' + ev.name + '</span>';
-                        crmEventsHtml += '<span style="font-size:11px; color:var(--text-secondary); flex:1; line-height:1.4;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + '</span>';
+                        crmEventsHtml += '<span style="font-size:11px; color:var(--text-secondary); flex:1; line-height:1.4;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + (ev.guests ? ' • 👥 ' + ev.guests : '') + '</span>';
                         crmEventsHtml += '</div>';
                     });
                 } else {
@@ -11615,9 +11615,7 @@
                 </div>
                 <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🎪 Function Details</h4>
                 <div id="ws_func_details" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4>
-                <div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
-            `;
+                            `;
 
             let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
             let outList = Object.values(window.stockMovementDB || {}).filter(o => o.eventId === id && o.type === 'Outward');
@@ -11674,34 +11672,47 @@
             document.getElementById('detailPanelBody').innerHTML = wsBodyHtml; 
             document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
 
-            let tCont = document.getElementById('ws_timeline'); 
-            let todayStr = new Date().toISOString().split('T')[0];
-            
-            if (ev.dates && ev.dates.length > 0) { 
-                ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { 
-                    let dStr = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); 
-                    let isPast = d.date < todayStr; 
-                    let icon = isPast ? "✅" : "⏳"; 
-                    let color = isPast ? "var(--success)" : "var(--text-primary)"; 
-                    let timeText = d.time ? ' | ' + d.time : '';
-                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${sanitize(d.name)}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr}${timeText}</span></div>`; 
-                }); 
-            } else { 
-                tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
-            }
-            // 🚀 Render function details from lead.events data
+            // 🚀 Advanced Function Details rendering (replaces Event Timeline)
             let fdCont = document.getElementById('ws_func_details');
             if (fdCont) {
                 fdCont.innerHTML = '';
+                let todayStr = new Date().toISOString().split('T')[0];
                 if (ev.events && ev.events.length > 0) {
                     ev.events.forEach((fev, fi) => {
                         let fevDate = fev.date ? new Date(fev.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD';
-                        let fevGuests = fev.guests ? fev.guests.toLocaleString('en-IN') + ' guests' : '';
+                        let fevGuests = fev.guests ? parseInt(fev.guests).toLocaleString('en-IN') : 0;
                         let fevTime = fev.time || '';
                         let fevVenue = fev.venue || '';
-                        let fevColor = fev.color || '#F1F5F9';
-                        fdCont.innerHTML += '<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><div><strong style="font-size:13px; color:var(--text-primary);">' + sanitize(fev.name) + '</strong>' + (fevVenue ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:3px;">📍 ' + sanitize(fevVenue) + '</div>' : '') + (fevGuests ? '<div style="font-size:10px; color:#94A3B8; margin-top:2px;">👥 ' + fevGuests + '</div>' : '') + '</div><div style="text-align:right;"><div style="font-size:12px; font-weight:600; color:var(--text-secondary);">' + fevDate + '</div>' + (fevTime ? '<div style="font-size:11px; color:#94A3B8; margin-top:2px;">🕐 ' + fevTime + '</div>' : '') + '</div></div>';
+                        let fevColor = getEventColor(fev);
+                        let fevTextColor = getContrastColor(fevColor);
+                        let isPast = fev.date && fev.date < todayStr;
+                        let statusIcon = isPast ? '✅' : '⏳';
+                        let statusColor = isPast ? 'var(--success)' : 'var(--text-secondary)';
+                        let cardHtml = '<div style="border-bottom:1px solid #F1F5F9; padding:14px 12px;">';
+                        cardHtml += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+                        cardHtml += '<span style="background:' + fevColor + '; color:' + fevTextColor + '; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; flex:1; text-align:center;">' + sanitize(fev.name) + '</span>';
+                        cardHtml += '<span style="font-size:14px; margin-left:8px; color:' + statusColor + ';" title="' + (isPast ? 'Completed' : 'Upcoming') + '">' + statusIcon + '</span>';
+                        cardHtml += '</div>';
+                        cardHtml += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:11px; color:var(--text-secondary); line-height:1.5;">';
+                        cardHtml += '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">📅</span><span style="font-weight:600; color:var(--text-primary);">' + fevDate + '</span></div>';
+                        if (fevTime) cardHtml += '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">🕐</span><span style="font-weight:600; color:var(--text-primary);">' + fevTime + '</span></div>';
+                        if (fevVenue) cardHtml += '<div style="display:flex; align-items:center; gap:4px; grid-column:1/-1;"><span style="font-size:12px;">📍</span><span style="font-weight:600; color:var(--text-primary);">' + sanitize(fevVenue) + '</span></div>';
+                        if (fevGuests > 0) cardHtml += '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">👥</span><span style="font-weight:600; color:var(--text-primary);">' + fevGuests + ' guests</span></div>';
+                        cardHtml += '</div>';
+                        cardHtml += '</div>';
+                        fdCont.innerHTML += cardHtml;
                     });
+                    let totalBudget = parseFloat(ev.budget) || 0;
+                    let totalGuests = ev.events.reduce((s, fev) => s + (parseInt(fev.guests) || 0), 0);
+                    let summaryHtml = '<div style="background:#F8FAFC; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">';
+                    summaryHtml += '<div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Total Budget</div>';
+                    summaryHtml += '<div style="display:flex; gap:12px; align-items:center;">';
+                    if (totalGuests > 0) summaryHtml += '<span style="font-size:11px; font-weight:700; color:#64748B;">👥 ' + totalGuests.toLocaleString('en-IN') + '</span>';
+                    summaryHtml += '<span style="font-size:14px; font-weight:900; color:var(--accent-color);">₹' + totalBudget.toLocaleString('en-IN') + '</span>';
+                    summaryHtml += '</div></div>';
+                    fdCont.innerHTML += summaryHtml;
+                } else {
+                    fdCont.innerHTML = '<div style="padding:20px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">No functions added yet.<br>Tap "+ Add Function" to add function details.</div>';
                 }
             }
             renderEventTasks(ev); 
