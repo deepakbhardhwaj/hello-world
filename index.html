@@ -6389,6 +6389,8 @@
                             </select></div>
                         <div class="form-group"><label class="form-label">Est. Budget (₹)</label><input type="number"
                                 id="de_budget" class="form-input" placeholder="0"></div>
+                        <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="de_guests"
+                                class="form-input" placeholder="e.g. 200" min="0"></div>
                     </div>
                     <div
                         style="margin:12px 0; padding:12px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px;">
@@ -10054,13 +10056,11 @@
             document.getElementById('leadEventPanel').style.display = 'none';
             renderLeadEvents();
             if (editingLeadId && leadsDB[editingLeadId]) {
-                // 🚀 Sync events data to dates for Won events
                 let lead = leadsDB[editingLeadId];
                 if (lead.status === 'Won' && lead.events && lead.events.length > 0) {
                     lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date, time: ev.time || '', venue: ev.venue || '' }));
                     saveDataLocally();
                 }
-                // 🚀 Re-render workspace if panel is open for this event, otherwise open it
                 if (currentLeadId === editingLeadId && document.getElementById('detailPanel').classList.contains('open')) {
                     renderWorkspace(editingLeadId);
                 } else if (currentLeadId === editingLeadId) {
@@ -10083,7 +10083,6 @@
             renderLEVList();
             if (editingLeadId && leadsDB[editingLeadId]) {
                 leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color, photos: ev.photos || [] }));
-                // 🚀 Sync events to dates for Won events so timeline and dashboard stay updated
                 let savedLead = leadsDB[editingLeadId];
                 if (savedLead.status === 'Won' && savedLead.events && savedLead.events.length > 0) {
                     savedLead.dates = savedLead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || savedLead.date, time: ev.time || '', venue: ev.venue || '' }));
@@ -10949,7 +10948,7 @@
                 let pWaBtn = document.getElementById('p_wa_btn');
                 if (pCallBtn) pCallBtn.onclick = function() { window.location.href='tel:' + sanitize(lead.phone); };
                 if (pWaBtn) pWaBtn.onclick = function() { window.open('https://wa.me/91' + waPhone, '_blank'); };
-                document.getElementById('p_budget').innerHTML = '₹' + (lead.budget || '0');
+                document.getElementById('p_budget').innerHTML = '₹' + (lead.budget || '0') + (lead.guests && lead.guests!=='0' ? ' · 👥 ' + lead.guests : '');
                 // 🐛 FIX: Cover photo now uses unified updateCoverPhoto() instead of
                 // inline logic. Previously this block only checked event photos and
                 // ignored lead.photos and manually-chosen coverPhoto — causing the
@@ -11211,7 +11210,6 @@
 
         function convertToEvent() {
             if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming";
-            // 🚀 FIX: agar lead.events me function details hain toh unhe lead.dates me bhi sync karo
             if (lead.events && lead.events.length > 0) {
                 lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date, time: ev.time || '', venue: ev.venue || '' }));
             } else if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
@@ -11356,8 +11354,8 @@
                     </div>
                     <div class="evt-card-foot">
                         <div>
-                            <div class="evt-foot-budget">₹${(parseFloat(ev.budget) || 0).toLocaleString('en-IN')}</div>
-                            <div class="evt-foot-date">Est. Budget</div>
+                            <div class="evt-foot-budget">₹${(parseFloat(ev.budget) || 0).toLocaleString('en-IN')}${ev.guests && ev.guests!=='0' ? ' · 👥 '+parseInt(ev.guests).toLocaleString('en-IN') : ''}</div>
+                            <div class="evt-foot-date">Est. Budget${ev.guests && ev.guests!=='0' ? ' & Guests' : ''}</div>
                         </div>
                         <div class="evt-quick-btns">
                             ${cleanPhone ? `<button class="evt-qbtn" title="Call" onclick="event.stopPropagation(); window.location.href='tel:${cleanPhone}'" style="color:var(--success);">📞</button>
@@ -11453,10 +11451,11 @@
 
             let id = "EVT" + Date.now();
             let budgetVal = document.getElementById('de_budget') ? document.getElementById('de_budget').value : "0";
+            let guestsVal = document.getElementById('de_guests') ? document.getElementById('de_guests').value : "0";
             leadsDB[id] = {
                 id: id, name: name, phone: phone, func: document.getElementById('de_cat').value,
                 date: dates[0].date, dates: dates, budget: budgetVal, venue: dates[0].venue || mainVenue, source: source,
-                status: 'Won', eventStatus: 'Upcoming', notes: [{ time: new Date().toLocaleString('en-IN'), text: "Direct Event Confirmed." }],
+                status: 'Won', eventStatus: 'Upcoming', guests: guestsVal, notes: [{ time: new Date().toLocaleString('en-IN'), text: "Direct Event Confirmed." }],
                 photos: [], tasks: [], expenses: []
             };
 
@@ -11613,9 +11612,14 @@
                         <button onclick="createExpenseFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
                     </div>
                 </div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🎪 Function Details</h4>
-                <div id="ws_func_details" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
-                            `;
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🎪 Function Details</span>
+                    <button onclick="openEventFunctionPanel('${ev.id}', event)" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>
+                </h4>
+                <div id="ws_func_details" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:0; box-shadow:var(--shadow-sm); overflow:hidden;"></div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📸 Function-wise Reference Pictures</h4>
+                <div id="ws_func_photos" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:12px; box-shadow:var(--shadow-sm);"></div>
+            `;
 
             let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
             let outList = Object.values(window.stockMovementDB || {}).filter(o => o.eventId === id && o.type === 'Outward');
@@ -11657,12 +11661,7 @@
                         <button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button>
                     </div>
                 </div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Reference Media</h4>
-                <div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);">
-                    <label class="upload-btn" style="padding:12px;">+ Upload Photos<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label>
-                    <div class="thumb-grid" id="p_thumbnails"></div>
-                </div>
-            `;
+                            `;
 
             let btnBg = ev.eventStatus === 'Completed' ? 'var(--text-secondary)' : 'var(--success)';
             let btnText = ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback';
@@ -11672,7 +11671,7 @@
             document.getElementById('detailPanelBody').innerHTML = wsBodyHtml; 
             document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
 
-            // 🚀 Advanced Function Details rendering (replaces Event Timeline)
+            // 🚀 Sleek Function Details rendering
             let fdCont = document.getElementById('ws_func_details');
             if (fdCont) {
                 fdCont.innerHTML = '';
@@ -11687,36 +11686,44 @@
                         let fevTextColor = getContrastColor(fevColor);
                         let isPast = fev.date && fev.date < todayStr;
                         let statusIcon = isPast ? '✅' : '⏳';
-                        let statusColor = isPast ? 'var(--success)' : 'var(--text-secondary)';
-                        let cardHtml = '<div style="border-bottom:1px solid #F1F5F9; padding:14px 12px;">';
-                        cardHtml += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
-                        cardHtml += '<span style="background:' + fevColor + '; color:' + fevTextColor + '; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; flex:1; text-align:center;">' + sanitize(fev.name) + '</span>';
-                        cardHtml += '<span style="font-size:14px; margin-left:8px; color:' + statusColor + ';" title="' + (isPast ? 'Completed' : 'Upcoming') + '">' + statusIcon + '</span>';
+                        let statusColor = isPast ? '#10B981' : '#94A3B8';
+                        let cardHtml = '<div style="padding:14px 14px; border-bottom:1px solid #F1F5F9;">';
+                        cardHtml += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">';
+                        cardHtml += '<span style="background:' + fevColor + '; color:' + fevTextColor + '; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:800; flex:1; text-align:center;">' + sanitize(fev.name) + '</span>';
+                        cardHtml += '<span style="font-size:16px; color:' + statusColor + ';" title="' + (isPast ? 'Completed' : 'Upcoming') + '">' + statusIcon + '</span>';
                         cardHtml += '</div>';
-                        cardHtml += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:11px; color:var(--text-secondary); line-height:1.5;">';
-                        cardHtml += '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">📅</span><span style="font-weight:600; color:var(--text-primary);">' + fevDate + '</span></div>';
-                        if (fevTime) cardHtml += '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">🕐</span><span style="font-weight:600; color:var(--text-primary);">' + fevTime + '</span></div>';
-                        if (fevVenue) cardHtml += '<div style="display:flex; align-items:center; gap:4px; grid-column:1/-1;"><span style="font-size:12px;">📍</span><span style="font-weight:600; color:var(--text-primary);">' + sanitize(fevVenue) + '</span></div>';
-                        if (fevGuests > 0) cardHtml += '<div style="display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">👥</span><span style="font-weight:600; color:var(--text-primary);">' + fevGuests + ' guests</span></div>';
+                        cardHtml += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+                        cardHtml += '<span style="background:#F1F5F9; color:#475569; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;">📅 ' + fevDate + '</span>';
+                        if (fevTime) cardHtml += '<span style="background:#F1F5F9; color:#475569; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;">🕐 ' + fevTime + '</span>';
+                        if (fevVenue) cardHtml += '<span style="background:#F1F5F9; color:#475569; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📍 ' + sanitize(fevVenue) + '</span>';
+                        if (fevGuests > 0) cardHtml += '<span style="background:#FFF7ED; color:#D97706; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;">👥 ' + fevGuests + '</span>';
                         cardHtml += '</div>';
                         cardHtml += '</div>';
                         fdCont.innerHTML += cardHtml;
                     });
-                    let totalBudget = parseFloat(ev.budget) || 0;
                     let totalGuests = ev.events.reduce((s, fev) => s + (parseInt(fev.guests) || 0), 0);
-                    let summaryHtml = '<div style="background:#F8FAFC; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">';
-                    summaryHtml += '<div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Total Budget</div>';
-                    summaryHtml += '<div style="display:flex; gap:12px; align-items:center;">';
-                    if (totalGuests > 0) summaryHtml += '<span style="font-size:11px; font-weight:700; color:#64748B;">👥 ' + totalGuests.toLocaleString('en-IN') + '</span>';
-                    summaryHtml += '<span style="font-size:14px; font-weight:900; color:var(--accent-color);">₹' + totalBudget.toLocaleString('en-IN') + '</span>';
-                    summaryHtml += '</div></div>';
-                    fdCont.innerHTML += summaryHtml;
+                    if (totalGuests > 0) {
+                        let summaryHtml = '<div style="background:#F8FAFC; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">';
+                        summaryHtml += '<div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Total Expected Guests</div>';
+                        summaryHtml += '<span style="font-size:16px; font-weight:900; color:var(--accent-color);">👥 ' + totalGuests.toLocaleString('en-IN') + '</span>';
+                        summaryHtml += '</div>';
+                        fdCont.innerHTML += summaryHtml;
+                    }
                 } else {
-                    fdCont.innerHTML = '<div style="padding:20px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">No functions added yet.<br>Tap "+ Add Function" to add function details.</div>';
+                    fdCont.innerHTML = '<div style="padding:24px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">No functions added yet.<br>Tap "+ Add Function" to add function details.</div>';
+                }
+            }
+            // 🚀 Render function-wise reference pictures
+            let fpCont = document.getElementById('ws_func_photos');
+            if (fpCont) {
+                fpCont.innerHTML = '';
+                if (typeof renderLeadEventPhotosHtml === 'function' && ev.events && ev.events.length > 0) {
+                    fpCont.innerHTML = renderLeadEventPhotosHtml(ev);
+                } else {
+                    fpCont.innerHTML = '<div style="padding:16px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">Add functions first to upload reference pictures.</div>';
                 }
             }
             renderEventTasks(ev); 
-            renderPhotos();
         }
 
         function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
