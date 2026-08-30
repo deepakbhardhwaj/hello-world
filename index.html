@@ -5671,6 +5671,7 @@
                                     <option value="Meeting Scheduled">Meeting Scheduled</option>
                                     <option value="Meeting Completed">Meeting Completed</option>
                                     <option value="Lost">Not Interested (Lost)</option>
+                                    <option value="Won">Won (Event)</option>
                                 </select>
                                 <div id="l_status_locked_note" style="display:none; font-size:10.5px; font-weight:700; color:#94A3B8; margin-top:8px;">🔒 This lead has become an Event — status is locked. Manage it from the Events Hub.</div>
                             </div>
@@ -10314,7 +10315,16 @@
         async function saveLeadData() {
             let name = document.getElementById('l_name').value;
             let phone = document.getElementById('l_phone').value;
-            let status = document.getElementById('l_status').value;
+            let statusSel = document.getElementById('l_status');
+            // Temporarily enable select to read its value (disabled selects return "")
+            let wasDisabled = statusSel.disabled;
+            if (wasDisabled) statusSel.removeAttribute('disabled');
+            let status = statusSel.value;
+            if (wasDisabled) statusSel.setAttribute('disabled', 'true');
+            // Fallback: if still empty, use original lead's status
+            if (!status && editingLeadId && leadsDB[editingLeadId]) {
+                status = leadsDB[editingLeadId].status;
+            }
 
             if (!name || !phone) {
                 alert("Client Name and Mobile Number are required!");
