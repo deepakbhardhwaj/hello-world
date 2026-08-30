@@ -6350,75 +6350,113 @@
         </div>
 
         <div id="directEventModal" class="modal-overlay" style="z-index: 5500;">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width:520px;padding:0 0 24px 0;">
+                <style>
+                    #directEventModal .modal-header{padding:14px 16px 12px;margin-bottom:0;top:0;}
+                    #directEventModal .lf-body{padding:2px 16px 0;}
+                    #directEventModal .lf-avatar-preview{width:44px;height:44px;border-radius:13px;background:#CBD5E1;color:white;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.25s;box-shadow:0 4px 10px rgba(0,0,0,.12);}
+                    #directEventModal .lf-section{background:#F8FAFC;border:1px solid #EEF2F7;border-radius:14px;padding:14px;margin-bottom:12px;}
+                    #directEventModal .lf-section-label{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:var(--accent-color);text-transform:uppercase;letter-spacing:.4px;background:#EFF6FF;padding:4px 10px;border-radius:20px;margin-bottom:12px;}
+                    #directEventModal .lf-section .form-group,#directEventModal .lf-section .form-row{margin-bottom:10px;}
+                    #directEventModal .lf-section .form-row:last-child,#directEventModal .lf-section .form-group:last-child{margin-bottom:0;}
+                    #directEventModal .lf-section .form-input,#directEventModal .lf-section .form-select{background:white;}
+                    #directEventModal .lf-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+                    #directEventModal .lf-chip{background:white;border:1.5px solid #E2E8F0;color:#475569;padding:6px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:3px;}
+                    #directEventModal .lf-chip.active{background:var(--accent-color);border-color:var(--accent-color);color:white;}
+                    #directEventModal .lf-chip.disabled{opacity:.45;pointer-events:none;}
+                    #directEventModal .lf-save-btn{width:100%;margin-top:4px;padding:13px;font-size:14px;border-radius:12px;}
+                </style>
                 <div class="modal-header">
-                    <h3>Add Direct Event</h3><button class="modal-close"
-                        onclick="document.getElementById('directEventModal').style.display='none';">&times;</button>
-                </div>
-                <form id="deForm" onsubmit="event.preventDefault();" novalidate>
-                    <div class="form-group">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0;">Select Existing Party</label>
-                            <button type="button" class="link-btn" onclick="openPartyModal()" style="color:var(--accent-color); font-weight:700; font-size:11px;">+ Add New Party</button>
-                        </div>
-                        <input type="text" class="select-search-box" placeholder="Search Party or type new name..."
-                            oninput="filterPartiesForEvent(this.value)">
-                        <select id="de_party_select" class="form-select" onchange="handlePartySelectForEvent(this.value)" style="margin-bottom:12px;">
-                            <option value="">-- Select Existing Party --</option>
-                        </select>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="lf-avatar-preview" id="de_avatar_preview">E</div>
+                        <h3 id="de_modal_title">Add Direct Event</h3>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Client Name</label><input type="text"
-                                id="de_name" class="form-input" required></div>
-                        <div class="form-group"><label class="form-label">Mobile Number</label>
-                            <div style="display:flex; gap:6px;">
-                                <input type="number" id="de_phone" class="form-input" required style="flex:1; min-width:0;">
-                                <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('de_phone','de_name')" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">📍</button>
+                    <button class="modal-close" onclick="document.getElementById('directEventModal').style.display='none';">&times;</button>
+                </div>
+                <div class="lf-body">
+                    <form id="deForm" onsubmit="event.preventDefault();" novalidate>
+                        <div class="lf-section">
+                            <span class="lf-section-label">ð¤ Client Details</span>
+                            <div class="form-group">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label class="form-label" style="margin:0;">Select Existing Party</label>
+                                    <button type="button" class="link-btn" onclick="openPartyModal()" style="color:var(--accent-color); font-weight:700; font-size:11px;">+ Add New Party</button>
+                                </div>
+                                <input type="text" class="select-search-box" placeholder="Search Party or type new name..."
+                                    oninput="filterPartiesForEvent(this.value)">
+                                <select id="de_party_select" class="form-select" onchange="handlePartySelectForEvent(this.value)" style="margin-bottom:12px;">
+                                    <option value="">-- Select Existing Party --</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Client Name</label><input type="text"
+                                        id="de_name" class="form-input" oninput="updateDeAvatarPreview()" required></div>
+                                <div class="form-group"><label class="form-label">Mobile Number</label>
+                                    <div style="display:flex; gap:6px;">
+                                        <input type="number" id="de_phone" class="form-input" required style="flex:1; min-width:0;">
+                                        <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('de_phone','de_name'); updateDeAvatarPreview();" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">ð</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="form-label">Event Category</label><select id="de_cat"
-                                class="form-select">
-                                <option>Balloon</option>
-                                <option>Wedding</option>
-                                <option>Festival</option>
-                                <option>Corporate</option>
-                                <option>Concert</option>
-                                <option>Traditional Events</option>
-                                <option>Others</option>
-                            </select></div>
-                        <div class="form-group"><label class="form-label">Est. Budget (₹)</label><input type="number"
-                                id="de_budget" class="form-input" placeholder="0"></div>
-                        <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="de_guests"
-                                class="form-input" placeholder="e.g. 200" min="0"></div>
-                    </div>
-                    <div
-                        style="margin:12px 0; padding:12px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px;">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <label class="form-label" style="margin:0; color:var(--accent-color);">Event Dates &
-                                Functions</label><button type="button"
-                                style="background:white; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; font-weight:700; cursor:pointer;"
-                                onclick="addFunctionDateRow('de_dates_container')">+ Add Date</button>
+
+                        <div class="lf-section">
+                            <span class="lf-section-label">ð Event Details</span>
+                            <div class="form-group"><label class="form-label">Event Title</label><input type="text"
+                                    id="de_event_title" class="form-input" placeholder="e.g. Deepak 1st Birthday"></div>
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <div class="lf-chip-row" id="de_category_chips">
+                                    <button type="button" class="lf-chip" data-val="Balloon" onclick="setDeCategoryChip('Balloon')">ð Balloon</button>
+                                    <button type="button" class="lf-chip" data-val="Wedding" onclick="setDeCategoryChip('Wedding')">ð Wedding</button>
+                                    <button type="button" class="lf-chip" data-val="Festival" onclick="setDeCategoryChip('Festival')">ð Festival</button>
+                                    <button type="button" class="lf-chip" data-val="Corporate" onclick="setDeCategoryChip('Corporate')">ð¢ Corporate</button>
+                                    <button type="button" class="lf-chip" data-val="Concert" onclick="setDeCategoryChip('Concert')">ð¤ Concert</button>
+                                    <button type="button" class="lf-chip" data-val="Traditional Events" onclick="setDeCategoryChip('Traditional Events')">ðª Traditional Events</button>
+                                    <button type="button" class="lf-chip" data-val="Others" onclick="setDeCategoryChip('Others')">â¨ Others</button>
+                                </div>
+                                <select id="de_cat" class="form-select" style="display:none;">
+                                    <option>Balloon</option>
+                                    <option>Wedding</option>
+                                    <option>Festival</option>
+                                    <option>Corporate</option>
+                                    <option>Concert</option>
+                                    <option>Traditional Events</option>
+                                    <option>Others</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="de_guests"
+                                    class="form-input" placeholder="e.g. 200" min="0"></div>
+                            <div style="margin:12px 0 0 0; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                    <label class="form-label" style="margin:0; color:var(--accent-color);">Event Dates & Functions</label>
+                                    <button type="button" style="background:white; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; font-weight:700; cursor:pointer;" onclick="addFunctionDateRow('de_dates_container')">+ Add Date</button>
+                                </div>
+                                <div id="de_dates_container"></div>
+                            </div>
+                            <div class="form-group" style="margin-top:10px;"><label class="form-label">Venue / Location</label><input type="text"
+                                    id="de_venue" class="form-input"></div>
                         </div>
-                        <div id="de_dates_container"></div>
-                    </div>
-                    <div class="form-group"><label class="form-label">Venue / Location</label><input type="text"
-                            id="de_venue" class="form-input"></div>
-                    <div class="form-group">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0;">Lead Source</label>
-                            <div style="display:flex; align-items:center;"><button type="button" class="link-btn"
-                                    style="color:var(--accent-color); font-weight:700; font-size:11px; margin-right:10px;"
-                                    onclick="addPermanentSource()">+ Add</button><button type="button" class="link-btn"
-                                    style="color:var(--text-secondary); font-weight:700; font-size:11px;"
-                                    onclick="openManageSourceModal()">⚙️ Manage</button></div>
-                        </div><select id="de_source" class="form-select"></select>
-                    </div><button type="button" class="btn-main" onclick="saveDirectEvent()">Create Event
-                        Workspace</button>
-                </form>
+
+                        <div class="lf-section">
+                            <span class="lf-section-label">ð Source & Assignment</span>
+                            <div class="form-group">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label class="form-label" style="margin:0;">Lead Source</label>
+                                    <div style="display:flex; align-items:center;"><button type="button" class="link-btn"
+                                            style="color:var(--accent-color); font-weight:700; font-size:11px; margin-right:10px;"
+                                            onclick="addPermanentSource()">+ Add</button><button type="button" class="link-btn"
+                                            style="color:var(--text-secondary); font-weight:700; font-size:11px;"
+                                            onclick="openManageSourceModal()">âï¸ Manage</button></div>
+                                </div><select id="de_source" class="form-select"></select>
+                            </div>
+                            <div class="form-group" style="margin-top: 10px;"><label class="form-label"
+                                    style="color:var(--accent-color);">Assign Lead To (Staff)</label><select id="de_assign_to"
+                                    class="form-select"></select></div>
+                        </div>
+                    </form>
+                </div>
+                <button type="button" class="btn-main lf-save-btn" onclick="saveDirectEvent()">Create Event</button>
             </div>
         </div>
 
@@ -10387,7 +10425,11 @@
                 leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '' }));
             }
 
-            // 🚀 SMART FIX: Lead saved securely to current Workspace ONLY!
+            // Remove undefined values (Firestore rejects them, causing save to fail and onSnapshot to revert data)
+            Object.keys(leadObj).forEach(k => { if (leadObj[k] === undefined) delete leadObj[k]; });
+            if (leadObj.events) { leadObj.events.forEach(ev => { Object.keys(ev).forEach(k => { if (ev[k] === undefined) delete ev[k]; }); }); }
+            if (leadObj.dates) { leadObj.dates.forEach(d => { Object.keys(d).forEach(k => { if (d[k] === undefined) delete d[k]; }); }); }
+            // SMART FIX: Lead saved securely to current Workspace ONLY!
             leadsDB[id] = leadObj;
             updateDataAndUI(); 
             document.getElementById('leadModal').style.display = 'none';
@@ -11448,35 +11490,95 @@
             select.innerHTML = options;
         }
 
-        function openDirectEventModal() { refreshSourceList(); closeAllMenus(); let form = document.getElementById('deForm'); if (form) form.reset(); if (typeof loadPartiesForEventSelect === 'function') loadPartiesForEventSelect(); let dateCont = document.getElementById('de_dates_container'); if (dateCont) { dateCont.innerHTML = ''; addFunctionDateRow('de_dates_container'); } document.getElementById('directEventModal').style.display = 'flex'; }
+        function openDirectEventModal() {
+            refreshSourceList();
+            closeAllMenus();
+            let form = document.getElementById('deForm');
+            if (form) form.reset();
+            if (typeof loadPartiesForEventSelect === 'function') loadPartiesForEventSelect();
+            let dateCont = document.getElementById('de_dates_container');
+            if (dateCont) { dateCont.innerHTML = ''; addFunctionDateRow('de_dates_container'); }
+            // Populate assign_to dropdown (same as CRM lead form)
+            let assignSel = document.getElementById('de_assign_to');
+            if (assignSel) {
+                assignSel.innerHTML = '<option value="">-- Auto (Me) --</option>';
+                if (typeof staffDB !== 'undefined') {
+                    Object.values(staffDB).forEach(s => {
+                        if (s.wsId === currentWorkspaceId) {
+                            assignSel.innerHTML += '<option value="' + (s.email || s.mob || '') + '">' + (s.name || s.email || s.mob) + '</option>';
+                        }
+                    });
+                }
+            }
+            // Reset avatar preview
+            updateDeAvatarPreview();
+            // Set default category chip
+            let catSel = document.getElementById('de_cat');
+            if (catSel) catSel.value = 'Others';
+            syncDeCategoryChips();
+            document.getElementById('directEventModal').style.display = 'flex';
+        }
         // 🚀 SAVE DIRECT EVENT (Now saves venue inside dates)
+        function updateDeAvatarPreview() {
+            let nameEl = document.getElementById('de_name');
+            let avatarEl = document.getElementById('de_avatar_preview');
+            if (!avatarEl || !nameEl) return;
+            let name = nameEl.value.trim();
+            if (name) { avatarEl.textContent = name.charAt(0).toUpperCase(); avatarEl.style.background = 'var(--accent-color)'; }
+            else { avatarEl.textContent = 'E'; avatarEl.style.background = '#CBD5E1'; }
+        }
+        function setDeCategoryChip(val) {
+            let sel = document.getElementById('de_cat');
+            sel.value = val;
+            syncDeCategoryChips();
+        }
+        function syncDeCategoryChips() {
+            let sel = document.getElementById('de_cat');
+            let val = sel.value;
+            document.querySelectorAll('#de_category_chips .lf-chip').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-val') === val);
+            });
+        }
         function saveDirectEvent() {
             let name = document.getElementById('de_name').value;
             let phone = document.getElementById('de_phone').value;
             let source = document.getElementById('de_source').value;
             let mainVenue = document.getElementById('de_venue').value;
-            if (!name || !phone || !source) { alert("Fill all required fields!"); return; }
+            if (!name || !phone) { alert("Client Name and Mobile Number are required!"); return; }
 
             let dates = [];
             document.querySelectorAll('#de_dates_container .multi-date-item').forEach(item => {
                 let dName = item.querySelector('.fn-name').value;
                 let dDate = item.querySelector('.fn-date').value;
                 let dTime = item.querySelector('.fn-time').value;
-                let dVenue = item.querySelector('.fn-venue').value || mainVenue; 
+                let dVenue = item.querySelector('.fn-venue').value || mainVenue;
                 if (dName && dDate) dates.push({ name: dName, date: dDate, time: dTime, venue: dVenue });
             });
 
             if (dates.length === 0) { alert("Add at least one date!"); return; }
 
             let id = "EVT" + Date.now();
-            let budgetVal = document.getElementById('de_budget') ? document.getElementById('de_budget').value : "0";
             let guestsVal = document.getElementById('de_guests') ? document.getElementById('de_guests').value : "0";
-            leadsDB[id] = {
-                id: id, name: name, phone: phone, func: document.getElementById('de_cat').value,
-                date: dates[0].date, dates: dates, budget: budgetVal, venue: dates[0].venue || mainVenue, source: source,
-                status: 'Won', eventStatus: 'Upcoming', guests: guestsVal, notes: [{ time: new Date().toLocaleString('en-IN'), text: "Direct Event Confirmed." }],
+            let eventTitleVal = document.getElementById('de_event_title') ? document.getElementById('de_event_title').value.trim() : '';
+            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
+            let dropdownAssign = document.getElementById('de_assign_to') ? document.getElementById('de_assign_to').value : '';
+            let finalAssignee = dropdownAssign || (isOwner ? "" : loggedInEmail);
+
+            let leadObj = {
+                id: id, name: name, phone: phone,
+                eventTitle: eventTitleVal || dates[0].name,
+                func: document.getElementById('de_cat').value,
+                date: dates[0].date, events: dates, dates: dates,
+                cat: document.getElementById('de_cat').value,
+                budget: "0", venue: dates[0].venue || mainVenue, source: source,
+                status: 'Won', eventStatus: 'Upcoming', guests: guestsVal,
+                assignedTo: finalAssignee,
+                notes: [{ time: new Date().toLocaleString('en-IN'), text: "Direct Event Confirmed." }],
                 photos: [], tasks: [], expenses: []
             };
+            // Remove undefined values (Firestore rejects them)
+            Object.keys(leadObj).forEach(k => { if (leadObj[k] === undefined) delete leadObj[k]; });
+            leadsDB[id] = leadObj;
 
             let cleanPhone = String(phone).trim();
             let partyExists = Object.values(partiesDB).find(p => String(p.phone).trim() === cleanPhone && p.type === "Customer");
@@ -11484,7 +11586,8 @@
                 let pId = "P" + Date.now();
                 partiesDB[pId] = { id: pId, name: name, phone: cleanPhone, type: "Customer", subCategory: "", address: leadsDB[id].venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] };
             }
-            updateDataAndUI(); document.getElementById('directEventModal').style.display = 'none'; alert("Success! Event added to Dashboard.");
+            updateDataAndUI();
+            document.getElementById('directEventModal').style.display = 'none';
         }
         // 🚀 FIX: Function Row UI (Single Line Title & Right X Button)
         function addFunctionDateRow(containerId) {
