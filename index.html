@@ -5646,14 +5646,14 @@
                                 </select>
                             </div>
                             <div class="form-row">
-                                <div class="form-group"><label class="form-label">Est. Budget (₹)</label><input type="number"
+                                <div class="form-group" id="lf_budget_group"><label class="form-label">Est. Budget (₹)</label><input type="number"
                                         id="l_budget" class="form-input" placeholder="e.g. 50000"></div>
                                 <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="l_guests"
                                         class="form-input" placeholder="e.g. 200" min="0"></div>
                             </div>
                         </div>
 
-                        <div class="lf-section">
+                        <div class="lf-section" id="lf_pipeline_section">
                             <span class="lf-section-label">📊 Pipeline Status</span>
                             <div class="form-group">
                                 <div class="lf-chip-row" id="l_status_chips">
@@ -5689,7 +5689,7 @@
                                             onclick="openManageSourceModal()">⚙️ Manage</button></div>
                                 </div><select id="l_source" class="form-select"></select>
                             </div>
-                            <div class="form-group" style="margin-top: 10px;"><label class="form-label"
+                            <div class="form-group" id="lf_assign_group" style="margin-top: 10px;"><label class="form-label"
                                     style="color:var(--accent-color);">Assign Lead To (Staff)</label><select id="l_assign_to"
                                     class="form-select"></select></div>
                         </div>
@@ -10083,7 +10083,10 @@
                 html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
                 html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
+                html += '<div style="display:flex; gap:4px;">';
+                html += '<label style="background:var(--success); color:white; border:none; border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer; font-weight:700;">&#x1F4F7;<input type="file" multiple accept="image/*" style="display:none;" onchange="uploadDeEventPhoto(' + i + ', event)"></label>';
                 html += '<button onclick="openDeEventPanel(); setTimeout(()=>{editLeadEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                html += '</div>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
                     html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
@@ -10095,7 +10098,12 @@
                 }
                 let photoCount = (ev.photos && ev.photos.length > 0) ? ev.photos.length : 0;
                 if (photoCount > 0) {
-                    html += '<div style="font-size:10px; color:var(--success); margin-top:3px;">&#x1F4F7; ' + photoCount + ' photo' + (photoCount > 1 ? 's' : '') + '</div>';
+                    html += '<div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">';
+                    ev.photos.forEach((photoData, pIdx) => {
+                        let purl = typeof photoData === 'string' ? photoData : photoData.url;
+                        html += '<img src="' + purl + '" style="width:45px; height:45px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + purl + '\', event)">';
+                    });
+                    html += '</div>';
                 }
                 html += '</div>';
             });
@@ -10105,6 +10113,46 @@
         function openDeEventPanel() {
             deEventMode = true;
             openLeadEventPanel();
+        }
+        async function uploadDeEventPhoto(evIdx, event) {
+            let files = event.target.files;
+            if (!files.length) return;
+            let ev = leadEventsData[evIdx];
+            if (!ev) return;
+            if (!ev.photos) ev.photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
+                    else { alert('Cloudinary did not return a URL!'); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            renderDeEvents();
+            event.target.value = '';
+        }
+        async function uploadLeadEventPhotoDirect(evIdx, event) {
+            let files = event.target.files;
+            if (!files.length) return;
+            let ev = leadEventsData[evIdx];
+            if (!ev) return;
+            if (!ev.photos) ev.photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
+                    else { alert('Cloudinary did not return a URL!'); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            renderLeadEvents();
+            if (editingLeadId && leadsDB[editingLeadId]) {
+                leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color, photos: ev.photos || [] }));
+                saveDataLocally();
+            }
+            event.target.value = '';
         }
 
         function openLeadEventPanel() {
@@ -10265,7 +10313,10 @@
                 html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
                 html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
+                html += '<div style="display:flex; gap:4px;">';
+                html += '<label style="background:var(--success); color:white; border:none; border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer; font-weight:700;">&#x1F4F7;<input type="file" multiple accept="image/*" style="display:none;" onchange="uploadLeadEventPhotoDirect(' + i + ', event)"></label>';
                 html += '<button onclick="openLeadEventPanel(); setTimeout(()=>{editLeadEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                html += '</div>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
                     html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
@@ -10273,6 +10324,15 @@
                     if (ev.time) html += ev.time + ' &nbsp; ';
                     if (ev.venue) html += ev.venue;
                     if (ev.guests) html += ' &nbsp; 👥 ' + ev.guests;
+                    html += '</div>';
+                }
+                let photoCountLE = (ev.photos && ev.photos.length > 0) ? ev.photos.length : 0;
+                if (photoCountLE > 0) {
+                    html += '<div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">';
+                    ev.photos.forEach((photoData, pIdx) => {
+                        let purl = typeof photoData === 'string' ? photoData : photoData.url;
+                        html += '<img src="' + purl + '" style="width:45px; height:45px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + purl + '\', event)">';
+                    });
                     html += '</div>';
                 }
                 html += '</div>';
@@ -10301,12 +10361,24 @@
                 leadEventsData = (l.events && l.events.length > 0) ? l.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
 
                 statusEl.value = l.status;
+                let saveBtn = document.getElementById('modal-save-btn');
+                let pipelineSec = document.getElementById('lf_pipeline_section');
+                let budgetGrp = document.getElementById('lf_budget_group');
+                let assignGrp = document.getElementById('lf_assign_group');
                 if (l.status === 'Won') {
                     statusEl.setAttribute('disabled', 'true');
                     statusEl.style.background = '#F1F5F9';
+                    if (saveBtn) saveBtn.innerText = 'Save Event';
+                    if (pipelineSec) pipelineSec.style.display = 'none';
+                    if (budgetGrp) budgetGrp.style.display = 'none';
+                    if (assignGrp) assignGrp.style.display = 'none';
                 } else {
                     statusEl.removeAttribute('disabled');
                     statusEl.style.background = 'white';
+                    if (saveBtn) saveBtn.innerText = 'Save Lead';
+                    if (pipelineSec) pipelineSec.style.display = '';
+                    if (budgetGrp) budgetGrp.style.display = '';
+                    if (assignGrp) assignGrp.style.display = '';
                 }
 
                 document.getElementById('l_guests').value = l.guests || '';
@@ -10318,6 +10390,14 @@
                 document.getElementById('l_event_title').value = '';
                 statusEl.removeAttribute('disabled');
                 statusEl.style.background = 'white';
+                let saveBtn2 = document.getElementById('modal-save-btn');
+                let pipelineSec2 = document.getElementById('lf_pipeline_section');
+                let budgetGrp2 = document.getElementById('lf_budget_group');
+                let assignGrp2 = document.getElementById('lf_assign_group');
+                if (saveBtn2) saveBtn2.innerText = 'Save Lead';
+                if (pipelineSec2) pipelineSec2.style.display = '';
+                if (budgetGrp2) budgetGrp2.style.display = '';
+                if (assignGrp2) assignGrp2.style.display = '';
             }
             renderLeadEvents();
             // 🚀 Premium form UI sync: chips + avatar preview reflect whatever the
@@ -10398,7 +10478,7 @@
                 l.id !== editingLeadId &&
                 String(l.phone || '').replace(/\D/g, '').slice(-10) === normalizedLeadPhone
             ) : null;
-            if (existingLeadDup) {
+            if (existingLeadDup && !(editingLeadId && leadsDB[editingLeadId] && leadsDB[editingLeadId].status === 'Won')) {
                 let proceed = confirm(`ℹ️ A lead already exists with this number (${normalizedLeadPhone}): "${existingLeadDup.name}" (${existingLeadDup.status}).\n\nIf this is the same old enquiry, click "Cancel" and edit that lead instead.\n\nIf this is a NEW enquiry from the same client (e.g. a different function), click "OK" to create a new lead — that's fine.`);
                 if (!proceed) return;
             }
