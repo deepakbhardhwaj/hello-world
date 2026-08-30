@@ -10053,8 +10053,19 @@
         function closeLeadEventPanel() {
             document.getElementById('leadEventPanel').style.display = 'none';
             renderLeadEvents();
-            if (editingLeadId && currentLeadId === editingLeadId && leadsDB[currentLeadId]) {
-                openPanel(currentLeadId);
+            if (editingLeadId && leadsDB[editingLeadId]) {
+                // 🚀 Sync events data to dates for Won events
+                let lead = leadsDB[editingLeadId];
+                if (lead.status === 'Won' && lead.events && lead.events.length > 0) {
+                    lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date, time: ev.time || '', venue: ev.venue || '' }));
+                    saveDataLocally();
+                }
+                // 🚀 Re-render workspace if panel is open for this event, otherwise open it
+                if (currentLeadId === editingLeadId && document.getElementById('detailPanel').classList.contains('open')) {
+                    renderWorkspace(editingLeadId);
+                } else if (currentLeadId === editingLeadId) {
+                    openPanel(editingLeadId);
+                }
             }
         }
         function saveLeadEvent() {
@@ -10072,6 +10083,11 @@
             renderLEVList();
             if (editingLeadId && leadsDB[editingLeadId]) {
                 leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color, photos: ev.photos || [] }));
+                // 🚀 Sync events to dates for Won events so timeline and dashboard stay updated
+                let savedLead = leadsDB[editingLeadId];
+                if (savedLead.status === 'Won' && savedLead.events && savedLead.events.length > 0) {
+                    savedLead.dates = savedLead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || savedLead.date, time: ev.time || '', venue: ev.venue || '' }));
+                }
                 saveDataLocally();
                 updateDataAndUI();
             }
@@ -11165,6 +11181,27 @@
             if (levPS) levPS.innerHTML = '';
             document.getElementById('leadEventPanel').style.display = 'flex';
         }
+        // 🚀 NEW: Open function details panel for an event (from Events dashboard 3-dot menu)
+        function openEventFunctionPanel(evId, e) {
+            e.stopPropagation(); closeAllMenus();
+            let lead = leadsDB[evId]; if (!lead) return;
+            currentLeadId = evId; editingLeadId = evId;
+            leadEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
+            let leModal = document.getElementById('leadEventPanel');
+            if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
+            document.getElementById('lev_name').value = '';
+            document.getElementById('lev_date').value = '';
+            document.getElementById('lev_time').value = '';
+            document.getElementById('lev_venue').value = '';
+            document.getElementById('lev_guests').value = '';
+            if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
+            document.getElementById('lev_form_title').innerText = 'Add New Function';
+            editingLeadEventIdx = -1;
+            renderLEVList();
+            let levPS = document.getElementById('lev_photos_section');
+            if (levPS) levPS.innerHTML = '';
+            document.getElementById('leadEventPanel').style.display = 'flex';
+        }
         function updateLeadStatus(shouldRender = true) {
             if (!currentLeadId) return; let newStatus = document.getElementById('p_status').value; let oldStatus = leadsDB[currentLeadId].status;
             if (newStatus === "Meeting Scheduled" && oldStatus !== "Meeting Scheduled") { document.getElementById('p_status').value = oldStatus; document.getElementById('crmMeetingPromptModal').style.display = 'flex'; return; }
@@ -11173,7 +11210,11 @@
         }
 
         function convertToEvent() {
-            if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming"; if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
+            if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming";
+            // 🚀 FIX: agar lead.events me function details hain toh unhe lead.dates me bhi sync karo
+            if (lead.events && lead.events.length > 0) {
+                lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date, time: ev.time || '', venue: ev.venue || '' }));
+            } else if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
             let partyExists = false; for (let id in partiesDB) { if (String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === "Customer") { partyExists = true; break; } }
             if (!partyExists) { let newPartyId = "P" + Date.now(); partiesDB[newPartyId] = { id: newPartyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; }
             updateDataAndUI(); document.getElementById('detailPanel').classList.remove('open'); setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; openTab('events', document.getElementById('btn-events')); alert("Deal Won! Added to Events."); }, 300);
@@ -11325,7 +11366,7 @@
                                 <button class="evt-qbtn" onclick="toggleMenu('${sanitize(ev.id)}', event)">⋮</button>
                                 <div class="dropdown-menu" id="menu-${sanitize(ev.id)}">
                                     <div class="dropdown-item" onclick="actionEdit('${sanitize(ev.id)}', event)">✏️ Edit Details</div>
-                                    <div class="dropdown-item" onclick="openMultiDateModal('${sanitize(ev.id)}', event)">📅 Manage Dates</div>
+                                    <div class="dropdown-item" onclick="openEventFunctionPanel('${sanitize(ev.id)}', event)">🎪 Add Function Details</div>
                                     ${extraMenu}
                                     <div class="dropdown-item" onclick="actionUndoToCRM('${sanitize(ev.id)}', event)">↩️ Undo to CRM</div>
                                     <div class="dropdown-item" onclick="actionCancelEvent('${sanitize(ev.id)}', event)">🚫 Cancel Event</div>
@@ -11562,7 +11603,6 @@
             let ledgerBtnHtml = partyId ? `<button onclick="jumpToLedger('${partyId}')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; transition:0.2s;">📖 View Ledger</button>` : '';
 
             let wsBodyHtml = `
-                <div class="action-grid" style="margin-bottom:15px;"><button class="btn-action btn-call" onclick="window.location.href='tel:${ev.phone}'">📞 Call</button><button class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${ev.phone}', '_blank')">💬 WhatsApp</button></div>
                 <div class="event-pnl-card" style="padding:20px; background: linear-gradient(135deg, #0F172A, #1E293B); color:white; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.1);">
                     <div style="font-size:11px; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; font-weight:700;">Financial Overview <div style="display:flex; gap:8px; align-items:center;"><button onclick="togglePrivacy()" style="background:none; border:none; color:#94A3B8; cursor:pointer; font-size:16px;" title="Toggle Privacy">👁️</button>${ledgerBtnHtml}</div></div>
                     <button onclick="openEventBalanceSheet('${ev.id}')" style="width:100%; padding:14px; background:rgba(255,255,255,0.1); color:white; border:1px dashed rgba(255,255,255,0.3); border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; transition:0.2s;">📊 Detailed Balance Sheet</button>
@@ -11573,6 +11613,8 @@
                         <button onclick="createExpenseFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
                     </div>
                 </div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🎪 Function Details</h4>
+                <div id="ws_func_details" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
                 <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4>
                 <div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
             `;
@@ -11646,6 +11688,21 @@
                 }); 
             } else { 
                 tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
+            }
+            // 🚀 Render function details from lead.events data
+            let fdCont = document.getElementById('ws_func_details');
+            if (fdCont) {
+                fdCont.innerHTML = '';
+                if (ev.events && ev.events.length > 0) {
+                    ev.events.forEach((fev, fi) => {
+                        let fevDate = fev.date ? new Date(fev.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD';
+                        let fevGuests = fev.guests ? fev.guests.toLocaleString('en-IN') + ' guests' : '';
+                        let fevTime = fev.time || '';
+                        let fevVenue = fev.venue || '';
+                        let fevColor = fev.color || '#F1F5F9';
+                        fdCont.innerHTML += '<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><div><strong style="font-size:13px; color:var(--text-primary);">' + sanitize(fev.name) + '</strong>' + (fevVenue ? '<div style="font-size:11px; color:var(--text-secondary); margin-top:3px;">📍 ' + sanitize(fevVenue) + '</div>' : '') + (fevGuests ? '<div style="font-size:10px; color:#94A3B8; margin-top:2px;">👥 ' + fevGuests + '</div>' : '') + '</div><div style="text-align:right;"><div style="font-size:12px; font-weight:600; color:var(--text-secondary);">' + fevDate + '</div>' + (fevTime ? '<div style="font-size:11px; color:#94A3B8; margin-top:2px;">🕐 ' + fevTime + '</div>' : '') + '</div></div>';
+                    });
+                }
             }
             renderEventTasks(ev); 
             renderPhotos();
