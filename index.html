@@ -10083,10 +10083,7 @@
                 html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
                 html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
-                html += '<div style="display:flex; gap:4px;">';
-                html += '<label style="background:var(--success); color:white; border:none; border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer; font-weight:700;">&#x1F4F7;<input type="file" multiple accept="image/*" style="display:none;" onchange="uploadDeEventPhoto(' + i + ', event)"></label>';
                 html += '<button onclick="openDeEventPanel(); setTimeout(()=>{editLeadEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
-                html += '</div>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
                     html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
@@ -10114,46 +10111,7 @@
             deEventMode = true;
             openLeadEventPanel();
         }
-        async function uploadDeEventPhoto(evIdx, event) {
-            let files = event.target.files;
-            if (!files.length) return;
-            let ev = leadEventsData[evIdx];
-            if (!ev) return;
-            if (!ev.photos) ev.photos = [];
-            window.showLoader('Uploading to Cloud...');
-            for (let i = 0; i < files.length; i++) {
-                try {
-                    let uploadedUrl = await uploadToCloudinary(files[i]);
-                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
-                    else { alert('Cloudinary did not return a URL!'); }
-                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
-            }
-            window.hideLoader();
-            renderDeEvents();
-            event.target.value = '';
-        }
-        async function uploadLeadEventPhotoDirect(evIdx, event) {
-            let files = event.target.files;
-            if (!files.length) return;
-            let ev = leadEventsData[evIdx];
-            if (!ev) return;
-            if (!ev.photos) ev.photos = [];
-            window.showLoader('Uploading to Cloud...');
-            for (let i = 0; i < files.length; i++) {
-                try {
-                    let uploadedUrl = await uploadToCloudinary(files[i]);
-                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
-                    else { alert('Cloudinary did not return a URL!'); }
-                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
-            }
-            window.hideLoader();
-            renderLeadEvents();
-            if (editingLeadId && leadsDB[editingLeadId]) {
-                leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color, photos: ev.photos || [] }));
-                saveDataLocally();
-            }
-            event.target.value = '';
-        }
+
 
         function openLeadEventPanel() {
             let leModal = document.getElementById('leadEventPanel');
@@ -10313,10 +10271,7 @@
                 html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
                 html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
                 html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
-                html += '<div style="display:flex; gap:4px;">';
-                html += '<label style="background:var(--success); color:white; border:none; border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer; font-weight:700;">&#x1F4F7;<input type="file" multiple accept="image/*" style="display:none;" onchange="uploadLeadEventPhotoDirect(' + i + ', event)"></label>';
                 html += '<button onclick="openLeadEventPanel(); setTimeout(()=>{editLeadEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
-                html += '</div>';
                 html += '</div>';
                 if (d || ev.time || ev.venue) {
                     html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
@@ -12013,14 +11968,15 @@
 
         function openEventBalanceSheet(evId) {
             let ev = leadsDB[evId]; document.getElementById('ebs-modal-title').innerText = "Balance Sheet: " + ev.func;
-            let html = ""; let totSales = 0; let totPurch = 0; let totExp = 0;
+            let html = ""; let totSales = 0; let totPurch = 0; let totExp = 0; let totQuot = 0;
 
+            // Billed To header
             html += `<div id="ebs_print_header" style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border:1px solid #E2E8F0; padding:10px 12px; border-radius:8px; margin-bottom:15px; box-shadow:var(--shadow-sm);">
                         <div>
                             <div style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:800; margin-bottom:4px;">Billed To / Client</div>
                             <div style="font-size:14px; font-weight:900; color:var(--text-primary); display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                 ${ev.name} 
-                                <span style="font-size:10px; font-weight:700; color:var(--text-secondary); background:white; border:1px solid #CBD5E1; padding:2px 6px; border-radius:4px;">📞 ${ev.phone}</span>
+                                <span style="font-size:10px; font-weight:700; color:var(--text-secondary); background:white; border:1px solid #CBD5E1; padding:2px 6px; border-radius:4px;">&#x1F4DE; ${ev.phone}</span>
                             </div>
                         </div>
                         <div>
@@ -12028,35 +11984,26 @@
                         </div>
                      </div>`;
 
+            // Function Schedule - Card style
             if (ev.dates && ev.dates.length > 0) {
-                html += `<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:800; margin-bottom:6px;">📅 Function Schedule</div>`;
-                html += `<div style="background:white; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden; margin-bottom:15px; box-shadow:var(--shadow-sm);">
-                            <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; table-layout:fixed;">`;
-
+                html += `<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:800; margin-bottom:8px;">&#x1F4C5; Function Schedule</div>`;
                 let sortedDates = [...ev.dates].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-                sortedDates.forEach((d, index) => {
-                    let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                    let btmBorder = index === sortedDates.length - 1 ? '' : 'border-bottom:1px dashed #E2E8F0;';
-                    let finalVenue = d.venue || ev.venue || 'Venue details not added';
+                sortedDates.forEach((d) => {
+                    let fDate = d.date ? new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD';
+                    let finalVenue = d.venue || ev.venue || 'Venue not set';
                     let finalGuests = d.guests || ev.guests || 0;
-
-                    html += `<tr style="${btmBorder}">
-                                <td style="padding:10px; font-weight:700; color:var(--text-primary); width:30%; vertical-align:top; word-wrap:break-word;">${d.name}</td>
-                                <td style="padding:10px; width:30%; vertical-align:top; line-height:1.4;">
-                                    <div style="font-weight:800; color:var(--accent-color); font-size:11px;">${fDate}</div>
-                                    <div style="color:var(--danger); font-size:10px; font-weight:bold; margin-top:2px;">⏰ ${d.time || 'TBD'}</div>
-                                    ${finalGuests ? `<div style="color:var(--success); font-size:10px; font-weight:bold; margin-top:2px;">👥 ${finalGuests} guests</div>` : ''}
-                                </td>
-                                <td style="padding:10px; width:40%; vertical-align:top; color:#334155; line-height:1.4;">
-                                    <div style="display:flex; align-items:flex-start; gap:4px;">
-                                        <span style="font-size:13px;">📍</span> 
-                                        <span style="font-weight:600; font-size:11.5px; word-break:break-word;">${finalVenue}</span>
-                                    </div>
-                                </td>
-                             </tr>`;
+                    html += `<div style="background:white; border:1px solid #E2E8F0; border-left:4px solid var(--accent-color); border-radius:8px; padding:10px 12px; margin-bottom:8px; box-shadow:var(--shadow-sm);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                    <span style="font-size:13px; font-weight:800; color:var(--text-primary);">${d.name}</span>
+                                    <span style="font-size:11px; font-weight:700; color:var(--accent-color);">${fDate}</span>
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                                    ${d.time ? `<span style="font-size:10px; font-weight:600; color:#D97706; background:#FEF3C7; padding:2px 8px; border-radius:4px;">&#x23F0; ${d.time}</span>` : ''}
+                                    ${finalGuests ? `<span style="font-size:10px; font-weight:600; color:#166534; background:#DCFCE7; padding:2px 8px; border-radius:4px;">&#x1F465; ${finalGuests} guests</span>` : ''}
+                                    <span style="font-size:10px; font-weight:600; color:#DC2626; background:#FEE2E2; padding:2px 8px; border-radius:4px;">&#x1F4CD; ${finalVenue}</span>
+                                </div>
+                             </div>`;
                 });
-                html += `</table></div>`;
             }
 
             let getStatusBadge = (st) => {
@@ -12066,89 +12013,172 @@
                 else if (stTxt === 'Partial') { bg = '#FEF3C7'; col = '#D97706'; border = '#FDE68A'; }
                 else if (stTxt === 'Due') { bg = '#FEE2E2'; col = '#DC2626'; border = '#FECACA'; }
                 else if (stTxt === 'Draft') { bg = '#F3F4F6'; col = '#64748B'; border = '#E5E7EB'; }
-                return `<span style="font-size:9px; font-weight:800; text-transform:uppercase; background:${bg}; color:${col}; border:1px solid ${border}; padding:2px 6px; border-radius:4px; margin-left:8px;">${stTxt}</span>`;
+                return `<span style="font-size:9px; font-weight:800; text-transform:uppercase; background:${bg}; color:${col}; border:1px solid ${border}; padding:2px 6px; border-radius:4px; margin-left:6px;">${stTxt}</span>`;
             };
 
-            html += `<h4 style="margin:10px 0 8px; color:var(--success); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Incomes (Sales Billed)</h4>`;
+            // === SALES SECTION: Quotations + Invoices ===
+            html += `<h4 style="margin:15px 0 8px; color:var(--accent-color); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Sales (Quotations & Invoices)</h4>`;
+            
+            // Quotations
+            let qList = Object.values(salesDB).filter(s => s.type === 'Quotation' && s.eventId === evId);
+            if (qList.length === 0) {
+                html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500; margin-bottom:8px;">No quotations created yet.</div>`;
+            }
+            qList.forEach(q => {
+                totQuot += q.finalTotal || 0;
+                let isConverted = q.convertedToInvoice || false;
+                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #BFDBFE; border-radius:8px; margin-bottom:6px; background:#EFF6FF; cursor:pointer;" onclick="viewDetails('${q.id}', 'sales');">
+                            <div>
+                                <div style="display:flex; align-items:center; margin-bottom:2px;">
+                                    <b style="color:var(--accent-color); font-size:13px;">${q.id}</b>
+                                    ${getStatusBadge(q.status)}
+                                    ${!isConverted ? `<span style="font-size:9px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; padding:2px 6px; border-radius:4px; margin-left:4px;">NOT INVOICED</span>` : `<span style="font-size:9px; font-weight:800; background:#DCFCE7; color:#166534; border:1px solid #BBF7D0; padding:2px 6px; border-radius:4px; margin-left:4px;">INVOICED</span>`}
+                                </div>
+                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[q.partyId]?.name || 'Unknown'}</span>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:800; font-size:14px; color:var(--accent-color);">&#x20B9;${(q.finalTotal || 0).toLocaleString('en-IN')}</div>
+                                <div style="font-size:9px; color:var(--text-secondary); font-weight:600;">Quotation</div>
+                            </div>
+                         </div>`;
+            });
+
+            // Invoices
             let sList = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.eventId === evId);
-            if (sList.length === 0) html += `<div style="color:var(--text-secondary); font-size:13px; font-weight:500;">No sales billed yet.</div>`;
+            if (sList.length === 0 && qList.length === 0) {
+                html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500;">No sales billed yet.</div>`;
+            }
             sList.forEach(s => {
                 totSales += s.finalTotal;
-                // 🚀 FIX: Removed display='none' for eventBalanceSheetModal
-                html += `<div style="display:flex; justify-content:space-between; padding:12px; border:1px solid #BBF7D0; border-radius:10px; margin-bottom:8px; background:#F0FDF4; cursor:pointer;" onclick="viewDetails('${s.id}', 'sales');">
+                let sPaid = s.advance || 0;
+                let sDue = s.balanceDue || 0;
+                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #BBF7D0; border-radius:8px; margin-bottom:6px; background:#F0FDF4; cursor:pointer;" onclick="viewDetails('${s.id}', 'sales');">
                             <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:14px;">${s.id}</b> ${getStatusBadge(s.status)}</div>
-                                <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${partiesDB[s.partyId]?.name || 'Unknown'}</span>
+                                <div style="display:flex; align-items:center; margin-bottom:2px;">
+                                    <b style="color:var(--text-primary); font-size:13px;">${s.id}</b>
+                                    ${getStatusBadge(s.status)}
+                                </div>
+                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[s.partyId]?.name || 'Unknown'}</span>
+                                <div style="font-size:10px; margin-top:3px;">
+                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${s.finalTotal.toLocaleString('en-IN')}</span>
+                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${sPaid.toLocaleString('en-IN')}</span>
+                                    ${sDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${sDue.toLocaleString('en-IN')}</span>` : ''}
+                                </div>
                             </div>
                             <div style="text-align:right;">
-                                <div style="font-weight:800; font-size:15px; color:var(--success);">+ ₹${s.finalTotal.toLocaleString('en-IN')}</div>
-                                ${s.status === 'Partial' || s.status === 'Due' ? `<div style="font-size:10px; color:var(--danger); font-weight:800; margin-top:4px;">Due: ₹${s.balanceDue.toLocaleString('en-IN')}</div>` : ''}
+                                <div style="font-weight:800; font-size:14px; color:var(--success);">+ &#x20B9;${s.finalTotal.toLocaleString('en-IN')}</div>
                             </div>
                          </div>`;
             });
 
-            html += `<h4 style="margin:20px 0 8px; color:var(--warning); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Estimated Expenses (Pending PO)</h4>`;
+            // Sales sub-totals
+            let actualReceivedForEvent = sList.reduce((sum, s) => sum + (s.advance || 0), 0);
+            let dueAmount = totSales - actualReceivedForEvent;
+            html += `<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin:8px 0 15px;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-secondary); font-weight:600;">Total Billed (Invoices): <span style="font-weight:800; color:var(--text-primary);">&#x20B9;${totSales.toLocaleString('en-IN')}</span></div>
+                        ${totQuot > 0 ? `<div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; color:var(--text-secondary); font-weight:500;">Quotation Value (Not Billed): <span style="font-weight:700; color:var(--accent-color);">&#x20B9;${totQuot.toLocaleString('en-IN')}</span></div>` : ''}
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-secondary); font-weight:600;">Amount Received: <span style="font-weight:800; color:var(--success);">&#x20B9;${actualReceivedForEvent.toLocaleString('en-IN')}</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); font-weight:600;">Pending Due: <span style="font-weight:800; color:var(--danger);">&#x20B9;${dueAmount.toLocaleString('en-IN')}</span></div>
+                     </div>`;
+
+            // === PURCHASE & EXPENSES SECTION ===
+            html += `<h4 style="margin:15px 0 8px; color:var(--danger); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Purchase & Expenses</h4>`;
+            let totExpPaid = 0; let totExpDue = 0;
+
+            // Pending POs
             let poList = Object.values(purchaseDB).filter(p => p.type === 'PO' && p.eventId === evId && p.status !== 'Invoiced' && p.status !== 'Rejected');
-            if (poList.length === 0) html += `<div style="color:var(--text-secondary); font-size:13px; font-weight:500;">No pending purchase orders.</div>`;
+            if (poList.length > 0) {
+                html += `<div style="font-size:10px; font-weight:700; color:var(--warning); margin-bottom:4px; text-transform:uppercase;">Pending POs</div>`;
+            }
             poList.forEach(po => {
                 totExp += po.total;
-                // 🚀 FIX
-                html += `<div style="display:flex; justify-content:space-between; padding:12px; border:1px solid #FDE68A; border-radius:10px; margin-bottom:8px; background:#FFFBEB; cursor:pointer;" onclick="viewDetails('${po.id}', 'purchase');">
+                let poPaid = po.advance || 0; let poDue = po.total - poPaid;
+                totExpPaid += poPaid; totExpDue += poDue;
+                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #FDE68A; border-radius:8px; margin-bottom:6px; background:#FFFBEB; cursor:pointer;" onclick="viewDetails('${po.id}', 'purchase');">
                             <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--warning); font-size:14px;">${po.id} (PO)</b> ${getStatusBadge(po.status)}</div>
-                                <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${partiesDB[po.partyId]?.name || 'Unknown'}</span>
+                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--warning); font-size:13px;">${po.id} (PO)</b> ${getStatusBadge(po.status)}</div>
+                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[po.partyId]?.name || 'Unknown'}</span>
+                                <div style="font-size:10px; margin-top:3px;">
+                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${po.total.toLocaleString('en-IN')}</span>
+                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${poPaid.toLocaleString('en-IN')}</span>
+                                    ${poDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${poDue.toLocaleString('en-IN')}</span>` : ''}
+                                </div>
                             </div>
-                            <div style="font-weight:800; font-size:15px; color:var(--warning);">- ₹${po.total.toLocaleString('en-IN')}</div>
+                            <div style="font-weight:800; font-size:14px; color:var(--warning);">- &#x20B9;${po.total.toLocaleString('en-IN')}</div>
                          </div>`;
             });
 
-            html += `<h4 style="margin:20px 0 8px; color:var(--danger); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Purchase Bills (Vendor Bills & etc.)</h4>`;
+            // Purchase Bills
             let pList = Object.values(purchaseDB).filter(p => p.type === 'PB' && p.eventId === evId);
-            if (pList.length === 0) html += `<div style="color:var(--text-secondary); font-size:13px; font-weight:500;">No purchase bills yet.</div>`;
+            if (pList.length > 0) {
+                html += `<div style="font-size:10px; font-weight:700; color:var(--danger); margin:8px 0 4px; text-transform:uppercase;">Purchase Bills</div>`;
+            }
             pList.forEach(p => {
                 totPurch += p.finalTotal;
-                // 🚀 FIX
-                html += `<div style="display:flex; justify-content:space-between; padding:12px; border:1px solid #FECACA; border-radius:10px; margin-bottom:8px; background:#FEF2F2; cursor:pointer;" onclick="viewDetails('${p.id}', 'purchase');">
+                let pPaid = p.advance || 0; let pDue = p.balanceDue || 0;
+                totExpPaid += pPaid; totExpDue += pDue;
+                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #FECACA; border-radius:8px; margin-bottom:6px; background:#FEF2F2; cursor:pointer;" onclick="viewDetails('${p.id}', 'purchase');">
                             <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:14px;">${p.id}</b> ${getStatusBadge(p.status)}</div>
-                                <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${partiesDB[p.partyId]?.name || 'Unknown'}</span>
+                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:13px;">${p.id}</b> ${getStatusBadge(p.status)}</div>
+                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[p.partyId]?.name || 'Unknown'}</span>
+                                <div style="font-size:10px; margin-top:3px;">
+                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${p.finalTotal.toLocaleString('en-IN')}</span>
+                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${pPaid.toLocaleString('en-IN')}</span>
+                                    ${pDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${pDue.toLocaleString('en-IN')}</span>` : ''}
+                                </div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-weight:800; font-size:15px; color:var(--danger);">- ₹${p.finalTotal.toLocaleString('en-IN')}</div>
-                                ${p.status === 'Partial' || p.status === 'Due' ? `<div style="font-size:10px; color:var(--danger); font-weight:800; margin-top:4px;">Due: ₹${p.balanceDue.toLocaleString('en-IN')}</div>` : ''}
-                            </div>
+                            <div style="font-weight:800; font-size:14px; color:var(--danger);">- &#x20B9;${p.finalTotal.toLocaleString('en-IN')}</div>
                          </div>`;
             });
 
-            html += `<h4 style="margin:20px 0 8px; color:var(--purple); text-transform:uppercase; font-size:12px; font-weight:800; letter-spacing:0.5px;">Other Expenses</h4>`;
+            // Other Expenses
             let eList = Object.values(expenseDB).filter(e => e.eventId === evId);
-            if (eList.length === 0) html += `<div style="color:var(--text-secondary); font-size:13px; font-weight:500;">No direct expenses yet.</div>`;
+            if (eList.length > 0) {
+                html += `<div style="font-size:10px; font-weight:700; color:var(--purple); margin:8px 0 4px; text-transform:uppercase;">Other Expenses</div>`;
+            }
             eList.forEach(e => {
                 totExp += e.amount;
-                // 🚀 FIX: 'editExpense' ki jagah 'viewDetails' laga diya gaya hai
-                html += `<div style="display:flex; justify-content:space-between; padding:12px; border:1px solid #E9D5FF; border-radius:10px; margin-bottom:8px; background:#FAF5FF; cursor:pointer;" onclick="viewDetails('${e.id}', 'expense');">
+                let ePaid = e.amountPaid || e.amount; let eDue = e.balanceDue || 0;
+                totExpPaid += ePaid; totExpDue += eDue;
+                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #E9D5FF; border-radius:8px; margin-bottom:6px; background:#FAF5FF; cursor:pointer;" onclick="viewDetails('${e.id}', 'expense');">
                             <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:14px;">${e.cat}</b> ${getStatusBadge(e.status)}</div>
-                                <span style="font-size:12px; font-weight:500; color:var(--text-secondary);">${e.notes || 'No notes'}</span>
+                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:13px;">${e.cat}</b> ${getStatusBadge(e.status)}</div>
+                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${e.notes || 'No notes'}</span>
+                                <div style="font-size:10px; margin-top:3px;">
+                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${e.amount.toLocaleString('en-IN')}</span>
+                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${ePaid.toLocaleString('en-IN')}</span>
+                                    ${eDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${eDue.toLocaleString('en-IN')}</span>` : ''}
+                                </div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-weight:800; font-size:15px; color:var(--purple);">- ₹${e.amount.toLocaleString('en-IN')}</div>
-                                ${e.status === 'Partial' || e.status === 'Due' ? `<div style="font-size:10px; color:var(--danger); font-weight:800; margin-top:4px;">Due: ₹${e.balanceDue.toLocaleString('en-IN')}</div>` : ''}
-                            </div>
+                            <div style="font-weight:800; font-size:14px; color:var(--purple);">- &#x20B9;${e.amount.toLocaleString('en-IN')}</div>
                          </div>`;
             });
 
-            let netProfit = totSales - (totPurch + totExp); let pColor = netProfit >= 0 ? 'var(--success)' : 'var(--danger)'; let pLabel = netProfit >= 0 ? 'Expected Net Profit' : 'Expected Net Loss';
-            let sListRec = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.eventId === evId); let actualReceivedForEvent = sListRec.reduce((sum, s) => sum + s.advance, 0); let dueAmount = totSales - actualReceivedForEvent;
+            if (poList.length === 0 && pList.length === 0 && eList.length === 0) {
+                html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500;">No purchase or expenses recorded.</div>`;
+            }
 
-            html += `<div style="margin-top:24px; border-top:2px dashed #CBD5E1; padding-top:20px; background:var(--surface-color); border-radius:12px;">
-                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:8px; color:var(--text-secondary); font-weight:600;">Total Billed: <span style="font-weight:800; color:var(--text-primary);">₹${totSales.toLocaleString('en-IN')}</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:8px; color:var(--text-secondary); font-weight:600;">Amount Received: <span style="font-weight:800; color:var(--success);">₹${actualReceivedForEvent.toLocaleString('en-IN')}</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:8px; color:var(--text-secondary); font-weight:600;">Pending Due: <span style="font-weight:800; color:var(--danger);">₹${dueAmount.toLocaleString('en-IN')}</span></div>
-                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:12px; color:var(--text-secondary); font-weight:600; border-top:1px solid #E2E8F0; padding-top:12px; margin-top:12px;">Total Expenses (PO + Bills): <span style="font-weight:800; color:var(--text-primary);">₹${(totPurch + totExp).toLocaleString('en-IN')}</span></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; background:#F8FAFC; padding:16px; border-radius:10px; border:1px solid #E2E8F0;"><b style="font-size:15px; color:var(--text-primary);">${pLabel}:</b> <b style="color:${pColor}; font-size:24px;">₹${Math.abs(netProfit).toLocaleString('en-IN')}</b></div>
+            // === FINAL SUMMARY ===
+            let totalExpenses = totPurch + totExp;
+            let netProfit = totSales - totalExpenses;
+            let pColor = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+            let pLabel = netProfit >= 0 ? 'Expected Net Profit' : 'Expected Net Loss';
+
+            html += `<div style="margin-top:20px; border-top:2px dashed #CBD5E1; padding-top:16px; background:var(--surface-color); border-radius:12px;">
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:var(--text-secondary); font-weight:600;">Total Billed: <span style="font-weight:800; color:var(--text-primary);">&#x20B9;${totSales.toLocaleString('en-IN')}</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:var(--text-secondary); font-weight:600;">Amount Received: <span style="font-weight:800; color:var(--success);">&#x20B9;${actualReceivedForEvent.toLocaleString('en-IN')}</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:10px; color:var(--text-secondary); font-weight:600;">Pending Due: <span style="font-weight:800; color:var(--danger);">&#x20B9;${dueAmount.toLocaleString('en-IN')}</span></div>
+                <div style="border-top:1px solid #E2E8F0; padding-top:10px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:var(--text-secondary); font-weight:600;">Total Expenses: <span style="font-weight:800; color:var(--text-primary);">&#x20B9;${totalExpenses.toLocaleString('en-IN')}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-secondary); font-weight:500;">Amount Paid (Expenses): <span style="font-weight:700; color:var(--success);">&#x20B9;${totExpPaid.toLocaleString('en-IN')}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); font-weight:500;">Balance Due (Expenses): <span style="font-weight:700; color:var(--danger);">&#x20B9;${totExpDue.toLocaleString('en-IN')}</span></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; padding:14px; border-radius:10px; border:1px solid #E2E8F0;">
+                    <b style="font-size:14px; color:var(--text-primary);">${pLabel}:</b>
+                    <b style="color:${pColor}; font-size:22px;">&#x20B9;${Math.abs(netProfit).toLocaleString('en-IN')}</b>
+                </div>
             </div>`;
-            html += `<button class="btn-main" style="margin-top:20px; background:var(--accent-color); color:white; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="downloadEventReportPDF('${evId}')">🖨️ Download Balance Sheet & Feedback</button>`;
+            html += `<button class="btn-main" style="margin-top:16px; background:var(--accent-color); color:white; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="downloadEventReportPDF('${evId}')">&#x1F5A8; Download Balance Sheet & Feedback</button>`;
             document.getElementById('ebs_content').innerHTML = html; document.getElementById('eventBalanceSheetModal').style.display = 'flex';
         }
 
