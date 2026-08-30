@@ -10347,7 +10347,9 @@
             let eventTitleVal = document.getElementById('l_event_title').value.trim() || document.getElementById('l_function').value;
             let primaryFunc = leadEventsData.length > 0 ? leadEventsData[0].name : (document.getElementById('l_function').value || eventTitleVal);
             let primaryDate = leadEventsData.length > 0 ? leadEventsData[0].date : document.getElementById('l_date').value;
-            let leadObj = {
+            // Start with existing lead data if editing, then overwrite with form values
+            let leadObj = editingLeadId ? { ...leadsDB[id] } : {};
+            Object.assign(leadObj, {
                 id: id,
                 name: name,
                 phone: phone,
@@ -10368,8 +10370,8 @@
                 eventStatus: editingLeadId ? (leadsDB[id].eventStatus || 'Upcoming') : 'Upcoming',
                 dates: editingLeadId ? (leadsDB[id].dates || []) : [],
                 venue: editingLeadId ? (leadsDB[id].venue || '') : '',
-                coverPhoto: editingLeadId ? leadsDB[id].coverPhoto : undefined
-            };
+                coverPhoto: editingLeadId ? (leadsDB[id].coverPhoto || null) : null
+            });
             // Sync events to dates for Won events
             if (status === 'Won' && leadEventsData.length > 0) {
                 leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '' }));
@@ -11708,11 +11710,11 @@
                         cardHtml += '</div>';
                         fdCont.innerHTML += cardHtml;
                     });
-                    let totalGuests = ev.events.reduce((s, fev) => s + (parseInt(fev.guests) || 0), 0);
-                    if (totalGuests > 0) {
+                    let maxGuests = ev.events.reduce((max, fev) => Math.max(max, parseInt(fev.guests) || 0), 0);
+                    if (maxGuests > 0) {
                         let summaryHtml = '<div style="background:#F8FAFC; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">';
-                        summaryHtml += '<div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Total Expected Guests</div>';
-                        summaryHtml += '<span style="font-size:16px; font-weight:900; color:var(--accent-color);">👥 ' + totalGuests.toLocaleString('en-IN') + '</span>';
+                        summaryHtml += '<div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Expected Guests</div>';
+                        summaryHtml += '<span style="font-size:16px; font-weight:900; color:var(--accent-color);">👥 ' + maxGuests.toLocaleString('en-IN') + '</span>';
                         summaryHtml += '</div>';
                         fdCont.innerHTML += summaryHtml;
                     }
