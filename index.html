@@ -6363,20 +6363,19 @@
                     #directEventModal .lf-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
                     #directEventModal .lf-chip{background:white;border:1.5px solid #E2E8F0;color:#475569;padding:6px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:3px;}
                     #directEventModal .lf-chip.active{background:var(--accent-color);border-color:var(--accent-color);color:white;}
-                    #directEventModal .lf-chip.disabled{opacity:.45;pointer-events:none;}
                     #directEventModal .lf-save-btn{width:100%;margin-top:4px;padding:13px;font-size:14px;border-radius:12px;}
                 </style>
                 <div class="modal-header">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <div class="lf-avatar-preview" id="de_avatar_preview">E</div>
-                        <h3 id="de_modal_title">Add Direct Event</h3>
+                        <h3>Add Direct Event</h3>
                     </div>
                     <button class="modal-close" onclick="document.getElementById('directEventModal').style.display='none';">&times;</button>
                 </div>
                 <div class="lf-body">
                     <form id="deForm" onsubmit="event.preventDefault();" novalidate>
                         <div class="lf-section">
-                            <span class="lf-section-label">ð¤ Client Details</span>
+                            <span class="lf-section-label">&#x1F464; Client Details</span>
                             <div class="form-group">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                                     <label class="form-label" style="margin:0;">Select Existing Party</label>
@@ -6394,26 +6393,26 @@
                                 <div class="form-group"><label class="form-label">Mobile Number</label>
                                     <div style="display:flex; gap:6px;">
                                         <input type="number" id="de_phone" class="form-input" required style="flex:1; min-width:0;">
-                                        <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('de_phone','de_name'); updateDeAvatarPreview();" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">ð</button>
+                                        <button type="button" class="contact-pick-btn" title="Pick from Contacts" onclick="pickContactInto('de_phone','de_name'); updateDeAvatarPreview();" style="display:none; align-items:center; justify-content:center; flex-shrink:0; width:34px; font-size:15px; color:var(--accent-color); background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; cursor:pointer;">&#x1F4C7;</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="lf-section">
-                            <span class="lf-section-label">ð Event Details</span>
+                            <span class="lf-section-label">&#x1F389; Event Details</span>
                             <div class="form-group"><label class="form-label">Event Title</label><input type="text"
                                     id="de_event_title" class="form-input" placeholder="e.g. Deepak 1st Birthday"></div>
                             <div class="form-group">
                                 <label class="form-label">Category</label>
                                 <div class="lf-chip-row" id="de_category_chips">
-                                    <button type="button" class="lf-chip" data-val="Balloon" onclick="setDeCategoryChip('Balloon')">ð Balloon</button>
-                                    <button type="button" class="lf-chip" data-val="Wedding" onclick="setDeCategoryChip('Wedding')">ð Wedding</button>
-                                    <button type="button" class="lf-chip" data-val="Festival" onclick="setDeCategoryChip('Festival')">ð Festival</button>
-                                    <button type="button" class="lf-chip" data-val="Corporate" onclick="setDeCategoryChip('Corporate')">ð¢ Corporate</button>
-                                    <button type="button" class="lf-chip" data-val="Concert" onclick="setDeCategoryChip('Concert')">ð¤ Concert</button>
-                                    <button type="button" class="lf-chip" data-val="Traditional Events" onclick="setDeCategoryChip('Traditional Events')">ðª Traditional Events</button>
-                                    <button type="button" class="lf-chip" data-val="Others" onclick="setDeCategoryChip('Others')">â¨ Others</button>
+                                    <button type="button" class="lf-chip" data-val="Balloon" onclick="setDeCategoryChip('Balloon')">&#x1F388; Balloon</button>
+                                    <button type="button" class="lf-chip" data-val="Wedding" onclick="setDeCategoryChip('Wedding')">&#x1F492; Wedding</button>
+                                    <button type="button" class="lf-chip" data-val="Festival" onclick="setDeCategoryChip('Festival')">&#x1F389; Festival</button>
+                                    <button type="button" class="lf-chip" data-val="Corporate" onclick="setDeCategoryChip('Corporate')">&#x1F3E2; Corporate</button>
+                                    <button type="button" class="lf-chip" data-val="Concert" onclick="setDeCategoryChip('Concert')">&#x1F3A4; Concert</button>
+                                    <button type="button" class="lf-chip" data-val="Traditional Events" onclick="setDeCategoryChip('Traditional Events')">&#x1FA94; Traditional Events</button>
+                                    <button type="button" class="lf-chip" data-val="Others" onclick="setDeCategoryChip('Others')">&#x2728; Others</button>
                                 </div>
                                 <select id="de_cat" class="form-select" style="display:none;">
                                     <option>Balloon</option>
@@ -6427,19 +6426,11 @@
                             </div>
                             <div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="de_guests"
                                     class="form-input" placeholder="e.g. 200" min="0"></div>
-                            <div style="margin:12px 0 0 0; padding:12px; background:white; border:1px solid var(--border-color); border-radius:8px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                    <label class="form-label" style="margin:0; color:var(--accent-color);">Event Dates & Functions</label>
-                                    <button type="button" style="background:white; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; font-weight:700; cursor:pointer;" onclick="addFunctionDateRow('de_dates_container')">+ Add Date</button>
-                                </div>
-                                <div id="de_dates_container"></div>
-                            </div>
-                            <div class="form-group" style="margin-top:10px;"><label class="form-label">Venue / Location</label><input type="text"
-                                    id="de_venue" class="form-input"></div>
+                            <div id="de_events_container"></div>
                         </div>
 
                         <div class="lf-section">
-                            <span class="lf-section-label">ð Source & Assignment</span>
+                            <span class="lf-section-label">&#x1F517; Source</span>
                             <div class="form-group">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                                     <label class="form-label" style="margin:0;">Lead Source</label>
@@ -6447,17 +6438,15 @@
                                             style="color:var(--accent-color); font-weight:700; font-size:11px; margin-right:10px;"
                                             onclick="addPermanentSource()">+ Add</button><button type="button" class="link-btn"
                                             style="color:var(--text-secondary); font-weight:700; font-size:11px;"
-                                            onclick="openManageSourceModal()">âï¸ Manage</button></div>
+                                            onclick="openManageSourceModal()">&#x2699;&#xFE0F; Manage</button></div>
                                 </div><select id="de_source" class="form-select"></select>
                             </div>
-                            <div class="form-group" style="margin-top: 10px;"><label class="form-label"
-                                    style="color:var(--accent-color);">Assign Lead To (Staff)</label><select id="de_assign_to"
-                                    class="form-select"></select></div>
                         </div>
                     </form>
                 </div>
                 <button type="button" class="btn-main lf-save-btn" onclick="saveDirectEvent()">Create Event</button>
             </div>
+        </div>
         </div>
 
         <div id="multiDateModal" class="modal-overlay" style="z-index: 6000;">
@@ -10075,6 +10064,49 @@
         // ===== LEAD MULTI-EVENT FUNCTIONS =====
         let leadEventsData = [];
         let editingLeadEventIdx = -1;
+        let deEventMode = false;
+        function renderDeEvents() {
+            let container = document.getElementById('de_events_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
+            html += '<button type="button" onclick="openDeEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>';
+            html += '</div>';
+            if (leadEventsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function" to get started.</p>';
+            }
+            leadEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
+                html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
+                html += '<button onclick="openDeEventPanel(); setTimeout(()=>{editLeadEvent(' + i + ');},100);" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                html += '</div>';
+                if (d || ev.time || ev.venue) {
+                    html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
+                    if (ev.guests) html += ' &nbsp; &#x1F465; ' + ev.guests;
+                    html += '</div>';
+                }
+                let photoCount = (ev.photos && ev.photos.length > 0) ? ev.photos.length : 0;
+                if (photoCount > 0) {
+                    html += '<div style="font-size:10px; color:var(--success); margin-top:3px;">&#x1F4F7; ' + photoCount + ' photo' + (photoCount > 1 ? 's' : '') + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        function openDeEventPanel() {
+            deEventMode = true;
+            openLeadEventPanel();
+        }
+
         function openLeadEventPanel() {
             let leModal = document.getElementById('leadEventPanel');
             if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
@@ -10094,17 +10126,9 @@
         function closeLeadEventPanel() {
             document.getElementById('leadEventPanel').style.display = 'none';
             renderLeadEvents();
-            if (editingLeadId && leadsDB[editingLeadId]) {
-                let lead = leadsDB[editingLeadId];
-                if (lead.status === 'Won' && lead.events && lead.events.length > 0) {
-                    lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date, time: ev.time || '', venue: ev.venue || '' }));
-                    saveDataLocally();
-                }
-                if (currentLeadId === editingLeadId && document.getElementById('detailPanel').classList.contains('open')) {
-                    renderWorkspace(editingLeadId);
-                } else if (currentLeadId === editingLeadId) {
-                    openPanel(editingLeadId);
-                }
+            if (deEventMode) { renderDeEvents(); }
+            if (editingLeadId && currentLeadId === editingLeadId && leadsDB[currentLeadId]) {
+                openPanel(currentLeadId);
             }
         }
         function saveLeadEvent() {
@@ -10122,10 +10146,6 @@
             renderLEVList();
             if (editingLeadId && leadsDB[editingLeadId]) {
                 leadsDB[editingLeadId].events = leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color, photos: ev.photos || [] }));
-                let savedLead = leadsDB[editingLeadId];
-                if (savedLead.status === 'Won' && savedLead.events && savedLead.events.length > 0) {
-                    savedLead.dates = savedLead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || savedLead.date, time: ev.time || '', venue: ev.venue || '' }));
-                }
                 saveDataLocally();
                 updateDataAndUI();
             }
@@ -10354,12 +10374,10 @@
             let name = document.getElementById('l_name').value;
             let phone = document.getElementById('l_phone').value;
             let statusSel = document.getElementById('l_status');
-            // Temporarily enable select to read its value (disabled selects return "")
             let wasDisabled = statusSel.disabled;
             if (wasDisabled) statusSel.removeAttribute('disabled');
             let status = statusSel.value;
             if (wasDisabled) statusSel.setAttribute('disabled', 'true');
-            // Fallback: if still empty, use original lead's status
             if (!status && editingLeadId && leadsDB[editingLeadId]) {
                 status = leadsDB[editingLeadId].status;
             }
@@ -10395,7 +10413,6 @@
             let eventTitleVal = document.getElementById('l_event_title').value.trim() || document.getElementById('l_function').value;
             let primaryFunc = leadEventsData.length > 0 ? leadEventsData[0].name : (document.getElementById('l_function').value || eventTitleVal);
             let primaryDate = leadEventsData.length > 0 ? leadEventsData[0].date : document.getElementById('l_date').value;
-            // Start with existing lead data if editing, then overwrite with form values
             let leadObj = editingLeadId ? { ...leadsDB[id] } : {};
             Object.assign(leadObj, {
                 id: id,
@@ -10419,17 +10436,17 @@
                 dates: editingLeadId ? (leadsDB[id].dates || []) : [],
                 venue: editingLeadId ? (leadsDB[id].venue || '') : '',
                 coverPhoto: editingLeadId ? (leadsDB[id].coverPhoto || null) : null
-            });
-            // Sync events to dates for Won events
-            if (status === 'Won' && leadEventsData.length > 0) {
-                leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '' }));
-            }
+            };
 
-            // Remove undefined values (Firestore rejects them, causing save to fail and onSnapshot to revert data)
+            // 🚀 SMART FIX: Lead saved securely to current Workspace ONLY!
+                        // Remove undefined values (Firestore rejects them, causing save to fail and onSnapshot to revert data)
             Object.keys(leadObj).forEach(k => { if (leadObj[k] === undefined) delete leadObj[k]; });
             if (leadObj.events) { leadObj.events.forEach(ev => { Object.keys(ev).forEach(k => { if (ev[k] === undefined) delete ev[k]; }); }); }
             if (leadObj.dates) { leadObj.dates.forEach(d => { Object.keys(d).forEach(k => { if (d[k] === undefined) delete d[k]; }); }); }
-            // SMART FIX: Lead saved securely to current Workspace ONLY!
+                        // Sync events to dates for Won events
+            if (status === 'Won' && leadEventsData.length > 0) {
+                leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '' }));
+            }
             leadsDB[id] = leadObj;
             updateDataAndUI(); 
             document.getElementById('leadModal').style.display = 'none';
@@ -11009,7 +11026,7 @@
                 let pWaBtn = document.getElementById('p_wa_btn');
                 if (pCallBtn) pCallBtn.onclick = function() { window.location.href='tel:' + sanitize(lead.phone); };
                 if (pWaBtn) pWaBtn.onclick = function() { window.open('https://wa.me/91' + waPhone, '_blank'); };
-                document.getElementById('p_budget').innerHTML = '₹' + (lead.budget || '0') + (lead.guests && lead.guests!=='0' ? ' · 👥 ' + lead.guests : '');
+                document.getElementById('p_budget').innerHTML = '₹' + (lead.budget || '0');
                 // 🐛 FIX: Cover photo now uses unified updateCoverPhoto() instead of
                 // inline logic. Previously this block only checked event photos and
                 // ignored lead.photos and manually-chosen coverPhoto — causing the
@@ -11024,7 +11041,7 @@
                         let tc = getContrastColor(evColor);
                         crmEventsHtml += '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F1F5F9;">';
                         crmEventsHtml += '<span style="background:' + evColor + '; color:' + tc + '; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; min-width:65px; text-align:center;">' + ev.name + '</span>';
-                        crmEventsHtml += '<span style="font-size:11px; color:var(--text-secondary); flex:1; line-height:1.4;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + (ev.guests ? ' • 👥 ' + ev.guests : '') + '</span>';
+                        crmEventsHtml += '<span style="font-size:11px; color:var(--text-secondary); flex:1; line-height:1.4;">' + evDate + (ev.time ? ' • ' + ev.time : '') + (ev.venue ? ' • ' + ev.venue : '') + '</span>';
                         crmEventsHtml += '</div>';
                     });
                 } else {
@@ -11241,27 +11258,6 @@
             if (levPS) levPS.innerHTML = '';
             document.getElementById('leadEventPanel').style.display = 'flex';
         }
-        // 🚀 NEW: Open function details panel for an event (from Events dashboard 3-dot menu)
-        function openEventFunctionPanel(evId, e) {
-            e.stopPropagation(); closeAllMenus();
-            let lead = leadsDB[evId]; if (!lead) return;
-            currentLeadId = evId; editingLeadId = evId;
-            leadEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
-            let leModal = document.getElementById('leadEventPanel');
-            if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
-            document.getElementById('lev_name').value = '';
-            document.getElementById('lev_date').value = '';
-            document.getElementById('lev_time').value = '';
-            document.getElementById('lev_venue').value = '';
-            document.getElementById('lev_guests').value = '';
-            if (document.getElementById('lev_color')) document.getElementById('lev_color').value = '#FFFFFF';
-            document.getElementById('lev_form_title').innerText = 'Add New Function';
-            editingLeadEventIdx = -1;
-            renderLEVList();
-            let levPS = document.getElementById('lev_photos_section');
-            if (levPS) levPS.innerHTML = '';
-            document.getElementById('leadEventPanel').style.display = 'flex';
-        }
         function updateLeadStatus(shouldRender = true) {
             if (!currentLeadId) return; let newStatus = document.getElementById('p_status').value; let oldStatus = leadsDB[currentLeadId].status;
             if (newStatus === "Meeting Scheduled" && oldStatus !== "Meeting Scheduled") { document.getElementById('p_status').value = oldStatus; document.getElementById('crmMeetingPromptModal').style.display = 'flex'; return; }
@@ -11270,10 +11266,7 @@
         }
 
         function convertToEvent() {
-            if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming";
-            if (lead.events && lead.events.length > 0) {
-                lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date, time: ev.time || '', venue: ev.venue || '' }));
-            } else if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
+            if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming"; if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
             let partyExists = false; for (let id in partiesDB) { if (String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === "Customer") { partyExists = true; break; } }
             if (!partyExists) { let newPartyId = "P" + Date.now(); partiesDB[newPartyId] = { id: newPartyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; }
             updateDataAndUI(); document.getElementById('detailPanel').classList.remove('open'); setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; openTab('events', document.getElementById('btn-events')); alert("Deal Won! Added to Events."); }, 300);
@@ -11415,8 +11408,8 @@
                     </div>
                     <div class="evt-card-foot">
                         <div>
-                            <div class="evt-foot-budget">₹${(parseFloat(ev.budget) || 0).toLocaleString('en-IN')}${ev.guests && ev.guests!=='0' ? ' · 👥 '+parseInt(ev.guests).toLocaleString('en-IN') : ''}</div>
-                            <div class="evt-foot-date">Est. Budget${ev.guests && ev.guests!=='0' ? ' & Guests' : ''}</div>
+                            <div class="evt-foot-budget">₹${(parseFloat(ev.budget) || 0).toLocaleString('en-IN')}</div>
+                            <div class="evt-foot-date">Est. Budget</div>
                         </div>
                         <div class="evt-quick-btns">
                             ${cleanPhone ? `<button class="evt-qbtn" title="Call" onclick="event.stopPropagation(); window.location.href='tel:${cleanPhone}'" style="color:var(--success);">📞</button>
@@ -11425,7 +11418,7 @@
                                 <button class="evt-qbtn" onclick="toggleMenu('${sanitize(ev.id)}', event)">⋮</button>
                                 <div class="dropdown-menu" id="menu-${sanitize(ev.id)}">
                                     <div class="dropdown-item" onclick="actionEdit('${sanitize(ev.id)}', event)">✏️ Edit Details</div>
-                                    <div class="dropdown-item" onclick="openEventFunctionPanel('${sanitize(ev.id)}', event)">🎪 Add Function Details</div>
+                                    <div class="dropdown-item" onclick="openMultiDateModal('${sanitize(ev.id)}', event)">📅 Manage Dates</div>
                                     ${extraMenu}
                                     <div class="dropdown-item" onclick="actionUndoToCRM('${sanitize(ev.id)}', event)">↩️ Undo to CRM</div>
                                     <div class="dropdown-item" onclick="actionCancelEvent('${sanitize(ev.id)}', event)">🚫 Cancel Event</div>
@@ -11496,26 +11489,14 @@
             let form = document.getElementById('deForm');
             if (form) form.reset();
             if (typeof loadPartiesForEventSelect === 'function') loadPartiesForEventSelect();
-            let dateCont = document.getElementById('de_dates_container');
-            if (dateCont) { dateCont.innerHTML = ''; addFunctionDateRow('de_dates_container'); }
-            // Populate assign_to dropdown (same as CRM lead form)
-            let assignSel = document.getElementById('de_assign_to');
-            if (assignSel) {
-                assignSel.innerHTML = '<option value="">-- Auto (Me) --</option>';
-                if (typeof staffDB !== 'undefined') {
-                    Object.values(staffDB).forEach(s => {
-                        if (s.wsId === currentWorkspaceId) {
-                            assignSel.innerHTML += '<option value="' + (s.email || s.mob || '') + '">' + (s.name || s.email || s.mob) + '</option>';
-                        }
-                    });
-                }
-            }
-            // Reset avatar preview
+            leadEventsData = [];
+            deEventMode = false;
+            editingLeadEventIdx = -1;
             updateDeAvatarPreview();
-            // Set default category chip
             let catSel = document.getElementById('de_cat');
             if (catSel) catSel.value = 'Others';
             syncDeCategoryChips();
+            renderDeEvents();
             document.getElementById('directEventModal').style.display = 'flex';
         }
         // 🚀 SAVE DIRECT EVENT (Now saves venue inside dates)
@@ -11543,40 +11524,31 @@
             let name = document.getElementById('de_name').value;
             let phone = document.getElementById('de_phone').value;
             let source = document.getElementById('de_source').value;
-            let mainVenue = document.getElementById('de_venue').value;
             if (!name || !phone) { alert("Client Name and Mobile Number are required!"); return; }
 
-            let dates = [];
-            document.querySelectorAll('#de_dates_container .multi-date-item').forEach(item => {
-                let dName = item.querySelector('.fn-name').value;
-                let dDate = item.querySelector('.fn-date').value;
-                let dTime = item.querySelector('.fn-time').value;
-                let dVenue = item.querySelector('.fn-venue').value || mainVenue;
-                if (dName && dDate) dates.push({ name: dName, date: dDate, time: dTime, venue: dVenue });
-            });
-
-            if (dates.length === 0) { alert("Add at least one date!"); return; }
+            if (leadEventsData.length === 0) { alert("Add at least one function!"); return; }
 
             let id = "EVT" + Date.now();
             let guestsVal = document.getElementById('de_guests') ? document.getElementById('de_guests').value : "0";
             let eventTitleVal = document.getElementById('de_event_title') ? document.getElementById('de_event_title').value.trim() : '';
-            let isOwner = (masterCompsDB[currentWorkspaceId]?.ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId]?.ownerMob === loggedInEmail);
-            let dropdownAssign = document.getElementById('de_assign_to') ? document.getElementById('de_assign_to').value : '';
-            let finalAssignee = dropdownAssign || (isOwner ? "" : loggedInEmail);
+            let mainVenue = leadEventsData[0].venue || '';
+            let isOwner = (masterCompsDB[currentWorkspaceId] && (masterCompsDB[currentWorkspaceId].ownerEmail === loggedInEmail || masterCompsDB[currentWorkspaceId].ownerMob === loggedInEmail));
+            let finalAssignee = isOwner ? "" : loggedInEmail;
 
             let leadObj = {
                 id: id, name: name, phone: phone,
-                eventTitle: eventTitleVal || dates[0].name,
+                eventTitle: eventTitleVal || leadEventsData[0].name,
                 func: document.getElementById('de_cat').value,
-                date: dates[0].date, events: dates, dates: dates,
+                date: leadEventsData[0].date,
+                events: leadEventsData.map(ev => ({ name: ev.name, date: ev.date, time: ev.time, venue: ev.venue, guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })),
+                dates: leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date, time: ev.time || '', venue: ev.venue || '' })),
                 cat: document.getElementById('de_cat').value,
-                budget: "0", venue: dates[0].venue || mainVenue, source: source,
+                budget: "0", venue: mainVenue, source: source,
                 status: 'Won', eventStatus: 'Upcoming', guests: guestsVal,
                 assignedTo: finalAssignee,
                 notes: [{ time: new Date().toLocaleString('en-IN'), text: "Direct Event Confirmed." }],
                 photos: [], tasks: [], expenses: []
             };
-            // Remove undefined values (Firestore rejects them)
             Object.keys(leadObj).forEach(k => { if (leadObj[k] === undefined) delete leadObj[k]; });
             leadsDB[id] = leadObj;
 
@@ -11584,8 +11556,10 @@
             let partyExists = Object.values(partiesDB).find(p => String(p.phone).trim() === cleanPhone && p.type === "Customer");
             if (!partyExists) {
                 let pId = "P" + Date.now();
-                partiesDB[pId] = { id: pId, name: name, phone: cleanPhone, type: "Customer", subCategory: "", address: leadsDB[id].venue || "", gst: "", balance: 0, balType: "Receivable", transactions: [] };
+                partiesDB[pId] = { id: pId, name: name, phone: cleanPhone, type: "Customer", subCategory: "", address: mainVenue, gst: "", balance: 0, balType: "Receivable", transactions: [] };
             }
+            leadEventsData = [];
+            deEventMode = false;
             updateDataAndUI();
             document.getElementById('directEventModal').style.display = 'none';
         }
@@ -11718,12 +11692,13 @@
             let formattedDate = ev.dates && ev.dates[0] ? new Date(ev.dates[0].date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : "TBD";
             let evCode = createEventCode(ev.name, ev.func, ev.dates && ev.dates[0] ? ev.dates[0].date : ev.date);
             
-            document.getElementById('p_budget').innerHTML = `<span style="color:var(--text-primary); background:#E2E8F0; padding:4px 8px; border-radius:6px; font-size:12px; letter-spacing:1px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">#${evCode}</span>` + (ev.guests && ev.guests!=='0' ? '<span style="margin-left:8px; font-size:13px; font-weight:700; color:#D97706;">👥 ' + ev.guests + '</span>' : '');
+            document.getElementById('p_budget').innerHTML = `<span style="color:var(--text-primary); background:#E2E8F0; padding:4px 8px; border-radius:6px; font-size:12px; letter-spacing:1px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);">#${evCode}</span>`;
             
             let partyId = Object.keys(partiesDB).find(pid => String(partiesDB[pid].phone).trim() === String(ev.phone).trim() && partiesDB[pid].type === 'Customer');
             let ledgerBtnHtml = partyId ? `<button onclick="jumpToLedger('${partyId}')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; transition:0.2s;">📖 View Ledger</button>` : '';
 
             let wsBodyHtml = `
+                <div class="action-grid" style="margin-bottom:15px;"><button class="btn-action btn-call" onclick="window.location.href='tel:${ev.phone}'">📞 Call</button><button class="btn-action btn-whatsapp" onclick="window.open('https://wa.me/91${ev.phone}', '_blank')">💬 WhatsApp</button></div>
                 <div class="event-pnl-card" style="padding:20px; background: linear-gradient(135deg, #0F172A, #1E293B); color:white; border-radius:16px; box-shadow:0 10px 20px rgba(0,0,0,0.1);">
                     <div style="font-size:11px; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; font-weight:700;">Financial Overview <div style="display:flex; gap:8px; align-items:center;"><button onclick="togglePrivacy()" style="background:none; border:none; color:#94A3B8; cursor:pointer; font-size:16px;" title="Toggle Privacy">👁️</button>${ledgerBtnHtml}</div></div>
                     <button onclick="openEventBalanceSheet('${ev.id}')" style="width:100%; padding:14px; background:rgba(255,255,255,0.1); color:white; border:1px dashed rgba(255,255,255,0.3); border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; transition:0.2s;">📊 Detailed Balance Sheet</button>
@@ -11734,11 +11709,8 @@
                         <button onclick="createExpenseFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
                     </div>
                 </div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>🎪 Function Details</span>
-                    <button onclick="openEventFunctionPanel('${ev.id}', event)" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700; box-shadow:0 1px 3px rgba(29,78,216,0.2);">+ Add Function</button>
-                </h4>
-                <div id="ws_func_details" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:0; box-shadow:var(--shadow-sm); overflow:hidden;"></div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4>
+                <div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
             `;
 
             let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
@@ -11781,9 +11753,12 @@
                         <button onclick="addEventTask()" style="background:var(--accent-color); color:white; border:none; border-radius:8px; padding:12px; cursor:pointer; font-weight:800; width:100%; box-shadow:var(--shadow-sm);">+ Add Task & Assign</button>
                     </div>
                 </div>
-                            
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📸 Function-wise Reference Pictures</h4>
-                <div id="ws_func_photos" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:12px; box-shadow:var(--shadow-sm);"></div>`;
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">🖼️ Reference Media</h4>
+                <div style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:16px; box-shadow:var(--shadow-sm);">
+                    <label class="upload-btn" style="padding:12px;">+ Upload Photos<input type="file" id="p_photo_upload" multiple accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)"></label>
+                    <div class="thumb-grid" id="p_thumbnails"></div>
+                </div>
+            `;
 
             let btnBg = ev.eventStatus === 'Completed' ? 'var(--text-secondary)' : 'var(--success)';
             let btnText = ev.eventStatus === 'Completed' ? '✅ Event Completed (View Feedback)' : '🎯 Complete Event & Add Feedback';
@@ -11793,60 +11768,23 @@
             document.getElementById('detailPanelBody').innerHTML = wsBodyHtml; 
             document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
 
-            // 🚀 Sleek Function Details rendering
-            let fdCont = document.getElementById('ws_func_details');
-            if (fdCont) {
-                fdCont.innerHTML = '';
-                let todayStr = new Date().toISOString().split('T')[0];
-                if (ev.events && ev.events.length > 0) {
-                    ev.events.forEach((fev, fi) => {
-                        let fevDate = fev.date ? new Date(fev.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD';
-                        let fevGuests = fev.guests ? parseInt(fev.guests).toLocaleString('en-IN') : 0;
-                        let fevTime = fev.time || '';
-                        let fevVenue = fev.venue || '';
-                        let fevColor = getEventColor(fev);
-                        let fevTextColor = getContrastColor(fevColor);
-                        let isPast = fev.date && fev.date < todayStr;
-                        let statusIcon = isPast ? '✅' : '⏳';
-                        let statusColor = isPast ? '#10B981' : '#94A3B8';
-                        let cardHtml = '<div style="padding:14px 14px; border-bottom:1px solid #F1F5F9;">';
-                        cardHtml += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">';
-                        cardHtml += '<span style="background:' + fevColor + '; color:' + fevTextColor + '; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:800; flex:1; text-align:center;">' + sanitize(fev.name) + '</span>';
-                        cardHtml += '<span style="font-size:16px; color:' + statusColor + ';" title="' + (isPast ? 'Completed' : 'Upcoming') + '">' + statusIcon + '</span>';
-                        cardHtml += '</div>';
-                        cardHtml += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
-                        cardHtml += '<span style="background:#F1F5F9; color:#475569; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;">📅 ' + fevDate + '</span>';
-                        if (fevTime) cardHtml += '<span style="background:#F1F5F9; color:#475569; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;">🕐 ' + fevTime + '</span>';
-                        if (fevVenue) cardHtml += '<span style="background:#F1F5F9; color:#475569; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📍 ' + sanitize(fevVenue) + '</span>';
-                        if (fevGuests > 0) cardHtml += '<span style="background:#FFF7ED; color:#D97706; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;">👥 ' + fevGuests + '</span>';
-                        cardHtml += '</div>';
-                        cardHtml += '</div>';
-                        fdCont.innerHTML += cardHtml;
-                    });
-                    let maxGuests = ev.events.reduce((max, fev) => Math.max(max, parseInt(fev.guests) || 0), 0);
-                    if (maxGuests > 0) {
-                        let summaryHtml = '<div style="background:#F8FAFC; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">';
-                        summaryHtml += '<div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Expected Guests</div>';
-                        summaryHtml += '<span style="font-size:16px; font-weight:900; color:var(--accent-color);">👥 ' + maxGuests.toLocaleString('en-IN') + '</span>';
-                        summaryHtml += '</div>';
-                        fdCont.innerHTML += summaryHtml;
-                    }
-                } else {
-                    fdCont.innerHTML = '<div style="padding:24px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">No functions added yet.<br>Tap "+ Add Function" to add function details.</div>';
-                }
+            let tCont = document.getElementById('ws_timeline'); 
+            let todayStr = new Date().toISOString().split('T')[0];
+            
+            if (ev.dates && ev.dates.length > 0) { 
+                ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { 
+                    let dStr = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); 
+                    let isPast = d.date < todayStr; 
+                    let icon = isPast ? "✅" : "⏳"; 
+                    let color = isPast ? "var(--success)" : "var(--text-primary)"; 
+                    let timeText = d.time ? ' | ' + d.time : '';
+                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${sanitize(d.name)}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr}${timeText}</span></div>`; 
+                }); 
+            } else { 
+                tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
             }
-            updateCoverPhoto();
-            renderEventTasks(ev);
-            // 🚀 Render function-wise reference pictures (after tasks, at end)
-            let fpCont = document.getElementById('ws_func_photos');
-            if (fpCont) {
-                fpCont.innerHTML = '';
-                if (typeof renderLeadEventPhotosHtml === 'function' && ev.events && ev.events.length > 0) {
-                    fpCont.innerHTML = renderLeadEventPhotosHtml(ev);
-                } else {
-                    fpCont.innerHTML = '<div style="padding:16px; text-align:center; color:#94A3B8; font-size:12px; font-weight:600;">Add functions first to upload reference pictures.</div>';
-                }
-            } 
+            renderEventTasks(ev); 
+            renderPhotos();
         }
 
         function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
