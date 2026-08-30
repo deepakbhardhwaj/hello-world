@@ -10436,7 +10436,7 @@
                 dates: editingLeadId ? (leadsDB[id].dates || []) : [],
                 venue: editingLeadId ? (leadsDB[id].venue || '') : '',
                 coverPhoto: editingLeadId ? (leadsDB[id].coverPhoto || null) : null
-            };
+            });
 
             // 🚀 SMART FIX: Lead saved securely to current Workspace ONLY!
                         // Remove undefined values (Firestore rejects them, causing save to fail and onSnapshot to revert data)
