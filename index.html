@@ -7135,7 +7135,7 @@
             </div>
         </div>
 
-        <div id="poItemViewModal" class="modal-overlay" style="display:none; z-index:11000;">
+        <div id="poItemViewModal" class="modal-overlay" style="display:none; z-index:20000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -7146,7 +7146,7 @@
             </div>
         </div>
 
-        <div id="pbItemViewModal" class="modal-overlay" style="display:none; z-index:11000;">
+        <div id="pbItemViewModal" class="modal-overlay" style="display:none; z-index:20000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -10057,7 +10057,7 @@
 
         function openLeadEventPanel() {
             let leModal = document.getElementById('leadEventPanel');
-            if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
+            if (leModal) leModal.style.setProperty('z-index', '20000', 'important');
             document.getElementById('lev_name').value = '';
             document.getElementById('lev_date').value = '';
             document.getElementById('lev_time').value = '';
@@ -11235,7 +11235,7 @@
             leadEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', photos: ev.photos || [] })) : [];
             editingLeadId = currentLeadId;
             let leModal = document.getElementById('leadEventPanel');
-            if (leModal) leModal.style.setProperty('z-index', '10600', 'important');
+            if (leModal) leModal.style.setProperty('z-index', '20000', 'important');
             document.getElementById('lev_name').value = '';
             document.getElementById('lev_date').value = '';
             document.getElementById('lev_time').value = '';
@@ -11409,8 +11409,7 @@
                                 <button class="evt-qbtn" onclick="toggleMenu('${sanitize(ev.id)}', event)">⋮</button>
                                 <div class="dropdown-menu" id="menu-${sanitize(ev.id)}">
                                     <div class="dropdown-item" onclick="actionEdit('${sanitize(ev.id)}', event)">✏️ Edit Details</div>
-                                    <div class="dropdown-item" onclick="openMultiDateModal('${sanitize(ev.id)}', event)">📅 Manage Dates</div>
-                                    ${extraMenu}
+                                                                        ${extraMenu}
                                     <div class="dropdown-item" onclick="actionUndoToCRM('${sanitize(ev.id)}', event)">↩️ Undo to CRM</div>
                                     <div class="dropdown-item" onclick="actionCancelEvent('${sanitize(ev.id)}', event)">🚫 Cancel Event</div>
                                     <div class="dropdown-item text-red" onclick="actionDeleteEvent('${sanitize(ev.id)}', event)">🗑️ Delete Event</div>
@@ -14137,7 +14136,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         // EVENT PANEL FUNCTIONS
         function openQuoteEventPanel() {
             let epModal = document.getElementById('quoteEventPanel');
-            if (epModal) epModal.style.setProperty('z-index', '10600', 'important');
+            if (epModal) epModal.style.setProperty('z-index', '20000', 'important');
             document.getElementById('qev_name').value = '';
             document.getElementById('qev_date').value = '';
             document.getElementById('qev_time').value = '';
@@ -14315,7 +14314,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         // ITEM PANEL FUNCTIONS
         function openQuoteItemPanel() {
             let ipModal = document.getElementById('quoteItemPanel');
-            if (ipModal) ipModal.style.setProperty('z-index', '10600', 'important');
+            if (ipModal) ipModal.style.setProperty('z-index', '20000', 'important');
             let eventSel = document.getElementById('qip_event');
             let opts = '<option value="">-- Select Event --</option>';
             quoteEventsData.forEach(ev => { opts += '<option value="' + ev.name + '">' + ev.name + '</option>'; });
@@ -14431,7 +14430,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         function openQuoteItemViewPanel(evIdx) {
             quoteViewEvIdx = evIdx;
             let ivModal = document.getElementById('quoteItemViewModal');
-            if (ivModal) ivModal.style.setProperty('z-index', '10600', 'important');
+            if (ivModal) ivModal.style.setProperty('z-index', '20000', 'important');
             renderQuoteItemView(false);
             document.getElementById('quoteItemViewModal').style.display = 'flex';
         }
@@ -14858,7 +14857,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         function showQuotePreview() {
             hideNavAndFabs();
             let pModal = document.getElementById('quotePreviewModal');
-            if (pModal) pModal.style.setProperty('z-index', '10600', 'important');
+            if (pModal) pModal.style.setProperty('z-index', '20000', 'important');
             let partyId = document.getElementById('q_party').value;
             if (!partyId) { alert('Please select a client/party!'); return; }
             if (quoteEventsData.length === 0) { alert('Please add at least one function!'); return; }
@@ -15075,7 +15074,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         // Side panel for add/edit invoice functions (mirrors quoteEventPanel)
         function openInvEventPanel() {
             let epModal = document.getElementById('invEventPanel');
-            if (epModal) epModal.style.setProperty('z-index', '10600', 'important');
+            if (epModal) epModal.style.setProperty('z-index', '20000', 'important');
             document.getElementById('iev_name').value = '';
             document.getElementById('iev_date').value = '';
             document.getElementById('iev_time').value = '';
@@ -15247,7 +15246,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         function openInvItemViewPanel(evIdx) {
             invViewEvIdx = evIdx;
             let ivModal = document.getElementById('invItemViewModal');
-            if (ivModal) ivModal.style.setProperty('z-index', '10600', 'important');
+            if (ivModal) ivModal.style.setProperty('z-index', '20000', 'important');
             renderInvItemView(false);
             document.getElementById('invItemViewModal').style.display = 'flex';
         }
@@ -15483,7 +15482,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         function showInvPreview() {
             hideNavAndFabs();
             let pModal = document.getElementById('invPreviewModal');
-            if (pModal) pModal.style.setProperty('z-index', '10600', 'important');
+            if (pModal) pModal.style.setProperty('z-index', '20000', 'important');
             let partyId = document.getElementById('di_party').value;
             if (!partyId) { alert('Please select a client/party!'); return; }
             if (invEventsData.length === 0) { alert('Please add at least one function!'); return; }
@@ -16561,7 +16560,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             poViewEvIdx = evIdx;
             let ev = poEventsData[evIdx]; if (!ev) return;
             let modal = document.getElementById('poItemViewModal');
-            if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '10600'; }
+            if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '20000'; }
             renderPOItemPopup();
         }
         function closePOItemViewPanel() {
@@ -16785,7 +16784,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         }
         function openPBItemPopup(evIdx) {
             pbViewEvIdx = evIdx; let ev = pbEventsData[evIdx]; if (!ev) return;
-            let modal = document.getElementById('pbItemViewModal'); if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '10600'; }
+            let modal = document.getElementById('pbItemViewModal'); if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '20000'; }
             renderPBItemPopup();
         }
         function closePBItemViewPanel() { let modal = document.getElementById('pbItemViewModal'); if (modal) modal.style.display = 'none'; renderPBEvents(); renderPBItems(); }
@@ -17993,7 +17992,7 @@ function openPurchaseOrderModal() {
         function viewDetails(id, context = 'sales') {
             hideNavAndFabs();
             let vModal = document.getElementById('quoteViewModal');
-            if (vModal) vModal.style.setProperty('z-index', '10600', 'important');
+            if (vModal) vModal.style.setProperty('z-index', '20000', 'important');
             let record = null;
             if (context === 'sales') { record = salesDB[id]; }
             else if (context === 'purchase') { record = purchaseDB[id]; }
