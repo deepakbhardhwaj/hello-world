@@ -16950,12 +16950,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             selected.forEach((p,i) => { msg += (i+1)+'. '+(p.label||'Photo')+'%0A'+p.url+'%0A%0A'; });
             if (vendorPhone) { let cp = String(vendorPhone).replace(/\D/g,''); if(cp.length===10) cp='91'+cp; window.open('https://wa.me/'+cp+'?text='+msg,'_blank'); }
             else { navigator.clipboard.writeText(msg.replace(/%0A/g,'\n')).then(()=>alert('Links copied to clipboard!')).catch(()=>alert(msg.replace(/%0A/g,'\n'))); }
-        }
-        function fetchItemsFromInvoice(formType) { /* deprecated */ }
-        function confirmFetchItems(formType) { /* deprecated */ }
-
-
-        // ===== PO/PB PREVIEW & PRINT FUNCTIONS =====
+        }        // ===== PO/PB PREVIEW & PRINT FUNCTIONS =====
         function showPOPreview() {
             let partyId = document.getElementById('po_vendor').value;
             if (!partyId) { alert('Please select a vendor!'); return; }
@@ -17290,9 +17285,7 @@ function openPurchaseOrderModal() {
             } else {
                 group.style.display = 'none';
             }
-        }
-        function addPOItem() { poItemCount++; let container = document.getElementById('po_items_container'); let rowId = 'po_item_' + poItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculatePOTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculatePOTotal()" required></div></div><div><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
-        function calculatePOTotal() {
+        }        function calculatePOTotal() {
             let total = poItemsData.reduce((s, i) => s + (i.amount || 0), 0);
             let discount = parseFloat(document.getElementById('po_discount').value) || 0;
             let grandTotal = total - discount;
@@ -18906,6 +18899,7 @@ function openPurchaseOrderModal() {
                     }
 
                     // MAIN ITEMS TABLE — grouped by category
+                    if ((record.type === 'PO' || record.type === 'PB') && record.events && record.events.length > 0) { subtotal = (record.items||[]).reduce((s,i)=>s+(i.amount||0),0); } else {
                     html += `<span class="section-label">Particulars</span>`;
                     if (record.items && Array.isArray(record.items) && record.items.length > 0) {
                         // Build categories
@@ -18989,6 +18983,7 @@ function openPurchaseOrderModal() {
                     html += `<div class="history-table"></div>`;
                 }
 
+                } // end else skipFlatItems
                 // Right: Totals Box
                 html += `<div class="totals-box">`;
                 if (record.type === 'Quotation' || record.type === 'PO') {
