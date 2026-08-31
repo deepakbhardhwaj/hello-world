@@ -7135,7 +7135,7 @@
             </div>
         </div>
 
-        <div id="poItemViewModal" class="modal-overlay" style="display:none; z-index:10600;">
+        <div id="poItemViewModal" class="modal-overlay" style="display:none; z-index:11000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -7146,7 +7146,7 @@
             </div>
         </div>
 
-        <div id="pbItemViewModal" class="modal-overlay" style="display:none; z-index:10600;">
+        <div id="pbItemViewModal" class="modal-overlay" style="display:none; z-index:11000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -11700,8 +11700,11 @@
                         <button onclick="createExpenseFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
                     </div>
                 </div>
-                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">📅 Event Timeline</h4>
-                <div id="ws_timeline" style="background:white; border-radius:12px; border:1px solid var(--border-color); padding:5px; box-shadow:var(--shadow-sm);"></div>
+                <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">&#x1F389; Functions</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <button onclick="openWorkspaceEventFunctionPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:4px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button>
+                </div>
+                <div id="ws_timeline" style="background:#F8FAFC; border-radius:8px; border:1px solid var(--border-color); padding:10px;"></div>
             `;
 
             let obList = Object.values(window.orderBookDB || {}).filter(o => o.leadId === id);
@@ -11757,19 +11760,31 @@
             document.getElementById('detailPanelFooter').innerHTML = wsFooterHtml;
 
             let tCont = document.getElementById('ws_timeline'); 
-            let todayStr = new Date().toISOString().split('T')[0];
-            
-            if (ev.dates && ev.dates.length > 0) { 
-                ev.dates.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(d => { 
-                    let dStr = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }); 
-                    let isPast = d.date < todayStr; 
-                    let icon = isPast ? "✅" : "⏳"; 
-                    let color = isPast ? "var(--success)" : "var(--text-primary)"; 
-                    let timeText = d.time ? ' | ' + d.time : '';
-                    tCont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px solid #F1F5F9;"><strong style="font-size:13px; color:${color};">${icon} ${sanitize(d.name)}</strong> <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">${dStr}${timeText}</span></div>`; 
-                }); 
-            } else { 
-                tCont.innerHTML = "<p style='font-size:12px; padding:10px; margin:0;'>No dates added.</p>"; 
+            if (!tCont) { renderEventTasks(ev); return; }
+            let funcs = (ev.events && ev.events.length > 0) ? ev.events : (ev.dates || []);
+            tCont.innerHTML = '';
+            if (funcs.length === 0) {
+                tCont.innerHTML = '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function".</p>';
+            } else {
+                funcs.sort((a, b) => new Date(a.date || '9999') - new Date(b.date || '9999')).forEach((d, i) => {
+                    let dStr = d.date ? new Date(d.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                    let evColor = d.color || '#3B82F6';
+                    let textColor = getContrastColor(evColor);
+                    let div = document.createElement('div');
+                    div.style.cssText = 'background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;';
+                    let html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
+                    html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + (d.name||'Function') + '</span>';
+                    html += '<button onclick="editWorkspaceEventFunction(' + i + ')" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                    html += '</div>';
+                    let details = '';
+                    if (dStr) details += dStr + ' &nbsp; ';
+                    if (d.time) details += d.time + ' &nbsp; ';
+                    if (d.venue) details += d.venue;
+                    if (d.guests) details += ' &nbsp; &#x1F465; ' + d.guests;
+                    if (details) html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5;">' + details + '</div>';
+                    div.innerHTML = html;
+                    tCont.appendChild(div);
+                });
             }
             renderEventTasks(ev);
             try {
@@ -11780,7 +11795,36 @@
             updateCoverPhoto();
         }
 
-        function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
+        
+        function openWorkspaceEventFunctionPanel(idx) {
+            let ev = leadsDB[activeWorkspaceEventId || currentLeadId];
+            if (!ev) return;
+            let funcs = ev.events || ev.dates || [];
+            let editing = (idx !== undefined && idx >= 0);
+            let f = editing ? funcs[idx] : { name:'', date:'', time:'', venue:'', guests:'', color:'#3B82F6' };
+            let modal = document.createElement('div');
+            modal.id = 'wsFuncPanel'; modal.className = 'modal-overlay'; modal.style.cssText = 'display:flex; z-index:10600;';
+            let title = editing ? 'Edit Function' : 'Add Function';
+            modal.innerHTML = `<div class="modal-content" style="max-width:400px;"><div class="modal-header"><h3>${title}</h3><button class="modal-close" onclick="document.getElementById('wsFuncPanel').remove();">&times;</button></div><div style="padding:0 16px 16px;"><div class="form-row"><div class="form-group" style="flex:1;"><label class="form-label">Function Name</label><input type="text" id="wsf_name" class="form-input" value="${f.name||''}" placeholder="e.g. Haldi, Wedding"></div><div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="wsf_color" class="form-input" value="${f.color||'#3B82F6'}" style="height:38px; width:45px; padding:2px; cursor:pointer; border-radius:6px;"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" id="wsf_date" class="form-input" value="${f.date||''}"></div><div class="form-group"><label class="form-label">Time</label><input type="time" id="wsf_time" class="form-input" value="${f.time||''}"></div></div><div class="form-group"><label class="form-label">Venue</label><input type="text" id="wsf_venue" class="form-input" value="${f.venue||''}" placeholder="Venue address"></div><div class="form-group"><label class="form-label">Expected Guests</label><input type="number" id="wsf_guests" class="form-input" value="${f.guests||''}" placeholder="0"></div><button type="button" class="btn-main" onclick="saveWorkspaceEventFunction(${editing ? idx : -1})" style="font-size:12px; padding:8px;">Save Function</button></div></div>`;
+            document.body.appendChild(modal);
+        }
+        function editWorkspaceEventFunction(idx) { openWorkspaceEventFunctionPanel(idx); }
+        function saveWorkspaceEventFunction(idx) {
+            let ev = leadsDB[activeWorkspaceEventId || currentLeadId];
+            if (!ev) return;
+            if (!ev.events) ev.events = [];
+            if (!ev.dates) ev.dates = [];
+            let f = { name: document.getElementById('wsf_name').value.trim(), date: document.getElementById('wsf_date').value, time: document.getElementById('wsf_time').value, venue: document.getElementById('wsf_venue').value.trim(), guests: document.getElementById('wsf_guests') ? document.getElementById('wsf_guests').value : '', color: document.getElementById('wsf_color') ? document.getElementById('wsf_color').value : '#3B82F6' };
+            if (!f.name) { alert('Please enter function name!'); return; }
+            if (idx >= 0) { ev.events[idx] = f; if (ev.dates[idx]) ev.dates[idx] = { name: f.name, date: f.date, time: f.time, venue: f.venue }; }
+            else { ev.events.push(f); ev.dates.push({ name: f.name, date: f.date, time: f.time, venue: f.venue }); }
+            ev.events.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
+            ev.dates.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
+            saveLeadData();
+            document.getElementById('wsFuncPanel').remove();
+            renderWorkspace(ev.id);
+        }
+function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElementById('poPbChoiceModal').style.display = 'flex'; }
 
         function jumpToLedger(partyId) { closePanel(); setTimeout(() => { openPartyLedger(partyId); }, 400); }
         function togglePrivacy() { privacyMode = !privacyMode; let ev = leadsDB[activeWorkspaceEventId]; if (ev) renderWorkspace(ev.id); }
