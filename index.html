@@ -5046,7 +5046,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Work Date</label>
+                            <label class="form-label">Order Date</label>
                             <input type="date" id="ob_date" class="form-input" required readonly style="background:#F8FAFC;">
                         </div>
                     </div>
@@ -7143,16 +7143,14 @@
                 </div>
                 <form id="poForm" onsubmit="event.preventDefault();" novalidate>
                     <div class="form-group">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0; color:var(--accent-color);">Select
-                                Vendor</label><button type="button" class="link-btn" onclick="openPartyModal()">+ Add
-                                New Vendor</button>
-                        </div><input type="text" class="select-search-box" placeholder="Search Vendor..."
-                            oninput="loadVendorsIntoSelect('po_vendor', document.getElementById(formType + '_vendor').value, this.value)"><select
-                            id="po_vendor" class="form-select" required></select>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0; color:var(--accent-color);">Select Vendor</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New Vendor</button>
+                        </div>
+                        <input type="text" class="select-search-box" placeholder="Search Vendor..."
+                            oninput="loadVendorsIntoSelect('po_vendor', document.getElementById('po_vendor').value, this.value)">
+                        <select id="po_vendor" class="form-select" required></select>
                     </div>
-
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Link to Event</label><select
                                 id="po_event_link" class="form-select" onchange="handleEventLinkChange('po')"></select>
@@ -7160,52 +7158,26 @@
                         <div class="form-group"><label class="form-label">Work Date</label><input type="date"
                                 id="po_date" class="form-input" required></div>
                     </div>
-
-                    <div class="form-group" id="po_function_group"
-                        style="display:none; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
-                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>
-                            <span style="font-size:9px; color:var(--text-secondary);">Select functions for this order</span>
-                        </div>
-                        <div id="po_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
-                    </div>
-
                     <input type="hidden" id="po_event" value="Purchase Order">
-
-                    
-
-                    <div
-                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #EFF6FF;">
-                        <div id="po_items_wrapper" style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin:12px 0;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
-                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Services / Items</label>
-                            <div style="display:flex; gap:6px;">
-                                <button type="button" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="fetchItemsFromInvoice('po')">&#x1F4C4; Fetch from Invoice</button>
-                                <button type="button" style="background:var(--accent-color); border:none; color:white; border-radius:4px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="addPOItem()">+ Add Item</button>
-                            </div>
-                        </div>
-                        <div id="po_items_container"></div>
-                    </div>
+                    <div id="po_events_container"></div>
+                    <div id="po_items_container"></div>
                     <div class="form-row">
-                        <div class="form-group"><label class="form-label">Discount/Negotiation (₹)</label><input
+                        <div class="form-group"><label class="form-label">Discount/Negotiation (&#x20B9;)</label><input
                                 type="number" id="po_discount" class="form-input" value="0"
                                 oninput="calculatePOTotal()"></div>
-                        <div class="form-group"><label class="form-label">Grand Total (₹)</label><input type="number"
+                        <div class="form-group"><label class="form-label">Grand Total (&#x20B9;)</label><input type="number"
                                 id="po_total" class="form-input" readonly
                                 style="background: #F1F5F9; font-weight: bold; font-size:14px;"></div>
                     </div>
-                                        <div class="form-group">
+                    <div class="form-group">
                         <label class="form-label">Remarks / Notes (Optional)</label>
                         <textarea id="po_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <label for="po_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label><input type="file" id="po_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('PO', 'po_file_upload', 'po_file_preview')"><div id="po_file_preview" style="margin-top:6px; display:none;"></div>
                     </div>
                     <button type="button" class="btn-main" style="background:var(--accent-color); color:white;"
                         onclick="savePOData()">Save Purchase Order</button>
                 </form>
             </div>
+        </div>
         </div>
 
         <div id="purchaseBillModal" class="modal-overlay" style="z-index: 5500;">
@@ -7215,108 +7187,53 @@
                         onclick="document.getElementById('purchaseBillModal').style.display='none'; tempEventIdForPurchase=null; convertingPOId=null;">&times;</button>
                 </div>
                 <form id="pbForm" onsubmit="event.preventDefault();" novalidate>
-                    <div id="pb_autopilot_badge"
-                        style="display:none; background:#EFF6FF; color:#D97706; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:16px; border:1px solid #BFDBFE; align-items:center; gap:6px;">
-                    </div>
-
                     <div class="form-group">
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0; color:var(--accent-color);">Select
-                                Vendor</label><button type="button" class="link-btn" onclick="openPartyModal()">+ Add
-                                New Vendor</button>
-                        </div><input type="text" class="select-search-box" placeholder="Search Vendor..."
-                            oninput="loadVendorsIntoSelect('pb_vendor', document.getElementById('pb_vendor').value, this.value)"><select
-                            id="pb_vendor" class="form-select" onchange="handleVendorSelectionForPB()"
-                            required></select>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="form-label" style="margin:0; color:var(--accent-color);">Select Vendor</label>
+                            <button type="button" class="link-btn" onclick="openPartyModal()">+ Add New Vendor</button>
+                        </div>
+                        <input type="text" class="select-search-box" placeholder="Search Vendor..."
+                            oninput="loadVendorsIntoSelect('pb_vendor', document.getElementById('pb_vendor').value, this.value)">
+                        <select id="pb_vendor" class="form-select" onchange="handleVendorSelectionForPB()" required></select>
                     </div>
-
-                    <div class="form-group" id="pb_link_po_group"
-                        style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--accent-color);">
-                        <label class="form-label" style="color:var(--accent-color);">🔗 Auto-fill from Pending PO</label>
-                        <select id="pb_linked_po" class="form-select" style="border-color:var(--accent-color);"
-                            onchange="handlePOSelectionForPB()"></select>
-                    </div>
-
                     <div class="form-row">
-                        <div class="form-group"><label class="form-label">Link to Event (Optional)</label><select
+                        <div class="form-group"><label class="form-label">Link to Event</label><select
                                 id="pb_event_link" class="form-select" onchange="handleEventLinkChange('pb')"></select>
                         </div>
-                        <div class="form-group"><label class="form-label">Bill Date</label><input type="date"
+                        <div class="form-group"><label class="form-label">Work Date</label><input type="date"
                                 id="pb_date" class="form-input" required></div>
                     </div>
-
-                    <div class="form-group" id="pb_function_group"
-                        style="display:none; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
-                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>
-                            <span style="font-size:9px; color:var(--text-secondary);">Select functions for this bill</span>
-                        </div>
-                        <div id="pb_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
-                    </div>
-                    </div>
-
-                    <div class="form-group"><label class="form-label">Vendor Bill No. (Optional)</label><input
-                            type="text" id="pb_ref" class="form-input" placeholder="e.g. INV-104"></div>
-                    <div
-                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #EFF6FF;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Services / Items</label>
-                                <div style="display:flex; gap:6px;">
-                                    <button type="button" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="fetchItemsFromInvoice('pb')">&#x1F4C4; Fetch from Invoice</button>
-                                    <button type="button" style="background:var(--accent-color); border:none; color:white; border-radius:4px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="addPBItem()">+ Add Item</button>
-                                </div>
-                        </div>
-                        <div id="pb_items_container"></div>
-                    </div>
+                    <input type="hidden" id="pb_event" value="Purchase Bill">
+                    <input type="hidden" id="pb_ref" value="">
+                    <div id="pb_events_container"></div>
+                    <div id="pb_items_container"></div>
                     <div class="form-row">
-                        <div class="form-group"><label class="form-label">Discount (₹)</label><input type="number"
-                                id="pb_discount" class="form-input" value="0" oninput="calculatePBTotal()"></div>
+                        <div class="form-group"><label class="form-label">Discount (&#x20B9;)</label><input
+                                type="number" id="pb_discount" class="form-input" value="0"
+                                oninput="calculatePBTotal()"></div>
                         <div class="form-group"><label class="form-label">Add GST (%)</label><select id="pb_gst"
                                 class="form-select" onchange="calculatePBTotal()">
-                                <option value="0">0% (No GST)</option>
-                                <option value="5">5%</option>
-                                <option value="12">12%</option>
-                                <option value="18">18%</option>
+                                <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option>
+                                <option value="18">18%</option><option value="28">28%</option>
                             </select></div>
                     </div>
-                    <div class="form-group"><label class="form-label">Final Bill Amount (₹)</label><input type="number"
-                            id="pb_final_total" class="form-input" readonly
-                            style="background: #F1F5F9; font-weight: bold; font-size: 16px; color:var(--danger);"></div>
-                    <div class="form-group" id="available_adv_out_group"
-                        style="display:none; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 12px; border-radius: 8px; margin-top: 16px;">
-                        <label class="form-label" style="color: var(--accent-color);">Use Advance Given to
-                            Vendor</label><select id="pb_use_advance" class="form-select" onchange="calculatePBTotal()">
-                            <option value="0">Do not use advance</option>
-                        </select>
+                    <div class="form-group"><label class="form-label">Grand Total (&#x20B9;)</label><input type="number"
+                            id="pb_total" class="form-input" readonly style="background:#F1F5F9; font-weight:bold; font-size:14px;"></div>
+                    <div class="form-row" style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-color);">
+                        <div class="form-group"><label class="form-label" style="color:var(--success);">Advance Paid (&#x20B9;)</label><input
+                                type="number" id="pb_advance" class="form-input" value="0" oninput="calculatePBTotal()"></div>
+                        <div class="form-group"><label class="form-label">Payment Mode</label><select id="pb_pay_mode" class="form-select dynamic-bank-select" onchange="toggleBankSelect(this)"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank">Bank Transfer</option><option value="Cheque">Cheque</option></select></div>
                     </div>
-                    <div class="form-row"
-                        style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
-                        <div class="form-group"><label class="form-label" style="color: var(--danger);">Amount Paying
-                                Now (₹)</label><input type="number" id="pb_advance" class="form-input" placeholder="0"
-                                oninput="calculatePBTotal()"></div>
-                        <div class="form-group"><label class="form-label">Payment Mode</label><select id="pb_pay_mode"
-                                class="form-select dynamic-pay-mode"></select></div>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px;">
-                        <span style="color: var(--text-secondary); font-weight: 700;">Balance Payable:</span><span
-                            id="pb_balance_due"
-                            style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
-                    </div>
-                                        <div class="form-group">
-                        <label class="form-label">Remarks / Notes (Optional)</label>
-                        <textarea id="pb_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
-                    </div>
+                    <div class="form-group"><label class="form-label">Balance Due: <span id="pb_balance_due" style="font-weight:800; color:var(--danger); font-size:16px;">&#x20B9;0</span></label></div>
                     <div class="form-group">
-                        <label class="form-label">Upload Document / Photo (Optional)</label>
-                        <label for="pb_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label><input type="file" id="pb_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('PB', 'pb_file_upload', 'pb_file_preview')"><div id="pb_file_preview" style="margin-top:6px; display:none;"></div>
+                        <label class="form-label">Remarks / Notes</label>
+                        <textarea id="pb_remarks" class="form-input" rows="2" placeholder="Any special instructions..." style="font-size:12px; resize:vertical;"></textarea>
                     </div>
-                    <button type="button" class="btn-main" style="background: var(--danger);"
-                        onclick="savePBData()">Save Vendor Bill</button>
+                    <button type="button" class="btn-main" style="background:var(--accent-color); color:white;"
+                        onclick="savePBData()">Save Purchase Bill</button>
                 </form>
             </div>
+        </div>
         </div>
 
         <div id="expenseModal" class="modal-overlay" style="z-index: 5500;">
@@ -8650,7 +8567,9 @@
             return false;
         }
 
-        let quoteItemCount = 0; let invItemCount = 0; let poItemCount = 0; let pbItemCount = 0; let currentCalDate = new Date(); let invEventsData = []; let invItemsData = []; let editingInvEventIdx = -1; let invViewEvIdx = -1;
+        let quoteItemCount = 0; let invItemCount = 0; let poItemCount = 0; let pbItemCount = 0; pbEventsData = []; pbItemsData = []; let currentCalDate = new Date(); let invEventsData = []; let invItemsData = []; let editingInvEventIdx = -1; let invViewEvIdx = -1;
+        let poEventsData = []; let poItemsData = []; let editingPOEventIdx = -1; let poViewEvIdx = -1;
+        let pbEventsData = []; let pbItemsData = []; let editingPBEventIdx = -1; let pbViewEvIdx = -1;
         let tempEventIdForInvoice = null; let tempEventIdForPurchase = null; let convertingPOId = null;
         let targetInvoiceId = null; let targetReceiptId = null; let targetInvoiceToAttach = null;
 
@@ -16419,294 +16338,356 @@
             });
         }
 
+        // ===== PO/PB EVENT & ITEM SYSTEM (cloned from Invoice) =====
+        function renderPOEvents() {
+            let container = document.getElementById('po_events_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
+            html += '<button type="button" onclick="openPOEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button>';
+            html += '</div>';
+            if (poEventsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet. Click "Add Function" or select from event.</p>';
+            }
+            poEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid ' + evColor + '; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">';
+                html += '<span style="background:' + evColor + '; color:' + textColor + '; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">' + ev.name + '</span>';
+                html += '<button onclick="editPOEvent(' + i + ')" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button>';
+                html += '</div>';
+                if (d || ev.time || ev.venue) {
+                    html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">';
+                    if (d) html += d + ' &nbsp; ';
+                    if (ev.time) html += ev.time + ' &nbsp; ';
+                    if (ev.venue) html += ev.venue;
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        function openPOEventPanel() {
+            let modal = document.createElement('div');
+            modal.id = 'poEventPanel';
+            modal.className = 'modal-overlay';
+            modal.style.cssText = 'display:flex; z-index:10600;';
+            modal.innerHTML = '<div class="modal-content" style="max-width:400px;"><div class="modal-header"><h3>Function Details</h3><button class="modal-close" onclick="document.getElementById(\'poEventPanel\').remove();">&times;</button></div><div style="padding:0 16px 16px;"><div class="form-row"><div class="form-group" style="flex:1;"><label class="form-label">Function Name</label><input type="text" id="poev_name" class="form-input" placeholder="e.g. Haldi, Wedding"></div><div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="poev_color" class="form-input" value="#3B82F6" style="height:38px; width:45px; padding:2px; cursor:pointer; border-radius:6px;"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" id="poev_date" class="form-input"></div><div class="form-group"><label class="form-label">Time</label><input type="time" id="poev_time" class="form-input"></div></div><div class="form-group"><label class="form-label">Venue</label><input type="text" id="poev_venue" class="form-input" placeholder="Venue address"></div><button type="button" class="btn-main" onclick="savePOEvent()" style="font-size:12px; padding:8px;">Save Function</button></div></div>';
+            document.body.appendChild(modal);
+        }
+        function savePOEvent() {
+            let name = document.getElementById('poev_name').value.trim();
+            if (!name) { alert('Please enter function name!'); return; }
+            let ev = { name: name, date: document.getElementById('poev_date').value, time: document.getElementById('poev_time').value, venue: document.getElementById('poev_venue').value.trim(), color: document.getElementById('poev_color') ? document.getElementById('poev_color').value : '' };
+            if (editingPOEventIdx >= 0) { poEventsData[editingPOEventIdx] = ev; editingPOEventIdx = -1; }
+            else { poEventsData.push(ev); }
+            poEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+            document.getElementById('poEventPanel').remove();
+            renderPOEvents();
+            renderPOItems();
+        }
+        function editPOEvent(idx) {
+            let ev = poEventsData[idx];
+            openPOEventPanel();
+            setTimeout(() => {
+                document.getElementById('poev_name').value = ev.name;
+                document.getElementById('poev_date').value = ev.date || '';
+                document.getElementById('poev_time').value = ev.time || '';
+                document.getElementById('poev_venue').value = ev.venue || '';
+                if (document.getElementById('poev_color')) document.getElementById('poev_color').value = ev.color || '#3B82F6';
+                editingPOEventIdx = idx;
+            }, 50);
+        }
+        function renderPOItems() {
+            let container = document.getElementById('po_items_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Services / Items</label>';
+            html += '<div style="display:flex; gap:6px;">';
+            html += '<button type="button" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="fetchItemsFromInvoice(\'po\')">&#x1F4C4; Fetch from Invoice</button>';
+            html += '</div></div>';
+            if (poItemsData.length === 0) {
+                html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet. Click "Fetch from Invoice" or add per function.</p>';
+            }
+            poEventsData.forEach((ev, evIdx) => {
+                let evItems = poItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; overflow:hidden;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+                html += '<button type="button" onclick="openPOItemViewPanel(' + evIdx + ')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">Add</button>';
+                html += '</div>';
+                if (evItems.length > 0) {
+                    evItems.forEach((item, iIdx) => {
+                        html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-top:1px solid #F1F5F9; font-size:11px;">';
+                        html += '<div><b style="color:var(--text-primary);">' + (item.name || '') + '</b>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + item.desc + '</div>';
+                        html += '</div>';
+                        html += '<div style="text-align:right;"><span style="font-weight:700;">' + (item.qty || 1) + ' ' + (item.unit || '') + ' x &#x20B9;' + (item.rate || 0) + '</span><br><span style="color:var(--accent-color); font-weight:800;">&#x20B9;' + ((item.amount || 0)).toLocaleString('en-IN') + '</span></div>';
+                        html += '</div>';
+                    });
+                    html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-top:1px dashed #CBD5E1; font-size:11px; font-weight:800; background:#F8FAFC;"><span>Function Total:</span><span style="color:var(--accent-color);">&#x20B9;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            calculatePOTotal();
+        }
+        function openPOItemViewPanel(evIdx) {
+            let ev = poEventsData[evIdx];
+            if (!ev) return;
+            poViewEvIdx = evIdx;
+            let modal = document.createElement('div');
+            modal.id = 'poItemViewPanel';
+            modal.className = 'modal-overlay';
+            modal.style.cssText = 'display:flex; z-index:10700;';
+            let evItems = poItemsData.filter(i => i.event === ev.name);
+            let itemsHtml = '';
+            evItems.forEach((item, i) => {
+                itemsHtml += '<div style="display:flex; justify-content:space-between; padding:8px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:6px;"><div><b style="font-size:12px;">' + (item.name||'') + '</b><div style="font-size:10px; color:#64748b;">' + (item.qty||1) + ' ' + (item.unit||'') + ' x &#x20B9;' + (item.rate||0) + '</div></div><div style="font-weight:700; color:var(--accent-color);">&#x20B9;' + (item.amount||0) + '</div></div>';
+            });
+            modal.innerHTML = '<div class="modal-content" style="max-width:450px; max-height:80vh; overflow-y:auto;"><div class="modal-header"><h3>Items for ' + ev.name + '</h3><button class="modal-close" onclick="document.getElementById(\'poItemViewPanel\').remove();">&times;</button></div><div style="padding:0 16px 16px;"><div id="po_item_list">' + itemsHtml + '</div><div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-top:12px; background:#F8FAFC;"><strong style="font-size:12px; color:var(--accent-color);">Add New Item</strong><div style="display:flex; gap:8px; align-items:flex-end; margin-top:8px;"><div style="flex:2;"><label class="form-label" style="font-size:10px; margin:0;">Item/Service</label><input type="text" id="poiv_name" class="form-input" placeholder="Name" style="font-size:11px;"></div><div style="flex:1;"><label class="form-label" style="font-size:10px; margin:0;">Qty</label><input type="number" id="poiv_qty" class="form-input" value="1" style="font-size:11px;"></div><div style="flex:1;"><label class="form-label" style="font-size:10px; margin:0;">Rate</label><input type="number" id="poiv_rate" class="form-input" placeholder="0" style="font-size:11px;"></div></div><div style="margin-top:6px;"><input type="text" id="poiv_desc" class="form-input" placeholder="Description (optional)" style="font-size:11px;"></div><div style="margin-top:6px; display:flex; gap:6px;"><select id="poiv_unit" class="form-select" style="flex:1; font-size:11px;">' + getUnitOptions() + '</select><button type="button" class="btn-main" onclick="savePOItemFromView()" style="font-size:11px; padding:6px 12px;">Add Item</button></div></div></div></div>';
+            document.body.appendChild(modal);
+        }
+        function savePOItemFromView() {
+            let name = document.getElementById('poiv_name').value.trim();
+            if (!name) { alert('Enter item name!'); return; }
+            let qty = parseFloat(document.getElementById('poiv_qty').value) || 1;
+            let rate = parseFloat(document.getElementById('poiv_rate').value) || 0;
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev) return;
+            poItemsData.push({ name: name, desc: document.getElementById('poiv_desc').value.trim(), unit: document.getElementById('poiv_unit').value, qty: qty, rate: rate, amount: qty * rate, event: ev.name });
+            document.getElementById('poiv_name').value = ''; document.getElementById('poiv_desc').value = ''; document.getElementById('poiv_qty').value = '1'; document.getElementById('poiv_rate').value = '';
+            // Refresh the item list in the modal
+            openPOItemViewPanel(poViewEvIdx);
+            renderPOItems();
+        }
+        function loadPOEventsFromLead(evId) {
+            if (!evId || !leadsDB[evId]) { poEventsData = []; poItemsData = []; renderPOEvents(); renderPOItems(); return; }
+            let lead = leadsDB[evId];
+            poEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name||'', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||0, color: ev.color||'' })) : [];
+            poItemsData = [];
+            renderPOEvents();
+            renderPOItems();
+        }
+        function fetchItemsFromInvoice(formType) {
+            let evId = document.getElementById(formType + '_event_link').value;
+            if (!evId) { alert('Please select an event first!'); return; }
+            let eventSales = Object.values(salesDB).filter(s => s.eventId === evId);
+            if (eventSales.length === 0) { alert('No invoices or quotations found for this event!'); return; }
+            let allItems = [];
+            eventSales.forEach(sale => {
+                if (sale.items && sale.items.length > 0) {
+                    sale.items.forEach(item => {
+                        allItems.push({ ...item, source: sale.id, sourceType: sale.type });
+                    });
+                }
+            });
+            if (allItems.length === 0) { alert('No items found in invoices!'); return; }
+            // Build popup
+            let modal = document.createElement('div');
+            modal.id = 'fetchItemsModal';
+            modal.className = 'modal-overlay';
+            modal.style.cssText = 'display:flex; z-index:10800;';
+            let itemsHtml = '';
+            allItems.forEach((item, idx) => {
+                itemsHtml += '<label style="display:flex; align-items:flex-start; gap:8px; padding:8px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:6px; cursor:pointer;"><input type="checkbox" class="fetch-item-cb" data-idx="' + idx + '" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;"><div style="flex:1;"><div style="display:flex; justify-content:space-between;"><b style="font-size:12px;">' + (item.name||'Unnamed') + '</b><span style="font-size:10px; color:var(--success); font-weight:700;">&#x20B9;' + (item.rate||0) + ' x ' + (item.qty||1) + '</span></div>' + (item.event ? '<div style="font-size:9px; color:var(--text-secondary);">Function: ' + item.event + '</div>' : '') + '<div style="font-size:9px; color:var(--text-secondary);">From: ' + item.source + '</div></div></label>';
+            });
+            modal.innerHTML = '<div class="modal-content" style="max-width:450px; max-height:80vh; overflow-y:auto;"><div class="modal-header"><h3>Fetch Items from Invoice</h3><button class="modal-close" onclick="document.getElementById(\'fetchItemsModal\').remove();">&times;</button></div><div style="padding:0 16px 16px;"><div style="display:flex; gap:8px; margin-bottom:10px;"><button onclick="document.querySelectorAll(\'.fetch-item-cb\').forEach(cb=>cb.checked=true);" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;">Select All</button><button onclick="document.querySelectorAll(\'.fetch-item-cb\').forEach(cb=>cb.checked=false);" style="background:#F8FAFC; color:#64748b; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;">Clear All</button></div>' + itemsHtml + '<button type="button" class="btn-main" style="margin-top:10px;" onclick="confirmFetchItems(\'' + formType + '\')">Add Selected Items</button></div></div>';
+            document.body.appendChild(modal);
+            window._fetchedItems = allItems;
+        }
+        function confirmFetchItems(formType) {
+            let selected = [];
+            document.querySelectorAll('.fetch-item-cb:checked').forEach(cb => {
+                let idx = parseInt(cb.getAttribute('data-idx'));
+                if (window._fetchedItems && window._fetchedItems[idx]) selected.push(window._fetchedItems[idx]);
+            });
+            if (selected.length === 0) { alert('Select at least one item!'); return; }
+            if (formType === 'po') {
+                selected.forEach(item => {
+                    poItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: (item.qty||1)*(item.rate||0), event: item.event||'' });
+                });
+                // Make sure events exist for items with event field
+                selected.forEach(item => {
+                    if (item.event && !poEventsData.find(e => e.name === item.event)) {
+                        let lead = leadsDB[document.getElementById('po_event_link').value];
+                        if (lead && lead.events) {
+                            let leadEv = lead.events.find(e => e.name === item.event);
+                            if (leadEv) poEventsData.push({ name: leadEv.name||'', date: leadEv.date||'', time: leadEv.time||'', venue: leadEv.venue||'', guests: leadEv.guests||0, color: leadEv.color||'' });
+                        }
+                    }
+                });
+                poEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
+                renderPOEvents();
+                renderPOItems();
+            }
+            document.getElementById('fetchItemsModal').remove();
+            window._fetchedItems = null;
+        }
+        function sharePhotosWithVendor(formType) {
+            formType = formType || 'po';
+            let selected = [];
+            document.querySelectorAll('.' + formType + '-photo-cb:checked').forEach(cb => selected.push({ url: cb.value, label: cb.getAttribute('data-label')||'' }));
+            if (selected.length === 0) { alert('Select at least one photo!'); return; }
+            let vendorSel = document.getElementById(formType + '_vendor');
+            let vendorName = vendorSel ? (vendorSel.options[vendorSel.selectedIndex]?.text||'Vendor') : 'Vendor';
+            let vendorPhone = '';
+            if (vendorSel && vendorSel.value && partiesDB[vendorSel.value]) vendorPhone = partiesDB[vendorSel.value].phone||'';
+            let msg = 'Hello ' + vendorName + ',%0A%0AHere are reference photos:%0A%0A';
+            selected.forEach((p,i) => { msg += (i+1)+'. '+(p.label||'Photo')+'%0A'+p.url+'%0A%0A'; });
+            if (vendorPhone) { let cp = String(vendorPhone).replace(/\\D/g,''); if(cp.length===10) cp='91'+cp; window.open('https://wa.me/'+cp+'?text='+msg,'_blank'); }
+            else { navigator.clipboard.writeText(msg.replace(/%0A/g,'\\n')).then(()=>alert('Links copied!')).catch(()=>alert(msg.replace(/%0A/g,'\\n'))); }
+        }
+        // PB versions (same as PO but with pb prefix)
+        function renderPBEvents() {
+            let container = document.getElementById('pb_events_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>';
+            html += '<button type="button" onclick="openPBEventPanel()" style="background:var(--accent-color); border:none; color:white; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Add Function</button>';
+            html += '</div>';
+            if (pbEventsData.length === 0) { html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No functions added yet.</p>'; }
+            pbEventsData.forEach((ev, i) => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+                let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-left:4px solid '+evColor+'; border-radius:6px; padding:8px 10px; margin-bottom:6px;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;"><span style="background:'+evColor+'; color:'+tc+'; padding:1px 8px; border-radius:4px; font-size:11px; font-weight:700;">'+ev.name+'</span><button onclick="editPBEvent('+i+')" style="background:var(--surface-color); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer;">Edit</button></div>';
+                if (d||ev.time||ev.venue) { html += '<div style="font-size:10px; color:var(--text-secondary); line-height:1.5; padding-left:2px;">'; if(d) html+=d+' &nbsp; '; if(ev.time) html+=ev.time+' &nbsp; '; if(ev.venue) html+=ev.venue; html += '</div>'; }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        function openPBEventPanel() {
+            let modal = document.createElement('div');
+            modal.id = 'pbEventPanel'; modal.className = 'modal-overlay'; modal.style.cssText = 'display:flex; z-index:10600;';
+            modal.innerHTML = '<div class="modal-content" style="max-width:400px;"><div class="modal-header"><h3>Function Details</h3><button class="modal-close" onclick="document.getElementById(\'pbEventPanel\').remove();">&times;</button></div><div style="padding:0 16px 16px;"><div class="form-row"><div class="form-group" style="flex:1;"><label class="form-label">Function Name</label><input type="text" id="pbev_name" class="form-input" placeholder="e.g. Haldi, Wedding"></div><div class="form-group" style="flex:0 0 50px;"><label class="form-label">Color</label><input type="color" id="pbev_color" class="form-input" value="#3B82F6" style="height:38px; width:45px; padding:2px; cursor:pointer; border-radius:6px;"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" id="pbev_date" class="form-input"></div><div class="form-group"><label class="form-label">Time</label><input type="time" id="pbev_time" class="form-input"></div></div><div class="form-group"><label class="form-label">Venue</label><input type="text" id="pbev_venue" class="form-input" placeholder="Venue address"></div><button type="button" class="btn-main" onclick="savePBEvent()" style="font-size:12px; padding:8px;">Save Function</button></div></div>';
+            document.body.appendChild(modal);
+        }
+        function savePBEvent() {
+            let name = document.getElementById('pbev_name').value.trim();
+            if (!name) { alert('Enter function name!'); return; }
+            let ev = { name: name, date: document.getElementById('pbev_date').value, time: document.getElementById('pbev_time').value, venue: document.getElementById('pbev_venue').value.trim(), color: document.getElementById('pbev_color')?document.getElementById('pbev_color').value:'' };
+            if (editingPBEventIdx >= 0) { pbEventsData[editingPBEventIdx] = ev; editingPBEventIdx = -1; }
+            else { pbEventsData.push(ev); }
+            pbEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
+            document.getElementById('pbEventPanel').remove();
+            renderPBEvents(); renderPBItems();
+        }
+        function editPBEvent(idx) {
+            let ev = pbEventsData[idx]; openPBEventPanel();
+            setTimeout(() => {
+                document.getElementById('pbev_name').value = ev.name;
+                document.getElementById('pbev_date').value = ev.date||'';
+                document.getElementById('pbev_time').value = ev.time||'';
+                document.getElementById('pbev_venue').value = ev.venue||'';
+                if (document.getElementById('pbev_color')) document.getElementById('pbev_color').value = ev.color||'#3B82F6';
+                editingPBEventIdx = idx;
+            }, 50);
+        }
+        function renderPBItems() {
+            let container = document.getElementById('pb_items_container');
+            if (!container) return;
+            let html = '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">';
+            html += '<label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Services / Items</label>';
+            html += '<div style="display:flex; gap:6px;"><button type="button" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="fetchItemsFromInvoice(\'pb\')">&#x1F4C4; Fetch from Invoice</button></div></div>';
+            if (pbItemsData.length === 0) { html += '<p style="font-size:11px; color:var(--text-secondary); text-align:center; padding:8px 0; margin:0;">No items added yet.</p>'; }
+            pbEventsData.forEach((ev, evIdx) => {
+                let evItems = pbItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s,i)=>s+(i.amount||0),0);
+                let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                html += '<div style="border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; overflow:hidden;">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;"><div style="background:'+evColor+'; color:'+tc+'; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">'+ev.name+' <span style="font-size:9px; opacity:0.8;">('+evItems.length+' items)</span></div>';
+                html += '<button type="button" onclick="openPBItemViewPanel('+evIdx+')" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">Add</button></div>';
+                if (evItems.length > 0) {
+                    evItems.forEach(item => {
+                        html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-top:1px solid #F1F5F9; font-size:11px;"><div><b>'+(item.name||'')+'</b>'+(item.desc?'<div style="font-size:9px; color:#64748b;">'+item.desc+'</div>':'')+'</div><div style="text-align:right;"><span style="font-weight:700;">'+(item.qty||1)+' '+(item.unit||'')+' x &#x20B9;'+(item.rate||0)+'</span><br><span style="color:var(--accent-color); font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</span></div></div>';
+                    });
+                    html += '<div style="display:flex; justify-content:space-between; padding:6px 10px; border-top:1px dashed #CBD5E1; font-size:11px; font-weight:800; background:#F8FAFC;"><span>Function Total:</span><span style="color:var(--accent-color);">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</span></div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            calculatePBTotal();
+        }
+        function openPBItemViewPanel(evIdx) {
+            let ev = pbEventsData[evIdx]; if (!ev) return; pbViewEvIdx = evIdx;
+            let modal = document.createElement('div'); modal.id = 'pbItemViewPanel'; modal.className = 'modal-overlay'; modal.style.cssText = 'display:flex; z-index:10700;';
+            let evItems = pbItemsData.filter(i => i.event === ev.name); let itemsHtml = '';
+            evItems.forEach(item => { itemsHtml += '<div style="display:flex; justify-content:space-between; padding:8px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:6px;"><div><b style="font-size:12px;">'+(item.name||'')+'</b><div style="font-size:10px; color:#64748b;">'+(item.qty||1)+' '+(item.unit||'')+' x &#x20B9;'+(item.rate||0)+'</div></div><div style="font-weight:700; color:var(--accent-color);">&#x20B9;'+(item.amount||0)+'</div></div>'; });
+            modal.innerHTML = '<div class="modal-content" style="max-width:450px; max-height:80vh; overflow-y:auto;"><div class="modal-header"><h3>Items for '+ev.name+'</h3><button class="modal-close" onclick="document.getElementById(\'pbItemViewPanel\').remove();">&times;</button></div><div style="padding:0 16px 16px;"><div id="pb_item_list">'+itemsHtml+'</div><div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; margin-top:12px; background:#F8FAFC;"><strong style="font-size:12px; color:var(--accent-color);">Add New Item</strong><div style="display:flex; gap:8px; align-items:flex-end; margin-top:8px;"><div style="flex:2;"><label class="form-label" style="font-size:10px; margin:0;">Item/Service</label><input type="text" id="pbiv_name" class="form-input" placeholder="Name" style="font-size:11px;"></div><div style="flex:1;"><label class="form-label" style="font-size:10px; margin:0;">Qty</label><input type="number" id="pbiv_qty" class="form-input" value="1" style="font-size:11px;"></div><div style="flex:1;"><label class="form-label" style="font-size:10px; margin:0;">Rate</label><input type="number" id="pbiv_rate" class="form-input" placeholder="0" style="font-size:11px;"></div></div><div style="margin-top:6px;"><input type="text" id="pbiv_desc" class="form-input" placeholder="Description (optional)" style="font-size:11px;"></div><div style="margin-top:6px; display:flex; gap:6px;"><select id="pbiv_unit" class="form-select" style="flex:1; font-size:11px;">'+getUnitOptions()+'</select><button type="button" class="btn-main" onclick="savePBItemFromView()" style="font-size:11px; padding:6px 12px;">Add Item</button></div></div></div></div>';
+            document.body.appendChild(modal);
+        }
+        function savePBItemFromView() {
+            let name = document.getElementById('pbiv_name').value.trim();
+            if (!name) { alert('Enter item name!'); return; }
+            let qty = parseFloat(document.getElementById('pbiv_qty').value)||1;
+            let rate = parseFloat(document.getElementById('pbiv_rate').value)||0;
+            let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
+            pbItemsData.push({ name: name, desc: document.getElementById('pbiv_desc').value.trim(), unit: document.getElementById('pbiv_unit').value, qty: qty, rate: rate, amount: qty*rate, event: ev.name });
+            document.getElementById('pbiv_name').value=''; document.getElementById('pbiv_desc').value=''; document.getElementById('pbiv_qty').value='1'; document.getElementById('pbiv_rate').value='';
+            openPBItemViewPanel(pbViewEvIdx); renderPBItems();
+        }
+        function loadPBEventsFromLead(evId) {
+            if (!evId || !leadsDB[evId]) { pbEventsData = []; pbItemsData = []; renderPBEvents(); renderPBItems(); return; }
+            let lead = leadsDB[evId];
+            pbEventsData = (lead.events && lead.events.length > 0) ? lead.events.map(ev => ({ name: ev.name||'', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||0, color: ev.color||'' })) : [];
+            pbItemsData = []; renderPBEvents(); renderPBItems();
+        }
+
         function openPurchaseOrderModal() {
             document.getElementById('poForm').reset();
             loadVendorsIntoSelect('po_vendor');
             loadEventsToLinkSelect('po_event_link', tempEventIdForPurchase);
             document.getElementById('po_date').value = new Date().toISOString().split('T')[0];
-
-            // Auto-load functions/dates if event is pre-selected
+            poEventsData = []; poItemsData = []; editingPOEventIdx = -1;
             handleEventLinkChange('po');
-
-            document.getElementById('po_items_container').innerHTML = '';
-            addPOItem(); calculatePOTotal();
+            renderPOEvents(); renderPOItems();
+            calculatePOTotal();
             document.getElementById('purchaseOrderModal').style.display = 'flex';
         }
-        function loadEventPhotosForPB() {
-            let evId = document.getElementById('pb_event_link').value;
-            let container = document.getElementById('pb_photo_list');
-            let group = document.getElementById('pb_photo_group');
-            let shareBtn = document.getElementById('pb_share_photos_btn');
-            if (container) container.innerHTML = '';
-            
-            if (!evId || !leadsDB[evId]) {
-                if (group) group.style.display = 'none';
-                if (shareBtn) shareBtn.style.display = 'none';
-                return;
-            }
-            
-            let lead = leadsDB[evId];
-            let hasPhotos = false;
-            
-            if (lead.events && lead.events.length > 0) {
-                lead.events.forEach((ev, evIdx) => {
-                    let evPhotos = ev.photos || [];
-                    if (evPhotos.length === 0) return;
-                    hasPhotos = true;
-                    let evColor = getEventColor(ev);
-                    let tc = getContrastColor(evColor);
-                    
-                    if (container) container.innerHTML += '<div style="width:100%; margin-bottom:6px; margin-top:' + (evIdx > 0 ? '10px' : '0') + ';"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700;">' + ev.name + '</span></div>';
-                    
-                    evPhotos.forEach((p, idx) => {
-                        let url = typeof p === 'string' ? p : p.url;
-                        let label = typeof p === 'string' ? '' : (p.label || '');
-                        if (container) container.innerHTML += '<label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;"><input type="checkbox" class="pb-photo-cb" value="' + url + '" data-label="' + (label || ev.name) + '" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;"><img loading="lazy" src="' + url + '" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;"><span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + (label || ev.name + ' ' + (idx + 1)) + '</span></label>';
-                    });
-                });
-            }
-            
-            if (hasPhotos) {
-                if (group) group.style.display = 'block';
-                if (shareBtn) shareBtn.style.display = 'inline-block';
-            } else {
-                if (group) group.style.display = 'none';
-                if (shareBtn) shareBtn.style.display = 'none';
-            }
-        }
-
         function loadEventPhotosForPO() {
             let evId = document.getElementById('po_event_link').value;
             let container = document.getElementById('po_photo_list');
             let group = document.getElementById('po_photo_group');
-            let shareBtn = document.getElementById('po_share_photos_btn');
-            if (container) container.innerHTML = '';
-            
-            if (!evId || !leadsDB[evId]) {
-                if (group) group.style.display = 'none';
-                if (shareBtn) shareBtn.style.display = 'none';
-                return;
-            }
-            
-            let lead = leadsDB[evId];
-            let hasPhotos = false;
-            
-            if (lead.events && lead.events.length > 0) {
-                lead.events.forEach((ev, evIdx) => {
-                    let evPhotos = ev.photos || [];
-                    if (evPhotos.length === 0) return;
-                    hasPhotos = true;
-                    let evColor = getEventColor(ev);
-                    let tc = getContrastColor(evColor);
-                    
-                    if (container) container.innerHTML += '<div style="width:100%; margin-bottom:6px; margin-top:' + (evIdx > 0 ? '10px' : '0') + ';"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700;">' + ev.name + '</span></div>';
-                    
-                    evPhotos.forEach((p, idx) => {
-                        let url = typeof p === 'string' ? p : p.url;
-                        let label = typeof p === 'string' ? '' : (p.label || '');
-                        if (container) container.innerHTML += '<label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;"><input type="checkbox" class="po-photo-cb" value="' + url + '" data-label="' + (label || ev.name) + '" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;"><img loading="lazy" src="' + url + '" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;"><span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + (label || ev.name + ' ' + (idx + 1)) + '</span></label>';
-                    });
-                });
-            }
-            
-            if (hasPhotos) {
-                if (group) group.style.display = 'block';
-                if (shareBtn) shareBtn.style.display = 'inline-block';
-            } else {
-                if (group) group.style.display = 'none';
-                if (shareBtn) shareBtn.style.display = 'none';
-            }
-        }
-        function fetchItemsFromInvoice(formType) {
-            let evId = document.getElementById(formType + '_event_link').value;
-            if (!evId) { alert('Please select an event first!'); return; }
-            
-            // Get selected functions from checkboxes
-            let selectedFuncs = [];
-            document.querySelectorAll('.' + formType + '-func-cb:checked').forEach(cb => {
-                let ev = leadsDB[evId];
-                if (ev && ev.dates && ev.dates[cb.value]) {
-                    selectedFuncs.push(ev.dates[cb.value].name);
-                }
-            });
-            
-            // Get all invoices and quotations for this event
-            let eventSales = Object.values(salesDB).filter(s => s.eventId === evId);
-            if (eventSales.length === 0) {
-                alert('No invoices or quotations found for this event!'); return;
-            }
-            
-            // Collect all items, optionally filtered by function
-            let allItems = [];
-            eventSales.forEach(sale => {
-                if (sale.items && sale.items.length > 0) {
-                    sale.items.forEach(item => {
-                        let matchFunc = selectedFuncs.length === 0 || selectedFuncs.includes(item.event || '');
-                        if (matchFunc) {
-                            allItems.push({ ...item, source: sale.id, sourceType: sale.type });
-                        }
-                    });
-                }
-            });
-            
-            if (allItems.length === 0) {
-                alert('No items found' + (selectedFuncs.length > 0 ? ' for selected functions' : '') + '!'); return;
-            }
-            
-            // Show popup with checkboxes
-            let modalHtml = '<div id="fetchItemsModal" class="modal-overlay" style="z-index:10800;">' +
-                '<div class="modal-content" style="max-width:480px; max-height:80vh; overflow-y:auto;">' +
-                '<div class="modal-header"><h3>Fetch Items from Invoice</h3>' +
-                '<button class="modal-close" onclick="document.getElementById(\'fetchItemsModal\').remove();">&times;</button></div>' +
-                '<div style="padding:0 16px 16px;">';
-            
-            if (selectedFuncs.length > 0) {
-                modalHtml += '<div style="background:#EFF6FF; padding:8px 10px; border-radius:6px; margin-bottom:12px; font-size:11px; color:var(--accent-color); font-weight:700;">Filtered by: ' + selectedFuncs.join(', ') + '</div>';
-            }
-            
-            modalHtml += '<div style="display:flex; justify-content:space-between; margin-bottom:10px;">' +
-                '<button onclick="document.querySelectorAll(\'.fetch-item-cb\').forEach(cb => cb.checked = true);" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;">Select All</button>' +
-                '<button onclick="document.querySelectorAll(\'.fetch-item-cb\').forEach(cb => cb.checked = false);" style="background:#F8FAFC; color:var(--text-secondary); border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;">Clear All</button>' +
-                '</div>';
-            
-            allItems.forEach((item, idx) => {
-                modalHtml += '<label style="display:flex; align-items:flex-start; gap:8px; padding:8px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:6px; cursor:pointer;">' +
-                    '<input type="checkbox" class="fetch-item-cb" data-idx="' + idx + '" style="accent-color:var(--warning); width:16px; height:16px; margin-top:2px;">' +
-                    '<div style="flex:1;">' +
-                    '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-                    '<b style="font-size:12px; color:var(--text-primary);">' + (item.name || 'Unnamed') + '</b>' +
-                    '<span style="font-size:10px; color:var(--success); font-weight:700;">&#x20B9;' + (item.rate || 0).toLocaleString('en-IN') + ' x ' + (item.qty || 1) + '</span>' +
-                    '</div>' +
-                    (item.desc ? '<div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">' + item.desc + '</div>' : '') +
-                    '<div style="font-size:9px; color:var(--text-secondary); margin-top:2px;">From: ' + item.source + ' (' + (item.sourceType || 'Invoice') + ')' +
-                    (item.event ? ' | Function: ' + item.event : '') + '</div>' +
-                    '</div></label>';
-            });
-            
-            modalHtml += '<button type="button" class="btn-main" style="background:var(--warning); color:#000; margin-top:10px;" onclick="confirmFetchItems(\'' + formType + '\');">Add Selected Items to ' + (formType === 'po' ? 'PO' : 'Bill') + '</button>' +
-                '</div></div></div>';
-            
-            // Remove existing modal if any
-            let existing = document.getElementById('fetchItemsModal');
-            if (existing) existing.remove();
-            
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            document.getElementById('fetchItemsModal').style.display = 'flex';
-            
-            // Store items for later use
-            window._fetchedItems = allItems;
-        }
-        
-        function confirmFetchItems(formType) {
-            let selected = [];
-            document.querySelectorAll('.fetch-item-cb:checked').forEach(cb => {
-                let idx = parseInt(cb.getAttribute('data-idx'));
-                if (window._fetchedItems && window._fetchedItems[idx]) {
-                    selected.push(window._fetchedItems[idx]);
-                }
-            });
-            
-            if (selected.length === 0) { alert('Please select at least one item!'); return; }
-            
-            let containerId = formType === 'po' ? 'po_items_container' : 'pb_items_container';
-            let container = document.getElementById(containerId);
-            if (!container) { alert('Items container not found!'); return; }
-            
-            selected.forEach(item => {
-                // Use the existing addPOItem or addPBItem pattern
-                if (formType === 'po') {
-                    poItemCount++;
-                    let rowId = 'po_item_' + poItemCount;
-                    let rowHtml = '<div class="quote-item-row" id="' + rowId + '" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;">' +
-                        '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">&times;</button>' +
-                        '<div style="display: flex; gap: 8px; align-items: flex-end; width:100%;">' +
-                        '<div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" value="' + (item.name || '').replace(/"/g, '"') + '" placeholder="Name" required></div>' +
-                        '<div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>' +
-                        '<div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="' + (item.qty || 1) + '" oninput="calculatePOTotal()" required></div>' +
-                        '<div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(&#x20B9;)</label><input type="number" class="form-input q-item-rate" value="' + (item.rate || 0) + '" placeholder="Rate" oninput="calculatePOTotal()" required></div>' +
-                        '</div>' +
-                        '<div><input type="text" class="form-input q-item-desc" value="' + (item.desc || '').replace(/"/g, '"') + '" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div>' +
-                        '</div>';
-                    container.insertAdjacentHTML('beforeend', rowHtml);
-                    // Set unit value if exists
-                    let lastRow = container.lastElementChild;
-                    if (lastRow && item.unit) {
-                        let unitSel = lastRow.querySelector('.q-item-unit');
-                        if (unitSel) unitSel.value = item.unit;
-                    }
-                } else {
-                    // For Purchase Bill
-                    pbItemCount++;
-                    let rowId = 'pb_item_' + pbItemCount;
-                    let rowHtml = '<div class="quote-item-row" id="' + rowId + '" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;">' +
-                        '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); calculatePBTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">&times;</button>' +
-                        '<div style="display: flex; gap: 8px; align-items: flex-end; width:100%;">' +
-                        '<div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" value="' + (item.name || '').replace(/"/g, '"') + '" placeholder="Name" required></div>' +
-                        '<div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>' +
-                        '<div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="' + (item.qty || 1) + '" oninput="calculatePBTotal()" required></div>' +
-                        '<div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(&#x20B9;)</label><input type="number" class="form-input q-item-rate" value="' + (item.rate || 0) + '" placeholder="Rate" oninput="calculatePBTotal()" required></div>' +
-                        '</div>' +
-                        '<div><input type="text" class="form-input q-item-desc" value="' + (item.desc || '').replace(/"/g, '"') + '" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div>' +
-                        '</div>';
-                    container.insertAdjacentHTML('beforeend', rowHtml);
-                    let lastRow = container.lastElementChild;
-                    if (lastRow && item.unit) {
-                        let unitSel = lastRow.querySelector('.q-item-unit');
-                        if (unitSel) unitSel.value = item.unit;
-                    }
-                }
-            });
-            
-            // Recalculate total
-            if (formType === 'po') calculatePOTotal();
-            else calculatePBTotal();
-            
-            // Close modal
-            document.getElementById('fetchItemsModal').remove();
-            window._fetchedItems = null;
-        }
+            container.innerHTML = '';
 
-        function sharePhotosWithVendor(formType) {
-            formType = formType || 'po';
-            let selected = [];
-            document.querySelectorAll('.' + formType + '-photo-cb:checked').forEach(cb => {
-                selected.push({ url: cb.value, label: cb.getAttribute('data-label') || '' });
-            });
-            if (selected.length === 0) { alert('Please select at least one photo to share!'); return; }
-            
-            let vendorSel = document.getElementById('po_vendor');
-            let vendorName = vendorSel ? vendorSel.options[vendorSel.selectedIndex]?.text || 'Vendor' : 'Vendor';
-            let vendorPhone = '';
-            if (vendorSel && vendorSel.value) {
-                let party = partiesDB[vendorSel.value];
-                if (party && party.phone) vendorPhone = party.phone;
-            }
-            
-            // Build message text
-            let msg = 'Hello ' + vendorName + ',%0A%0AHere are the reference photos for your work:%0A%0A';
-            selected.forEach((p, i) => {
-                msg += (i + 1) + '. ' + (p.label || 'Photo') + '%0A' + p.url + '%0A%0A';
-            });
-            
-            // Open WhatsApp if phone number exists
-            if (vendorPhone) {
-                let cleanPhone = String(vendorPhone).replace(/\D/g, '');
-                if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
-                window.open('https://wa.me/' + cleanPhone + '?text=' + msg, '_blank');
-            } else {
-                // Copy to clipboard
-                let text = msg.replace(/%0A/g, '\n');
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('Photos links copied to clipboard! You can paste them in WhatsApp or any messaging app.');
-                }).catch(() => {
-                    // Fallback: show links
-                    alert('Share these photo links:\n\n' + text);
+            if (evId && leadsDB[evId] && leadsDB[evId].photos && leadsDB[evId].photos.length > 0) {
+                leadsDB[evId].photos.forEach((p, idx) => {
+                    let url = typeof p === 'string' ? p : p.url;
+                    let label = typeof p === 'string' ? '' : (p.label || '');
+                    container.innerHTML += `
+                        <label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;">
+                            <input type="checkbox" class="po-photo-cb" value="${url}" data-label="${label}" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;">
+                            <img loading="lazy" src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+                            <span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label || 'Photo ' + (idx + 1)}</span>
+                        </label>
+                    `;
                 });
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
             }
         }
-
         function addPOItem() { poItemCount++; let container = document.getElementById('po_items_container'); let rowId = 'po_item_' + poItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculatePOTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculatePOTotal()" required></div></div><div><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
-        function calculatePOTotal() { let total = 0; document.querySelectorAll('#po_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0; total += (qty * rate); }); let discount = parseFloat(document.getElementById('po_discount').value) || 0; let grandTotal = total - discount; if (grandTotal < 0) grandTotal = 0; document.getElementById('po_total').value = grandTotal; }
+        function calculatePOTotal() {
+            let total = poItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+            let discount = parseFloat(document.getElementById('po_discount').value) || 0;
+            let grandTotal = total - discount;
+            document.getElementById('po_total').value = grandTotal;
+        }
         // 🚀 UPDATED SAVE PO (Edit ID Logic Added)
         // Upload a single file to Cloudinary (images, HEIC, PDF, all formats)
         // Uses /auto/upload for ALL file types - Cloudinary auto-detects format
@@ -16850,20 +16831,17 @@
             let partyId = document.getElementById('po_vendor').value; let evId = document.getElementById('po_event_link').value; let event = document.getElementById('po_event').value; let date = document.getElementById('po_date').value;
             if (!partyId || !event || !date) { alert("Fill all required fields!"); return; }
 
-            let items = []; document.querySelectorAll('#po_items_container .quote-item-row').forEach(row => {
-                let name = row.querySelector('.q-item-name').value; let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0; let unit = row.querySelector('.q-item-unit') ? row.querySelector('.q-item-unit').value : 'Pcs'; let desc = row.querySelector('.q-item-desc') ? row.querySelector('.q-item-desc').value : '';
-                if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate });
-            });
+            let items = poItemsData.map(i => ({ name: i.name, desc: i.desc||'', unit: i.unit||'Pcs', qty: i.qty, rate: i.rate, amount: i.amount }));
             if (items.length === 0) return alert("Please add at least one item!");
 
-            let selectedPhotos = []; document.querySelectorAll('.po-photo-cb:checked').forEach(cb => { selectedPhotos.push({ url: cb.value, label: cb.getAttribute('data-label') }); });
+            let selectedPhotos = [];
             let discount = parseFloat(document.getElementById('po_discount').value) || 0; let total = parseFloat(document.getElementById('po_total').value) || 0;
 
             let id = editingPurchaseId ? editingPurchaseId : generateDocId('PO');
             let currentStatus = editingPurchaseId && purchaseDB[editingPurchaseId] ? purchaseDB[editingPurchaseId].status : 'Draft';
 
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
-            let selectedDates = getSelectedDates('po', evId);
+            let selectedDates = poEventsData.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'' }));
 
             let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks, docUrl: poDocUrl };
 
@@ -16871,27 +16849,16 @@
             updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
         }
 
-        function openPurchaseBillModal(preFillPartyId = null) {
+        function openPurchaseBillModal() {
             document.getElementById('pbForm').reset();
-            document.getElementById('pb_date').value = new Date().toISOString().split('T')[0]; convertingPOId = null;
-            let badge = document.getElementById('pb_autopilot_badge'); if (badge) badge.style.display = 'none';
-            loadVendorsIntoSelect('pb_vendor', preFillPartyId);
+            loadVendorsIntoSelect('pb_vendor');
             loadEventsToLinkSelect('pb_event_link', tempEventIdForPurchase);
-
-            // 🚀 BUG FIX: Auto-load functions/dates if event is pre-selected
+            document.getElementById('pb_date').value = new Date().toISOString().split('T')[0];
+            pbEventsData = []; pbItemsData = []; editingPBEventIdx = -1;
             handleEventLinkChange('pb');
-
-            document.getElementById('pb_date').valueAsDate = new Date(); document.getElementById('pb_items_container').innerHTML = '';
-            let poSelect = document.getElementById('pb_linked_po'); let poGroup = document.getElementById('pb_link_po_group');
-            if (poSelect && poGroup) {
-                poSelect.innerHTML = '<option value="">-- Do not link / Direct Bill --</option>'; let foundPos = false;
-                if (tempEventIdForPurchase) {
-                    let pendingPOs = Object.values(purchaseDB).filter(p => p.type === 'PO' && p.eventId === tempEventIdForPurchase && p.status === 'Draft');
-                    if (pendingPOs.length > 0) { pendingPOs.forEach(po => { poSelect.innerHTML += `<option value="${po.id}">${po.id} - ₹${po.total.toLocaleString()} (${partiesDB[po.partyId]?.name})</option>`; }); foundPos = true; }
-                }
-                poGroup.style.display = foundPos ? 'block' : 'none';
-            }
-            addPBItem(); calculatePBTotal(); handleVendorSelectionForPB(); document.getElementById('purchaseBillModal').style.display = 'flex';
+            renderPBEvents(); renderPBItems();
+            calculatePBTotal();
+            document.getElementById('purchaseBillModal').style.display = 'flex';
         }
         function handleVendorSelectionForPB() {
             let pId = document.getElementById('pb_vendor').value;
@@ -16914,7 +16881,18 @@
             calculatePBTotal();
         }
         function addPBItem() { pbItemCount++; let container = document.getElementById('pb_items_container'); let rowId = 'pb_item_' + pbItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePBTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculatePBTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculatePBTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
-        function calculatePBTotal() { let baseTotal = 0; document.querySelectorAll('#pb_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; baseTotal += (qty * rate); }); let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount; let manuallyEnteredAdvance = parseFloat(document.getElementById('pb_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal) { alert("Amount paying now cannot exceed the bill total!"); document.getElementById('pb_advance').value = finalGrandTotal; manuallyEnteredAdvance = finalGrandTotal; } let selectedOldAdvanceId = document.getElementById('pb_use_advance').value; let oldAdvanceAmount = 0; if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { oldAdvanceAmount = Math.min(purchaseDB[selectedOldAdvanceId].availableAmount, finalGrandTotal); } let totalAdvanceApplied = manuallyEnteredAdvance + oldAdvanceAmount; let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0; document.getElementById('pb_final_total').value = finalGrandTotal; document.getElementById('pb_balance_due').innerText = "₹" + balanceDue.toLocaleString('en-IN'); }
+        function calculatePBTotal() {
+            let total = pbItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+            let discount = parseFloat(document.getElementById('pb_discount').value) || 0;
+            let gstPercent = parseFloat(document.getElementById('pb_gst') ? document.getElementById('pb_gst').value : 0) || 0;
+            let afterDiscount = total - discount;
+            let taxAmount = Math.round(afterDiscount * gstPercent / 100);
+            let finalTotal = afterDiscount + taxAmount;
+            let advance = parseFloat(document.getElementById('pb_advance') ? document.getElementById('pb_advance').value : 0) || 0;
+            let balanceDue = finalTotal - advance;
+            if (document.getElementById('pb_total')) document.getElementById('pb_total').value = finalTotal;
+            if (document.getElementById('pb_balance_due')) document.getElementById('pb_balance_due').innerHTML = '\u20B9' + balanceDue.toLocaleString('en-IN');
+        }
         function handlePOSelectionForPB() {
             let poId = document.getElementById('pb_linked_po').value; let badge = document.getElementById('pb_autopilot_badge');
             if (!poId) { convertingPOId = null; if (badge) badge.style.display = 'none'; return; }
@@ -17175,7 +17153,7 @@
         async function savePBData() {
             let partyId = document.getElementById('pb_vendor').value; let date = document.getElementById('pb_date').value; let evId = document.getElementById('pb_event_link').value; let refNo = document.getElementById('pb_ref').value;
             if (!partyId || !date) { alert("Fill all required fields!"); return; }
-            let items = []; document.querySelectorAll('#pb_items_container .quote-item-row').forEach(row => { let name = row.querySelector('.i-item-name').value; let qty = parseFloat(row.querySelector('.i-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.i-item-rate').value) || 0; let unit = row.querySelector('.i-item-unit') ? row.querySelector('.i-item-unit').value : 'Pcs'; let desc = row.querySelector('.i-item-desc') ? row.querySelector('.i-item-desc').value : ''; if (name) items.push({ name, desc, unit, qty, rate, amount: qty * rate }); });
+            let items = pbItemsData.map(i => ({ name: i.name, desc: i.desc||'', unit: i.unit||'Pcs', qty: i.qty, rate: i.rate, amount: i.amount }));
             if (items.length === 0) return alert("Please add at least one item!");
             let party = partiesDB[partyId];
             if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; }
@@ -17189,9 +17167,9 @@
             let status = 'Due'; if (totalAdvanceApplied >= finalGrandTotal && finalGrandTotal > 0) status = 'Paid'; else if (totalAdvanceApplied > 0) status = 'Partial';
 
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
-            let selectedDates = getSelectedDates('pb', evId);
+            let selectedDates = pbEventsData.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'' }));
 
-            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } let selectedPhotosPB = []; document.querySelectorAll('.pb-photo-cb:checked').forEach(cb => { selectedPhotosPB.push({ url: cb.value, label: cb.getAttribute('data-label') }); }); purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, selectedPhotos: selectedPhotosPB, remarks: pbRemarks, docUrl: pbDocUrl };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks, docUrl: pbDocUrl };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -17308,23 +17286,23 @@
                 document.getElementById('po_date').value = record.date;
                 document.getElementById('po_event').value = record.event;
 
-                document.getElementById('po_items_container').innerHTML = ''; poItemCount = 0;
+                poItemsData = []; poEventsData = [];
+                if (record.linkedDates && record.linkedDates.length > 0) {
+                    record.linkedDates.forEach(d => { poEventsData.push({ name: d.name||'Main Event', date: d.date||'', time: d.time||'', venue: d.venue||'', color: '' }); });
+                }
                 if (record.items) {
                     record.items.forEach(item => {
-                        addPOItem();
-                        let rows = document.querySelectorAll('#po_items_container .quote-item-row');
-                        let lastRow = rows[rows.length - 1];
-                        lastRow.querySelector('.q-item-name').value = item.name;
-                        lastRow.querySelector('.q-item-qty').value = item.qty;
-                        lastRow.querySelector('.q-item-rate').value = item.rate;
-                        if (lastRow.querySelector('.q-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.q-item-unit').innerHTML = getUnitOptions(item.unit); }
-                        if (lastRow.querySelector('.q-item-desc')) lastRow.querySelector('.q-item-desc').value = item.desc || "";
+                        if (item.unit && !itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); }
+                        poItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: item.amount||(item.qty||1)*(item.rate||0), event: item.event||'' });
+                        if (item.event && !poEventsData.find(e => e.name === item.event)) { poEventsData.push({ name: item.event, date:'', time:'', venue:'', color:'' }); }
                     });
                 }
+                poEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
+                renderPOEvents(); renderPOItems();
                 document.getElementById('po_discount').value = record.discount;
                 calculatePOTotal();
 
-                let photoGroup = document.getElementById('po_photo_group'); if (!photoGroup) return; let photoList = document.getElementById('po_photo_list');
+                let photoGroup = document.getElementById('po_photo_group'); if (!photoGroup) { /* photo group removed, skip */ } else { let photoList = document.getElementById('po_photo_list');
                 if (record.selectedPhotos && record.selectedPhotos.length > 0) {
                     photoList.innerHTML = '';
                     record.selectedPhotos.forEach((p, idx) => {
@@ -17332,7 +17310,7 @@
                     });
                     photoGroup.style.display = 'block';
                 } else { photoGroup.style.display = 'none'; loadEventPhotosForPO(); }
-
+                }
                 editingPurchaseId = id;
                 document.getElementById('purchaseOrderModal').style.display = 'flex';
 
@@ -17343,13 +17321,19 @@
                 document.getElementById(prefix + '_items_container').innerHTML = '';
                 if (record.items) {
                     record.items.forEach(item => {
-                        if (record.type === 'PB') addPBItem(); else addAssetItem();
-                        let rows = document.querySelectorAll('#' + prefix + '_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
-                        lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
-                        if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
-                        if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
+                        if (record.type === 'PB') {
+                            pbItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: item.amount||(item.qty||1)*(item.rate||0), event: item.event||'' });
+                            if (item.event && !pbEventsData.find(e => e.name === item.event)) { pbEventsData.push({ name: item.event, date:'', time:'', venue:'', color:'' }); }
+                        } else {
+                            addAssetItem();
+                            let rows = document.querySelectorAll('#' + prefix + '_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
+                            lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
+                            if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
+                            if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
+                        }
                     });
                 }
+                if (record.type === 'PB') { pbEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1); renderPBEvents(); renderPBItems(); }
                 document.getElementById(prefix + '_discount').value = record.discount; document.getElementById(prefix + '_gst').value = record.gstPercent;
                 let advEl = document.getElementById(prefix + '_advance'); if (advEl) { advEl.value = record.advance; advEl.setAttribute('readonly', true); advEl.style.background = '#F1F5F9'; }
                 let advGrp = document.getElementById(record.type === 'PB' ? 'available_adv_out_group' : 'ast_available_adv_group'); if (advGrp) advGrp.style.display = 'none';
@@ -21057,29 +21041,8 @@
             let linkEl = document.getElementById(prefix + '_event_link');
             if (!linkEl) return;
             let evId = linkEl.value;
-            let funcGroup = document.getElementById(prefix + '_function_group');
-            let funcList = document.getElementById(prefix + '_function_list');
-
-            
-
-            if (evId && leadsDB[evId] && leadsDB[evId].dates && leadsDB[evId].dates.length > 0) {
-                let html = '';
-                leadsDB[evId].dates.forEach((d, idx) => {
-                    let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-                    let vText = d.venue ? ` | 📍 ${d.venue}` : '';
-                    let tText = d.time ? ` | ⏰ ${d.time}` : '';
-                    // Generate Checkbox
-                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:var(--surface-color); padding:8px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:6px;">
-                                <input type="checkbox" class="${prefix}-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
-                                <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
-                             </label>`;
-                });
-                if (funcList) funcList.innerHTML = html;
-                if (funcGroup) funcGroup.style.display = 'block';
-            } else {
-                if (funcGroup) funcGroup.style.display = 'none';
-                if (funcList) funcList.innerHTML = '';
-            }
+            if (prefix === 'po') loadPOEventsFromLead(evId);
+            if (prefix === 'pb') loadPBEventsFromLead(evId);
         }
 
         // Helper function: Selected checkboxes ka data nikalne ke liye
@@ -23394,7 +23357,7 @@
                     let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     let vText = d.venue ? ` | 📍 ${d.venue}` : '';
                     let tText = d.time ? ` | ⏰ ${d.time}` : '';
-                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:var(--surface-color); padding:8px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:6px;">
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
                                 <input type="checkbox" class="out-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
                                 <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
                              </label>`;
@@ -25761,7 +25724,7 @@
                     let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     let vText = d.venue ? ` | 📍 ${d.venue}` : '';
                     let tText = d.time ? ` | ⏰ ${d.time}` : '';
-                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:var(--surface-color); padding:8px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:6px;">
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
                                 <input type="checkbox" class="ob-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
                                 <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
                              </label>`;
