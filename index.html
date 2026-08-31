@@ -16338,7 +16338,19 @@
             });
         }
 
-        // ===== PO/PB EVENT & ITEM SYSTEM (cloned from Invoice) =====
+        
+        // Toggle bank select for payment mode (Bank/Cheque)
+        function toggleBankSelect(selectEl) {
+            if (!selectEl) return;
+            let val = selectEl.value;
+            let bankGroup = selectEl.parentElement.querySelector('.bank-name-group');
+            if (!bankGroup) {
+                let next = selectEl.parentElement.nextElementSibling;
+                if (next && next.classList && next.classList.contains('bank-name-group')) bankGroup = next;
+            }
+            if (bankGroup) bankGroup.style.display = (val === 'Bank' || val === 'Cheque') ? 'block' : 'none';
+        }
+// ===== PO/PB EVENT & ITEM SYSTEM (cloned from Invoice) =====
         function renderPOEvents() {
             let container = document.getElementById('po_events_container');
             if (!container) return;
@@ -16662,6 +16674,7 @@
             let evId = document.getElementById('po_event_link').value;
             let container = document.getElementById('po_photo_list');
             let group = document.getElementById('po_photo_group');
+            if (!container || !group) return;
             container.innerHTML = '';
 
             if (evId && leadsDB[evId] && leadsDB[evId].photos && leadsDB[evId].photos.length > 0) {
@@ -16894,7 +16907,7 @@
             if (document.getElementById('pb_balance_due')) document.getElementById('pb_balance_due').innerHTML = '\u20B9' + balanceDue.toLocaleString('en-IN');
         }
         function handlePOSelectionForPB() {
-            let poId = document.getElementById('pb_linked_po').value; let badge = document.getElementById('pb_autopilot_badge');
+            let poLinkEl = document.getElementById('pb_linked_po'); let poId = poLinkEl ? poLinkEl.value : ''; let badge = document.getElementById('pb_autopilot_badge');
             if (!poId) { convertingPOId = null; if (badge) badge.style.display = 'none'; return; }
             let po = purchaseDB[poId]; convertingPOId = poId;
             if (badge) { badge.style.display = 'flex'; badge.innerHTML = `🔄 Auto-filled from Purchase Order: <b style="font-family:monospace; margin-left:4px;">${po.id}</b>`; }
@@ -17159,7 +17172,7 @@
             if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; }
             let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount;
             let manuallyEnteredAdvance = parseFloat(document.getElementById('pb_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal && !editingPurchaseId) manuallyEnteredAdvance = finalGrandTotal;
-            let selectedOldAdvanceId = document.getElementById('pb_use_advance').value; let oldAdvanceAmount = 0; let paymentOutToUpdate = null; if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { paymentOutToUpdate = purchaseDB[selectedOldAdvanceId]; oldAdvanceAmount = Math.min(paymentOutToUpdate.availableAmount, finalGrandTotal); }
+            let advSel = document.getElementById('pb_use_advance'); let selectedOldAdvanceId = advSel ? advSel.value : ''; let oldAdvanceAmount = 0; let paymentOutToUpdate = null; if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { paymentOutToUpdate = purchaseDB[selectedOldAdvanceId]; oldAdvanceAmount = Math.min(paymentOutToUpdate.availableAmount, finalGrandTotal); }
             let totalAdvanceApplied = editingPurchaseId ? purchaseDB[editingPurchaseId].advance : (manuallyEnteredAdvance + oldAdvanceAmount);
             let payMode = document.getElementById('pb_pay_mode').value; let balanceDue = finalGrandTotal - totalAdvanceApplied; if (balanceDue < 0) balanceDue = 0;
             let eventTitle = evId ? leadsDB[evId].func : "General Vendor Bill"; let eventCodeStr = evId ? createEventCode(leadsDB[evId].name, leadsDB[evId].func, leadsDB[evId].date) : null;
