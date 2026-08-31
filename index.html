@@ -7159,6 +7159,36 @@
                 <button onclick="closePBItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
+        <div id="poPreviewModal" class="modal-overlay item-popup-overlay" style="display:none;">
+            <div class="modal-content" style="max-width:550px;">
+                <div class="modal-header">
+                    <h3>Purchase Order Preview</h3>
+                    <button class="modal-close" onclick="document.getElementById('poPreviewModal').style.display='none';">&times;</button>
+                </div>
+                <div id="poPreviewBody" style="padding:0 0 12px 0; max-height:60vh; overflow-y:auto;"></div>
+                <div style="display:flex; gap:8px; padding-top:8px;">
+                    <button onclick="document.getElementById('poPreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">Edit</button>
+                    <button onclick="printPODocument()" class="btn-main" style="flex:1; background:var(--accent-light); color:var(--accent-color); border:1px solid #BFDBFE; font-size:12px;">Print</button>
+                    <button onclick="savePOData()" class="btn-main" style="flex:2; font-size:12px;">Confirm & Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pbPreviewModal" class="modal-overlay item-popup-overlay" style="display:none;">
+            <div class="modal-content" style="max-width:550px;">
+                <div class="modal-header">
+                    <h3>Purchase Bill Preview</h3>
+                    <button class="modal-close" onclick="document.getElementById('pbPreviewModal').style.display='none';">&times;</button>
+                </div>
+                <div id="pbPreviewBody" style="padding:0 0 12px 0; max-height:60vh; overflow-y:auto;"></div>
+                <div style="display:flex; gap:8px; padding-top:8px;">
+                    <button onclick="document.getElementById('pbPreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">Edit</button>
+                    <button onclick="printPBDocument()" class="btn-main" style="flex:1; background:var(--accent-light); color:var(--accent-color); border:1px solid #BFDBFE; font-size:12px;">Print</button>
+                    <button onclick="savePBData()" class="btn-main" style="flex:2; font-size:12px;">Confirm & Save</button>
+                </div>
+            </div>
+        </div>
+
 
 
         <div id="purchaseOrderModal" class="modal-overlay" style="z-index: 5500;">
@@ -7199,8 +7229,10 @@
                         <label class="form-label">Remarks / Notes (Optional)</label>
                         <textarea id="po_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
                     </div>
-                    <button type="button" class="btn-main" style="background:var(--accent-color); color:white;"
-                        onclick="savePOData()">Save Purchase Order</button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-main" style="flex:1; background:var(--accent-light); color:var(--accent-color); border:1px solid #BFDBFE;" onclick="showPOPreview()">Preview</button>
+                        <button type="button" class="btn-main" style="flex:2; background:var(--accent-color); color:white;" onclick="savePOData()">Save Purchase Order</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -7255,8 +7287,7 @@
                         <label class="form-label">Remarks / Notes</label>
                         <textarea id="pb_remarks" class="form-input" rows="2" placeholder="Any special instructions..." style="font-size:12px; resize:vertical;"></textarea>
                     </div>
-                    <button type="button" class="btn-main" style="background:var(--accent-color); color:white;"
-                        onclick="savePBData()">Save Purchase Bill</button>
+                    <div style="display:flex; gap:8px;"><button type="button" class="btn-main" style="flex:1; background:var(--accent-light); color:var(--accent-color); border:1px solid #BFDBFE;" onclick="showPBPreview()">Preview</button><button type="button" class="btn-main" style="flex:2; background:var(--accent-color); color:white;" onclick="savePBData()">Save Purchase Bill</button></div>
                 </form>
             </div>
         </div>
@@ -16922,6 +16953,308 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         }
         function fetchItemsFromInvoice(formType) { /* deprecated */ }
         function confirmFetchItems(formType) { /* deprecated */ }
+
+
+        // ===== PO/PB PREVIEW & PRINT FUNCTIONS =====
+        function showPOPreview() {
+            let partyId = document.getElementById('po_vendor').value;
+            if (!partyId) { alert('Please select a vendor!'); return; }
+            if (poItemsData.length === 0) { alert('Please add at least one item!'); return; }
+            let party = partiesDB[partyId];
+            let partyName = party ? party.name : 'Unknown';
+            let date = document.getElementById('po_date').value;
+            let discount = parseFloat(document.getElementById('po_discount').value) || 0;
+            let selectedEvents = poEventsData.filter(e => e._selected !== false);
+            let grandTotal = poItemsData.reduce((s,i) => s + (i.amount||0), 0);
+            let netTotal = grandTotal - discount;
+            let html = '<div style="margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid var(--accent-color);">';
+            html += '<div><h4 style="margin:0; font-size:15px; font-weight:800; color:var(--text-primary);">Purchase Order</h4>';
+            html += '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">' + partyName + '</div>';
+            html += '<div style="font-size:10px; color:var(--text-secondary);">' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div>';
+            html += '<div style="text-align:right; font-size:10px; color:var(--text-secondary);">Vendor: <b style="color:var(--text-primary);">' + partyName + '</b></div>';
+            html += '</div>';
+            // Function-wise items
+            selectedEvents.forEach(ev => {
+                let evItems = poItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<div style="margin-bottom:10px; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">';
+                html += '<div style="background:'+evColor+'; color:'+tc+'; padding:5px 10px; font-size:11px; font-weight:700;">'+ev.name+' &#x20B9;'+evTotal.toLocaleString('en-IN')+'</div>';
+                let categories = [];
+                evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div style="background:#EFF6FF; padding:3px 8px; font-size:9px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+' &#x20B9;'+catTotal.toLocaleString('en-IN')+'</div>';
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
+                    catItems.forEach(item => {
+                        html += '<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:3px 6px;"><b>'+(item.name||'')+'</b>'+(item.desc?'<div style="font-size:8px; color:#64748b;">'+item.desc+'</div>':'')+'</td><td style="padding:3px; text-align:center;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:3px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:3px; text-align:right; font-weight:700;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td></tr>';
+                    });
+                    html += '</table>';
+                });
+                html += '</div>';
+            });
+            // Totals
+            html += '<div style="border-top:2px solid var(--accent-color); padding-top:8px;">';
+            html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>Subtotal:</span><span>&#x20B9;'+grandTotal.toLocaleString('en-IN')+'</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--danger);"><span>Discount:</span><span>-&#x20B9;'+discount.toLocaleString('en-IN')+'</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); padding:4px 0; border-top:1px solid var(--border-color);"><span>Grand Total:</span><span>&#x20B9;'+netTotal.toLocaleString('en-IN')+'</span></div>';
+            html += '</div></div>';
+            document.getElementById('poPreviewBody').innerHTML = html;
+            document.getElementById('poPreviewModal').style.display = 'flex';
+        }
+        function showPBPreview() {
+            let partyId = document.getElementById('pb_vendor').value;
+            if (!partyId) { alert('Please select a vendor!'); return; }
+            if (pbItemsData.length === 0) { alert('Please add at least one item!'); return; }
+            let party = partiesDB[partyId];
+            let partyName = party ? party.name : 'Unknown';
+            let date = document.getElementById('pb_date').value;
+            let discount = parseFloat(document.getElementById('pb_discount').value) || 0;
+            let gstPercent = parseFloat(document.getElementById('pb_gst') ? document.getElementById('pb_gst').value : 0) || 0;
+            let advance = parseFloat(document.getElementById('pb_advance') ? document.getElementById('pb_advance').value : 0) || 0;
+            let selectedEvents = pbEventsData.filter(e => e._selected !== false);
+            let grandTotal = pbItemsData.reduce((s,i) => s + (i.amount||0), 0);
+            let afterDiscount = grandTotal - discount;
+            let taxAmount = Math.round(afterDiscount * gstPercent / 100);
+            let finalTotal = afterDiscount + taxAmount;
+            let balanceDue = finalTotal - advance;
+            let html = '<div style="margin-bottom:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid var(--accent-color);">';
+            html += '<div><h4 style="margin:0; font-size:15px; font-weight:800; color:var(--text-primary);">Purchase Bill</h4>';
+            html += '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">' + partyName + '</div>';
+            html += '<div style="font-size:10px; color:var(--text-secondary);">' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div></div>';
+            selectedEvents.forEach(ev => {
+                let evItems = pbItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<div style="margin-bottom:10px; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">';
+                html += '<div style="background:'+evColor+'; color:'+tc+'; padding:5px 10px; font-size:11px; font-weight:700;">'+ev.name+' &#x20B9;'+evTotal.toLocaleString('en-IN')+'</div>';
+                let categories = [];
+                evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div style="background:#EFF6FF; padding:3px 8px; font-size:9px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+' &#x20B9;'+catTotal.toLocaleString('en-IN')+'</div>';
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
+                    catItems.forEach(item => {
+                        html += '<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:3px 6px;"><b>'+(item.name||'')+'</b>'+(item.desc?'<div style="font-size:8px; color:#64748b;">'+item.desc+'</div>':'')+'</td><td style="padding:3px; text-align:center;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:3px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:3px; text-align:right; font-weight:700;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td></tr>';
+                    });
+                    html += '</table>';
+                });
+                html += '</div>';
+            });
+            html += '<div style="border-top:2px solid var(--accent-color); padding-top:8px;">';
+            html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>Subtotal:</span><span>&#x20B9;'+grandTotal.toLocaleString('en-IN')+'</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--danger);"><span>Discount:</span><span>-&#x20B9;'+discount.toLocaleString('en-IN')+'</span></div>';
+            if (gstPercent > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>GST ('+gstPercent+'%):</span><span>&#x20B9;'+taxAmount.toLocaleString('en-IN')+'</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); padding:4px 0; border-top:1px solid var(--border-color);"><span>Grand Total:</span><span>&#x20B9;'+finalTotal.toLocaleString('en-IN')+'</span></div>';
+            if (advance > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--success);"><span>Advance Paid:</span><span>&#x20B9;'+advance.toLocaleString('en-IN')+'</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:var(--danger); padding:4px 0; border-top:1px solid var(--border-color);"><span>Balance Due:</span><span>&#x20B9;'+balanceDue.toLocaleString('en-IN')+'</span></div>';
+            html += '</div></div>';
+            document.getElementById('pbPreviewBody').innerHTML = html;
+            document.getElementById('pbPreviewModal').style.display = 'flex';
+        }
+        // ===== PRINT FUNCTIONS =====
+        function printPODocument() {
+            let partyId = document.getElementById('po_vendor').value;
+            if (!partyId) { alert('Select vendor first!'); return; }
+            let party = partiesDB[partyId];
+            let partyName = party ? party.name : 'Unknown';
+            let partyPhone = party ? (party.phone || '') : '';
+            let date = document.getElementById('po_date').value;
+            let discount = parseFloat(document.getElementById('po_discount').value) || 0;
+            let evId = document.getElementById('po_event_link').value;
+            let selectedEvents = poEventsData.filter(e => e._selected !== false);
+            let grandTotal = poItemsData.reduce((s,i) => s + (i.amount||0), 0);
+            let netTotal = grandTotal - discount;
+            let poId = 'PO-' + Date.now().toString().slice(-6);
+            let printWin = window.open('', '_blank');
+            let html = '<html><head><title>Purchase Order - ' + partyName + '</title>';
+            html += '<style>';
+            html += '@page { size: A4; margin: 15px; }';
+            html += 'body { font-family: Arial, sans-serif; color: #0F172A; margin: 0; padding: 0; }';
+            html += '.page-break { page-break-after: always; }';
+            html += '.header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #3B82F6; padding-bottom:10px; margin-bottom:15px; }';
+            html += '.header h1 { margin:0; font-size:20px; color:#1E40AF; }';
+            html += '.vendor-info { font-size:12px; color:#475569; margin-top:4px; }';
+            html += '.func-header { background:#3B82F6; color:white; padding:6px 10px; font-size:13px; font-weight:700; border-radius:4px 4px 0 0; display:flex; justify-content:space-between; }';
+            html += '.cat-header { background:#EFF6FF; border-left:3px solid #3B82F6; padding:4px 8px; font-size:10px; font-weight:800; color:#1E40AF; text-transform:uppercase; }';
+            html += 'table { width:100%; border-collapse:collapse; font-size:11px; }';
+            html += 'th { background:#F1F5F9; padding:5px 8px; text-align:left; font-size:10px; color:#475569; border-bottom:1px solid #CBD5E1; }';
+            html += 'td { padding:5px 8px; border-bottom:1px solid #F1F5F9; }';
+            html += '.total-row { font-weight:800; background:#F8FAFC; }';
+            html += '.grand-total { font-size:16px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:6px; display:flex; justify-content:space-between; }';
+            html += '.photo-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }';
+            html += '.photo-item { width:120px; height:120px; border:1px solid #CBD5E1; border-radius:4px; overflow:hidden; }';
+            html += '.photo-item img { width:100%; height:100%; object-fit:cover; }';
+            html += '</style></head><body>';
+            // Page 1: Summary
+            html += '<div>';
+            html += '<div class="header"><div><h1>Purchase Order</h1><div class="vendor-info">Vendor: <b>' + partyName + '</b>';
+            if (partyPhone) html += ' | Phone: ' + partyPhone;
+            html += '</div><div class="vendor-info">Date: ' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div>';
+            html += '<div style="text-align:right; font-size:11px; color:#64748B;">PO No: ' + poId + '</div></div>';
+            // Function-wise summary
+            html += '<h3 style="font-size:13px; color:#1E40AF; margin:10px 0 6px;">Function-wise Breakdown</h3>';
+            html += '<table><thead><tr><th>Function</th><th>Items</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+            selectedEvents.forEach(ev => {
+                let evItems = poItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<tr><td><b>' + ev.name + '</b></td><td>' + evItems.length + '</td><td style="text-align:right; font-weight:700;">&#8377;' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            html += '<div class="grand-total"><span>Grand Total:</span><span>&#8377;' + netTotal.toLocaleString('en-IN') + '</span></div>';
+            if (discount > 0) { html += '<div style="display:flex; justify-content:space-between; font-size:12px; color:#DC2626; margin-top:4px;"><span>Discount:</span><span>-&#8377;' + discount.toLocaleString('en-IN') + '</span></div>'; }
+            html += '</div>';
+            // Function-wise pages
+            selectedEvents.forEach((ev, evIdx) => {
+                let evItems = poItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                html += '<div class="page-break"></div>';
+                html += '<div>';
+                html += '<div class="header"><div><h1 style="font-size:16px;">' + ev.name + ' - Items</h1>';
+                html += '<div class="vendor-info">Vendor: ' + partyName + ' | PO: ' + poId + '</div></div>';
+                html += '<div style="text-align:right; font-size:10px; color:#64748B;">' + (ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '') + '</div></div>';
+                let categories = [];
+                evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div class="cat-header">' + catName + ' (&#8377;' + catTotal.toLocaleString('en-IN') + ')</div>';
+                    html += '<table><thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+                    catItems.forEach((item, i) => {
+                        html += '<tr><td>' + (i+1) + '</td><td><b>' + (item.name||'') + '</b>' + (item.desc ? '<div style="font-size:9px; color:#64748B;">' + item.desc + '</div>' : '') + '</td><td>' + (item.qty||1) + ' ' + (item.unit||'') + '</td><td>&#8377;' + (item.rate||0) + '</td><td style="text-align:right; font-weight:700;">&#8377;' + ((item.amount||0)).toLocaleString('en-IN') + '</td></tr>';
+                    });
+                    html += '<tr class="total-row"><td colspan="4" style="text-align:right;">' + catName + ' Subtotal:</td><td style="text-align:right;">&#8377;' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</tbody></table>';
+                });
+                // Reference photos
+                let photos = [];
+                if (evId && leadsDB[evId] && leadsDB[evId].events) {
+                    let leadEv = leadsDB[evId].events.find(e => e.name === ev.name);
+                    if (leadEv && leadEv.photos) photos = leadEv.photos;
+                }
+                // Also get selected photos from the item popup
+                let selectedPhotoUrls = [];
+                document.querySelectorAll('.po-ref-photo-cb:checked').forEach(cb => selectedPhotoUrls.push(cb.value));
+                let allPhotos = [];
+                photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); if (selectedPhotoUrls.includes(url) || selectedPhotoUrls.length === 0) allPhotos.push(url); });
+                if (allPhotos.length > 0) {
+                    html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div class="photo-grid">';
+                    allPhotos.forEach(url => { html += '<div class="photo-item"><img src="' + url + '" /></div>'; });
+                    html += '</div></div>';
+                }
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<div class="grand-total"><span>' + ev.name + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                html += '</div>';
+            });
+            html += '</body></html>';
+            printWin.document.write(html);
+            printWin.document.close();
+            setTimeout(() => { printWin.print(); }, 500);
+        }
+        function printPBDocument() {
+            let partyId = document.getElementById('pb_vendor').value;
+            if (!partyId) { alert('Select vendor first!'); return; }
+            let party = partiesDB[partyId];
+            let partyName = party ? party.name : 'Unknown';
+            let partyPhone = party ? (party.phone || '') : '';
+            let date = document.getElementById('pb_date').value;
+            let discount = parseFloat(document.getElementById('pb_discount').value) || 0;
+            let gstPercent = parseFloat(document.getElementById('pb_gst') ? document.getElementById('pb_gst').value : 0) || 0;
+            let advance = parseFloat(document.getElementById('pb_advance') ? document.getElementById('pb_advance').value : 0) || 0;
+            let evId = document.getElementById('pb_event_link').value;
+            let selectedEvents = pbEventsData.filter(e => e._selected !== false);
+            let grandTotal = pbItemsData.reduce((s,i) => s + (i.amount||0), 0);
+            let afterDiscount = grandTotal - discount;
+            let taxAmount = Math.round(afterDiscount * gstPercent / 100);
+            let finalTotal = afterDiscount + taxAmount;
+            let balanceDue = finalTotal - advance;
+            let pbId = 'PB-' + Date.now().toString().slice(-6);
+            let printWin = window.open('', '_blank');
+            let html = '<html><head><title>Purchase Bill - ' + partyName + '</title>';
+            html += '<style>';
+            html += '@page { size: A4; margin: 15px; }';
+            html += 'body { font-family: Arial, sans-serif; color: #0F172A; margin: 0; padding: 0; }';
+            html += '.page-break { page-break-after: always; }';
+            html += '.header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #3B82F6; padding-bottom:10px; margin-bottom:15px; }';
+            html += '.header h1 { margin:0; font-size:20px; color:#1E40AF; }';
+            html += '.vendor-info { font-size:12px; color:#475569; margin-top:4px; }';
+            html += '.cat-header { background:#EFF6FF; border-left:3px solid #3B82F6; padding:4px 8px; font-size:10px; font-weight:800; color:#1E40AF; text-transform:uppercase; }';
+            html += 'table { width:100%; border-collapse:collapse; font-size:11px; }';
+            html += 'th { background:#F1F5F9; padding:5px 8px; text-align:left; font-size:10px; color:#475569; border-bottom:1px solid #CBD5E1; }';
+            html += 'td { padding:5px 8px; border-bottom:1px solid #F1F5F9; }';
+            html += '.total-row { font-weight:800; background:#F8FAFC; }';
+            html += '.grand-total { font-size:16px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:6px; display:flex; justify-content:space-between; }';
+            html += '.photo-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }';
+            html += '.photo-item { width:120px; height:120px; border:1px solid #CBD5E1; border-radius:4px; overflow:hidden; }';
+            html += '.photo-item img { width:100%; height:100%; object-fit:cover; }';
+            html += '</style></head><body>';
+            // Page 1: Summary
+            html += '<div>';
+            html += '<div class="header"><div><h1>Purchase Bill</h1><div class="vendor-info">Vendor: <b>' + partyName + '</b>';
+            if (partyPhone) html += ' | Phone: ' + partyPhone;
+            html += '</div><div class="vendor-info">Date: ' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div>';
+            html += '<div style="text-align:right; font-size:11px; color:#64748B;">Bill No: ' + pbId + '</div></div>';
+            html += '<h3 style="font-size:13px; color:#1E40AF; margin:10px 0 6px;">Function-wise Breakdown</h3>';
+            html += '<table><thead><tr><th>Function</th><th>Items</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+            selectedEvents.forEach(ev => {
+                let evItems = pbItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<tr><td><b>' + ev.name + '</b></td><td>' + evItems.length + '</td><td style="text-align:right; font-weight:700;">&#8377;' + evTotal.toLocaleString('en-IN') + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            html += '<div class="grand-total"><span>Grand Total:</span><span>&#8377;' + finalTotal.toLocaleString('en-IN') + '</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:12px; color:#DC2626; margin-top:4px;"><span>Discount:</span><span>-&#8377;' + discount.toLocaleString('en-IN') + '</span></div>';
+            if (advance > 0) html += '<div style="display:flex; justify-content:space-between; font-size:12px; color:#059669; margin-top:4px;"><span>Advance Paid:</span><span>&#8377;' + advance.toLocaleString('en-IN') + '</span></div>';
+            if (balanceDue > 0) html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:#DC2626; margin-top:4px;"><span>Balance Due:</span><span>&#8377;' + balanceDue.toLocaleString('en-IN') + '</span></div>';
+            html += '</div>';
+            // Function-wise pages
+            selectedEvents.forEach((ev, evIdx) => {
+                let evItems = pbItemsData.filter(i => i.event === ev.name);
+                if (evItems.length === 0) return;
+                html += '<div class="page-break"></div>';
+                html += '<div>';
+                html += '<div class="header"><div><h1 style="font-size:16px;">' + ev.name + ' - Items</h1>';
+                html += '<div class="vendor-info">Vendor: ' + partyName + ' | Bill: ' + pbId + '</div></div>';
+                html += '<div style="text-align:right; font-size:10px; color:#64748B;">' + (ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '') + '</div></div>';
+                let categories = [];
+                evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div class="cat-header">' + catName + ' (&#8377;' + catTotal.toLocaleString('en-IN') + ')</div>';
+                    html += '<table><thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Rate</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
+                    catItems.forEach((item, i) => {
+                        html += '<tr><td>' + (i+1) + '</td><td><b>' + (item.name||'') + '</b>' + (item.desc ? '<div style="font-size:9px; color:#64748B;">' + item.desc + '</div>' : '') + '</td><td>' + (item.qty||1) + ' ' + (item.unit||'') + '</td><td>&#8377;' + (item.rate||0) + '</td><td style="text-align:right; font-weight:700;">&#8377;' + ((item.amount||0)).toLocaleString('en-IN') + '</td></tr>';
+                    });
+                    html += '<tr class="total-row"><td colspan="4" style="text-align:right;">' + catName + ' Subtotal:</td><td style="text-align:right;">&#8377;' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</tbody></table>';
+                });
+                let photos = [];
+                if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
+                let selectedPhotoUrls = [];
+                document.querySelectorAll('.pb-ref-photo-cb:checked').forEach(cb => selectedPhotoUrls.push(cb.value));
+                let allPhotos = [];
+                photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); if (selectedPhotoUrls.includes(url) || selectedPhotoUrls.length === 0) allPhotos.push(url); });
+                if (allPhotos.length > 0) {
+                    html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div class="photo-grid">';
+                    allPhotos.forEach(url => { html += '<div class="photo-item"><img src="' + url + '" /></div>'; });
+                    html += '</div></div>';
+                }
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                html += '<div class="grand-total"><span>' + ev.name + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                html += '</div>';
+            });
+            html += '</body></html>';
+            printWin.document.write(html);
+            printWin.document.close();
+            setTimeout(() => { printWin.print(); }, 500);
+        }
 
 function openPurchaseOrderModal() {
             document.getElementById('poForm').reset();
