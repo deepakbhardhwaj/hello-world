@@ -14473,7 +14473,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             renderQuoteItems(); syncQuoteGrossFromItems();
         }
         function openQuoteItemReadOnlyView(recordId, evIdx) {
-            let record = salesDB[recordId];
+            let record = salesDB[recordId] || purchaseDB[recordId];
             if (!record || !record.events || !record.events[evIdx]) return;
             let ev = record.events[evIdx];
             let evItems = (record.items || []).filter(i => i.event === ev.name);
@@ -18522,7 +18522,7 @@ function openPurchaseOrderModal() {
                         </div>`;
                     }
                 } else {
-                    if (record.type !== 'Quotation' && record.events && record.events.length > 0) {
+                    if (record.type !== 'Quotation' && record.type !== 'PO' && record.type !== 'PB' && record.events && record.events.length > 0) {
                         bodyHtml += '<div style="background:#FAFAFE; border:1px solid #E2E8F0; padding:10px; border-radius:8px; margin-bottom:10px; font-size:11px;">';
                         bodyHtml += '<strong style="color:var(--accent-color);">Event Schedule:</strong><br>';
                         record.events.forEach(ev => {
@@ -18810,7 +18810,7 @@ function openPurchaseOrderModal() {
 
                 // 🚀 EVENT SCHEDULE (DATES) - Prints ONLY selected dates with Venue
                 // Skip for Quotations that have their own events array (printed separately below)
-                if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId] && !(record.type === 'Quotation' && record.events && record.events.length > 0)) {
+                if (record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId] && !((record.type === 'Quotation' || record.type === 'PO' || record.type === 'PB') && record.events && record.events.length > 0)) {
                     let ev = leadsDB[record.eventId];
                     
                     let datesToPrint = (record.linkedDates && record.linkedDates.length > 0) ? record.linkedDates : (ev.dates || []);
@@ -18841,7 +18841,7 @@ function openPurchaseOrderModal() {
 
                 // QUOTATION PRINT - Cover page with summary + per-event detail pages
                 let subtotal = 0;
-                if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
+                if ((record.type === 'Quotation' || record.type === 'PO' || record.type === 'PB' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     html += '<span class="section-label">Function Schedule</span>';
                     html += '<table style="margin-bottom:15px; font-size:11px;">';
@@ -18883,7 +18883,8 @@ function openPurchaseOrderModal() {
                     html += '</table>';
                 } else {
                     // EVENT SCHEDULE BOX (for non-quotation or non-grouped)
-                    if (record.events && record.events.length > 0) {
+                    // Skip for PO/PB with events - Function Schedule already shown above
+                    if (record.events && record.events.length > 0 && !((record.type === 'PO' || record.type === 'PB') && record.events && record.events.length > 0)) {
                         html += '<div style="margin:10px 0; padding:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px;">';
                         html += '<div style="font-size:11px; font-weight:800; color:#475569; margin-bottom:6px;">Event Schedule</div>';
                         record.events.forEach(ev => {
@@ -19241,6 +19242,7 @@ function openPurchaseOrderModal() {
                 <button onclick="window.print()" style="width:100%; background:#2563EB; color:white; border:none; padding:16px; border-radius:12px; font-weight:900; font-size:16px; box-shadow:0 8px 20px rgba(37,99,235,0.4); cursor:pointer;">🖨️ Save PDF to Share</button>
             </div>
             <script>setTimeout(function(){ window.print(); }, 1000);<\/script>
+            `;
             
             /* FUNCTION-WISE PAGES FOR PO/PB */
             if ((record.type === 'PO' || record.type === 'PB') && record.events && record.events.length > 0) {
@@ -19279,7 +19281,7 @@ function openPurchaseOrderModal() {
                 });
             }
             
-            </body></html>`;
+            html += '</body></html>';
 
             printWin.document.open();
             printWin.document.write(html);
