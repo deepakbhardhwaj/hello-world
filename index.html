@@ -7149,7 +7149,7 @@
                                 Vendor</label><button type="button" class="link-btn" onclick="openPartyModal()">+ Add
                                 New Vendor</button>
                         </div><input type="text" class="select-search-box" placeholder="Search Vendor..."
-                            oninput="loadVendorsIntoSelect('po_vendor', document.getElementById('po_vendor').value, this.value)"><select
+                            oninput="loadVendorsIntoSelect('po_vendor', document.getElementById(formType + '_vendor').value, this.value)"><select
                             id="po_vendor" class="form-select" required></select>
                     </div>
 
@@ -7173,8 +7173,10 @@
 
                     <div class="form-group" id="po_photo_group"
                         style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--warning);">
-                        <label class="form-label" style="color:var(--warning); margin-bottom:8px;">Select Reference
-                            Photos to Attach with PO</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" style="color:var(--warning); margin:0;">Function-wise Reference Photos</label>
+                            <button type="button" id="po_share_photos_btn" style="display:none; background:var(--success); color:white; border:none; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="sharePhotosWithVendor()">&#x1F4E4; Share with Vendor</button>
+                        </div>
                         <div id="po_photo_list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
                         </div>
                     </div>
@@ -7184,9 +7186,11 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <label class="form-label" style="margin: 0; color: var(--warning);">Services / Items
-                                Needed</label><button type="button"
-                                style="background: white; border: 1px solid var(--warning); color: var(--warning); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);"
-                                onclick="addPOItem()">+ Add Item</button>
+                                Needed</label>
+                                <div style="display:flex; gap:6px;">
+                                    <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="fetchItemsFromInvoice('po')">&#x1F4C4; Fetch from Invoice</button>
+                                    <button type="button" style="background: white; border: 1px solid var(--warning); color: var(--warning); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addPOItem()">+ Add Item</button>
+                                </div>
                         </div>
                         <div id="po_items_container"></div>
                     </div>
@@ -7257,6 +7261,15 @@
                         <div id="pb_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
                     </div>
 
+                    <div class="form-group" id="pb_photo_group"
+                        style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--warning);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" style="color:var(--warning); margin:0;">Function-wise Reference Photos</label>
+                            <button type="button" id="pb_share_photos_btn" style="display:none; background:var(--success); color:white; border:none; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="sharePhotosWithVendor('pb')">&#x1F4E4; Share with Vendor</button>
+                        </div>
+                        <div id="pb_photo_list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
+                        </div>
+                    </div>
                     <div class="form-group"><label class="form-label">Vendor Bill No. (Optional)</label><input
                             type="text" id="pb_ref" class="form-input" placeholder="e.g. INV-104"></div>
                     <div
@@ -7267,6 +7280,7 @@
                                 Billed</label><button type="button"
                                 style="background: white; border: 1px solid var(--warning); color: var(--warning); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);"
                                 onclick="addPBItem()">+ Add Item</button>
+                                <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm); margin-left:6px;" onclick="fetchItemsFromInvoice('pb')">&#x1F4C4; Fetch from Invoice</button>
                         </div>
                         <div id="pb_items_container"></div>
                     </div>
@@ -16432,29 +16446,279 @@
             addPOItem(); calculatePOTotal(); loadEventPhotosForPO();
             document.getElementById('purchaseOrderModal').style.display = 'flex';
         }
+        function loadEventPhotosForPB() {
+            let evId = document.getElementById('pb_event_link').value;
+            let container = document.getElementById('pb_photo_list');
+            let group = document.getElementById('pb_photo_group');
+            let shareBtn = document.getElementById('pb_share_photos_btn');
+            if (container) container.innerHTML = '';
+            
+            if (!evId || !leadsDB[evId]) {
+                if (group) group.style.display = 'none';
+                if (shareBtn) shareBtn.style.display = 'none';
+                return;
+            }
+            
+            let lead = leadsDB[evId];
+            let hasPhotos = false;
+            
+            if (lead.events && lead.events.length > 0) {
+                lead.events.forEach((ev, evIdx) => {
+                    let evPhotos = ev.photos || [];
+                    if (evPhotos.length === 0) return;
+                    hasPhotos = true;
+                    let evColor = getEventColor(ev);
+                    let tc = getContrastColor(evColor);
+                    
+                    if (container) container.innerHTML += '<div style="width:100%; margin-bottom:6px; margin-top:' + (evIdx > 0 ? '10px' : '0') + ';"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700;">' + ev.name + '</span></div>';
+                    
+                    evPhotos.forEach((p, idx) => {
+                        let url = typeof p === 'string' ? p : p.url;
+                        let label = typeof p === 'string' ? '' : (p.label || '');
+                        if (container) container.innerHTML += '<label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;"><input type="checkbox" class="pb-photo-cb" value="' + url + '" data-label="' + (label || ev.name) + '" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;"><img loading="lazy" src="' + url + '" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;"><span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + (label || ev.name + ' ' + (idx + 1)) + '</span></label>';
+                    });
+                });
+            }
+            
+            if (hasPhotos) {
+                if (group) group.style.display = 'block';
+                if (shareBtn) shareBtn.style.display = 'inline-block';
+            } else {
+                if (group) group.style.display = 'none';
+                if (shareBtn) shareBtn.style.display = 'none';
+            }
+        }
+
         function loadEventPhotosForPO() {
             let evId = document.getElementById('po_event_link').value;
             let container = document.getElementById('po_photo_list');
             let group = document.getElementById('po_photo_group');
-            container.innerHTML = '';
-
-            if (evId && leadsDB[evId] && leadsDB[evId].photos && leadsDB[evId].photos.length > 0) {
-                leadsDB[evId].photos.forEach((p, idx) => {
-                    let url = typeof p === 'string' ? p : p.url;
-                    let label = typeof p === 'string' ? '' : (p.label || '');
-                    container.innerHTML += `
-                        <label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;">
-                            <input type="checkbox" class="po-photo-cb" value="${url}" data-label="${label}" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;">
-                            <img loading="lazy" src="${url}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
-                            <span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label || 'Photo ' + (idx + 1)}</span>
-                        </label>
-                    `;
+            let shareBtn = document.getElementById('po_share_photos_btn');
+            if (container) container.innerHTML = '';
+            
+            if (!evId || !leadsDB[evId]) {
+                if (group) group.style.display = 'none';
+                if (shareBtn) shareBtn.style.display = 'none';
+                return;
+            }
+            
+            let lead = leadsDB[evId];
+            let hasPhotos = false;
+            
+            if (lead.events && lead.events.length > 0) {
+                lead.events.forEach((ev, evIdx) => {
+                    let evPhotos = ev.photos || [];
+                    if (evPhotos.length === 0) return;
+                    hasPhotos = true;
+                    let evColor = getEventColor(ev);
+                    let tc = getContrastColor(evColor);
+                    
+                    if (container) container.innerHTML += '<div style="width:100%; margin-bottom:6px; margin-top:' + (evIdx > 0 ? '10px' : '0') + ';"><span style="background:' + evColor + '; color:' + tc + '; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700;">' + ev.name + '</span></div>';
+                    
+                    evPhotos.forEach((p, idx) => {
+                        let url = typeof p === 'string' ? p : p.url;
+                        let label = typeof p === 'string' ? '' : (p.label || '');
+                        if (container) container.innerHTML += '<label style="cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; gap:5px; position:relative; min-width:70px;"><input type="checkbox" class="po-photo-cb" value="' + url + '" data-label="' + (label || ev.name) + '" style="position:absolute; top:5px; left:5px; width:18px; height:18px; accent-color:var(--warning); z-index:10;"><img loading="lazy" src="' + url + '" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;"><span style="font-size:9px; font-weight:700; color:#64748b; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + (label || ev.name + ' ' + (idx + 1)) + '</span></label>';
+                    });
                 });
-                group.style.display = 'block';
+            }
+            
+            if (hasPhotos) {
+                if (group) group.style.display = 'block';
+                if (shareBtn) shareBtn.style.display = 'inline-block';
             } else {
-                group.style.display = 'none';
+                if (group) group.style.display = 'none';
+                if (shareBtn) shareBtn.style.display = 'none';
             }
         }
+        function fetchItemsFromInvoice(formType) {
+            let evId = document.getElementById(formType + '_event_link').value;
+            if (!evId) { alert('Please select an event first!'); return; }
+            
+            // Get selected functions from checkboxes
+            let selectedFuncs = [];
+            document.querySelectorAll('.' + formType + '-func-cb:checked').forEach(cb => {
+                let ev = leadsDB[evId];
+                if (ev && ev.dates && ev.dates[cb.value]) {
+                    selectedFuncs.push(ev.dates[cb.value].name);
+                }
+            });
+            
+            // Get all invoices and quotations for this event
+            let eventSales = Object.values(salesDB).filter(s => s.eventId === evId);
+            if (eventSales.length === 0) {
+                alert('No invoices or quotations found for this event!'); return;
+            }
+            
+            // Collect all items, optionally filtered by function
+            let allItems = [];
+            eventSales.forEach(sale => {
+                if (sale.items && sale.items.length > 0) {
+                    sale.items.forEach(item => {
+                        let matchFunc = selectedFuncs.length === 0 || selectedFuncs.includes(item.event || '');
+                        if (matchFunc) {
+                            allItems.push({ ...item, source: sale.id, sourceType: sale.type });
+                        }
+                    });
+                }
+            });
+            
+            if (allItems.length === 0) {
+                alert('No items found' + (selectedFuncs.length > 0 ? ' for selected functions' : '') + '!'); return;
+            }
+            
+            // Show popup with checkboxes
+            let modalHtml = '<div id="fetchItemsModal" class="modal-overlay" style="z-index:10800;">' +
+                '<div class="modal-content" style="max-width:480px; max-height:80vh; overflow-y:auto;">' +
+                '<div class="modal-header"><h3>Fetch Items from Invoice</h3>' +
+                '<button class="modal-close" onclick="document.getElementById(\'fetchItemsModal\').remove();">&times;</button></div>' +
+                '<div style="padding:0 16px 16px;">';
+            
+            if (selectedFuncs.length > 0) {
+                modalHtml += '<div style="background:#EFF6FF; padding:8px 10px; border-radius:6px; margin-bottom:12px; font-size:11px; color:var(--accent-color); font-weight:700;">Filtered by: ' + selectedFuncs.join(', ') + '</div>';
+            }
+            
+            modalHtml += '<div style="display:flex; justify-content:space-between; margin-bottom:10px;">' +
+                '<button onclick="document.querySelectorAll(\'.fetch-item-cb\').forEach(cb => cb.checked = true);" style="background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;">Select All</button>' +
+                '<button onclick="document.querySelectorAll(\'.fetch-item-cb\').forEach(cb => cb.checked = false);" style="background:#F8FAFC; color:var(--text-secondary); border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;">Clear All</button>' +
+                '</div>';
+            
+            allItems.forEach((item, idx) => {
+                modalHtml += '<label style="display:flex; align-items:flex-start; gap:8px; padding:8px; background:white; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:6px; cursor:pointer;">' +
+                    '<input type="checkbox" class="fetch-item-cb" data-idx="' + idx + '" style="accent-color:var(--warning); width:16px; height:16px; margin-top:2px;">' +
+                    '<div style="flex:1;">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<b style="font-size:12px; color:var(--text-primary);">' + (item.name || 'Unnamed') + '</b>' +
+                    '<span style="font-size:10px; color:var(--success); font-weight:700;">&#x20B9;' + (item.rate || 0).toLocaleString('en-IN') + ' x ' + (item.qty || 1) + '</span>' +
+                    '</div>' +
+                    (item.desc ? '<div style="font-size:10px; color:var(--text-secondary); margin-top:2px;">' + item.desc + '</div>' : '') +
+                    '<div style="font-size:9px; color:var(--text-secondary); margin-top:2px;">From: ' + item.source + ' (' + (item.sourceType || 'Invoice') + ')' +
+                    (item.event ? ' | Function: ' + item.event : '') + '</div>' +
+                    '</div></label>';
+            });
+            
+            modalHtml += '<button type="button" class="btn-main" style="background:var(--warning); color:#000; margin-top:10px;" onclick="confirmFetchItems(\'' + formType + '\');">Add Selected Items to ' + (formType === 'po' ? 'PO' : 'Bill') + '</button>' +
+                '</div></div></div>';
+            
+            // Remove existing modal if any
+            let existing = document.getElementById('fetchItemsModal');
+            if (existing) existing.remove();
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            document.getElementById('fetchItemsModal').style.display = 'flex';
+            
+            // Store items for later use
+            window._fetchedItems = allItems;
+        }
+        
+        function confirmFetchItems(formType) {
+            let selected = [];
+            document.querySelectorAll('.fetch-item-cb:checked').forEach(cb => {
+                let idx = parseInt(cb.getAttribute('data-idx'));
+                if (window._fetchedItems && window._fetchedItems[idx]) {
+                    selected.push(window._fetchedItems[idx]);
+                }
+            });
+            
+            if (selected.length === 0) { alert('Please select at least one item!'); return; }
+            
+            let containerId = formType === 'po' ? 'po_items_container' : 'pb_items_container';
+            let container = document.getElementById(containerId);
+            if (!container) { alert('Items container not found!'); return; }
+            
+            selected.forEach(item => {
+                // Use the existing addPOItem or addPBItem pattern
+                if (formType === 'po') {
+                    poItemCount++;
+                    let rowId = 'po_item_' + poItemCount;
+                    let rowHtml = '<div class="quote-item-row" id="' + rowId + '" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;">' +
+                        '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">&times;</button>' +
+                        '<div style="display: flex; gap: 8px; align-items: flex-end; width:100%;">' +
+                        '<div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" value="' + (item.name || '').replace(/"/g, '"') + '" placeholder="Name" required></div>' +
+                        '<div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>' +
+                        '<div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="' + (item.qty || 1) + '" oninput="calculatePOTotal()" required></div>' +
+                        '<div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(&#x20B9;)</label><input type="number" class="form-input q-item-rate" value="' + (item.rate || 0) + '" placeholder="Rate" oninput="calculatePOTotal()" required></div>' +
+                        '</div>' +
+                        '<div><input type="text" class="form-input q-item-desc" value="' + (item.desc || '').replace(/"/g, '"') + '" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div>' +
+                        '</div>';
+                    container.insertAdjacentHTML('beforeend', rowHtml);
+                    // Set unit value if exists
+                    let lastRow = container.lastElementChild;
+                    if (lastRow && item.unit) {
+                        let unitSel = lastRow.querySelector('.q-item-unit');
+                        if (unitSel) unitSel.value = item.unit;
+                    }
+                } else {
+                    // For Purchase Bill
+                    pbItemCount++;
+                    let rowId = 'pb_item_' + pbItemCount;
+                    let rowHtml = '<div class="quote-item-row" id="' + rowId + '" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;">' +
+                        '<button type="button" onclick="document.getElementById(\'' + rowId + '\').remove(); calculatePBTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">&times;</button>' +
+                        '<div style="display: flex; gap: 8px; align-items: flex-end; width:100%;">' +
+                        '<div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" value="' + (item.name || '').replace(/"/g, '"') + '" placeholder="Name" required></div>' +
+                        '<div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>' +
+                        '<div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="' + (item.qty || 1) + '" oninput="calculatePBTotal()" required></div>' +
+                        '<div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(&#x20B9;)</label><input type="number" class="form-input q-item-rate" value="' + (item.rate || 0) + '" placeholder="Rate" oninput="calculatePBTotal()" required></div>' +
+                        '</div>' +
+                        '<div><input type="text" class="form-input q-item-desc" value="' + (item.desc || '').replace(/"/g, '"') + '" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div>' +
+                        '</div>';
+                    container.insertAdjacentHTML('beforeend', rowHtml);
+                    let lastRow = container.lastElementChild;
+                    if (lastRow && item.unit) {
+                        let unitSel = lastRow.querySelector('.q-item-unit');
+                        if (unitSel) unitSel.value = item.unit;
+                    }
+                }
+            });
+            
+            // Recalculate total
+            if (formType === 'po') calculatePOTotal();
+            else calculatePBTotal();
+            
+            // Close modal
+            document.getElementById('fetchItemsModal').remove();
+            window._fetchedItems = null;
+        }
+
+        function sharePhotosWithVendor(formType) {
+            formType = formType || 'po';
+            let selected = [];
+            document.querySelectorAll('.' + formType + '-photo-cb:checked').forEach(cb => {
+                selected.push({ url: cb.value, label: cb.getAttribute('data-label') || '' });
+            });
+            if (selected.length === 0) { alert('Please select at least one photo to share!'); return; }
+            
+            let vendorSel = document.getElementById('po_vendor');
+            let vendorName = vendorSel ? vendorSel.options[vendorSel.selectedIndex]?.text || 'Vendor' : 'Vendor';
+            let vendorPhone = '';
+            if (vendorSel && vendorSel.value) {
+                let party = partiesDB[vendorSel.value];
+                if (party && party.phone) vendorPhone = party.phone;
+            }
+            
+            // Build message text
+            let msg = 'Hello ' + vendorName + ',%0A%0AHere are the reference photos for your work:%0A%0A';
+            selected.forEach((p, i) => {
+                msg += (i + 1) + '. ' + (p.label || 'Photo') + '%0A' + p.url + '%0A%0A';
+            });
+            
+            // Open WhatsApp if phone number exists
+            if (vendorPhone) {
+                let cleanPhone = String(vendorPhone).replace(/\D/g, '');
+                if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+                window.open('https://wa.me/' + cleanPhone + '?text=' + msg, '_blank');
+            } else {
+                // Copy to clipboard
+                let text = msg.replace(/%0A/g, '\n');
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Photos links copied to clipboard! You can paste them in WhatsApp or any messaging app.');
+                }).catch(() => {
+                    // Fallback: show links
+                    alert('Share these photo links:\n\n' + text);
+                });
+            }
+        }
+
         function addPOItem() { poItemCount++; let container = document.getElementById('po_items_container'); let rowId = 'po_item_' + poItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePOTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input q-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select q-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input q-item-qty" value="1" oninput="calculatePOTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input q-item-rate" placeholder="Rate" oninput="calculatePOTotal()" required></div></div><div><input type="text" class="form-input q-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function calculatePOTotal() { let total = 0; document.querySelectorAll('#po_items_container .quote-item-row').forEach(row => { let qty = parseFloat(row.querySelector('.q-item-qty').value) || 0; let rate = parseFloat(row.querySelector('.q-item-rate').value) || 0; total += (qty * rate); }); let discount = parseFloat(document.getElementById('po_discount').value) || 0; let grandTotal = total - discount; if (grandTotal < 0) grandTotal = 0; document.getElementById('po_total').value = grandTotal; }
         // 🚀 UPDATED SAVE PO (Edit ID Logic Added)
@@ -16940,7 +17204,7 @@
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = getSelectedDates('pb', evId);
 
-            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks, docUrl: pbDocUrl };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } let selectedPhotosPB = []; document.querySelectorAll('.pb-photo-cb:checked').forEach(cb => { selectedPhotosPB.push({ url: cb.value, label: cb.getAttribute('data-label') }); }); purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, selectedPhotos: selectedPhotosPB, remarks: pbRemarks, docUrl: pbDocUrl };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -20810,6 +21074,7 @@
             let funcList = document.getElementById(prefix + '_function_list');
 
             if (prefix === 'po' && typeof loadEventPhotosForPO === 'function') loadEventPhotosForPO();
+            if (prefix === 'pb' && typeof loadEventPhotosForPB === 'function') loadEventPhotosForPB();
 
             if (evId && leadsDB[evId] && leadsDB[evId].dates && leadsDB[evId].dates.length > 0) {
                 let html = '';
