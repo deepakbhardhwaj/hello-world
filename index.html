@@ -5046,7 +5046,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Order Date</label>
+                            <label class="form-label">Work Date</label>
                             <input type="date" id="ob_date" class="form-input" required readonly style="background:#F8FAFC;">
                         </div>
                     </div>
@@ -7145,7 +7145,7 @@
                     <div class="form-group">
                         <div
                             style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0; color:var(--warning);">Select
+                            <label class="form-label" style="margin:0; color:var(--accent-color);">Select
                                 Vendor</label><button type="button" class="link-btn" onclick="openPartyModal()">+ Add
                                 New Vendor</button>
                         </div><input type="text" class="select-search-box" placeholder="Search Vendor..."
@@ -7157,40 +7157,32 @@
                         <div class="form-group"><label class="form-label">Link to Event</label><select
                                 id="po_event_link" class="form-select" onchange="handleEventLinkChange('po')"></select>
                         </div>
-                        <div class="form-group"><label class="form-label">Order Date</label><input type="date"
+                        <div class="form-group"><label class="form-label">Work Date</label><input type="date"
                                 id="po_date" class="form-input" required></div>
                     </div>
 
                     <div class="form-group" id="po_function_group"
-                        style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-bottom:12px;">
-                        <label class="form-label" style="color:var(--accent-color); margin-bottom:8px;">Select Functions
-                            for this Order</label>
+                        style="display:none; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
+                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>
+                            <span style="font-size:9px; color:var(--text-secondary);">Select functions for this order</span>
+                        </div>
                         <div id="po_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
                     </div>
 
-                    <div class="form-group"><label class="form-label">Order Title / Details</label><input type="text"
-                            id="po_event" class="form-input" placeholder="e.g. Stage Flower Work" required></div>
+                    <input type="hidden" id="po_event" value="Purchase Order">
 
-                    <div class="form-group" id="po_photo_group"
-                        style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--warning);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label class="form-label" style="color:var(--warning); margin:0;">Function-wise Reference Photos</label>
-                            <button type="button" id="po_share_photos_btn" style="display:none; background:var(--success); color:white; border:none; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="sharePhotosWithVendor()">&#x1F4E4; Share with Vendor</button>
-                        </div>
-                        <div id="po_photo_list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
-                        </div>
-                    </div>
+                    
 
                     <div
-                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #FFFBEB;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--warning);">Services / Items
-                                Needed</label>
-                                <div style="display:flex; gap:6px;">
-                                    <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="fetchItemsFromInvoice('po')">&#x1F4C4; Fetch from Invoice</button>
-                                    <button type="button" style="background: white; border: 1px solid var(--warning); color: var(--warning); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="addPOItem()">+ Add Item</button>
-                                </div>
+                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #EFF6FF;">
+                        <div id="po_items_wrapper" style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin:12px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
+                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Services / Items</label>
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="fetchItemsFromInvoice('po')">&#x1F4C4; Fetch from Invoice</button>
+                                <button type="button" style="background:var(--accent-color); border:none; color:white; border-radius:4px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="addPOItem()">+ Add Item</button>
+                            </div>
                         </div>
                         <div id="po_items_container"></div>
                     </div>
@@ -7210,7 +7202,7 @@
                         <label class="form-label">Upload Document / Photo (Optional)</label>
                         <label for="po_file_upload" style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#EFF6FF; color:var(--accent-color); border:1px solid #BFDBFE; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">↑ Attach Files</label><input type="file" id="po_file_upload" accept="image/*,.heic,.heif,.pdf" multiple style="display:none;" onchange="addDocUpload('PO', 'po_file_upload', 'po_file_preview')"><div id="po_file_preview" style="margin-top:6px; display:none;"></div>
                     </div>
-                    <button type="button" class="btn-main" style="background:var(--warning); color:#000;"
+                    <button type="button" class="btn-main" style="background:var(--accent-color); color:white;"
                         onclick="savePOData()">Save Purchase Order</button>
                 </form>
             </div>
@@ -7224,13 +7216,13 @@
                 </div>
                 <form id="pbForm" onsubmit="event.preventDefault();" novalidate>
                     <div id="pb_autopilot_badge"
-                        style="display:none; background:#FFFBEB; color:#D97706; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:16px; border:1px solid #FDE68A; align-items:center; gap:6px;">
+                        style="display:none; background:#EFF6FF; color:#D97706; padding:10px 12px; border-radius:8px; font-size:11px; margin-bottom:16px; border:1px solid #BFDBFE; align-items:center; gap:6px;">
                     </div>
 
                     <div class="form-group">
                         <div
                             style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <label class="form-label" style="margin:0; color:var(--warning);">Select
+                            <label class="form-label" style="margin:0; color:var(--accent-color);">Select
                                 Vendor</label><button type="button" class="link-btn" onclick="openPartyModal()">+ Add
                                 New Vendor</button>
                         </div><input type="text" class="select-search-box" placeholder="Search Vendor..."
@@ -7240,9 +7232,9 @@
                     </div>
 
                     <div class="form-group" id="pb_link_po_group"
-                        style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--warning);">
-                        <label class="form-label" style="color:var(--warning);">🔗 Auto-fill from Pending PO</label>
-                        <select id="pb_linked_po" class="form-select" style="border-color:var(--warning);"
+                        style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--accent-color);">
+                        <label class="form-label" style="color:var(--accent-color);">🔗 Auto-fill from Pending PO</label>
+                        <select id="pb_linked_po" class="form-select" style="border-color:var(--accent-color);"
                             onchange="handlePOSelectionForPB()"></select>
                     </div>
 
@@ -7255,32 +7247,26 @@
                     </div>
 
                     <div class="form-group" id="pb_function_group"
-                        style="display:none; background:#EFF6FF; padding:10px; border-radius:6px; border:1px dashed #3B82F6; margin-bottom:12px;">
-                        <label class="form-label" style="color:var(--accent-color);">Select Functions for this
-                            Bill</label>
+                        style="display:none; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:#F8FAFC; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
+                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Function Details</label>
+                            <span style="font-size:9px; color:var(--text-secondary);">Select functions for this bill</span>
+                        </div>
                         <div id="pb_function_list" style="display:flex; flex-direction:column; gap:6px;"></div>
                     </div>
-
-                    <div class="form-group" id="pb_photo_group"
-                        style="display:none; background:#F8FAFC; padding:12px; border-radius:8px; border:1px dashed var(--warning);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label class="form-label" style="color:var(--warning); margin:0;">Function-wise Reference Photos</label>
-                            <button type="button" id="pb_share_photos_btn" style="display:none; background:var(--success); color:white; border:none; border-radius:6px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="sharePhotosWithVendor('pb')">&#x1F4E4; Share with Vendor</button>
-                        </div>
-                        <div id="pb_photo_list" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
-                        </div>
                     </div>
+
                     <div class="form-group"><label class="form-label">Vendor Bill No. (Optional)</label><input
                             type="text" id="pb_ref" class="form-input" placeholder="e.g. INV-104"></div>
                     <div
-                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #FFFBEB;">
+                        style="margin: 16px 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #EFF6FF;">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--warning);">Services / Items
-                                Billed</label><button type="button"
-                                style="background: white; border: 1px solid var(--warning); color: var(--warning); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);"
-                                onclick="addPBItem()">+ Add Item</button>
-                                <button type="button" style="background: white; border: 1px solid var(--accent-color); color: var(--accent-color); border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm); margin-left:6px;" onclick="fetchItemsFromInvoice('pb')">&#x1F4C4; Fetch from Invoice</button>
+                            <label class="form-label" style="margin:0; color:var(--accent-color); font-size:11px;">Services / Items</label>
+                                <div style="display:flex; gap:6px;">
+                                    <button type="button" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; font-weight:700;" onclick="fetchItemsFromInvoice('pb')">&#x1F4C4; Fetch from Invoice</button>
+                                    <button type="button" style="background:var(--accent-color); border:none; color:white; border-radius:4px; padding:4px 10px; font-size:10px; cursor:pointer; font-weight:700;" onclick="addPBItem()">+ Add Item</button>
+                                </div>
                         </div>
                         <div id="pb_items_container"></div>
                     </div>
@@ -16437,13 +16423,13 @@
             document.getElementById('poForm').reset();
             loadVendorsIntoSelect('po_vendor');
             loadEventsToLinkSelect('po_event_link', tempEventIdForPurchase);
+            document.getElementById('po_date').value = new Date().toISOString().split('T')[0];
 
-            // 🚀 BUG FIX: Auto-load functions/dates if event is pre-selected
+            // Auto-load functions/dates if event is pre-selected
             handleEventLinkChange('po');
 
             document.getElementById('po_items_container').innerHTML = '';
-            document.getElementById('po_photo_group').style.display = 'none';
-            addPOItem(); calculatePOTotal(); loadEventPhotosForPO();
+            addPOItem(); calculatePOTotal();
             document.getElementById('purchaseOrderModal').style.display = 'flex';
         }
         function loadEventPhotosForPB() {
@@ -16886,7 +16872,8 @@
         }
 
         function openPurchaseBillModal(preFillPartyId = null) {
-            document.getElementById('pbForm').reset(); convertingPOId = null;
+            document.getElementById('pbForm').reset();
+            document.getElementById('pb_date').value = new Date().toISOString().split('T')[0]; convertingPOId = null;
             let badge = document.getElementById('pb_autopilot_badge'); if (badge) badge.style.display = 'none';
             loadVendorsIntoSelect('pb_vendor', preFillPartyId);
             loadEventsToLinkSelect('pb_event_link', tempEventIdForPurchase);
@@ -17337,7 +17324,7 @@
                 document.getElementById('po_discount').value = record.discount;
                 calculatePOTotal();
 
-                let photoGroup = document.getElementById('po_photo_group'); let photoList = document.getElementById('po_photo_list');
+                let photoGroup = document.getElementById('po_photo_group'); if (!photoGroup) return; let photoList = document.getElementById('po_photo_list');
                 if (record.selectedPhotos && record.selectedPhotos.length > 0) {
                     photoList.innerHTML = '';
                     record.selectedPhotos.forEach((p, idx) => {
@@ -21073,8 +21060,7 @@
             let funcGroup = document.getElementById(prefix + '_function_group');
             let funcList = document.getElementById(prefix + '_function_list');
 
-            if (prefix === 'po' && typeof loadEventPhotosForPO === 'function') loadEventPhotosForPO();
-            if (prefix === 'pb' && typeof loadEventPhotosForPB === 'function') loadEventPhotosForPB();
+            
 
             if (evId && leadsDB[evId] && leadsDB[evId].dates && leadsDB[evId].dates.length > 0) {
                 let html = '';
@@ -21083,7 +21069,7 @@
                     let vText = d.venue ? ` | 📍 ${d.venue}` : '';
                     let tText = d.time ? ` | ⏰ ${d.time}` : '';
                     // Generate Checkbox
-                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:var(--surface-color); padding:8px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:6px;">
                                 <input type="checkbox" class="${prefix}-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
                                 <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
                              </label>`;
@@ -23408,7 +23394,7 @@
                     let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     let vText = d.venue ? ` | 📍 ${d.venue}` : '';
                     let tText = d.time ? ` | ⏰ ${d.time}` : '';
-                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:var(--surface-color); padding:8px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:6px;">
                                 <input type="checkbox" class="out-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
                                 <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
                              </label>`;
@@ -25775,7 +25761,7 @@
                     let fDate = new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     let vText = d.venue ? ` | 📍 ${d.venue}` : '';
                     let tText = d.time ? ` | ⏰ ${d.time}` : '';
-                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:white; padding:8px; border:1px solid #BFDBFE; border-radius:6px;">
+                    html += `<label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; cursor:pointer; background:var(--surface-color); padding:8px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:6px;">
                                 <input type="checkbox" class="ob-func-cb" value="${idx}" style="accent-color:var(--accent-color); width:16px; height:16px; margin-top:2px;">
                                 <span><b style="font-size:12px; color:var(--text-primary);">${d.name}</b><br><span style="color:var(--text-secondary);">${fDate}${tText}${vText}</span></span>
                              </label>`;
