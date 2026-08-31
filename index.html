@@ -1545,6 +1545,9 @@
             box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
             z-index: 10000 !important; /* 🚀 FIX: Form Layer on Top */
         }
+        .modal-overlay.item-popup-overlay { z-index: 20000 !important; }
+        .modal-overlay.item-popup-overlay .modal-content { z-index: 20001 !important; }
+
 
         @keyframes slideUpModal {
             from {
@@ -7135,7 +7138,7 @@
             </div>
         </div>
 
-        <div id="poItemViewModal" class="modal-overlay" style="display:none; z-index:20000;">
+        <div id="poItemViewModal" class="modal-overlay item-popup-overlay" style="display:none;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -7146,7 +7149,7 @@
             </div>
         </div>
 
-        <div id="pbItemViewModal" class="modal-overlay" style="display:none; z-index:20000;">
+        <div id="pbItemViewModal" class="modal-overlay item-popup-overlay" style="display:none;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -16560,7 +16563,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             poViewEvIdx = evIdx;
             let ev = poEventsData[evIdx]; if (!ev) return;
             let modal = document.getElementById('poItemViewModal');
-            if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '20000'; }
+            if (modal) { modal.style.display = 'flex'; }
             renderPOItemPopup();
         }
         function closePOItemViewPanel() {
@@ -16784,7 +16787,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         }
         function openPBItemPopup(evIdx) {
             pbViewEvIdx = evIdx; let ev = pbEventsData[evIdx]; if (!ev) return;
-            let modal = document.getElementById('pbItemViewModal'); if (modal) { modal.style.display = 'flex'; modal.style.zIndex = '20000'; }
+            let modal = document.getElementById('pbItemViewModal'); if (modal) { modal.style.display = 'flex'; }
             renderPBItemPopup();
         }
         function closePBItemViewPanel() { let modal = document.getElementById('pbItemViewModal'); if (modal) modal.style.display = 'none'; renderPBEvents(); renderPBItems(); }
