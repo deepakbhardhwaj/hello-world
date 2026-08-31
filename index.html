@@ -17441,7 +17441,7 @@ function openPurchaseOrderModal() {
             let partyId = document.getElementById('po_vendor').value; let evId = document.getElementById('po_event_link').value; let event = document.getElementById('po_event').value; let date = document.getElementById('po_date').value;
             if (!partyId || !event || !date) { alert("Fill all required fields!"); return; }
 
-            let items = poItemsData.map(i => ({ name: i.name, desc: i.desc||'', unit: i.unit||'Pcs', qty: i.qty, rate: i.rate, amount: i.amount }));
+            let items = poItemsData.map(i => ({ name: i.name, desc: i.desc||'', unit: i.unit||'Pcs', qty: i.qty, rate: i.rate, amount: i.amount, event: i.event||'', category: i.category||'General' }));
             if (items.length === 0) return alert("Please add at least one item!");
 
             let selectedPhotos = [];
@@ -17453,7 +17453,7 @@ function openPurchaseOrderModal() {
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = poEventsData.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'' }));
 
-            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, remarks: poRemarks, docUrl: poDocUrl };
+            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } let selectedEvents = poEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'' })); purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, events: selectedEvents, remarks: poRemarks, docUrl: poDocUrl };
 
             editingPurchaseId = null;
             updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
@@ -17763,7 +17763,7 @@ function openPurchaseOrderModal() {
         async function savePBData() {
             let partyId = document.getElementById('pb_vendor').value; let date = document.getElementById('pb_date').value; let evId = document.getElementById('pb_event_link').value; let refNo = document.getElementById('pb_ref').value;
             if (!partyId || !date) { alert("Fill all required fields!"); return; }
-            let items = pbItemsData.map(i => ({ name: i.name, desc: i.desc||'', unit: i.unit||'Pcs', qty: i.qty, rate: i.rate, amount: i.amount }));
+            let items = pbItemsData.map(i => ({ name: i.name, desc: i.desc||'', unit: i.unit||'Pcs', qty: i.qty, rate: i.rate, amount: i.amount, event: i.event||'', category: i.category||'General' }));
             if (items.length === 0) return alert("Please add at least one item!");
             let party = partiesDB[partyId];
             if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; }
@@ -17779,7 +17779,7 @@ function openPurchaseOrderModal() {
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = pbEventsData.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'' }));
 
-            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, remarks: pbRemarks, docUrl: pbDocUrl };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, events: pbEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'' })), remarks: pbRemarks, docUrl: pbDocUrl };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -18416,7 +18416,7 @@ function openPurchaseOrderModal() {
                 bodyHtml = `<div style="margin-bottom: 15px;"><strong>Party:</strong> ${sanitize(partyName)}<br><strong>Doc ID:</strong> ${record.id}${record.ref ? `<br><strong>Bill No.:</strong> ${sanitize(record.ref)}` : ''}${record.events && record.events.length > 0 ? '' : `<br><strong>Title/Event:</strong> ${sanitize(record.event || '')}`}<br><strong>Date:</strong> ${formattedDate}<br><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700; text-transform:uppercase;">${record.status}</span></div>`;
 
                 let subtotal = 0;
-                if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
+                if ((record.type === 'Quotation' || record.type === 'PO' || record.type === 'PB' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
                     // FUNCTION SCHEDULE TABLE (with event colors)
                     bodyHtml += `<div style="margin-bottom:12px;"><div style="font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:4px;">Function Schedule</div>`;
                     bodyHtml += `<table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-color); border-radius:8px; overflow:hidden;"><tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr>`;
@@ -19246,6 +19246,44 @@ function openPurchaseOrderModal() {
                 <button onclick="window.print()" style="width:100%; background:#2563EB; color:white; border:none; padding:16px; border-radius:12px; font-weight:900; font-size:16px; box-shadow:0 8px 20px rgba(37,99,235,0.4); cursor:pointer;">🖨️ Save PDF to Share</button>
             </div>
             <script>setTimeout(function(){ window.print(); }, 1000);<\/script>
+            
+            /* FUNCTION-WISE PAGES FOR PO/PB */
+            if ((record.type === 'PO' || record.type === 'PB') && record.events && record.events.length > 0) {
+                let isPO = record.type === 'PO';
+                record.events.forEach((ev, evIdx) => {
+                    let evItems = (record.items || []).filter(i => i.event === ev.name);
+                    if (evItems.length === 0) return;
+                    html += '<div style="page-break-after: always;"></div>';
+                    html += '<div style="margin-top:20px;"><h2 style="font-size:16px; color:#1E40AF; border-bottom:2px solid #3B82F6; padding-bottom:6px; margin-bottom:12px;">' + (ev.name||'Function') + ' - Items</h2>';
+                    // Group by category
+                    let categories = [];
+                    evItems.forEach(i => { let c = (i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+                    categories.forEach(catName => {
+                        let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+                        let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                        html += '<div style="background:#EFF6FF; border-left:3px solid #3B82F6; padding:5px 8px; font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px;">' + catName + ' (&#8377;' + catTotal.toLocaleString('en-IN') + ')</div>';
+                        html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:10px;"><thead><tr style="background:#F1F5F9;"><th style="padding:5px 8px; text-align:left; border:1px solid #E2E8F0;">#</th><th style="padding:5px 8px; text-align:left; border:1px solid #E2E8F0;">Item / Service</th><th style="padding:5px 8px; text-align:center; border:1px solid #E2E8F0;">Qty</th><th style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">Rate</th><th style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">Amount</th></tr></thead><tbody>';
+                        catItems.forEach((item, i) => {
+                            html += '<tr><td style="padding:5px 8px; border:1px solid #E2E8F0;">' + (i+1) + '</td><td style="padding:5px 8px; border:1px solid #E2E8F0;"><strong>' + (item.name||'') + '</strong>' + (item.desc ? '<div style="font-size:9px; color:#64748B;">' + item.desc + '</div>' : '') + '</td><td style="padding:5px 8px; text-align:center; border:1px solid #E2E8F0;">' + (item.qty||1) + ' ' + (item.unit||'') + '</td><td style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">&#8377;' + (item.rate||0) + '</td><td style="padding:5px 8px; text-align:right; font-weight:700; border:1px solid #E2E8F0;">&#8377;' + ((item.amount||0)).toLocaleString('en-IN') + '</td></tr>';
+                        });
+                        html += '<tr style="background:#F8FAFC; font-weight:800;"><td colspan="4" style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">' + catName + ' Subtotal:</td><td style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">&#8377;' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                        html += '</tbody></table>';
+                    });
+                    // Reference photos for this function
+                    if (record.selectedPhotos && record.selectedPhotos.length > 0) {
+                        let funcPhotos = record.selectedPhotos.filter(p => { let lbl = typeof p === 'object' ? (p.label||'') : ''; return lbl === ev.name || lbl === ''; });
+                        if (funcPhotos.length > 0) {
+                            html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div style="display:flex; flex-wrap:wrap; gap:8px;">';
+                            funcPhotos.forEach(p => { let url = typeof p === 'object' ? (p.url||p) : p; html += '<div style="width:120px; height:120px; border:1px solid #CBD5E1; border-radius:4px; overflow:hidden;"><img src="' + url + '" style="width:100%; height:100%; object-fit:cover;" /></div>'; });
+                            html += '</div></div>';
+                        }
+                    }
+                    let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:8px;"><span>' + (ev.name||'Function') + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                    html += '</div>';
+                });
+            }
+            
             </body></html>`;
 
             printWin.document.open();
