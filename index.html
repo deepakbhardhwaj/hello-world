@@ -5326,7 +5326,7 @@
                 .task-stat-num { font-size:20px; font-weight:900; color:white; line-height:1; }
                 .task-stat-lbl { font-size:9px; font-weight:700; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
                 
-                .task-filter-bar { display:flex; gap:6px; overflow-x:auto; padding:0 0 8px; margin-bottom:14px; scrollbar-width:none; }
+                .task-filter-bar { display:flex; gap:6px; overflow-x:auto; padding:0 16px 8px 0; margin-bottom:14px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
                 .task-filter-bar::-webkit-scrollbar { display:none; }
                 .task-pill { display:flex; align-items:center; gap:5px; background:white; border:1.5px solid #E2E8F0; padding:8px 16px; border-radius:30px; font-size:12px; font-weight:800; color:#64748B; cursor:pointer; transition:all 0.2s; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.03); }
                 .task-pill:hover { border-color:#94A3B8; color:#0F172A; }
@@ -6868,7 +6868,7 @@
         </div>
 
 
-        <div id="quoteItemReadModal" class="modal-overlay" style="display:none; z-index:10700;">
+        <div id="quoteItemReadModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:21000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -6964,7 +6964,7 @@
             </div>
         </div>
 
-        <div id="quoteItemViewModal" class="modal-overlay" style="display:none; z-index:10600;">
+        <div id="quoteItemViewModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:21000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -7040,12 +7040,8 @@
                             </div>
                         </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label class="form-label" style="margin: 0; color: var(--accent-color);">Services / Items</label>
-                            <div style="display: flex; gap: 8px;">
-                                <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Stock</button>
-                                <button type="button" style="background: var(--accent-color); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="showInvPreview()">👁 Preview & Save</button>
-                            </div>
+                        <div id="di_items_header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <button type="button" id="btn_fetch_godown" style="display: none; background: white; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow:var(--shadow-sm);" onclick="openInventorySelectSheet('di')">📦 Fetch Stock</button>
                         </div>
                     </div>
 
@@ -7079,7 +7075,7 @@
                         <span style="color: var(--text-secondary); font-weight: 700;">Balance Due:</span>
                         <span id="di_balance_due" style="font-weight: 800; color: var(--danger); font-size: 18px;">₹0</span>
                     </div>
-                    <div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="di_remarks" class="form-input" rows="2" placeholder="Optional remarks for this invoice" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" style="background: var(--success);" onclick="saveDirectInvoiceData()">Save Invoice</button>
+                    <div class="form-group"><label class="form-label">Remarks / Notes</label><textarea id="di_remarks" class="form-input" rows="2" placeholder="Optional remarks for this invoice" style="font-size:12px; padding:8px 10px;"></textarea></div><button type="button" class="btn-main" style="background: var(--success);" onclick="showInvPreview()">👁 Preview & Save</button>
                 </form>
             </div>
         </div>
@@ -7127,7 +7123,7 @@
         </div>
 
         <!-- INVOICE ITEM VIEW MODAL (mini popup, mirrors quoteItemViewModal) -->
-        <div id="invItemViewModal" class="modal-overlay" style="display:none; z-index:10600;">
+        <div id="invItemViewModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:21000;">
             <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Item Details</h3>
@@ -7139,9 +7135,9 @@
         </div>
 
         <div id="poItemViewModal" class="modal-overlay item-popup-overlay" style="display:none;">
-            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+            <div class="modal-content" style="max-width:580px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
-                    <h3>Item Details</h3>
+                    <h3>Manage Items</h3>
                     <button class="modal-close" onclick="closePOItemViewPanel()">&times;</button>
                 </div>
                 <div id="poItemViewBody" style="padding:0 0 12px 0;"></div>
@@ -7150,9 +7146,9 @@
         </div>
 
         <div id="pbItemViewModal" class="modal-overlay item-popup-overlay" style="display:none;">
-            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
+            <div class="modal-content" style="max-width:580px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
-                    <h3>Item Details</h3>
+                    <h3>Manage Items</h3>
                     <button class="modal-close" onclick="closePBItemViewPanel()">&times;</button>
                 </div>
                 <div id="pbItemViewBody" style="padding:0 0 12px 0;"></div>
@@ -7959,7 +7955,7 @@
                         <div class="team-modal-title">👥 Team & Staff</div>
                         <div class="team-modal-sub">Manage access & permissions</div>
                     </div>
-                    <button onclick="document.getElementById('teamModal').style.display='none'" style="background:rgba(255,255,255,0.15); border:none; width:32px; height:32px; border-radius:8px; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    <button onclick="closeTeamModal()" style="background:rgba(255,255,255,0.15); border:none; width:32px; height:32px; border-radius:8px; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
                 </div>
                 <!-- Join Code Box -->
                 <div class="team-join-box">
@@ -7989,7 +7985,7 @@
                         <div style="font-size:17px; font-weight:900; color:white;">➕ Add Staff Member</div>
                         <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-top:2px;">They'll sign in using this email</div>
                     </div>
-                    <button onclick="document.getElementById('addStaffModal').style.display='none';" style="background:rgba(255,255,255,0.15); border:none; width:30px; height:30px; border-radius:8px; color:white; font-size:18px; cursor:pointer;">&times;</button>
+                    <button onclick="closeStaffModal()" style="background:rgba(255,255,255,0.15); border:none; width:30px; height:30px; border-radius:8px; color:white; font-size:18px; cursor:pointer;">&times;</button>
                 </div>
             </div>
             <div style="padding:20px 22px;">
@@ -9358,7 +9354,11 @@
             }
         }
 
-        function openTeamModal() {
+        
+function closeTeamModal() { let m = document.getElementById('teamModal'); if (m) m.style.display = 'none'; smartShowNav(); }
+function closeStaffModal() { let m = document.getElementById('addStaffModal'); if (m) m.style.display = 'none'; }
+
+function openTeamModal() {
             let comp = masterCompsDB[currentWorkspaceId];
             if (!comp) return;
 
@@ -12061,12 +12061,11 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             }
             qList.forEach(q => {
                 totQuot += q.finalTotal || 0;
-                let isConverted = q.convertedToInvoice || false;
+                let isConverted = q.convertedToInvoice || q.status === 'Invoiced' || false;
                 html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #BFDBFE; border-radius:8px; margin-bottom:6px; background:#EFF6FF; cursor:pointer;" onclick="viewDetails('${q.id}', 'sales');">
                             <div>
                                 <div style="display:flex; align-items:center; margin-bottom:2px;">
                                     <b style="color:var(--accent-color); font-size:13px;">${q.id}</b>
-                                    ${getStatusBadge(q.status)}
                                     ${!isConverted ? `<span style="font-size:9px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; padding:2px 6px; border-radius:4px; margin-left:4px;">NOT INVOICED</span>` : `<span style="font-size:9px; font-weight:800; background:#DCFCE7; color:#166534; border:1px solid #BBF7D0; padding:2px 6px; border-radius:4px; margin-left:4px;">INVOICED</span>`}
                                 </div>
                                 <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[q.partyId]?.name || 'Unknown'}</span>
@@ -14534,7 +14533,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             }
             document.getElementById('quoteItemReadBody').innerHTML = html;
             let rModal = document.getElementById('quoteItemReadModal');
-            rModal.style.setProperty('z-index', '10700', 'important');
+            rModal.style.setProperty('z-index', '21000', 'important');
             rModal.style.display = 'flex';
         }
         function openQuoteItemPreviewView(evIdx) {
@@ -14593,7 +14592,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             }
             document.getElementById('quoteItemReadBody').innerHTML = html;
             let rModal = document.getElementById('quoteItemReadModal');
-            rModal.style.setProperty('z-index', '10700', 'important');
+            rModal.style.setProperty('z-index', '21000', 'important');
             rModal.style.display = 'flex';
         }
         // Helper: get unique categories for an event from quoteItemsData
@@ -14721,7 +14720,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="qiv_name" class="form-input" placeholder="Enter item name"></div>';
             html += '<div class="form-row">';
             html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="qiv_qty" class="form-input" value="1" oninput="updateQIVGross()"></div>';
-            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="qiv_unit" class="form-select">' + getUnitOptions() + '</select></div>';
+            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="qiv_unit" class="form-select" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>';
             html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="qiv_rate" class="form-input" value="0" oninput="updateQIVGross()"></div>';
             html += '</div>';
             html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="qiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
@@ -15328,7 +15327,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             }
             document.getElementById('quoteItemReadBody').innerHTML = html;
             let rModal = document.getElementById('quoteItemReadModal');
-            rModal.style.setProperty('z-index', '10700', 'important');
+            rModal.style.setProperty('z-index', '21000', 'important');
             rModal.style.display = 'flex';
         }
         // Helper: get unique categories for an event from invItemsData
@@ -15415,7 +15414,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="iiv_name" class="form-input" placeholder="Enter item name"></div>';
             html += '<div class="form-row">';
             html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="iiv_qty" class="form-input" value="1" oninput="updateIIVGross()"></div>';
-            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="iiv_unit" class="form-select">' + getUnitOptions() + '</select></div>';
+            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="iiv_unit" class="form-select" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>';
             html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="iiv_rate" class="form-input" value="0" oninput="updateIIVGross()"></div>';
             html += '</div>';
             html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="iiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
@@ -16601,90 +16600,216 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             let modal = document.getElementById('poItemViewModal'); if (modal) modal.style.display = 'none';
             renderPOEvents(); renderPOItems();
         }
-        function renderPOItemPopup() {
-            let ev = poEventsData[poViewEvIdx]; if (!ev) return;
-            let evColor = getEventColor(ev); let textColor = getContrastColor(evColor);
-            let evItems = poItemsData.filter(i => i.event === ev.name);
-            let html = '<div style="background:'+evColor+'; color:'+textColor+'; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">'+ev.name+' <span style="font-size:10px; opacity:0.8;">('+evItems.length+' items)</span></div>';
-            // Existing items
-            if (evItems.length > 0) {
-                html += '<div style="max-height:200px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px;">';
-                let categories = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
-                let itemNum = 0;
-                categories.forEach(catName => {
-                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
-                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:5px 8px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div><span style="font-size:10px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</span></div>';
-                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-                    catItems.forEach((item) => { let realIdx = poItemsData.indexOf(item); itemNum++;
-                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:4px; text-align:center; color:var(--text-secondary);">'+itemNum+'</td><td style="padding:4px 6px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary);">'+item.desc+'</div>':'')+'</td><td style="padding:4px; text-align:center;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:4px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:4px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:2px; white-space:nowrap;"><button onclick="editPOItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:3px; width:20px; height:20px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePOItem('+realIdx+')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:3px; width:20px; height:20px; padding:0; font-size:12px; cursor:pointer;">\u00D7</button></td></tr>';
-                    });
-                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:3px 6px; text-align:right; font-size:9px; font-weight:700; color:var(--text-secondary);">'+catName+' Subtotal:</td><td colspan="2" style="padding:3px 6px; text-align:right; font-size:10px; font-weight:800;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</td></tr>';
-                    html += '</table>';
-                });
-                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:5px 8px; display:flex; justify-content:space-between;"><div style="font-size:11px; font-weight:800;">Event Total:</div><div style="font-size:13px; font-weight:800; color:var(--accent-color);">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</div></div>';
-                html += '</div>';
+        // ===== ADVANCED PO ITEM POPUP =====
+function renderPOItemPopup() {
+    let ev = poEventsData[poViewEvIdx]; if (!ev) return;
+    let evColor = getEventColor(ev); let textColor = getContrastColor(evColor);
+    let evItems = poItemsData.filter(i => i.event === ev.name);
+    let evId = document.getElementById('po_event_link') ? document.getElementById('po_event_link').value : '';
+    
+    // Collect invoice items for this function
+    let invCategories = [];
+    let invItemsByCat = {};
+    if (evId) {
+        let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
+                let eventSales = allSales.filter(s => s.type === 'Invoice');
+                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
+                if (eventSales.length === 0) eventSales = allSales;
+        eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
+            if (!item.event || item.event === ev.name) {
+                let c = (item.category||'General').trim()||'General';
+                if (!invCategories.includes(c)) { invCategories.push(c); invItemsByCat[c] = []; }
+                invItemsByCat[c].push(item);
             }
-            // Import from Invoice - Category checkboxes
-            let evId = document.getElementById('po_event_link') ? document.getElementById('po_event_link').value : '';
-            let invCategories = [];
-            if (evId) {
-                let eventSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => { if (!item.event || item.event === ev.name) { let c=(item.category||'General').trim()||'General'; if (!invCategories.includes(c)) invCategories.push(c); } }); });
+        }); });
+    }
+    
+    let html = '';
+    // Header with function name
+    html += '<div style="background:'+evColor+'; color:'+textColor+'; padding:12px 16px; font-size:14px; font-weight:800; margin:-12px -12px 12px -12px; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">';
+    html += '<span>'+ev.name+'</span>';
+    html += '<span style="font-size:11px; opacity:0.9; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px;">'+evItems.length+' items added</span>';
+    html += '</div>';
+    
+    // Tab buttons
+    html += '<div style="display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid var(--border-color);">';
+    html += '<button id="po_tab_items" onclick="poSwitchTab(\'items\')" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-bottom:3px solid #3B82F6; background:transparent; color:#3B82F6; cursor:pointer;">My Items ('+evItems.length+')</button>';
+    if (invCategories.length > 0) {
+        html += '<button id="po_tab_import" onclick="poSwitchTab(\'import\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">Import from Invoice</button>';
+    }
+    html += '<button id="po_tab_add" onclick="poSwitchTab(\'add\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">+ Add New</button>';
+    html += '</div>';
+    
+    // === TAB 1: My Items ===
+    html += '<div id="po_tab_content_items" style="display:block;">';
+    if (evItems.length > 0) {
+        html += '<div style="max-height:350px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">';
+        let categories = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+        let itemNum = 0;
+        categories.forEach(catName => {
+            let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+            let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:3px solid #3B82F6; padding:6px 10px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div><span style="font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</span></div>';
+            html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+            catItems.forEach((item) => { let realIdx = poItemsData.indexOf(item); itemNum++;
+                html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:5px; text-align:center; color:var(--text-secondary); font-weight:700;">'+itemNum+'</td><td style="padding:5px 8px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">'+item.desc+'</div>':'')+'</td><td style="padding:5px; text-align:center; font-size:10px;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:5px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:5px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:3px; white-space:nowrap;"><button onclick="editPOItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; width:22px; height:22px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePOItem('+realIdx+')" style="background:#FEE2E2; border:1px solid #FECACA; color:#DC2626; border-radius:4px; width:22px; height:22px; padding:0; font-size:14px; cursor:pointer; margin-left:2px;">&#x00D7;</button></td></tr>';
+            });
+            html += '<tr style="border-top:1px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:9px; font-weight:700; color:var(--text-secondary);">'+catName+' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</td></tr>';
+            html += '</table>';
+        });
+        let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+        html += '<div style="border-top:2px solid #3B82F6; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:white; padding:8px 12px; display:flex; justify-content:space-between; border-radius:0 0 8px 8px;"><div style="font-size:12px; font-weight:800;">Function Total:</div><div style="font-size:15px; font-weight:900;">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</div></div>';
+        html += '</div>';
+    } else {
+        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No items yet</div><div style="font-size:11px; margin-top:4px;">Use "Import from Invoice" or "+ Add New" tabs above</div></div>';
+    }
+    html += '</div>';
+    
+    // === TAB 2: Import from Invoice ===
+    html += '<div id="po_tab_content_import" style="display:none;">';
+    if (invCategories.length > 0) {
+        // One-click import all
+        html += '<div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border:1px solid #93C5FD; border-radius:8px; padding:10px; margin-bottom:10px;">';
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
+        html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">&#x1F4C4; Import from Invoices/Quotations</div>';
+        html += '<button onclick="poImportAllFromInvoice()" style="background:#3B82F6; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(59,130,246,0.3);">&#x26A1 Import All</button>';
+        html += '</div>';
+        html += '<div style="font-size:10px; color:#64748b;">Select items below with qty & rate, then click "Add Selected" per category. Sale rates are NOT shown to vendor.</div>';
+        html += '</div>';
+        
+        // Search bar
+        html += '<input type="text" id="po_import_search" oninput="poFilterImportItems()" placeholder="Search items..." class="form-input" style="width:100%; margin-bottom:8px; font-size:12px; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px;">';
+        
+        // Category cards
+        invCategories.forEach(catName => {
+            let catInvItems = invItemsByCat[catName] || [];
+            html += '<div class="po-import-cat-card" data-cat="'+catName.toLowerCase()+'" style="border:1px solid #BFDBFE; border-radius:8px; margin-bottom:8px; overflow:hidden;">';
+            html += '<div onclick="poToggleCatCard(this)" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#EFF6FF; cursor:pointer; user-select:none;">';
+            html += '<div style="display:flex; align-items:center; gap:6px;"><input type="checkbox" class="po-cat-select-all" onchange="poSelectAllCat(this, \''+catName.replace(/'/g,"\\'")+'\')" style="accent-color:#3B82F6; width:14px; height:14px;"><span style="font-size:12px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+'</span><span style="font-size:9px; color:#3B82F6; background:white; padding:1px 6px; border-radius:8px;">'+catInvItems.length+'</span></div>';
+            html += '<div style="display:flex; align-items:center; gap:6px;"><span class="po-cat-total" style="font-size:10px; font-weight:700; color:#3B82F6;">&#x20B9;0</span><span style="font-size:12px; color:#64748b; transition:transform 0.2s;">&#x25BC;</span></div>';
+            html += '</div>';
+            html += '<div class="po-cat-items-list" style="padding:6px; display:none;">';
+            catInvItems.forEach(item => {
+                let alreadyAdded = poItemsData.some(i => i.name === item.name && i.event === ev.name);
+                html += '<div class="po-import-item" data-name="'+(item.name||'').toLowerCase()+'" style="display:flex; align-items:flex-start; gap:8px; padding:8px; border-bottom:1px solid #F1F5F9; background:white; border-radius:4px; margin-bottom:4px; '+(alreadyAdded?'opacity:0.5;':'')+'">';
+                html += '<input type="checkbox" class="po-inv-item-cb" data-name="'+(item.name||'').replace(/"/g,'"')+'" data-desc="'+(item.desc||'').replace(/"/g,'"')+'" data-unit="'+(item.unit||'Pcs')+'" data-cat="'+catName.replace(/"/g,'"')+'" '+(alreadyAdded?'checked disabled':'')+' style="accent-color:#3B82F6; width:16px; height:16px; margin-top:3px;" onchange="poUpdateCatTotal(this)">';
+                html += '<div style="flex:1;">';
+                html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">'+(item.name||'Unnamed')+(alreadyAdded?' <span style="font-size:8px; background:#10B981; color:white; padding:1px 5px; border-radius:6px;">ADDED</span>':'')+'</div>';
+                if (item.desc) html += '<div style="font-size:10px; color:#64748b; margin-top:1px;">'+item.desc+'</div>';
+                html += '<div style="display:flex; gap:6px; margin-top:4px; align-items:center;">';
+                html += '<label style="font-size:9px; color:#64748b; font-weight:600;">Qty:</label><input type="number" class="po-inv-item-qty" value="1" min="1" style="width:50px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="poUpdateCatTotal(this)">';
+                html += '<select class="po-inv-item-unit" onchange="handleUnitChange(this)" style="padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:10px;">'+getUnitOptions(item.unit||'Pcs')+'</select>';
+                html += '<label style="font-size:9px; color:#64748b; font-weight:600; margin-left:4px;">Rate:</label><input type="number" class="po-inv-item-rate" value="0" min="0" placeholder="0" style="width:70px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="poUpdateCatTotal(this)">';
+                html += '<span class="po-inv-item-amount" style="font-size:11px; font-weight:800; color:#1E40AF; min-width:60px; text-align:right;">&#x20B9;0</span>';
+                html += '</div></div></div>';
+            });
+            html += '<button onclick="addSelectedInvItemsPO(\''+catName.replace(/'/g,"\\'")+'\')" style="width:100%; margin-top:6px; background:#3B82F6; color:white; border:none; border-radius:6px; padding:8px; font-size:11px; font-weight:800; cursor:pointer;">+ Add Selected from '+catName+'</button>';
+            html += '</div></div>';
+        });
+    } else {
+        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No invoices found</div><div style="font-size:11px; margin-top:4px;">Create an invoice or quotation for this event first.</div></div>';
+    }
+    html += '</div>';
+    
+    // === TAB 3: Add New Manually ===
+    html += '<div id="po_tab_content_add" style="display:none;">';
+    let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
+    let savedCats = (appSettings.savedCategories || []);
+    let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+    let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
+    let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
+    let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
+    if (globalChipsHtml) chipsHtml += globalChipsHtml;
+    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:14px; background:var(--surface-color);">';
+    html += '<div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:10px; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#3B82F6; border-radius:50%;"></span>Add New Item</div>';
+    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label><input type="text" id="poiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="poiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;"><datalist id="poiv_category_list">'+datalistHtml+'</datalist>'+(chipsHtml?'<div style="margin-top:4px;">'+chipsHtml+'</div>':'')+'</div>';
+    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Item / Service Name</label><input type="text" id="poiv_name" class="form-input" placeholder="Enter item name"></div>';
+    html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="poiv_qty" class="form-input" value="1" oninput="updatePOIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="poiv_unit" class="form-select" onchange="handleUnitChange(this)">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="poiv_rate" class="form-input" value="0" oninput="updatePOIVGross()"></div></div>';
+    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Description (Optional)</label><input type="text" id="poiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--border-color);"><div style="font-size:13px; font-weight:800; color:var(--text-primary);">Total: <span id="poiv_gross" style="color:var(--accent-color); font-size:15px;">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePOItemFromView()" style="font-size:12px; padding:10px 18px; width:auto;">+ Add Item</button></div></div>';
+    // Reference Photos
+    let photos = [];
+    if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
+    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:10px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
+    if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="po-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
+    html += '</div>';
+    html += '</div>';
+    
+    document.getElementById('poItemViewBody').innerHTML = html;
+    let nameInput = document.getElementById('poiv_name'); if (nameInput) nameInput.focus();
+}
+function poSwitchTab(tab) {
+    ['items','import','add'].forEach(t => {
+        let content = document.getElementById('po_tab_content_'+t);
+        let btn = document.getElementById('po_tab_'+t);
+        if (content) content.style.display = (t === tab) ? 'block' : 'none';
+        if (btn) { if (t === tab) { btn.style.borderBottom = '3px solid #3B82F6'; btn.style.color = '#3B82F6'; btn.style.fontWeight = '800'; } else { btn.style.borderBottom = '3px solid transparent'; btn.style.color = 'var(--text-secondary)'; btn.style.fontWeight = '700'; } }
+    });
+}
+function poToggleCatCard(header) {
+    let card = header.parentElement;
+    let list = card.querySelector('.po-cat-items-list');
+    let arrow = header.querySelector('span:last-child');
+    if (list.style.display === 'none') { list.style.display = 'block'; if(arrow) arrow.style.transform = 'rotate(180deg)'; } else { list.style.display = 'none'; if(arrow) arrow.style.transform = 'rotate(0deg)'; }
+}
+function poUpdateCatTotal(elem) {
+    let row = elem.closest('.po-import-item'); if (!row) return;
+    let qtyInput = row.querySelector('.po-inv-item-qty');
+    let rateInput = row.querySelector('.po-inv-item-rate');
+    let amtSpan = row.querySelector('.po-inv-item-amount');
+    let qty = qtyInput ? parseFloat(qtyInput.value)||0 : 0;
+    let rate = rateInput ? parseFloat(rateInput.value)||0 : 0;
+    let amt = qty * rate;
+    if (amtSpan) amtSpan.innerHTML = '&#x20B9;' + amt.toLocaleString('en-IN');
+    // Update category total
+    let card = row.closest('.po-import-cat-card');
+    if (card) {
+        let total = 0;
+        card.querySelectorAll('.po-inv-item-cb:checked').forEach(cb => {
+            let r = cb.closest('.po-import-item');
+            let q = r.querySelector('.po-inv-item-qty'); let rr = r.querySelector('.po-inv-item-rate');
+            total += (q ? parseFloat(q.value)||0 : 0) * (rr ? parseFloat(rr.value)||0 : 0);
+        });
+        let totalSpan = card.querySelector('.po-cat-total');
+        if (totalSpan) totalSpan.innerHTML = '&#x20B9;' + total.toLocaleString('en-IN');
+    }
+}
+function poSelectAllCat(cb, catName) {
+    let card = cb.closest('.po-import-cat-card');
+    if (!card) return;
+    card.querySelectorAll('.po-inv-item-cb:not(:disabled)').forEach(itemCb => {
+        itemCb.checked = cb.checked;
+        poUpdateCatTotal(itemCb);
+    });
+}
+function poFilterImportItems() {
+    let query = (document.getElementById('po_import_search')?.value || '').toLowerCase();
+    document.querySelectorAll('.po-import-item').forEach(item => {
+        let name = item.getAttribute('data-name') || '';
+        item.style.display = name.includes(query) ? 'flex' : 'none';
+    });
+}
+function poImportAllFromInvoice() {
+    let ev = poEventsData[poViewEvIdx]; if (!ev) return;
+    let evId = document.getElementById('po_event_link') ? document.getElementById('po_event_link').value : '';
+    if (!evId) return;
+    let added = 0;
+    let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
+                let eventSales = allSales.filter(s => s.type === 'Invoice');
+                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
+                if (eventSales.length === 0) eventSales = allSales;
+    eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
+        if (!item.event || item.event === ev.name) {
+            let alreadyAdded = poItemsData.some(i => i.name === item.name && i.event === ev.name);
+            if (!alreadyAdded) {
+                poItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: 1, rate: 0, amount: 0, event: ev.name, category: (item.category||'General').trim()||'General' });
+                added++;
             }
-            if (invCategories.length > 0) {
-                html += '<div style="border:1px solid #BFDBFE; border-radius:8px; padding:10px; margin-bottom:12px; background:#EFF6FF;">';
-                html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; margin-bottom:6px;">&#x1F4C4; Import from Invoices/Quotations</div>';
-                html += '<div style="font-size:10px; color:#64748b; margin-bottom:6px;">Select a category to see items (no rates shown):</div>';
-                invCategories.forEach(catName => {
-                    html += '<label style="display:flex; align-items:center; gap:6px; padding:5px 8px; background:white; border:1px solid #E2E8F0; border-radius:4px; margin-bottom:4px; cursor:pointer; font-size:11px; font-weight:700; color:#1E40AF;"><input type="checkbox" class="po-cat-cb" onchange="togglePOCategory(this, \''+catName.replace(/'/g,"\\'")+'\')" style="accent-color:#3B82F6; width:14px; height:14px;">'+catName+'</label>';
-                });
-                html += '<div id="po_cat_items" style="margin-top:8px;"></div>';
-                html += '</div>';
-            }
-            // Add New Item form
-            let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
-            let savedCats = (appSettings.savedCategories || []);
-            let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
-            let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
-            let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px;">'+c+'</button>').join('');
-            let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px;">'+c+'</button>').join('');
-            if (globalChipsHtml) chipsHtml += globalChipsHtml;
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);"><div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
-            html += '<div class="form-group" style="margin-bottom:6px;"><label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label><input type="text" id="poiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="poiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;"><datalist id="poiv_category_list">'+datalistHtml+'</datalist>'+(chipsHtml?'<div style="margin-top:4px;">'+chipsHtml+'</div>':'')+'</div>';
-            html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="poiv_name" class="form-input" placeholder="Enter item name"></div>';
-            html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="poiv_qty" class="form-input" value="1" oninput="updatePOIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="poiv_unit" class="form-select">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="poiv_rate" class="form-input" value="0" oninput="updatePOIVGross()"></div></div>';
-            html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="poiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center;"><div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="poiv_gross" style="color:var(--accent-color);">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePOItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button></div></div>';
-            // Reference Photos
-            let photos = [];
-            if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:12px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
-            if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="po-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div><button type="button" onclick="sharePhotosWithVendor(\'po\')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:9px; font-weight:700; cursor:pointer;">Share Selected Photos</button>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
-            html += '<input type="file" id="po_ref_photo_upload" accept="image/*" multiple onchange="uploadPORefPhotos(this)" style="font-size:10px; margin-top:4px;"><div id="po_uploaded_photos" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;"></div></div>';
-            document.getElementById('poItemViewBody').innerHTML = html;
-            let nameInput = document.getElementById('poiv_name'); if (nameInput) nameInput.focus();
         }
-        function togglePOCategory(cb, catName) {
-            let ev = poEventsData[poViewEvIdx]; if (!ev) return;
-            let container = document.getElementById('po_cat_items'); if (!container) return;
-            let evId = document.getElementById('po_event_link') ? document.getElementById('po_event_link').value : '';
-            if (cb.checked) {
-                let invItems = []; let eventSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => { let c=(item.category||'General').trim()||'General'; if (c === catName && (!item.event || item.event === ev.name)) invItems.push(item); }); });
-                let div = document.createElement('div'); div.id = 'po_cat_items_' + catName.replace(/[^a-zA-Z0-9]/g,'_'); div.style.cssText = 'margin-top:6px; padding:6px; background:white; border:1px solid #BFDBFE; border-radius:6px;';
-                let h = '<div style="font-size:10px; font-weight:700; color:#1E40AF; margin-bottom:4px;">'+catName+' Items (no rates - enter your own):</div>';
-                invItems.forEach(item => {
-                    let alreadyAdded = poItemsData.some(i => i.name === item.name && i.event === ev.name);
-                    let checked = alreadyAdded ? 'checked disabled' : '';
-                    h += '<div style="display:flex; align-items:flex-start; gap:6px; padding:4px; border-bottom:1px solid #F1F5F9; font-size:11px;"><input type="checkbox" class="po-inv-item-cb" data-name="'+(item.name||'').replace(/"/g,'"')+'" data-desc="'+(item.desc||'').replace(/"/g,'"')+'" data-unit="'+(item.unit||'Pcs')+'" data-cat="'+catName.replace(/"/g,'"')+'" '+checked+' style="accent-color:#3B82F6; width:14px; height:14px; margin-top:4px;"><div style="flex:1;"><b>'+(item.name||'Unnamed')+'</b><div style="font-size:9px; color:#64748b;">'+(item.desc||'')+'</div><div style="display:flex; gap:4px; margin-top:2px; align-items:center;"><label style="font-size:9px; color:#64748b;">Qty:</label><input type="number" class="po-inv-item-qty" value="'+(item.qty||1)+'" style="width:50px; padding:2px 4px; font-size:10px; border:1px solid #CBD5E1; border-radius:3px;"><label style="font-size:9px; color:#64748b;">Rate:</label><input type="number" class="po-inv-item-rate" value="0" style="width:70px; padding:2px 4px; font-size:10px; border:1px solid #CBD5E1; border-radius:3px;"><label style="font-size:9px; color:#64748b;">Unit:</label><select class="po-inv-item-unit" style="width:60px; padding:1px; font-size:10px; border:1px solid #CBD5E1; border-radius:3px;">'+getUnitOptions(item.unit||'Pcs')+'</select></div></div></div>';
-                });
-                h += '<button type="button" onclick="addSelectedInvItemsPO(\''+catName.replace(/'/g,"\\'")+'\')" style="background:#3B82F6; color:white; border:none; border-radius:4px; padding:4px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-top:4px; width:100%;">Add Selected Items</button>';
-                div.innerHTML = h; container.appendChild(div);
-            } else { let div = document.getElementById('po_cat_items_' + catName.replace(/[^a-zA-Z0-9]/g,'_')); if (div) div.remove(); }
-        }
-        function addSelectedInvItemsPO(catName) {
+    }); });
+    if (added > 0) { renderPOItemPopup(); renderPOItems(); poSwitchTab('items'); } else { alert('All items already imported!'); }
+}
+                function addSelectedInvItemsPO(catName) {
             let ev = poEventsData[poViewEvIdx]; if (!ev) return;
             let added = 0;
             let cbList = document.querySelectorAll('.po-inv-item-cb:checked:not(:disabled)');
@@ -16822,76 +16947,216 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             renderPBItemPopup();
         }
         function closePBItemViewPanel() { let modal = document.getElementById('pbItemViewModal'); if (modal) modal.style.display = 'none'; renderPBEvents(); renderPBItems(); }
-        function renderPBItemPopup() {
-            let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
-            let evColor = getEventColor(ev); let textColor = getContrastColor(evColor);
-            let evItems = pbItemsData.filter(i => i.event === ev.name);
-            let html = '<div style="background:'+evColor+'; color:'+textColor+'; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">'+ev.name+' <span style="font-size:10px; opacity:0.8;">('+evItems.length+' items)</span></div>';
-            if (evItems.length > 0) {
-                html += '<div style="max-height:200px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px;">';
-                let categories = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
-                let itemNum = 0;
-                categories.forEach(catName => {
-                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
-                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:5px 8px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div><span style="font-size:10px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</span></div>';
-                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-                    catItems.forEach((item) => { let realIdx = pbItemsData.indexOf(item); itemNum++;
-                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:4px; text-align:center; color:var(--text-secondary);">'+itemNum+'</td><td style="padding:4px 6px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary);">'+item.desc+'</div>':'')+'</td><td style="padding:4px; text-align:center;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:4px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:4px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:2px; white-space:nowrap;"><button onclick="editPBItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:3px; width:20px; height:20px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePBItem('+realIdx+')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:3px; width:20px; height:20px; padding:0; font-size:12px; cursor:pointer;">\u00D7</button></td></tr>';
-                    });
-                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:3px 6px; text-align:right; font-size:9px; font-weight:700; color:var(--text-secondary);">'+catName+' Subtotal:</td><td colspan="2" style="padding:3px 6px; text-align:right; font-size:10px; font-weight:800;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</td></tr>';
-                    html += '</table>';
-                });
-                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:5px 8px; display:flex; justify-content:space-between;"><div style="font-size:11px; font-weight:800;">Event Total:</div><div style="font-size:13px; font-weight:800; color:var(--accent-color);">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</div></div>';
-                html += '</div>';
+        // ===== ADVANCED PO ITEM POPUP =====
+function renderPBItemPopup() {
+    let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
+    let evColor = getEventColor(ev); let textColor = getContrastColor(evColor);
+    let evItems = pbItemsData.filter(i => i.event === ev.name);
+    let evId = document.getElementById('pb_event_link') ? document.getElementById('pb_event_link').value : '';
+    
+    // Collect invoice items for this function
+    let invCategories = [];
+    let invItemsByCat = {};
+    if (evId) {
+        let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
+                let eventSales = allSales.filter(s => s.type === 'Invoice');
+                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
+                if (eventSales.length === 0) eventSales = allSales;
+        eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
+            if (!item.event || item.event === ev.name) {
+                let c = (item.category||'General').trim()||'General';
+                if (!invCategories.includes(c)) { invCategories.push(c); invItemsByCat[c] = []; }
+                invItemsByCat[c].push(item);
             }
-            let evId = document.getElementById('pb_event_link') ? document.getElementById('pb_event_link').value : '';
-            let invCategories = [];
-            if (evId) { let eventSales = Object.values(salesDB).filter(s => s.eventId === evId); eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => { if (!item.event || item.event === ev.name) { let c=(item.category||'General').trim()||'General'; if (!invCategories.includes(c)) invCategories.push(c); } }); }); }
-            if (invCategories.length > 0) {
-                html += '<div style="border:1px solid #BFDBFE; border-radius:8px; padding:10px; margin-bottom:12px; background:#EFF6FF;"><div style="font-size:11px; font-weight:800; color:#1E40AF; margin-bottom:6px;">&#x1F4C4; Import from Invoices/Quotations</div><div style="font-size:10px; color:#64748b; margin-bottom:6px;">Select a category to see items (no rates shown):</div>';
-                invCategories.forEach(catName => { html += '<label style="display:flex; align-items:center; gap:6px; padding:5px 8px; background:white; border:1px solid #E2E8F0; border-radius:4px; margin-bottom:4px; cursor:pointer; font-size:11px; font-weight:700; color:#1E40AF;"><input type="checkbox" class="pb-cat-cb" onchange="togglePBCategory(this, \''+catName.replace(/'/g,"\\'")+'\')" style="accent-color:#3B82F6; width:14px; height:14px;">'+catName+'</label>'; });
-                html += '<div id="pb_cat_items" style="margin-top:8px;"></div></div>';
+        }); });
+    }
+    
+    let html = '';
+    // Header with function name
+    html += '<div style="background:'+evColor+'; color:'+textColor+'; padding:12px 16px; font-size:14px; font-weight:800; margin:-12px -12px 12px -12px; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">';
+    html += '<span>'+ev.name+'</span>';
+    html += '<span style="font-size:11px; opacity:0.9; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px;">'+evItems.length+' items added</span>';
+    html += '</div>';
+    
+    // Tab buttons
+    html += '<div style="display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid var(--border-color);">';
+    html += '<button id="pb_tab_items" onclick="pbSwitchTab(\'items\')" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-bottom:3px solid #3B82F6; background:transparent; color:#3B82F6; cursor:pointer;">My Items ('+evItems.length+')</button>';
+    if (invCategories.length > 0) {
+        html += '<button id="pb_tab_import" onclick="pbSwitchTab(\'import\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">Import from Invoice</button>';
+    }
+    html += '<button id="pb_tab_add" onclick="pbSwitchTab(\'add\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">+ Add New</button>';
+    html += '</div>';
+    
+    // === TAB 1: My Items ===
+    html += '<div id="pb_tab_content_items" style="display:block;">';
+    if (evItems.length > 0) {
+        html += '<div style="max-height:350px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">';
+        let categories = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
+        let itemNum = 0;
+        categories.forEach(catName => {
+            let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
+            let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:3px solid #3B82F6; padding:6px 10px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div><span style="font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</span></div>';
+            html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+            catItems.forEach((item) => { let realIdx = pbItemsData.indexOf(item); itemNum++;
+                html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:5px; text-align:center; color:var(--text-secondary); font-weight:700;">'+itemNum+'</td><td style="padding:5px 8px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">'+item.desc+'</div>':'')+'</td><td style="padding:5px; text-align:center; font-size:10px;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:5px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:5px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:3px; white-space:nowrap;"><button onclick="editPBItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; width:22px; height:22px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePBItem('+realIdx+')" style="background:#FEE2E2; border:1px solid #FECACA; color:#DC2626; border-radius:4px; width:22px; height:22px; padding:0; font-size:14px; cursor:pointer; margin-left:2px;">&#x00D7;</button></td></tr>';
+            });
+            html += '<tr style="border-top:1px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:9px; font-weight:700; color:var(--text-secondary);">'+catName+' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</td></tr>';
+            html += '</table>';
+        });
+        let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+        html += '<div style="border-top:2px solid #3B82F6; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:white; padding:8px 12px; display:flex; justify-content:space-between; border-radius:0 0 8px 8px;"><div style="font-size:12px; font-weight:800;">Function Total:</div><div style="font-size:15px; font-weight:900;">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</div></div>';
+        html += '</div>';
+    } else {
+        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No items yet</div><div style="font-size:11px; margin-top:4px;">Use "Import from Invoice" or "+ Add New" tabs above</div></div>';
+    }
+    html += '</div>';
+    
+    // === TAB 2: Import from Invoice ===
+    html += '<div id="pb_tab_content_import" style="display:none;">';
+    if (invCategories.length > 0) {
+        // One-click import all
+        html += '<div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border:1px solid #93C5FD; border-radius:8px; padding:10px; margin-bottom:10px;">';
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
+        html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">&#x1F4C4; Import from Invoices/Quotations</div>';
+        html += '<button onclick="pbImportAllFromInvoice()" style="background:#3B82F6; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(59,130,246,0.3);">&#x26A1 Import All</button>';
+        html += '</div>';
+        html += '<div style="font-size:10px; color:#64748b;">Select items below with qty & rate, then click "Add Selected" per category. Sale rates are NOT shown to vendor.</div>';
+        html += '</div>';
+        
+        // Search bar
+        html += '<input type="text" id="pb_import_search" oninput="pbFilterImportItems()" placeholder="Search items..." class="form-input" style="width:100%; margin-bottom:8px; font-size:12px; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px;">';
+        
+        // Category cards
+        invCategories.forEach(catName => {
+            let catInvItems = invItemsByCat[catName] || [];
+            html += '<div class="pb-import-cat-card" data-cat="'+catName.toLowerCase()+'" style="border:1px solid #BFDBFE; border-radius:8px; margin-bottom:8px; overflow:hidden;">';
+            html += '<div onclick="pbToggleCatCard(this)" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#EFF6FF; cursor:pointer; user-select:none;">';
+            html += '<div style="display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pb-cat-select-all" onchange="pbSelectAllCat(this, \''+catName.replace(/'/g,"\\'")+'\')" style="accent-color:#3B82F6; width:14px; height:14px;"><span style="font-size:12px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+'</span><span style="font-size:9px; color:#3B82F6; background:white; padding:1px 6px; border-radius:8px;">'+catInvItems.length+'</span></div>';
+            html += '<div style="display:flex; align-items:center; gap:6px;"><span class="pb-cat-total" style="font-size:10px; font-weight:700; color:#3B82F6;">&#x20B9;0</span><span style="font-size:12px; color:#64748b; transition:transform 0.2s;">&#x25BC;</span></div>';
+            html += '</div>';
+            html += '<div class="pb-cat-items-list" style="padding:6px; display:none;">';
+            catInvItems.forEach(item => {
+                let alreadyAdded = pbItemsData.some(i => i.name === item.name && i.event === ev.name);
+                html += '<div class="pb-import-item" data-name="'+(item.name||'').toLowerCase()+'" style="display:flex; align-items:flex-start; gap:8px; padding:8px; border-bottom:1px solid #F1F5F9; background:white; border-radius:4px; margin-bottom:4px; '+(alreadyAdded?'opacity:0.5;':'')+'">';
+                html += '<input type="checkbox" class="pb-inv-item-cb" data-name="'+(item.name||'').replace(/"/g,'"')+'" data-desc="'+(item.desc||'').replace(/"/g,'"')+'" data-unit="'+(item.unit||'Pcs')+'" data-cat="'+catName.replace(/"/g,'"')+'" '+(alreadyAdded?'checked disabled':'')+' style="accent-color:#3B82F6; width:16px; height:16px; margin-top:3px;" onchange="pbUpdateCatTotal(this)">';
+                html += '<div style="flex:1;">';
+                html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">'+(item.name||'Unnamed')+(alreadyAdded?' <span style="font-size:8px; background:#10B981; color:white; padding:1px 5px; border-radius:6px;">ADDED</span>':'')+'</div>';
+                if (item.desc) html += '<div style="font-size:10px; color:#64748b; margin-top:1px;">'+item.desc+'</div>';
+                html += '<div style="display:flex; gap:6px; margin-top:4px; align-items:center;">';
+                html += '<label style="font-size:9px; color:#64748b; font-weight:600;">Qty:</label><input type="number" class="pb-inv-item-qty" value="1" min="1" style="width:50px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="pbUpdateCatTotal(this)">';
+                html += '<select class="pb-inv-item-unit" onchange="handleUnitChange(this)" style="padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:10px;">'+getUnitOptions(item.unit||'Pcs')+'</select>';
+                html += '<label style="font-size:9px; color:#64748b; font-weight:600; margin-left:4px;">Rate:</label><input type="number" class="pb-inv-item-rate" value="0" min="0" placeholder="0" style="width:70px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="pbUpdateCatTotal(this)">';
+                html += '<span class="pb-inv-item-amount" style="font-size:11px; font-weight:800; color:#1E40AF; min-width:60px; text-align:right;">&#x20B9;0</span>';
+                html += '</div></div></div>';
+            });
+            html += '<button onclick="addSelectedInvItemsPB(\''+catName.replace(/'/g,"\\'")+'\')" style="width:100%; margin-top:6px; background:#3B82F6; color:white; border:none; border-radius:6px; padding:8px; font-size:11px; font-weight:800; cursor:pointer;">+ Add Selected from '+catName+'</button>';
+            html += '</div></div>';
+        });
+    } else {
+        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No invoices found</div><div style="font-size:11px; margin-top:4px;">Create an invoice or quotation for this event first.</div></div>';
+    }
+    html += '</div>';
+    
+    // === TAB 3: Add New Manually ===
+    html += '<div id="pb_tab_content_add" style="display:none;">';
+    let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
+    let savedCats = (appSettings.savedCategories || []);
+    let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+    let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
+    let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
+    let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
+    if (globalChipsHtml) chipsHtml += globalChipsHtml;
+    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:14px; background:var(--surface-color);">';
+    html += '<div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:10px; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#3B82F6; border-radius:50%;"></span>Add New Item</div>';
+    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label><input type="text" id="pbiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="pbiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;"><datalist id="pbiv_category_list">'+datalistHtml+'</datalist>'+(chipsHtml?'<div style="margin-top:4px;">'+chipsHtml+'</div>':'')+'</div>';
+    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Item / Service Name</label><input type="text" id="pbiv_name" class="form-input" placeholder="Enter item name"></div>';
+    html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="pbiv_qty" class="form-input" value="1" oninput="updatePBIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="pbiv_unit" class="form-select" onchange="handleUnitChange(this)">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="pbiv_rate" class="form-input" value="0" oninput="updatePBIVGross()"></div></div>';
+    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Description (Optional)</label><input type="text" id="pbiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--border-color);"><div style="font-size:13px; font-weight:800; color:var(--text-primary);">Total: <span id="pbiv_gross" style="color:var(--accent-color); font-size:15px;">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePBItemFromView()" style="font-size:12px; padding:10px 18px; width:auto;">+ Add Item</button></div></div>';
+    // Reference Photos
+    let photos = [];
+    if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
+    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:10px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
+    if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="pb-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div><button type="button" onclick="sharePhotosWithVendor(\'pb\')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:9px; font-weight:700; cursor:pointer;">Share Selected Photos</button>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
+    html += '</div>';
+    html += '</div>';
+    
+    document.getElementById('pbItemViewBody').innerHTML = html;
+    let nameInput = document.getElementById('pbiv_name'); if (nameInput) nameInput.focus();
+}
+function pbSwitchTab(tab) {
+    ['items','import','add'].forEach(t => {
+        let content = document.getElementById('pb_tab_content_'+t);
+        let btn = document.getElementById('pb_tab_'+t);
+        if (content) content.style.display = (t === tab) ? 'block' : 'none';
+        if (btn) { if (t === tab) { btn.style.borderBottom = '3px solid #3B82F6'; btn.style.color = '#3B82F6'; btn.style.fontWeight = '800'; } else { btn.style.borderBottom = '3px solid transparent'; btn.style.color = 'var(--text-secondary)'; btn.style.fontWeight = '700'; } }
+    });
+}
+function pbToggleCatCard(header) {
+    let card = header.parentElement;
+    let list = card.querySelector('.pb-cat-items-list');
+    let arrow = header.querySelector('span:last-child');
+    if (list.style.display === 'none') { list.style.display = 'block'; if(arrow) arrow.style.transform = 'rotate(180deg)'; } else { list.style.display = 'none'; if(arrow) arrow.style.transform = 'rotate(0deg)'; }
+}
+function pbUpdateCatTotal(elem) {
+    let row = elem.closest('.pb-import-item'); if (!row) return;
+    let qtyInput = row.querySelector('.pb-inv-item-qty');
+    let rateInput = row.querySelector('.pb-inv-item-rate');
+    let amtSpan = row.querySelector('.pb-inv-item-amount');
+    let qty = qtyInput ? parseFloat(qtyInput.value)||0 : 0;
+    let rate = rateInput ? parseFloat(rateInput.value)||0 : 0;
+    let amt = qty * rate;
+    if (amtSpan) amtSpan.innerHTML = '&#x20B9;' + amt.toLocaleString('en-IN');
+    // Update category total
+    let card = row.closest('.pb-import-cat-card');
+    if (card) {
+        let total = 0;
+        card.querySelectorAll('.pb-inv-item-cb:checked').forEach(cb => {
+            let r = cb.closest('.pb-import-item');
+            let q = r.querySelector('.pb-inv-item-qty'); let rr = r.querySelector('.pb-inv-item-rate');
+            total += (q ? parseFloat(q.value)||0 : 0) * (rr ? parseFloat(rr.value)||0 : 0);
+        });
+        let totalSpan = card.querySelector('.pb-cat-total');
+        if (totalSpan) totalSpan.innerHTML = '&#x20B9;' + total.toLocaleString('en-IN');
+    }
+}
+function pbSelectAllCat(cb, catName) {
+    let card = cb.closest('.pb-import-cat-card');
+    if (!card) return;
+    card.querySelectorAll('.pb-inv-item-cb:not(:disabled)').forEach(itemCb => {
+        itemCb.checked = cb.checked;
+        pbUpdateCatTotal(itemCb);
+    });
+}
+function pbFilterImportItems() {
+    let query = (document.getElementById('pb_import_search')?.value || '').toLowerCase();
+    document.querySelectorAll('.pb-import-item').forEach(item => {
+        let name = item.getAttribute('data-name') || '';
+        item.style.display = name.includes(query) ? 'flex' : 'none';
+    });
+}
+function pbImportAllFromInvoice() {
+    let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
+    let evId = document.getElementById('pb_event_link') ? document.getElementById('pb_event_link').value : '';
+    if (!evId) return;
+    let added = 0;
+    let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
+                let eventSales = allSales.filter(s => s.type === 'Invoice');
+                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
+                if (eventSales.length === 0) eventSales = allSales;
+    eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
+        if (!item.event || item.event === ev.name) {
+            let alreadyAdded = pbItemsData.some(i => i.name === item.name && i.event === ev.name);
+            if (!alreadyAdded) {
+                pbItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: 1, rate: 0, amount: 0, event: ev.name, category: (item.category||'General').trim()||'General' });
+                added++;
             }
-            let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
-            let savedCats = (appSettings.savedCategories || []);
-            let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
-            let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
-            let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px;">'+c+'</button>').join('');
-            let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px;">'+c+'</button>').join('');
-            if (globalChipsHtml) chipsHtml += globalChipsHtml;
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);"><div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
-            html += '<div class="form-group" style="margin-bottom:6px;"><label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label><input type="text" id="pbiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="pbiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;"><datalist id="pbiv_category_list">'+datalistHtml+'</datalist>'+(chipsHtml?'<div style="margin-top:4px;">'+chipsHtml+'</div>':'')+'</div>';
-            html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="pbiv_name" class="form-input" placeholder="Enter item name"></div>';
-            html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="pbiv_qty" class="form-input" value="1" oninput="updatePBIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="pbiv_unit" class="form-select">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="pbiv_rate" class="form-input" value="0" oninput="updatePBIVGross()"></div></div>';
-            html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="pbiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center;"><div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="pbiv_gross" style="color:var(--accent-color);">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePBItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button></div></div>';
-            let photos = [];
-            if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
-            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:12px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
-            if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="pb-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div><button type="button" onclick="sharePhotosWithVendor(\'pb\')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:9px; font-weight:700; cursor:pointer;">Share Selected Photos</button>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
-            html += '<input type="file" id="pb_ref_photo_upload" accept="image/*" multiple onchange="uploadPBRefPhotos(this)" style="font-size:10px; margin-top:4px;"><div id="pb_uploaded_photos" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;"></div></div>';
-            document.getElementById('pbItemViewBody').innerHTML = html;
-            let nameInput = document.getElementById('pbiv_name'); if (nameInput) nameInput.focus();
         }
-        function togglePBCategory(cb, catName) {
-            let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
-            let container = document.getElementById('pb_cat_items'); if (!container) return;
-            let evId = document.getElementById('pb_event_link') ? document.getElementById('pb_event_link').value : '';
-            if (cb.checked) {
-                let invItems = []; let eventSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => { let c=(item.category||'General').trim()||'General'; if (c === catName && (!item.event || item.event === ev.name)) invItems.push(item); }); });
-                let div = document.createElement('div'); div.id = 'pb_cat_items_' + catName.replace(/[^a-zA-Z0-9]/g,'_'); div.style.cssText = 'margin-top:6px; padding:6px; background:white; border:1px solid #BFDBFE; border-radius:6px;';
-                let h = '<div style="font-size:10px; font-weight:700; color:#1E40AF; margin-bottom:4px;">'+catName+' Items (no rates - enter your own):</div>';
-                invItems.forEach(item => { let alreadyAdded = pbItemsData.some(i => i.name === item.name && i.event === ev.name); let checked = alreadyAdded ? 'checked disabled' : '';
-                    h += '<div style="display:flex; align-items:flex-start; gap:6px; padding:4px; border-bottom:1px solid #F1F5F9; font-size:11px;"><input type="checkbox" class="pb-inv-item-cb" data-name="'+(item.name||'').replace(/"/g,'"')+'" data-desc="'+(item.desc||'').replace(/"/g,'"')+'" data-unit="'+(item.unit||'Pcs')+'" data-cat="'+catName.replace(/"/g,'"')+'" '+checked+' style="accent-color:#3B82F6; width:14px; height:14px; margin-top:4px;"><div style="flex:1;"><b>'+(item.name||'Unnamed')+'</b><div style="font-size:9px; color:#64748b;">'+(item.desc||'')+'</div><div style="display:flex; gap:4px; margin-top:2px; align-items:center;"><label style="font-size:9px; color:#64748b;">Qty:</label><input type="number" class="pb-inv-item-qty" value="'+(item.qty||1)+'" style="width:50px; padding:2px 4px; font-size:10px; border:1px solid #CBD5E1; border-radius:3px;"><label style="font-size:9px; color:#64748b;">Rate:</label><input type="number" class="pb-inv-item-rate" value="0" style="width:70px; padding:2px 4px; font-size:10px; border:1px solid #CBD5E1; border-radius:3px;"><label style="font-size:9px; color:#64748b;">Unit:</label><select class="pb-inv-item-unit" style="width:60px; padding:1px; font-size:10px; border:1px solid #CBD5E1; border-radius:3px;">'+getUnitOptions(item.unit||'Pcs')+'</select></div></div></div>';
-                });
-                h += '<button type="button" onclick="addSelectedInvItemsPB(\''+catName.replace(/'/g,"\\'")+'\')" style="background:#3B82F6; color:white; border:none; border-radius:4px; padding:4px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-top:4px; width:100%;">Add Selected Items</button>';
-                div.innerHTML = h; container.appendChild(div);
-            } else { let div = document.getElementById('pb_cat_items_' + catName.replace(/[^a-zA-Z0-9]/g,'_')); if (div) div.remove(); }
-        }
-        function addSelectedInvItemsPB(catName) {
+    }); });
+    if (added > 0) { renderPBItemPopup(); renderPBItems(); pbSwitchTab('items'); } else { alert('All items already imported!'); }
+}
+                function addSelectedInvItemsPB(catName) {
             let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
             let added = 0;
             let cbList = document.querySelectorAll('.pb-inv-item-cb:checked:not(:disabled)');
@@ -18708,7 +18973,7 @@ function openPurchaseOrderModal() {
                 
                 .summary-container { display: flex; justify-content: space-between; margin-top: 10px; gap: 20px; }
                 .history-table { width: 60%; font-size: 11px; }
-                .totals-box { width: 30%; background: ${pt.totalsBg}; border: 1px solid ${pt.tableBorder}; padding: 10px; border-radius: ${pt.radius}; font-size: 11px; }
+                .totals-box { width: 30%; margin-left: auto; background: ${pt.totalsBg}; border: 1px solid ${pt.tableBorder}; padding: 10px; border-radius: ${pt.radius}; font-size: 11px; }
                 .grand-total { font-size: 13px; font-weight: 800; border-top: 2px solid ${pt.accent}; padding-top: 6px; margin-top: 6px; color: ${pt.accent}; }
                 
                 .status-stamp { position:absolute; top: 150px; right: 50px; font-size: 40px; font-weight: 900; opacity: 0.1; text-transform: uppercase; transform: rotate(-15deg); border: 5px solid; padding: 10px 20px; border-radius: 10px; }
@@ -18986,7 +19251,7 @@ function openPurchaseOrderModal() {
 
                 } // end else skipFlatItems
                 // Right: Totals Box
-                html += `<div class="totals-box">`;
+                html += `<div class="summary-container" style="justify-content: flex-end;"><div class="totals-box">`;
                 if (record.type === 'Quotation' || record.type === 'PO') {
                     html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Gross Amount:</span> <span>₹${(record.gross || subtotal).toLocaleString('en-IN')}</span></div>`;
                     if (record.transport && record.transport > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Transport Charge:</span> <span>+₹${(record.transport || 0).toLocaleString('en-IN')}</span></div>`;
@@ -19035,8 +19300,8 @@ function openPurchaseOrderModal() {
                 }
             }
 
-            html += `<div style="page-break-inside: avoid; break-inside: avoid; margin-top: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #0f172a; padding-top: 15px;">
+            html += `<div style="page-break-inside: avoid; break-inside: avoid; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #0f172a; padding-top: 8px;">
                     <div style="flex: 1; padding-right: 20px;">`;
 
             if (record.type === 'Invoice' || record.type === 'Quotation') {
