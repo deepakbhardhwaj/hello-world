@@ -7134,7 +7134,7 @@
             </div>
         </div>
 
-        <div id="poItemViewModal" class="modal-overlay item-popup-overlay" style="display:none;">
+        <div id="poItemViewModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:22000 !important;">
             <div class="modal-content" style="max-width:580px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Manage Items</h3>
@@ -7145,7 +7145,7 @@
             </div>
         </div>
 
-        <div id="pbItemViewModal" class="modal-overlay item-popup-overlay" style="display:none;">
+        <div id="pbItemViewModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:22000 !important;">
             <div class="modal-content" style="max-width:580px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
                     <h3>Manage Items</h3>
@@ -7234,7 +7234,7 @@
         </div>
         </div>
 
-        <div id="purchaseBillModal" class="modal-overlay" style="z-index: 5500;">
+        <div id="purchaseBillModal" class="modal-overlay" style="z-index: 11000 !important; display:none;">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
                     <h3 id="pb-modal-title">Record Vendor Bill</h3><button class="modal-close"
@@ -7920,7 +7920,7 @@
         </div>
 
     <!-- 🚀 1. TEAM MANAGEMENT MODAL -->
-    <div id="teamModal" class="modal-overlay" style="z-index: 8500;">
+    <div id="teamModal" class="modal-overlay" style="z-index: 10500 !important; display:none;">
         <div class="modal-content" style="max-width: 520px; padding:0; overflow:hidden; border-radius:20px;">
             <style>
                 .team-modal-header { background:linear-gradient(135deg,#0F172A,#1E3A8A); padding:20px; color:white; position:relative; overflow:hidden; }
@@ -7977,7 +7977,7 @@
             </div>
         </div>
     </div>
-    <div id="addStaffModal" class="modal-overlay" style="z-index: 9500;">
+    <div id="addStaffModal" class="modal-overlay" style="z-index: 10800 !important; display:none;">
         <div class="modal-content" style="max-width: 400px; padding:0; border-radius:20px; overflow:hidden;">
             <div style="background:linear-gradient(135deg,#059669,#047857); padding:20px 22px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -9357,6 +9357,8 @@
         
 function closeTeamModal() { let m = document.getElementById('teamModal'); if (m) m.style.display = 'none'; smartShowNav(); }
 function closeStaffModal() { let m = document.getElementById('addStaffModal'); if (m) m.style.display = 'none'; }
+window.closeTeamModal = function() { let m = document.getElementById('teamModal'); if (m) m.style.display = 'none'; if (typeof smartShowNav === 'function') smartShowNav(); };
+window.closeStaffModal = function() { let m = document.getElementById('addStaffModal'); if (m) m.style.display = 'none'; };
 
 function openTeamModal() {
             let comp = masterCompsDB[currentWorkspaceId];
@@ -10456,7 +10458,7 @@ function openTeamModal() {
             if (leadObj.dates) { leadObj.dates.forEach(d => { Object.keys(d).forEach(k => { if (d[k] === undefined) delete d[k]; }); }); }
                         // Sync events to dates for Won events
             if (status === 'Won' && leadEventsData.length > 0) {
-                leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '' }));
+                leadObj.dates = leadEventsData.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || primaryDate, time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '' }));
             }
             leadsDB[id] = leadObj;
             updateDataAndUI(); 
@@ -11291,7 +11293,12 @@ function openTeamModal() {
         }
 
         function convertToEvent() {
-            if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming"; if (!lead.dates || lead.dates.length === 0) lead.dates = [{ name: "Main Event", date: lead.date, time: "" }]; lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
+            if (!currentLeadId) return; let lead = leadsDB[currentLeadId]; lead.status = "Won"; lead.eventStatus = "Upcoming"; // 🚀 FIX: Sync lead.events to lead.dates for calendar/event list rendering
+            if (lead.events && lead.events.length > 0) {
+                lead.dates = lead.events.map(ev => ({ name: ev.name || 'Main Event', date: ev.date || lead.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '' }));
+            } else if (!lead.dates || lead.dates.length === 0) {
+                lead.dates = [{ name: "Main Event", date: lead.date, time: "" }];
+            } lead.notes.push({ time: new Date().toLocaleString('en-IN'), text: "Lead WON and converted to Event!" });
             let partyExists = false; for (let id in partiesDB) { if (String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === "Customer") { partyExists = true; break; } }
             if (!partyExists) { let newPartyId = "P" + Date.now(); partiesDB[newPartyId] = { id: newPartyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; }
             updateDataAndUI(); document.getElementById('detailPanel').classList.remove('open'); setTimeout(() => { document.getElementById('panelOverlay').style.display = 'none'; openTab('events', document.getElementById('btn-events')); alert("Deal Won! Added to Events."); }, 300);
@@ -14596,6 +14603,12 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             rModal.style.display = 'flex';
         }
         // Helper: get unique categories for an event from quoteItemsData
+        // 📋 DEFAULT ITEM CATEGORIES — used across all forms (Quotation, Invoice, PO, PB)
+        // User can still type custom categories — these appear as quick-select chips/suggestions
+        function getDefaultItemCategories() {
+            return ['Tent', 'Floral', 'Light & Electric Work', 'SFX', 'Entertainment', 'Printing & Stationery', 'Management Team', 'Catering', 'Sound System', 'Decorative Materials'];
+        }
+
         function getEventCategories(evName) {
             let cats = [];
             quoteItemsData.filter(i => i.event === evName).forEach(i => {
@@ -14701,6 +14714,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             // Merge without duplicates
             let allCats = existingCats.slice();
             savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
             let datalistHtml = allCats.map(c => '<option value="' + sanitize(c) + '">').join('');
             // Build quick-select chips — event-specific first (blue), then global (lighter)
             let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'qiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
@@ -15082,6 +15096,13 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             document.getElementById('diForm').reset(); 
             document.getElementById('di_date').valueAsDate = new Date(); 
             invEventsData = []; invItemsData = []; editingInvEventIdx = -1; invViewEvIdx = -1;
+            // 🚀 FIX: Prefill invEventsData from linked lead when creating invoice from event panel
+            if (tempEventIdForInvoice && leadsDB[tempEventIdForInvoice] && leadsDB[tempEventIdForInvoice].events && leadsDB[tempEventIdForInvoice].events.length > 0) {
+                let leadEv = leadsDB[tempEventIdForInvoice];
+                invEventsData = leadEv.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', manualGross: 0, catOverrides: {}, photos: ev.photos || [] }));
+                let evName = document.getElementById('di_event');
+                if (evName) evName.value = leadEv.func || leadEv.name || '';
+            }
             renderInvEvents(); renderInvItems(); 
             calculateDirectInvoiceTotal(); 
             handlePartySelectionForInvoice(); 
@@ -15099,6 +15120,8 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             } 
             toggleInvoiceType(); // Refresh fields view
             document.getElementById('directInvoiceModal').style.display = 'flex'; 
+            // 🚀 FIX: Re-render events after modal is visible
+            setTimeout(() => { renderInvEvents(); renderInvItems(); }, 100);
         }
         function addInvoiceItem() { invItemCount++; let container = document.getElementById('rental_items_container') || document.getElementById('inv_items_container'); let rowId = 'i_item_' + invItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculateDirectInvoiceTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display:flex; gap:4px; align-items:center;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">CAT</span><input type="text" class="form-input i-item-category" placeholder="Category (e.g. Mandap, Floral)" style="flex:1; font-size:11px; font-weight:700; border:2px solid #3B82F6; border-radius:6px; padding:4px 8px;"></div><div style="display:flex; gap:4px; align-items:center; margin-top:2px;"><span style="background:#8B5CF6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">EVT</span><select class="form-select i-item-event" style="flex:1; font-size:11px; font-weight:600; border:1px solid #8B5CF6; border-radius:6px; padding:4px 8px;" onchange="updateInvItemEventOptions()"><option value="">No Event</option></select></div><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculateDirectInvoiceTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculateDirectInvoiceTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
         function handlePartySelectionForInvoice() { if (editingSalesId) return; let pId = document.getElementById('di_party').value; let advanceGroup = document.getElementById('available_advance_group'); let advanceSelect = document.getElementById('di_use_advance'); advanceSelect.innerHTML = '<option value="0">Do not use advance</option>'; let hasAdvance = false; if (pId) { Object.values(salesDB).forEach(s => { if (s.type === 'Receipt' && s.partyId === pId && s.availableAmount > 0) { advanceSelect.innerHTML += `<option value="${s.id}">Use Available: ₹${s.availableAmount.toLocaleString('en-IN')}</option>`; hasAdvance = true; } }); } advanceGroup.style.display = hasAdvance ? 'block' : 'none'; calculateDirectInvoiceTotal(); }
@@ -15398,6 +15421,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             let savedCats = (appSettings.savedCategories || []);
             let allCats = existingCats.slice();
             savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
             let datalistHtml = allCats.map(c => '<option value="' + sanitize(c) + '">').join('');
             let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'iiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
             let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'iiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
@@ -16501,7 +16525,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
         function savePOEvent() {
             let name = document.getElementById('poev_name').value.trim();
             if (!name) { alert('Please enter function name!'); return; }
-            let ev = { name: name, date: document.getElementById('poev_date').value, time: document.getElementById('poev_time').value, venue: document.getElementById('poev_venue').value.trim(), guests: document.getElementById('poev_guests') ? document.getElementById('poev_guests').value : '', color: document.getElementById('poev_color') ? document.getElementById('poev_color').value : '', _selected: true };
+            let ev = { name: name, date: document.getElementById('poev_date').value, time: document.getElementById('poev_time').value, venue: document.getElementById('poev_venue').value.trim(), guests: document.getElementById('poev_guests') ? (parseInt(document.getElementById('poev_guests').value) || 0) : 0, color: document.getElementById('poev_color') ? document.getElementById('poev_color').value : '', _selected: true };
             if (editingPOEventIdx >= 0) { ev._selected = poEventsData[editingPOEventIdx]._selected; poEventsData[editingPOEventIdx] = ev; editingPOEventIdx = -1; }
             else { poEventsData.push(ev); }
             poEventsData.sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
@@ -16716,6 +16740,7 @@ function renderPOItemPopup() {
     let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
     let savedCats = (appSettings.savedCategories || []);
     let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
     let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
     let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
     let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
@@ -16886,7 +16911,7 @@ function poImportAllFromInvoice() {
         function savePBEvent() {
             let name = document.getElementById('pbev_name').value.trim();
             if (!name) { alert('Enter function name!'); return; }
-            let ev = { name: name, date: document.getElementById('pbev_date').value, time: document.getElementById('pbev_time').value, venue: document.getElementById('pbev_venue').value.trim(), guests: document.getElementById('pbev_guests')?document.getElementById('pbev_guests').value:'', color: document.getElementById('pbev_color')?document.getElementById('pbev_color').value:'', _selected: true };
+            let ev = { name: name, date: document.getElementById('pbev_date').value, time: document.getElementById('pbev_time').value, venue: document.getElementById('pbev_venue').value.trim(), guests: document.getElementById('pbev_guests')?(parseInt(document.getElementById('pbev_guests').value)||0):0, color: document.getElementById('pbev_color')?document.getElementById('pbev_color').value:'', _selected: true };
             if (editingPBEventIdx >= 0) { ev._selected = pbEventsData[editingPBEventIdx]._selected; pbEventsData[editingPBEventIdx] = ev; editingPBEventIdx = -1; }
             else { pbEventsData.push(ev); }
             pbEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
@@ -17063,6 +17088,7 @@ function renderPBItemPopup() {
     let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
     let savedCats = (appSettings.savedCategories || []);
     let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
     let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
     let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
     let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
@@ -17078,7 +17104,7 @@ function renderPBItemPopup() {
     let photos = [];
     if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
     html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:10px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
-    if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="pb-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div><button type="button" onclick="sharePhotosWithVendor(\'pb\')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; padding:4px 8px; font-size:9px; font-weight:700; cursor:pointer;">Share Selected Photos</button>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
+    if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="pb-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
     html += '</div>';
     html += '</div>';
     
@@ -17791,6 +17817,17 @@ function openPurchaseOrderModal() {
                 handleEventLinkChange('pb');
             }
 
+            // 🚀 FIX: Prefill pbEventsData and pbItemsData from PO events (event-wise system)
+            if (po.events && po.events.length > 0) {
+                pbEventsData = po.events.map(ev => ({ name: ev.name || '', date: ev.date || '', time: ev.time || '', venue: ev.venue || '', guests: ev.guests || 0, color: ev.color || '', manualGross: ev.manualGross || 0, catOverrides: ev.catOverrides || {}, photos: ev.photos || [] }));
+                pbItemsData = [];
+                if (po.items && po.items.length > 0) {
+                    po.items.forEach(item => {
+                        pbItemsData.push({ event: item.event || (po.events[0] ? po.events[0].name : ''), name: item.name || '', desc: item.desc || '', qty: item.qty || 1, unit: item.unit || 'PCS', rate: item.rate || 0, amount: (item.qty || 1) * (item.rate || 0), category: item.category || 'General' });
+                    });
+                }
+                renderPBEvents(); renderPBItems();
+            }
             let container = document.getElementById('pb_items_container'); container.innerHTML = ''; pbItemCount = 0;
             po.items.forEach(item => {
                 addPBItem(); let rows = document.querySelectorAll('#pb_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
@@ -19026,7 +19063,7 @@ function openPurchaseOrderModal() {
                 </table>
                 
                 <div class="summary-container" style="justify-content: flex-end;">
-                    <div class="totals-box" style="width:50%;">
+                    <div class="totals-box" style="width:50%; margin-left:auto;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Total Expense:</span> <strong>₹${(record.amount || 0).toLocaleString('en-IN')}</strong></div>
                         <div class="grand-total" style="display:flex; justify-content:space-between; color:#166534; font-size:15px; padding:5px 0; border-top:1px dashed #cbd5e1; border-bottom:1px dashed #cbd5e1; margin:5px 0;"><span>Amount Paid:</span> <span>₹${(record.paid || 0).toLocaleString('en-IN')}</span></div>
                         <div style="display:flex; justify-content:space-between; color:#dc2626; font-weight:800;"><span>Balance Due:</span> <span>₹${(record.balanceDue || 0).toLocaleString('en-IN')}</span></div>
@@ -19251,7 +19288,7 @@ function openPurchaseOrderModal() {
 
                 } // end else skipFlatItems
                 // Right: Totals Box
-                html += `<div class="summary-container" style="justify-content: flex-end;"><div class="totals-box">`;
+                html += `<div class="summary-container" style="justify-content: flex-end;"><div class="totals-box" style="margin-left:auto;">`;
                 if (record.type === 'Quotation' || record.type === 'PO') {
                     html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Gross Amount:</span> <span>₹${(record.gross || subtotal).toLocaleString('en-IN')}</span></div>`;
                     if (record.transport && record.transport > 0) html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Transport Charge:</span> <span>+₹${(record.transport || 0).toLocaleString('en-IN')}</span></div>`;
