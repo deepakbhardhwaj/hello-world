@@ -15390,6 +15390,19 @@ function openPOItemPreviewView(evIdx) {
                 html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
                 html += '</div>';
             }
+            // 🐛 FIX: "Item Details" popup was missing Reference Photos entirely — add them (same source as PO Preview)
+            let ipvEvLinkEl = document.getElementById('po_event_link');
+            let ipvQuoteRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : (ipvEvLinkEl && ipvEvLinkEl.value ? { eventId: ipvEvLinkEl.value } : null);
+            let ipvPhotos = getLeadEventPhotos(ipvQuoteRec, ev.name, ev.photos);
+            if (ipvPhotos.length > 0) {
+                html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid #3B82F6; padding-bottom:3px;">\u{1F4F7} Reference Photos (' + ipvPhotos.length + ')</div><div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+                ipvPhotos.forEach(p => {
+                    let url = typeof p === 'object' ? (p.url||p) : p;
+                    let label = typeof p === 'object' ? (p.label||'') : '';
+                    html += '<div style="text-align:center;"><img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">' + (label ? '<div style="font-size:9px; font-weight:600; color:var(--text-primary); margin-top:2px;">' + sanitize(label) + '</div>' : '') + '</div>';
+                });
+                html += '</div></div>';
+            }
             document.getElementById('quoteItemReadBody').innerHTML = html;
             let rModal = document.getElementById('quoteItemReadModal');
             rModal.style.setProperty('z-index', '21000', 'important');
@@ -19721,7 +19734,8 @@ function openPurchaseOrderModal() {
                 let isPO = record.type === 'PO';
                 record.events.forEach((ev, evIdx) => {
                     let evItems = (record.items || []).filter(i => i.event === ev.name);
-                    if (evItems.length === 0) return;
+                    let evPhotosCheck = getLeadEventPhotos(record, ev.name, ev.photos);
+                    if (evItems.length === 0 && evPhotosCheck.length === 0) return;
                     html += '<div style="page-break-after: always;"></div>';
                     html += '<div style="margin-top:20px;"><h2 style="font-size:16px; color:#1E40AF; border-bottom:2px solid #3B82F6; padding-bottom:6px; margin-bottom:12px;">' + (ev.name||'Function') + ' - Items</h2>';
                     // Group by category
@@ -19738,14 +19752,20 @@ function openPurchaseOrderModal() {
                         html += '<tr style="background:#F8FAFC; font-weight:800;"><td colspan="4" style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">' + catName + ' Subtotal:</td><td style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">&#8377;' + catTotal.toLocaleString('en-IN') + '</td></tr>';
                         html += '</tbody></table>';
                     });
-                    // Reference photos for this function
-                    if (record.selectedPhotos && record.selectedPhotos.length > 0) {
-                        let funcPhotos = record.selectedPhotos.filter(p => { let lbl = typeof p === 'object' ? (p.label||'') : ''; return lbl === ev.name || lbl === ''; });
-                        if (funcPhotos.length > 0) {
-                            html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div style="display:flex; flex-wrap:wrap; gap:8px;">';
-                            funcPhotos.forEach(p => { let url = typeof p === 'object' ? (p.url||p) : p; html += '<div style="width:120px; height:120px; border:1px solid #CBD5E1; border-radius:4px; overflow:hidden;"><img src="' + url + '" style="width:100%; height:100%; object-fit:cover;" /></div>'; });
-                            html += '</div></div>';
-                        }
+                    // Reference photos for this function — 🐛 FIX: read from ev.photos (same source
+                    // as the working PO Preview), NOT record.selectedPhotos which is never actually populated
+                    let funcPhotos = getLeadEventPhotos(record, ev.name, ev.photos);
+                    if (funcPhotos.length > 0) {
+                        let fpCount = funcPhotos.length;
+                        let fpCols = fpCount === 1 ? '1fr' : (fpCount <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)');
+                        let fpHeight = fpCount === 1 ? '260px' : (fpCount <= 4 ? '150px' : '120px');
+                        html += '<div style="margin-top:12px; break-inside:avoid;"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid #3B82F6; padding-bottom:3px;">' + (ev.name||'Function') + ' — Reference Photos (' + fpCount + ')</div><div style="display:grid; grid-template-columns:' + fpCols + '; gap:8px;">';
+                        funcPhotos.forEach(p => {
+                            let url = typeof p === 'object' ? (p.url||p) : p;
+                            let label = typeof p === 'object' ? (p.label||'') : '';
+                            html += '<div style="text-align:center; border:1px solid #CBD5E1; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid;"><img src="' + url + '" style="width:100%; height:' + fpHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff;">' + (label ? '<div style="font-size:9px; font-weight:700; color:#0f172a; margin-top:3px;">' + sanitize(label) + '</div>' : '') + '</div>';
+                        });
+                        html += '</div></div>';
                     }
                     let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
                     html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:8px;"><span>' + (ev.name||'Function') + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
