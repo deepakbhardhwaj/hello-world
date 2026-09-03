@@ -7234,7 +7234,7 @@
         </div>
         </div>
 
-        <div id="purchaseBillModal" class="modal-overlay" style="z-index: 11000 !important; display:none;">
+        <div id="purchaseBillModal" class="modal-overlay" style="z-index: 22000 !important; display:none;">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
                     <h3 id="pb-modal-title">Record Vendor Bill</h3><button class="modal-close"
@@ -17260,6 +17260,18 @@ function pbImportAllFromInvoice() {
             html += '<div style="font-size:10px; color:var(--text-secondary);">' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div>';
             html += '<div style="text-align:right; font-size:10px; color:var(--text-secondary);">Vendor: <b style="color:var(--text-primary);">' + partyName + '</b></div>';
             html += '</div>';
+            // FUNCTION SCHEDULE TABLE
+            if (poEventsData.length > 0) {
+                html += '<div style="margin-top:10px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
+                html += '<table style="width:100%; border-collapse:collapse; border:1px solid var(--border-color); margin-bottom:12px; font-size:10px;">';
+                html += '<thead><tr><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr></thead><tbody>';
+                poEventsData.forEach(ev => {
+                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-';
+                    html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color); font-weight:700;">' + sanitize(ev.name) + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + evDate + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
             // Function-wise items
             selectedEvents.forEach(ev => {
                 let evItems = poItemsData.filter(i => i.event === ev.name);
@@ -17283,6 +17295,58 @@ function pbImportAllFromInvoice() {
                 html += '</div>';
             });
             // Totals
+            // REFERENCE PHOTOS — auto-attach from lead
+            let pbRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null;
+            let pbHasPhotos = pbEventsData.some(ev => getLeadEventPhotos(pbRec, ev.name, ev.photos).length > 0);
+            if (pbHasPhotos) {
+                html += '<div style="margin-top:12px;">';
+                html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
+                html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
+                pbEventsData.forEach(ev => {
+                    let evPhotos = getLeadEventPhotos(pbRec, ev.name, ev.photos).filter(function(p) { return p.selected !== false; });
+                    if (evPhotos.length === 0) return;
+                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    html += '<div style="margin-bottom:10px;">';
+                    html += '<div style="background:' + evColor + '; color:' + tc + '; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; margin-bottom:6px;">' + sanitize(ev.name) + '</div>';
+                    html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+                    evPhotos.forEach(function(photo) {
+                        let url = typeof photo === 'string' ? photo : photo.url;
+                        let label = typeof photo === 'string' ? '' : (photo.label || '');
+                        html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
+                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
+                        if (label) html += '<div style="font-size:9px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div></div>';
+                });
+                html += '</div></div>';
+            }
+            // REFERENCE PHOTOS — auto-attach from lead
+            let poRec = (typeof editingPOId !== 'undefined' && editingPOId && purchaseDB[editingPOId]) ? purchaseDB[editingPOId] : null;
+            let poHasPhotos = poEventsData.some(ev => getLeadEventPhotos(poRec, ev.name, ev.photos).length > 0);
+            if (poHasPhotos) {
+                html += '<div style="margin-top:12px;">';
+                html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
+                html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
+                poEventsData.forEach(ev => {
+                    let evPhotos = getLeadEventPhotos(poRec, ev.name, ev.photos).filter(function(p) { return p.selected !== false; });
+                    if (evPhotos.length === 0) return;
+                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    html += '<div style="margin-bottom:10px;">';
+                    html += '<div style="background:' + evColor + '; color:' + tc + '; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; margin-bottom:6px;">' + sanitize(ev.name) + '</div>';
+                    html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+                    evPhotos.forEach(function(photo) {
+                        let url = typeof photo === 'string' ? photo : photo.url;
+                        let label = typeof photo === 'string' ? '' : (photo.label || '');
+                        html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
+                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
+                        if (label) html += '<div style="font-size:9px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div></div>';
+                });
+                html += '</div></div>';
+            }
             html += '<div style="border-top:2px solid var(--accent-color); padding-top:8px;">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>Subtotal:</span><span>&#x20B9;'+grandTotal.toLocaleString('en-IN')+'</span></div>';
             if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--danger);"><span>Discount:</span><span>-&#x20B9;'+discount.toLocaleString('en-IN')+'</span></div>';
@@ -17312,6 +17376,18 @@ function pbImportAllFromInvoice() {
             html += '<div><h4 style="margin:0; font-size:15px; font-weight:800; color:var(--text-primary);">Purchase Bill</h4>';
             html += '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">' + partyName + '</div>';
             html += '<div style="font-size:10px; color:var(--text-secondary);">' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div></div>';
+            // FUNCTION SCHEDULE TABLE
+            if (pbEventsData.length > 0) {
+                html += '<div style="margin-top:10px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
+                html += '<table style="width:100%; border-collapse:collapse; border:1px solid var(--border-color); margin-bottom:12px; font-size:10px;">';
+                html += '<thead><tr><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr></thead><tbody>';
+                pbEventsData.forEach(ev => {
+                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-';
+                    html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color); font-weight:700;">' + sanitize(ev.name) + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + evDate + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
             selectedEvents.forEach(ev => {
                 let evItems = pbItemsData.filter(i => i.event === ev.name);
                 if (evItems.length === 0) return;
@@ -17428,7 +17504,15 @@ function pbImportAllFromInvoice() {
                 let selectedPhotoUrls = [];
                 document.querySelectorAll('.po-ref-photo-cb:checked').forEach(cb => selectedPhotoUrls.push(cb.value));
                 let allPhotos = [];
-                photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); if (selectedPhotoUrls.includes(url) || selectedPhotoUrls.length === 0) allPhotos.push(url); });
+                photos.forEach(p => {
+                    let url = typeof p === 'string' ? p : (p.url||p);
+                    let label = typeof p === 'object' ? (p.label||'') : '';
+                    if (selectedPhotoUrls.includes(url)) allPhotos.push({ url: url, label: label, selected: true });
+                });
+                // If no checkboxes checked, include all with selected: false
+                if (allPhotos.length === 0) {
+                    photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); let label = typeof p === 'object' ? (p.label||'') : ''; allPhotos.push({ url: url, label: label, selected: false }); });
+                }
                 if (allPhotos.length > 0) {
                     html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div class="photo-grid">';
                     allPhotos.forEach(url => { html += '<div class="photo-item"><img src="' + url + '" /></div>'; });
@@ -17526,7 +17610,15 @@ function pbImportAllFromInvoice() {
                 let selectedPhotoUrls = [];
                 document.querySelectorAll('.pb-ref-photo-cb:checked').forEach(cb => selectedPhotoUrls.push(cb.value));
                 let allPhotos = [];
-                photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); if (selectedPhotoUrls.includes(url) || selectedPhotoUrls.length === 0) allPhotos.push(url); });
+                photos.forEach(p => {
+                    let url = typeof p === 'string' ? p : (p.url||p);
+                    let label = typeof p === 'object' ? (p.label||'') : '';
+                    if (selectedPhotoUrls.includes(url)) allPhotos.push({ url: url, label: label, selected: true });
+                });
+                // If no checkboxes checked, include all with selected: false
+                if (allPhotos.length === 0) {
+                    photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); let label = typeof p === 'object' ? (p.label||'') : ''; allPhotos.push({ url: url, label: label, selected: false }); });
+                }
                 if (allPhotos.length > 0) {
                     html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div class="photo-grid">';
                     allPhotos.forEach(url => { html += '<div class="photo-item"><img src="' + url + '" /></div>'; });
@@ -17774,7 +17866,7 @@ function openPurchaseOrderModal() {
             if (advanceGroup) advanceGroup.style.display = hasAdvance ? 'block' : 'none';
             calculatePBTotal();
         }
-        function addPBItem() { pbItemCount++; let container = document.getElementById('pb_items_container'); let rowId = 'pb_item_' + pbItemCount; let rowHtml = `<div class="quote-item-row" id="${rowId}" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; position:relative;"><button type="button" onclick="document.getElementById('${rowId}').remove(); calculatePBTotal();" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; font-weight:bold; z-index:5; box-shadow:0 2px 4px rgba(220,38,38,0.3);">×</button><div style="display: flex; gap: 8px; align-items: flex-end; width:100%;"><div style="flex: 2;"><label class="form-label" style="margin:0 0 2px 0;">Item/Service</label><input type="text" class="form-input i-item-name" placeholder="Name" required></div><div style="flex: 1.1;"><label class="form-label" style="margin:0 0 2px 0;">Unit</label><select class="form-select i-item-unit" style="padding:8px 4px;" onchange="handleUnitChange(this)">${getUnitOptions()}</select></div><div style="flex: 1;"><label class="form-label" style="margin:0 0 2px 0;">Qty</label><input type="number" class="form-input i-item-qty" value="1" oninput="calculatePBTotal()" required></div><div style="flex: 1.5;"><label class="form-label" style="margin:0 0 2px 0;">Rate(₹)</label><input type="number" class="form-input i-item-rate" placeholder="Rate" oninput="calculatePBTotal()" required></div></div><div><input type="text" class="form-input i-item-desc" placeholder="Item description / specification (Optional)" style="font-size:11px; background:white; padding:6px 10px;"></div></div>`; container.insertAdjacentHTML('beforeend', rowHtml); }
+        // Old addPBItem removed — using event-wise pbItemsData system
         function calculatePBTotal() {
             let total = pbItemsData.reduce((s, i) => s + (i.amount || 0), 0);
             let discount = parseFloat(document.getElementById('pb_discount').value) || 0;
@@ -17828,13 +17920,7 @@ function openPurchaseOrderModal() {
                 }
                 renderPBEvents(); renderPBItems();
             }
-            let container = document.getElementById('pb_items_container'); container.innerHTML = ''; pbItemCount = 0;
-            po.items.forEach(item => {
-                addPBItem(); let rows = document.querySelectorAll('#pb_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
-                lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
-                if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
-                if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
-            });
+            // Old flat-item system removed — event-wise prefill handles this
             calculatePBTotal();
         }
         // 🚀 BUG FIX: Show/Hide Godown and Load List for Rental Assets
