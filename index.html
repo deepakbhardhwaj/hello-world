@@ -15352,6 +15352,50 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             rModal.style.display = 'flex';
         }
         // Helper: get unique categories for an event from invItemsData
+function openPOItemPreviewView(evIdx) {
+            let ev = poEventsData[evIdx];
+            if (!ev) return;
+            let evItems = poItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
+            } else {
+                let cats = getPOEventCategories(ev.name);
+                let itemNum = 0;
+                cats.forEach(catName => {
+                    let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 10px; border-radius:6px; margin-bottom:4px;">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
+                    html += '</div>';
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:8px;">';
+                    html += '<tr style="background:var(--bg-color);"><th style="padding:4px 4px; text-align:center; width:20px; border-bottom:1px solid var(--border-color);">#</th><th style="padding:4px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Item / Service</th><th style="padding:4px 4px; text-align:center; width:40px; border-bottom:1px solid var(--border-color);">Qty</th><th style="padding:4px 4px; text-align:right; width:50px; border-bottom:1px solid var(--border-color);">Rate</th><th style="padding:4px 4px; text-align:right; width:60px; border-bottom:1px solid var(--border-color);">Amount</th></tr>';
+                    catItems.forEach((item) => {
+                        itemNum++;
+                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:4px 4px; text-align:center; color:var(--text-secondary);">' + itemNum + '</td><td style="padding:4px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                        html += '</td>';
+                        html += '<td style="padding:4px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:4px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:4px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                    });
+                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:10px; font-weight:700; color:var(--text-secondary);">' + sanitize(catName) + ' Subtotal:</td><td style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:var(--text-primary);">\u20B9' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</table>';
+                });
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:6px 10px; display:flex; justify-content:space-between; align-items:center; border-radius:6px;">';
+                html += '<div style="font-size:12px; font-weight:800; color:var(--text-primary);">Event Total:</div>';
+                html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
+            }
+            document.getElementById('quoteItemReadBody').innerHTML = html;
+            let rModal = document.getElementById('quoteItemReadModal');
+            rModal.style.setProperty('z-index', '21000', 'important');
+            rModal.style.display = 'flex';
+        }
+        // Helper: get unique categories for an event from poItemsData
         function getInvEventCategories(evName) {
             let cats = [];
             invItemsData.filter(i => i.event === evName).forEach(i => {
@@ -17289,7 +17333,7 @@ function pbImportAllFromInvoice() {
                 html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
                 html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
                 html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
-                html += '<button onclick="document.getElementById(\'poPreviewModal\').style.display=\'none\'; openPOItemPopup(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '<button onclick="document.getElementById(\'poPreviewModal\').style.display=\'none\'; openPOItemPreviewView(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
                 html += '</div>';
                 // Category breakdown
                 if (evItems.length > 0) {
