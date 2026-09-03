@@ -16597,6 +16597,237 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             container.innerHTML = html;
             calculatePOTotal();
         }
+function renderPOItemPopup(scrollToBottom) {
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev) return;
+            let evItems = poItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + ev.name + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            // Scrollable item list — grouped by category
+            html += '<div id="poiv_scroll_list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px;">';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px 0;">No items for this function yet.</p>';
+            } else {
+                // Group items by category
+                let categories = getPOEventCategories(ev.name);
+                let itemNum = 0;
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    let catDisplayTotal = getPOCategoryDisplayTotal(ev, catName, catItems);
+                    // Category header — blue tint with left accent border + editable amount
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 8px; border-bottom:1px solid var(--border-color);">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    // Editable amount input — shows "Enter Amount" when 0
+                    if (catDisplayTotal > 0) {
+                        html += '<input type="number" value="' + catDisplayTotal + '" oninput="updatePOCategoryAmount(' + poViewEvIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:90px; padding:3px 6px; font-size:12px; font-weight:800; color:#1E40AF; background:var(--surface-color); border:1px solid #BFDBFE; border-radius:4px; text-align:right;">';
+                    } else {
+                        html += '<input type="number" value="" placeholder="Enter Amount" oninput="updatePOCategoryAmount(' + poViewEvIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:90px; padding:3px 6px; font-size:10px; font-weight:700; color:#94A3B8; background:var(--surface-color); border:1px dashed #3B82F6; border-radius:4px; text-align:right;">';
+                    }
+                    html += '</div>';
+                    // Category items table
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                    catItems.forEach((item) => {
+                        let realIdx = poItemsData.indexOf(item);
+                        itemNum++;
+                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + itemNum + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                        html += '</td>';
+                        html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td>';
+                        html += '<td style="padding:4px;"><button onclick="deletePOItemFromView(' + realIdx + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:50%; width:22px; height:22px; padding:0; font-size:14px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;">\u00D7</button></td>';
+                        html += '</tr>';
+                    });
+                    // Category subtotal — uses override if set
+                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:10px; font-weight:700; color:var(--text-secondary);">' + sanitize(catName) + ' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:var(--text-primary);">\u20B9' + catDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</table>';
+                });
+                // Event grand total
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:6px 8px; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="font-size:12px; font-weight:800; color:var(--text-primary);">Event Total:</div>';
+                html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            // Collect categories — merge event-specific + globally saved categories
+            let existingCats = getPOEventCategories(ev.name);
+            let savedCats = (appSettings.savedCategories || []);
+            // Merge without duplicates
+            let allCats = existingCats.slice();
+            savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            let datalistHtml = allCats.map(c => '<option value="' + sanitize(c) + '">').join('');
+            // Build quick-select chips — event-specific first (blue), then global (lighter)
+            let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            // Add saved categories that aren't in this event yet
+            let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            if (globalChipsHtml) chipsHtml += globalChipsHtml;
+            // Inline Add Item form (always visible at bottom)
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
+            // Category selector — prominent, at top, with quick chips
+            html += '<div class="form-group" style="margin-bottom:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
+            html += '<input type="text" id="poiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="poiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<datalist id="poiv_category_list">' + datalistHtml + '</datalist>';
+            if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="poiv_name" class="form-input" placeholder="Enter item name"></div>';
+            html += '<div class="form-row">';
+            html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="poiv_qty" class="form-input" value="1" oninput="updatePOIVGross()"></div>';
+            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="poiv_unit" class="form-select" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>';
+            html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="poiv_rate" class="form-input" value="0" oninput="updatePOIVGross()"></div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="poiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="poiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
+            html += '<button type="button" class="btn-main" onclick="savePOItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>';
+            html += '</div></div>';
+            // EVENT PHOTOS SECTION
+            let evPhotos = (ev.photos || []);
+            html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Reference Photos (' + evPhotos.length + ')</div>';
+            html += '<label style="display:inline-block; background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; margin-bottom:6px;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePOEventPhotoUpload(event)"></label>';
+            html += '<div id="poiv_photos_grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+            evPhotos.forEach((photoData, index) => {
+                let url = typeof photoData === 'string' ? photoData : photoData.url;
+                let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                html += '<div style="position:relative;">';
+                html += '<img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                html += '<button onclick="deletePOIVPhoto(' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
+                html += '<input type="text" value="' + label + '" placeholder="Name (optional)" onchange="updatePOIVPhotoLabel(' + index + ', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+            document.getElementById('poItemViewBody').innerHTML = html;
+            // Auto-scroll to bottom so latest item is visible
+            if (scrollToBottom) {
+                let scrollEl = document.getElementById('poiv_scroll_list');
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+            }
+            // Keep focus on item name field (keyboard stays open)
+            let nameInput = document.getElementById('poiv_name');
+            if (nameInput) { nameInput.focus(); }
+        }
+function savePOItemFromView() {
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev) return;
+            let name = document.getElementById('poiv_name').value.trim();
+            if (!name) { alert('Please enter item name!'); return; }
+            let category = document.getElementById('poiv_category') ? document.getElementById('poiv_category').value.trim() : '';
+            if (!category) { alert('Please enter a category (e.g. Mandap, Floral, Catering)!'); document.getElementById('poiv_category').focus(); return; }
+            let qty = parseFloat(document.getElementById('poiv_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('poiv_rate').value) || 0;
+            let unit = document.getElementById('poiv_unit') ? document.getElementById('poiv_unit').value : 'Pcs';
+            let desc = document.getElementById('poiv_desc').value.trim();
+            poItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty * rate, event: ev.name, category: category });
+            // Persist category globally for future suggestions
+            if (!appSettings.savedCategories) appSettings.savedCategories = [];
+            if (!appSettings.savedCategories.includes(category)) {
+                appSettings.savedCategories.push(category);
+                saveDataLocally();
+            }
+            // Reset form for next item
+            document.getElementById('poiv_name').value = '';
+            document.getElementById('poiv_qty').value = '1';
+            document.getElementById('poiv_rate').value = '0';
+            document.getElementById('poiv_desc').value = '';
+            // Preserve category value so user can add multiple items in same category
+            let savedCat = category;
+            renderPOItemPopup(true);
+            let catInput = document.getElementById('poiv_category');
+            if (catInput && savedCat) catInput.value = savedCat;
+        }
+function deletePOItemFromView(idx) {
+            poItemsData.splice(idx, 1);
+            renderPOItemPopup(false);
+        }
+        async function handlePOEventPhotoUpload(event) {
+            let files = event.target.files;
+            if (!files.length) return;
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev) return;
+            if (!ev.photos) ev.photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
+                    else { alert('Cloudinary did not return a URL!'); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            renderPOItemPopup(false);
+            event.target.value = '';
+        }
+function updatePOIVGross() {
+            let qty = parseFloat(document.getElementById('poiv_qty').value) || 0;
+            let rate = parseFloat(document.getElementById('poiv_rate').value) || 0;
+            document.getElementById('poiv_gross').innerText = '\u20B9' + (qty * rate).toLocaleString('en-IN');
+        }
+function getPOCategoryDisplayTotal(ev, catName, catItems) {
+            if (ev.catOverrides && ev.catOverrides[catName] !== undefined && ev.catOverrides[catName] > 0) {
+                return ev.catOverrides[catName];
+            }
+            return catItems.reduce((s,i) => s + (i.amount||0), 0);
+        }
+        // Update a category's override amount
+        // Debounced version — prevents re-render while user is typing
+        let _updatePOCategoryTimer = null;
+function updatePOCategoryAmount(evIdx, catName, val) {
+            let ev = poEventsData[evIdx];
+            if (!ev) return;
+            if (!ev.catOverrides) ev.catOverrides = {};
+            ev.catOverrides[catName] = parseFloat(val) || 0;
+            // Recalculate event manualGross from category overrides
+            let evItems = poItemsData.filter(i => i.event === ev.name);
+            let cats = getPOEventCategories(ev.name);
+            let totalFromCats = 0;
+            cats.forEach(c => {
+                let catItems = evItems.filter(i => (i.category || 'General').trim() === c || (!i.category && c === 'General'));
+                if (ev.catOverrides[c] !== undefined && ev.catOverrides[c] > 0) {
+                    totalFromCats += ev.catOverrides[c];
+                } else {
+                    totalFromCats += catItems.reduce((s,i) => s + (i.amount||0), 0);
+                }
+            });
+            ev.manualGross = totalFromCats;
+            // Immediately update gross + net totals
+            syncQuoteGrossFromItems();
+            // Debounced re-render of compact summary (avoids focus loss while typing)
+            clearTimeout(_updatePOCategoryTimer);
+            _updatePOCategoryTimer = setTimeout(function() { renderPOItems(); }, 400);
+        }
+function deletePOIVPhoto(photoIdx) {
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev || !ev.photos) return;
+            if (confirm('Delete this photo?')) { ev.photos.splice(photoIdx, 1); renderPOItemPopup(false); }
+        }
+
+function updatePOIVPhotoLabel(photoIdx, val) {
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev || !ev.photos) return;
+            let p = ev.photos[photoIdx];
+            if (typeof p === 'string') { ev.photos[photoIdx] = { url: p, label: val }; }
+            else { p.label = val; }
+        }
+function getPOEventCategories(evName) {
+            let cats = [];
+            quoteItemsData.filter(i => i.event === evName).forEach(i => {
+                let c = (i.category || 'General').trim();
+                if (!c) c = 'General';
+                if (!cats.includes(c)) cats.push(c);
+            });
+            return cats;
+        }
+
+        // 📸 AUTO-ATTACH: Merges reference photos from a lead into the given photo array.
+        // Tries by eventId first, then by matching event name across all leads.
+        // Lead stores event-wise photos in lead.events[].photos (NOT lead.dates).
+
         function deletePOItem(idx) { poItemsData.splice(idx, 1); renderPOItems(); }
         function editPOItemInline(idx) {
             let item = poItemsData[idx]; if (!item) return;
@@ -16625,254 +16856,8 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             renderPOEvents(); renderPOItems();
         }
         // ===== ADVANCED PO ITEM POPUP =====
-function renderPOItemPopup() {
-    let ev = poEventsData[poViewEvIdx]; if (!ev) return;
-    let evColor = getEventColor(ev); let textColor = getContrastColor(evColor);
-    let evItems = poItemsData.filter(i => i.event === ev.name);
-    let evId = document.getElementById('po_event_link') ? document.getElementById('po_event_link').value : '';
-    
-    // Collect invoice items for this function
-    let invCategories = [];
-    let invItemsByCat = {};
-    if (evId) {
-        let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                let eventSales = allSales.filter(s => s.type === 'Invoice');
-                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
-                if (eventSales.length === 0) eventSales = allSales;
-        eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
-            if (!item.event || item.event === ev.name) {
-                let c = (item.category||'General').trim()||'General';
-                if (!invCategories.includes(c)) { invCategories.push(c); invItemsByCat[c] = []; }
-                invItemsByCat[c].push(item);
-            }
-        }); });
-    }
-    
-    let html = '';
-    // Header with function name
-    html += '<div style="background:'+evColor+'; color:'+textColor+'; padding:12px 16px; font-size:14px; font-weight:800; margin:-12px -12px 12px -12px; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">';
-    html += '<span>'+ev.name+'</span>';
-    html += '<span style="font-size:11px; opacity:0.9; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px;">'+evItems.length+' items added</span>';
-    html += '</div>';
-    
-    // Tab buttons
-    html += '<div style="display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid var(--border-color);">';
-    html += '<button id="po_tab_items" onclick="poSwitchTab(\'items\')" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-bottom:3px solid #3B82F6; background:transparent; color:#3B82F6; cursor:pointer;">My Items ('+evItems.length+')</button>';
-    if (invCategories.length > 0) {
-        html += '<button id="po_tab_import" onclick="poSwitchTab(\'import\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">Import from Invoice</button>';
-    }
-    html += '<button id="po_tab_add" onclick="poSwitchTab(\'add\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">+ Add New</button>';
-    html += '</div>';
-    
-    // === TAB 1: My Items ===
-    html += '<div id="po_tab_content_items" style="display:block;">';
-    if (evItems.length > 0) {
-        html += '<div style="max-height:350px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">';
-        let categories = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
-        let itemNum = 0;
-        categories.forEach(catName => {
-            let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
-            let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:3px solid #3B82F6; padding:6px 10px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div><span style="font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</span></div>';
-            html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-            catItems.forEach((item) => { let realIdx = poItemsData.indexOf(item); itemNum++;
-                html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:5px; text-align:center; color:var(--text-secondary); font-weight:700;">'+itemNum+'</td><td style="padding:5px 8px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">'+item.desc+'</div>':'')+'</td><td style="padding:5px; text-align:center; font-size:10px;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:5px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:5px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:3px; white-space:nowrap;"><button onclick="editPOItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; width:22px; height:22px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePOItem('+realIdx+')" style="background:#FEE2E2; border:1px solid #FECACA; color:#DC2626; border-radius:4px; width:22px; height:22px; padding:0; font-size:14px; cursor:pointer; margin-left:2px;">&#x00D7;</button></td></tr>';
-            });
-            html += '<tr style="border-top:1px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:9px; font-weight:700; color:var(--text-secondary);">'+catName+' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</td></tr>';
-            html += '</table>';
-        });
-        let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-        html += '<div style="border-top:2px solid #3B82F6; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:white; padding:8px 12px; display:flex; justify-content:space-between; border-radius:0 0 8px 8px;"><div style="font-size:12px; font-weight:800;">Function Total:</div><div style="font-size:15px; font-weight:900;">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</div></div>';
-        html += '</div>';
-    } else {
-        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No items yet</div><div style="font-size:11px; margin-top:4px;">Use "Import from Invoice" or "+ Add New" tabs above</div></div>';
-    }
-    html += '</div>';
-    
-    // === TAB 2: Import from Invoice ===
-    html += '<div id="po_tab_content_import" style="display:none;">';
-    if (invCategories.length > 0) {
-        // One-click import all
-        html += '<div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border:1px solid #93C5FD; border-radius:8px; padding:10px; margin-bottom:10px;">';
-        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
-        html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">&#x1F4C4; Import from Invoices/Quotations</div>';
-        html += '<button onclick="poImportAllFromInvoice()" style="background:#3B82F6; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(59,130,246,0.3);">&#x26A1 Import All</button>';
-        html += '</div>';
-        html += '<div style="font-size:10px; color:#64748b;">Select items below with qty & rate, then click "Add Selected" per category. Sale rates are NOT shown to vendor.</div>';
-        html += '</div>';
-        
-        // Search bar
-        html += '<input type="text" id="po_import_search" oninput="poFilterImportItems()" placeholder="Search items..." class="form-input" style="width:100%; margin-bottom:8px; font-size:12px; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px;">';
-        
-        // Category cards
-        invCategories.forEach(catName => {
-            let catInvItems = invItemsByCat[catName] || [];
-            html += '<div class="po-import-cat-card" data-cat="'+catName.toLowerCase()+'" style="border:1px solid #BFDBFE; border-radius:8px; margin-bottom:8px; overflow:hidden;">';
-            html += '<div onclick="poToggleCatCard(this)" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#EFF6FF; cursor:pointer; user-select:none;">';
-            html += '<div style="display:flex; align-items:center; gap:6px;"><input type="checkbox" class="po-cat-select-all" onchange="poSelectAllCat(this, \''+catName.replace(/'/g,"\\'")+'\')" style="accent-color:#3B82F6; width:14px; height:14px;"><span style="font-size:12px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+'</span><span style="font-size:9px; color:#3B82F6; background:white; padding:1px 6px; border-radius:8px;">'+catInvItems.length+'</span></div>';
-            html += '<div style="display:flex; align-items:center; gap:6px;"><span class="po-cat-total" style="font-size:10px; font-weight:700; color:#3B82F6;">&#x20B9;0</span><span style="font-size:12px; color:#64748b; transition:transform 0.2s;">&#x25BC;</span></div>';
-            html += '</div>';
-            html += '<div class="po-cat-items-list" style="padding:6px; display:none;">';
-            catInvItems.forEach(item => {
-                let alreadyAdded = poItemsData.some(i => i.name === item.name && i.event === ev.name);
-                html += '<div class="po-import-item" data-name="'+(item.name||'').toLowerCase()+'" style="display:flex; align-items:flex-start; gap:8px; padding:8px; border-bottom:1px solid #F1F5F9; background:white; border-radius:4px; margin-bottom:4px; '+(alreadyAdded?'opacity:0.5;':'')+'">';
-                html += '<input type="checkbox" class="po-inv-item-cb" data-name="'+(item.name||'').replace(/"/g,'"')+'" data-desc="'+(item.desc||'').replace(/"/g,'"')+'" data-unit="'+(item.unit||'Pcs')+'" data-cat="'+catName.replace(/"/g,'"')+'" '+(alreadyAdded?'checked disabled':'')+' style="accent-color:#3B82F6; width:16px; height:16px; margin-top:3px;" onchange="poUpdateCatTotal(this)">';
-                html += '<div style="flex:1;">';
-                html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">'+(item.name||'Unnamed')+(alreadyAdded?' <span style="font-size:8px; background:#10B981; color:white; padding:1px 5px; border-radius:6px;">ADDED</span>':'')+'</div>';
-                if (item.desc) html += '<div style="font-size:10px; color:#64748b; margin-top:1px;">'+item.desc+'</div>';
-                html += '<div style="display:flex; gap:6px; margin-top:4px; align-items:center;">';
-                html += '<label style="font-size:9px; color:#64748b; font-weight:600;">Qty:</label><input type="number" class="po-inv-item-qty" value="1" min="1" style="width:50px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="poUpdateCatTotal(this)">';
-                html += '<select class="po-inv-item-unit" onchange="handleUnitChange(this)" style="padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:10px;">'+getUnitOptions(item.unit||'Pcs')+'</select>';
-                html += '<label style="font-size:9px; color:#64748b; font-weight:600; margin-left:4px;">Rate:</label><input type="number" class="po-inv-item-rate" value="0" min="0" placeholder="0" style="width:70px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="poUpdateCatTotal(this)">';
-                html += '<span class="po-inv-item-amount" style="font-size:11px; font-weight:800; color:#1E40AF; min-width:60px; text-align:right;">&#x20B9;0</span>';
-                html += '</div></div></div>';
-            });
-            html += '<button onclick="addSelectedInvItemsPO(\''+catName.replace(/'/g,"\\'")+'\')" style="width:100%; margin-top:6px; background:#3B82F6; color:white; border:none; border-radius:6px; padding:8px; font-size:11px; font-weight:800; cursor:pointer;">+ Add Selected from '+catName+'</button>';
-            html += '</div></div>';
-        });
-    } else {
-        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No invoices found</div><div style="font-size:11px; margin-top:4px;">Create an invoice or quotation for this event first.</div></div>';
-    }
-    html += '</div>';
-    
-    // === TAB 3: Add New Manually ===
-    html += '<div id="po_tab_content_add" style="display:none;">';
-    let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
-    let savedCats = (appSettings.savedCategories || []);
-    let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
-            getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
-    let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
-    let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
-    let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'poiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
-    if (globalChipsHtml) chipsHtml += globalChipsHtml;
-    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:14px; background:var(--surface-color);">';
-    html += '<div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:10px; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#3B82F6; border-radius:50%;"></span>Add New Item</div>';
-    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label><input type="text" id="poiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="poiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;"><datalist id="poiv_category_list">'+datalistHtml+'</datalist>'+(chipsHtml?'<div style="margin-top:4px;">'+chipsHtml+'</div>':'')+'</div>';
-    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Item / Service Name</label><input type="text" id="poiv_name" class="form-input" placeholder="Enter item name"></div>';
-    html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="poiv_qty" class="form-input" value="1" oninput="updatePOIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="poiv_unit" class="form-select" onchange="handleUnitChange(this)">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="poiv_rate" class="form-input" value="0" oninput="updatePOIVGross()"></div></div>';
-    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Description (Optional)</label><input type="text" id="poiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--border-color);"><div style="font-size:13px; font-weight:800; color:var(--text-primary);">Total: <span id="poiv_gross" style="color:var(--accent-color); font-size:15px;">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePOItemFromView()" style="font-size:12px; padding:10px 18px; width:auto;">+ Add Item</button></div></div>';
-    // Reference Photos
-    let photos = [];
-    if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
-    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:10px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
-    if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="po-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
-    html += '</div>';
-    html += '</div>';
-    
-    document.getElementById('poItemViewBody').innerHTML = html;
-    let nameInput = document.getElementById('poiv_name'); if (nameInput) nameInput.focus();
-}
-function poSwitchTab(tab) {
-    ['items','import','add'].forEach(t => {
-        let content = document.getElementById('po_tab_content_'+t);
-        let btn = document.getElementById('po_tab_'+t);
-        if (content) content.style.display = (t === tab) ? 'block' : 'none';
-        if (btn) { if (t === tab) { btn.style.borderBottom = '3px solid #3B82F6'; btn.style.color = '#3B82F6'; btn.style.fontWeight = '800'; } else { btn.style.borderBottom = '3px solid transparent'; btn.style.color = 'var(--text-secondary)'; btn.style.fontWeight = '700'; } }
-    });
-}
-function poToggleCatCard(header) {
-    let card = header.parentElement;
-    let list = card.querySelector('.po-cat-items-list');
-    let arrow = header.querySelector('span:last-child');
-    if (list.style.display === 'none') { list.style.display = 'block'; if(arrow) arrow.style.transform = 'rotate(180deg)'; } else { list.style.display = 'none'; if(arrow) arrow.style.transform = 'rotate(0deg)'; }
-}
-function poUpdateCatTotal(elem) {
-    let row = elem.closest('.po-import-item'); if (!row) return;
-    let qtyInput = row.querySelector('.po-inv-item-qty');
-    let rateInput = row.querySelector('.po-inv-item-rate');
-    let amtSpan = row.querySelector('.po-inv-item-amount');
-    let qty = qtyInput ? parseFloat(qtyInput.value)||0 : 0;
-    let rate = rateInput ? parseFloat(rateInput.value)||0 : 0;
-    let amt = qty * rate;
-    if (amtSpan) amtSpan.innerHTML = '&#x20B9;' + amt.toLocaleString('en-IN');
-    // Update category total
-    let card = row.closest('.po-import-cat-card');
-    if (card) {
-        let total = 0;
-        card.querySelectorAll('.po-inv-item-cb:checked').forEach(cb => {
-            let r = cb.closest('.po-import-item');
-            let q = r.querySelector('.po-inv-item-qty'); let rr = r.querySelector('.po-inv-item-rate');
-            total += (q ? parseFloat(q.value)||0 : 0) * (rr ? parseFloat(rr.value)||0 : 0);
-        });
-        let totalSpan = card.querySelector('.po-cat-total');
-        if (totalSpan) totalSpan.innerHTML = '&#x20B9;' + total.toLocaleString('en-IN');
-    }
-}
-function poSelectAllCat(cb, catName) {
-    let card = cb.closest('.po-import-cat-card');
-    if (!card) return;
-    card.querySelectorAll('.po-inv-item-cb:not(:disabled)').forEach(itemCb => {
-        itemCb.checked = cb.checked;
-        poUpdateCatTotal(itemCb);
-    });
-}
-function poFilterImportItems() {
-    let query = (document.getElementById('po_import_search')?.value || '').toLowerCase();
-    document.querySelectorAll('.po-import-item').forEach(item => {
-        let name = item.getAttribute('data-name') || '';
-        item.style.display = name.includes(query) ? 'flex' : 'none';
-    });
-}
-function poImportAllFromInvoice() {
-    let ev = poEventsData[poViewEvIdx]; if (!ev) return;
-    let evId = document.getElementById('po_event_link') ? document.getElementById('po_event_link').value : '';
-    if (!evId) return;
-    let added = 0;
-    let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                let eventSales = allSales.filter(s => s.type === 'Invoice');
-                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
-                if (eventSales.length === 0) eventSales = allSales;
-    eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
-        if (!item.event || item.event === ev.name) {
-            let alreadyAdded = poItemsData.some(i => i.name === item.name && i.event === ev.name);
-            if (!alreadyAdded) {
-                poItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: 1, rate: 0, amount: 0, event: ev.name, category: (item.category||'General').trim()||'General' });
-                added++;
-            }
-        }
-    }); });
-    if (added > 0) { renderPOItemPopup(); renderPOItems(); poSwitchTab('items'); } else { alert('All items already imported!'); }
-}
-                function addSelectedInvItemsPO(catName) {
-            let ev = poEventsData[poViewEvIdx]; if (!ev) return;
-            let added = 0;
-            let cbList = document.querySelectorAll('.po-inv-item-cb:checked:not(:disabled)');
-            cbList.forEach(cb => {
-                let row = cb.parentElement;
-                let qtyInput = row.querySelector('.po-inv-item-qty');
-                let rateInput = row.querySelector('.po-inv-item-rate');
-                let unitSel = row.querySelector('.po-inv-item-unit');
-                let qty = qtyInput ? parseFloat(qtyInput.value)||1 : 1;
-                let rate = rateInput ? parseFloat(rateInput.value)||0 : 0;
-                let unit = unitSel ? unitSel.value : 'Pcs';
-                poItemsData.push({ name: cb.getAttribute('data-name'), desc: cb.getAttribute('data-desc')||'', unit: unit, qty: qty, rate: rate, amount: qty*rate, event: ev.name, category: catName });
-                cb.disabled = true;
-                added++;
-            });
-            if (added === 0) { alert('Select at least one item!'); return; }
-            renderPOItemPopup();
-            renderPOItems();
-        }
-        function updatePOIVGross() { let qty=parseFloat(document.getElementById('poiv_qty').value)||0; let rate=parseFloat(document.getElementById('poiv_rate').value)||0; let g=document.getElementById('poiv_gross'); if(g) g.innerHTML='&#x20B9;'+(qty*rate).toLocaleString('en-IN'); }
-        function savePOItemFromView() {
-            let ev = poEventsData[poViewEvIdx]; if (!ev) return;
-            let name = document.getElementById('poiv_name').value.trim();
-            if (!name) { alert('Please enter item name!'); return; }
-            let category = document.getElementById('poiv_category') ? document.getElementById('poiv_category').value.trim() : '';
-            if (!category) { alert('Please enter a category!'); document.getElementById('poiv_category').focus(); return; }
-            let qty = parseFloat(document.getElementById('poiv_qty').value)||0;
-            let rate = parseFloat(document.getElementById('poiv_rate').value)||0;
-            let unit = document.getElementById('poiv_unit') ? document.getElementById('poiv_unit').value : 'Pcs';
-            let desc = document.getElementById('poiv_desc').value.trim();
-            poItemsData.push({ name: name, desc: desc, unit: unit, qty: qty, rate: rate, amount: qty*rate, event: ev.name, category: category });
-            if (!appSettings.savedCategories) appSettings.savedCategories = [];
-            if (!appSettings.savedCategories.includes(category)) { appSettings.savedCategories.push(category); saveDataLocally(); }
-            document.getElementById('poiv_name').value=''; document.getElementById('poiv_qty').value='1'; document.getElementById('poiv_rate').value='0'; document.getElementById('poiv_desc').value='';
-            let savedCat = category; renderPOItemPopup();
-            let catInput = document.getElementById('poiv_category'); if (catInput && savedCat) catInput.value = savedCat;
-        }
-        function uploadPORefPhotos(input) {
+                        function updatePOIVGross() { let qty=parseFloat(document.getElementById('poiv_qty').value)||0; let rate=parseFloat(document.getElementById('poiv_rate').value)||0; let g=document.getElementById('poiv_gross'); if(g) g.innerHTML='&#x20B9;'+(qty*rate).toLocaleString('en-IN'); }
+                function uploadPORefPhotos(input) {
             if (!input.files || input.files.length === 0) return;
             let container = document.getElementById('po_uploaded_photos');
             Array.from(input.files).forEach(file => { let reader = new FileReader(); reader.onload = function(e) { let div = document.createElement('div'); div.style.cssText = 'position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);'; div.innerHTML = '<img src="'+e.target.result+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="po-ref-photo-cb" value="'+e.target.result+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;" checked>'; container.appendChild(div); }; reader.readAsDataURL(file); });
