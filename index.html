@@ -16694,7 +16694,11 @@ function renderPOItemPopup(scrollToBottom) {
             evPhotos.forEach((photoData, index) => {
                 let url = typeof photoData === 'string' ? photoData : photoData.url;
                 let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                let isSelected = typeof photoData === 'string' ? true : (photoData.selected !== false);
                 html += '<div style="position:relative;">';
+                html += '<div style="position:absolute; top:-4px; left:-4px; z-index:10; background:white; border-radius:4px; padding:1px;">';
+                html += '<input type="checkbox" class="po-ref-photo-cb" ' + (isSelected ? 'checked' : '') + ' onchange="togglePOPhotoSelection(' + index + ', this.checked)" style="width:14px; height:14px; cursor:pointer;">';
+                html += '</div>';
                 html += '<img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
                 html += '<button onclick="deletePOIVPhoto(' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
                 html += '<input type="text" value="' + label + '" placeholder="Name (optional)" onchange="updatePOIVPhotoLabel(' + index + ', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
@@ -16816,7 +16820,7 @@ function updatePOIVPhotoLabel(photoIdx, val) {
         }
 function getPOEventCategories(evName) {
             let cats = [];
-            quoteItemsData.filter(i => i.event === evName).forEach(i => {
+            poItemsData.filter(i => i.event === evName).forEach(i => {
                 let c = (i.category || 'General').trim();
                 if (!c) c = 'General';
                 if (!cats.includes(c)) cats.push(c);
@@ -16827,6 +16831,17 @@ function getPOEventCategories(evName) {
         // 📸 AUTO-ATTACH: Merges reference photos from a lead into the given photo array.
         // Tries by eventId first, then by matching event name across all leads.
         // Lead stores event-wise photos in lead.events[].photos (NOT lead.dates).
+
+        function togglePOPhotoSelection(photoIdx, isSelected) {
+            let ev = poEventsData[poViewEvIdx];
+            if (!ev || !ev.photos) return;
+            let p = ev.photos[photoIdx];
+            if (typeof p === 'string') {
+                ev.photos[photoIdx] = { url: p, selected: isSelected };
+            } else {
+                p.selected = isSelected;
+            }
+        }
 
         function deletePOItem(idx) { poItemsData.splice(idx, 1); renderPOItems(); }
         function editPOItemInline(idx) {
@@ -17281,33 +17296,7 @@ function pbImportAllFromInvoice() {
             });
             // Totals
             // REFERENCE PHOTOS — auto-attach from lead
-            let pbRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null;
-            let pbHasPhotos = pbEventsData.some(ev => getLeadEventPhotos(pbRec, ev.name, ev.photos).length > 0);
-            if (pbHasPhotos) {
-                html += '<div style="margin-top:12px;">';
-                html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
-                html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
-                pbEventsData.forEach(ev => {
-                    let evPhotos = getLeadEventPhotos(pbRec, ev.name, ev.photos).filter(function(p) { return p.selected !== false; });
-                    if (evPhotos.length === 0) return;
-                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
-                    html += '<div style="margin-bottom:10px;">';
-                    html += '<div style="background:' + evColor + '; color:' + tc + '; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; margin-bottom:6px;">' + sanitize(ev.name) + '</div>';
-                    html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
-                    evPhotos.forEach(function(photo) {
-                        let url = typeof photo === 'string' ? photo : photo.url;
-                        let label = typeof photo === 'string' ? '' : (photo.label || '');
-                        html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
-                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
-                        if (label) html += '<div style="font-size:9px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
-                        html += '</div>';
-                    });
-                    html += '</div></div>';
-                });
-                html += '</div></div>';
-            }
-            // REFERENCE PHOTOS — auto-attach from lead
-            let poRec = (typeof editingPOId !== 'undefined' && editingPOId && purchaseDB[editingPOId]) ? purchaseDB[editingPOId] : null;
+            let poPrintRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null;
             let poHasPhotos = poEventsData.some(ev => getLeadEventPhotos(poRec, ev.name, ev.photos).length > 0);
             if (poHasPhotos) {
                 html += '<div style="margin-top:12px;">';
@@ -17332,6 +17321,7 @@ function pbImportAllFromInvoice() {
                 });
                 html += '</div></div>';
             }
+
             html += '<div style="border-top:2px solid var(--accent-color); padding-top:8px;">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>Subtotal:</span><span>&#x20B9;'+grandTotal.toLocaleString('en-IN')+'</span></div>';
             if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--danger);"><span>Discount:</span><span>-&#x20B9;'+discount.toLocaleString('en-IN')+'</span></div>';
@@ -17447,10 +17437,10 @@ function pbImportAllFromInvoice() {
             html += '<div style="text-align:right; font-size:11px; color:#64748B;">PO No: ' + poId + '</div></div>';
             // Function-wise summary
             // FUNCTION SCHEDULE TABLE
-            if (pbEventsData.length > 0) {
+            if (poEventsData.length > 0) {
                 html += '<h3 style="font-size:11px; color:#475569; margin:10px 0 4px;">Function Schedule</h3>';
                 html += '<table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:10px;"><thead><tr><th style="border:1px solid #E2E8F0; padding:4px 6px;">Function</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Time</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Guests</th></tr></thead><tbody>';
-                pbEventsData.forEach(ev => {
+                poEventsData.forEach(ev => {
                     let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
                     let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-';
                     html += '<tr style="background:' + evColor + ';"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px; font-weight:700;">' + sanitize(ev.name) + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
@@ -17508,13 +17498,12 @@ function pbImportAllFromInvoice() {
                     if (leadEv && leadEv.photos) photos = leadEv.photos;
                 }
                 // Also get selected photos from the item popup
-                let selectedPhotoUrls = [];
-                document.querySelectorAll('.po-ref-photo-cb:checked').forEach(cb => selectedPhotoUrls.push(cb.value));
                 let allPhotos = [];
                 photos.forEach(p => {
                     let url = typeof p === 'string' ? p : (p.url||p);
                     let label = typeof p === 'object' ? (p.label||'') : '';
-                    if (selectedPhotoUrls.includes(url)) allPhotos.push({ url: url, label: label, selected: true });
+                    let isSelected = typeof p === 'string' ? true : (p.selected !== false);
+                    if (isSelected) allPhotos.push({ url: url, label: label, selected: true });
                 });
                 // If no checkboxes checked, include all with selected: false
                 if (allPhotos.length === 0) {
@@ -17675,8 +17664,16 @@ function openPurchaseOrderModal() {
             } else {
                 group.style.display = 'none';
             }
-        }        function calculatePOTotal() {
-            let total = poItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+        }        function syncPOGrossFromItems() {
+            calculatePOTotal();
+        }
+        function calculatePOTotal() {
+            let total = 0;
+            poEventsData.forEach(ev => {
+                let evItems = poItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                total += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
             let discount = parseFloat(document.getElementById('po_discount').value) || 0;
             let grandTotal = total - discount;
             document.getElementById('po_total').value = grandTotal;
@@ -17836,7 +17833,7 @@ function openPurchaseOrderModal() {
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = poEventsData.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'' }));
 
-            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } let selectedEvents = poEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'' })); purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, events: selectedEvents, remarks: poRemarks, docUrl: poDocUrl };
+            let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } let selectedEvents = poEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'', manualGross: ev.manualGross||0, catOverrides: ev.catOverrides||{}, photos: ev.photos||[] })); purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, events: selectedEvents, remarks: poRemarks, docUrl: poDocUrl };
 
             editingPurchaseId = null;
             updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
@@ -18293,14 +18290,18 @@ function openPurchaseOrderModal() {
                 document.getElementById('po_event').value = record.event;
 
                 poItemsData = []; poEventsData = [];
-                if (record.linkedDates && record.linkedDates.length > 0) {
-                    record.linkedDates.forEach(d => { poEventsData.push({ name: d.name||'Main Event', date: d.date||'', time: d.time||'', venue: d.venue||'', color: '' }); });
+                if (record.events && record.events.length > 0) {
+                    poEventsData = record.events.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'', manualGross: ev.manualGross||0, catOverrides: ev.catOverrides||{}, photos: ev.photos||[], _selected: true }));
+                } else if (record.linkedDates && record.linkedDates.length > 0) {
+                    record.linkedDates.forEach(d => { poEventsData.push({ name: d.name||'Main Event', date: d.date||'', time: d.time||'', venue: d.venue||'', guests: d.guests||'', color: d.color||'', _selected: true }); });
+                } else if (record.event) {
+                    poEventsData.push({ name: record.event, date: record.date||'', time: '', venue: '', _selected: true });
                 }
-                if (record.items) {
+                if (record.items && record.items.length > 0) {
                     record.items.forEach(item => {
                         if (item.unit && !itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); }
-                        poItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: item.amount||(item.qty||1)*(item.rate||0), event: item.event||'' });
-                        if (item.event && !poEventsData.find(e => e.name === item.event)) { poEventsData.push({ name: item.event, date:'', time:'', venue:'', color:'' }); }
+                        let itemEvent = item.event || (poEventsData.length > 0 ? poEventsData[0].name : '');
+                        poItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: item.amount||(item.qty||1)*(item.rate||0), event: itemEvent, category: item.category||'General' });
                     });
                 }
                 poEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1);
