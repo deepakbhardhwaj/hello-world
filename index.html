@@ -7226,8 +7226,7 @@
                         <textarea id="po_remarks" class="form-input" rows="2" placeholder="Any special instructions or notes..." style="font-size:12px; resize:vertical;"></textarea>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button type="button" class="btn-main" style="flex:1; background:var(--accent-light); color:var(--accent-color); border:1px solid #BFDBFE;" onclick="showPOPreview()">Preview</button>
-                        <button type="button" class="btn-main" style="flex:2; background:var(--accent-color); color:white;" onclick="savePOData()">Save Purchase Order</button>
+                        <button type="button" class="btn-main" style="flex:1; background:var(--accent-color); color:white;" onclick="showPOPreview()">Preview & Save Purchase Order</button>
                     </div>
                 </form>
             </div>
@@ -16690,8 +16689,10 @@ function renderPOItemPopup(scrollToBottom) {
             let poRecForPhotos = (poEvLink && poEvLink.value) ? { eventId: poEvLink.value } : ((typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null);
             let evPhotos = getLeadEventPhotos(poRecForPhotos, ev.name, ev.photos || []);
             html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
-            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Reference Photos (' + evPhotos.length + ')</div>';
-            html += '<label style="display:inline-block; background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; margin-bottom:6px;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePOEventPhotoUpload(event)"></label>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Reference Photos (' + evPhotos.length + ')</div>';
+            html += '<label style="background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePOEventPhotoUpload(event)"></label>';
+            html += '</div>';
             html += '<div id="poiv_photos_grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
             evPhotos.forEach((photoData, index) => {
                 let url = typeof photoData === 'string' ? photoData : photoData.url;
@@ -17496,21 +17497,26 @@ function pbImportAllFromInvoice() {
                 // Reference photos
                 // Merge lead event photos with PO event photos (auto-attach + manual upload)
                 let poPrintRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : { eventId: evId };
-                let photos = getLeadEventPhotos(poPrintRec, ev.name, ev.photos || []);
-                let allPhotos = [];
-                photos.forEach(p => {
-                    let url = typeof p === 'string' ? p : (p.url||p);
-                    let label = typeof p === 'object' ? (p.label||'') : '';
-                    let isSelected = typeof p === 'string' ? true : (p.selected !== false);
-                    if (isSelected) allPhotos.push({ url: url, label: label, selected: true });
-                });
-                // If no checkboxes checked, include all with selected: false
-                if (allPhotos.length === 0) {
-                    photos.forEach(p => { let url = typeof p === 'string' ? p : (p.url||p); let label = typeof p === 'object' ? (p.label||'') : ''; allPhotos.push({ url: url, label: label, selected: false }); });
-                }
-                if (allPhotos.length > 0) {
-                    html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div class="photo-grid">';
-                    allPhotos.forEach(p => { let pUrl = typeof p === 'string' ? p : p.url; html += '<div class="photo-item"><img src="' + pUrl + '" /></div>'; });
+                let evPhotos = getLeadEventPhotos(poPrintRec, ev.name, ev.photos || []);
+                // Filter to selected photos only
+                let selPhotos = evPhotos.filter(p => typeof p === 'string' ? true : (p.selected !== false));
+                if (selPhotos.length > 0) {
+                    let photoCount = selPhotos.length;
+                    let gridCols, imgHeight;
+                    if (photoCount === 1) { gridCols = '1fr'; imgHeight = '380px'; }
+                    else if (photoCount === 2) { gridCols = 'repeat(2, 1fr)'; imgHeight = '300px'; }
+                    else if (photoCount <= 4) { gridCols = 'repeat(2, 1fr)'; imgHeight = '220px'; }
+                    else { gridCols = 'repeat(3, 1fr)'; imgHeight = '160px'; }
+                    html += '<div style="margin-top:15px;"><div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid ' + evColor + '; padding-bottom:3px;">' + sanitize(ev.name) + ' — Reference Photos (' + photoCount + ')</div>';
+                    html += '<div style="display:grid; grid-template-columns:' + gridCols + '; gap:8px;">';
+                    selPhotos.forEach(photo => {
+                        let url = typeof photo === 'string' ? photo : photo.url;
+                        let label = typeof photo === 'string' ? '' : (photo.label || '');
+                        html += '<div style="text-align:center; border:1px solid #E2E8F0; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid;">';
+                        html += '<img src="' + url + '" style="width:100%; height:' + imgHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff;">';
+                        if (label) html += '<div style="font-size:9px; color:#64748B; margin-top:3px;">' + sanitize(label) + '</div>';
+                        html += '</div>';
+                    });
                     html += '</div></div>';
                 }
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
@@ -17835,7 +17841,7 @@ function openPurchaseOrderModal() {
             let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } let selectedEvents = poEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'', manualGross: ev.manualGross||0, catOverrides: ev.catOverrides||{}, photos: ev.photos||[] })); purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, events: selectedEvents, remarks: poRemarks, docUrl: poDocUrl };
 
             editingPurchaseId = null;
-            updateDataAndUI(); document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
+            updateDataAndUI(); document.getElementById('poPreviewModal').style.display = 'none'; document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
         }
 
         function openPurchaseBillModal() {
