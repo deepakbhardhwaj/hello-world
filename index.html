@@ -16685,8 +16685,10 @@ function renderPOItemPopup(scrollToBottom) {
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="poiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
             html += '<button type="button" class="btn-main" onclick="savePOItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>';
             html += '</div></div>';
-            // EVENT PHOTOS SECTION
-            let evPhotos = (ev.photos || []);
+            // EVENT PHOTOS SECTION — merge event photos with lead event photos (auto-attach)
+            let poEvLink = document.getElementById('po_event_link');
+            let poRecForPhotos = (poEvLink && poEvLink.value) ? { eventId: poEvLink.value } : ((typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null);
+            let evPhotos = getLeadEventPhotos(poRecForPhotos, ev.name, ev.photos || []);
             html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Reference Photos (' + evPhotos.length + ')</div>';
             html += '<label style="display:inline-block; background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700; margin-bottom:6px;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePOEventPhotoUpload(event)"></label>';
@@ -17492,12 +17494,9 @@ function pbImportAllFromInvoice() {
                     html += '</tbody></table>';
                 });
                 // Reference photos
-                let photos = [];
-                if (evId && leadsDB[evId] && leadsDB[evId].events) {
-                    let leadEv = leadsDB[evId].events.find(e => e.name === ev.name);
-                    if (leadEv && leadEv.photos) photos = leadEv.photos;
-                }
-                // Also get selected photos from the item popup
+                // Merge lead event photos with PO event photos (auto-attach + manual upload)
+                let poPrintRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : { eventId: evId };
+                let photos = getLeadEventPhotos(poPrintRec, ev.name, ev.photos || []);
                 let allPhotos = [];
                 photos.forEach(p => {
                     let url = typeof p === 'string' ? p : (p.url||p);
@@ -17511,7 +17510,7 @@ function pbImportAllFromInvoice() {
                 }
                 if (allPhotos.length > 0) {
                     html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:700; color:#1E40AF; margin-bottom:6px;">Reference Photos:</div><div class="photo-grid">';
-                    allPhotos.forEach(url => { html += '<div class="photo-item"><img src="' + url + '" /></div>'; });
+                    allPhotos.forEach(p => { let pUrl = typeof p === 'string' ? p : p.url; html += '<div class="photo-item"><img src="' + pUrl + '" /></div>'; });
                     html += '</div></div>';
                 }
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
