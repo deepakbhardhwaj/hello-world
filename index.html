@@ -7135,13 +7135,13 @@
         </div>
 
         <div id="poItemViewModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:22000 !important;">
-            <div class="modal-content" style="max-width:580px; max-height:92vh; overflow-y:auto;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
-                    <h3>Manage Items</h3>
+                    <h3>Item Details</h3>
                     <button class="modal-close" onclick="closePOItemViewPanel()">&times;</button>
                 </div>
                 <div id="poItemViewBody" style="padding:0 0 12px 0;"></div>
-                <button onclick="closePOItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
+                
             </div>
         </div>
 
@@ -7164,7 +7164,6 @@
                 <div id="poPreviewBody" style="padding:0 0 12px 0; max-height:60vh; overflow-y:auto;"></div>
                 <div style="display:flex; gap:8px; padding-top:8px;">
                     <button onclick="document.getElementById('poPreviewModal').style.display='none';" class="btn-main" style="flex:1; background:var(--surface-color); color:var(--text-primary); border:1px solid var(--border-color); box-shadow:none; font-size:12px;">Edit</button>
-                    <button onclick="printPODocument()" class="btn-main" style="flex:1; background:var(--accent-light); color:var(--accent-color); border:1px solid #BFDBFE; font-size:12px;">Print</button>
                     <button onclick="savePOData()" class="btn-main" style="flex:2; font-size:12px;">Confirm & Save</button>
                 </div>
             </div>
@@ -14910,7 +14909,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             if (quoteItemsData.length === 0) { alert('Please add at least one item!'); return; }
             let party = partiesDB[partyId];
             let partyName = party ? party.name : 'Unknown';
-            let gross = parseFloat(document.getElementById('q_gross') ? document.getElementById('q_gross').value : 0) || 0;
+            let gross = 0; poEventsData.forEach(function(ev) { var evItems = poItemsData.filter(function(i) { return i.event === ev.name; }); var evTotal = evItems.reduce(function(s, i) { return s + (i.amount||0); }, 0); gross += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal; });
             let discount = parseFloat(document.getElementById('q_discount') ? document.getElementById('q_discount').value : 0) || 0;
             let transport = parseFloat(document.getElementById('q_transport') ? document.getElementById('q_transport').value : 0) || 0;
             let net = parseFloat(document.getElementById('q_total') ? document.getElementById('q_total').value : 0) || 0;
