@@ -16688,6 +16688,8 @@ function renderPOItemPopup(scrollToBottom) {
             let poEvLink = document.getElementById('po_event_link');
             let poRecForPhotos = (poEvLink && poEvLink.value) ? { eventId: poEvLink.value } : ((typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null);
             let evPhotos = getLeadEventPhotos(poRecForPhotos, ev.name, ev.photos || []);
+            // Sync merged photos back to event so selection toggles work correctly
+            ev.photos = evPhotos;
             html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
             html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Reference Photos (' + evPhotos.length + ')</div>';
@@ -17246,94 +17248,111 @@ function pbImportAllFromInvoice() {
             else { navigator.clipboard.writeText(msg.replace(/%0A/g,'\n')).then(()=>alert('Links copied to clipboard!')).catch(()=>alert(msg.replace(/%0A/g,'\n'))); }
         }        // ===== PO/PB PREVIEW & PRINT FUNCTIONS =====
         function showPOPreview() {
+            hideNavAndFabs();
+            let pModal = document.getElementById('poPreviewModal');
+            if (pModal) pModal.style.setProperty('z-index', '20000', 'important');
             let partyId = document.getElementById('po_vendor').value;
             if (!partyId) { alert('Please select a vendor!'); return; }
+            if (poEventsData.length === 0) { alert('Please add at least one function!'); return; }
             if (poItemsData.length === 0) { alert('Please add at least one item!'); return; }
             let party = partiesDB[partyId];
             let partyName = party ? party.name : 'Unknown';
-            let date = document.getElementById('po_date').value;
-            let discount = parseFloat(document.getElementById('po_discount').value) || 0;
-            let selectedEvents = poEventsData.filter(e => e._selected !== false);
-            let grandTotal = poItemsData.reduce((s,i) => s + (i.amount||0), 0);
-            let netTotal = grandTotal - discount;
-            let html = '<div style="margin-bottom:12px;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid var(--accent-color);">';
-            html += '<div><h4 style="margin:0; font-size:15px; font-weight:800; color:var(--text-primary);">Purchase Order</h4>';
-            html += '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">' + partyName + '</div>';
-            html += '<div style="font-size:10px; color:var(--text-secondary);">' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div>';
-            html += '<div style="text-align:right; font-size:10px; color:var(--text-secondary);">Vendor: <b style="color:var(--text-primary);">' + partyName + '</b></div>';
-            html += '</div>';
-            // FUNCTION SCHEDULE TABLE
-            if (poEventsData.length > 0) {
-                html += '<div style="margin-top:10px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
-                html += '<table style="width:100%; border-collapse:collapse; border:1px solid var(--border-color); margin-bottom:12px; font-size:10px;">';
-                html += '<thead><tr><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr></thead><tbody>';
-                poEventsData.forEach(ev => {
-                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
-                    let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-';
-                    html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color); font-weight:700;">' + sanitize(ev.name) + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + evDate + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
-                });
-                html += '</tbody></table>';
-            }
-            // Function-wise items
-            selectedEvents.forEach(ev => {
+            let gross = parseFloat(document.getElementById('q_gross') ? document.getElementById('q_gross').value : 0) || 0;
+            let discount = parseFloat(document.getElementById('po_discount') ? document.getElementById('po_discount').value : 0) || 0;
+            let transport = 0;
+            let net = parseFloat(document.getElementById('po_total') ? document.getElementById('po_total').value : 0) || 0;
+            let eventTitleVal = '';
+            let html = '<div style="margin-bottom:12px;"><h4 style="margin:0 0 2px; font-size:15px; font-weight:800; color:var(--text-primary);">' + partyName + '</h4>';
+            if (eventTitleVal) html += '<p style="font-size:12px; font-weight:700; color:var(--accent-color); margin:0 0 2px;">' + eventTitleVal + '</p>';
+            html += '<p style="font-size:11px; color:var(--text-secondary); margin:0;">' + poEventsData.length + ' Events \u00B7 ' + poItemsData.length + ' Items \u00B7 Gross \u20B9' + gross.toLocaleString('en-IN') + ' \u00B7 Net \u20B9' + net.toLocaleString('en-IN') + '</p></div>';
+            // FUNCTION SCHEDULE TABLE (with event colors)
+            html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Function Schedule</div>';
+            html += '<table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px; border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden;">';
+            html += '<tr style="background:var(--bg-color);"><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Function</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Date</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Time</th><th style="padding:6px 8px; text-align:left; border:1px solid var(--border-color);">Venue</th><th style="padding:6px 8px; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); border:1px solid var(--border-color);">Guests</th></tr>';
+            poEventsData.forEach(ev => {
+                let d = ev.date ? new Date(ev.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '-';
+                let evColor = getEventColor(ev);
+                let tc = getContrastColor(evColor);
+                html += '<tr style="background:' + evColor + ';"><td style="padding:6px 8px; font-weight:700; color:' + tc + '; border:1px solid var(--border-color);">' + ev.name + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + d + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.time || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.venue || '-') + '</td><td style="padding:6px 8px; color:' + tc + '; opacity:0.9; border:1px solid var(--border-color);">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
+            });
+            html += '</table>';
+            // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button) — boxed like function schedule
+            html += '<div style="margin-top:14px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Items / Services</div>';
+            html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden; margin-bottom:12px;">';
+            poEventsData.forEach((ev, evIdx) => {
                 let evItems = poItemsData.filter(i => i.event === ev.name);
-                if (evItems.length === 0) return;
-                let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<div style="margin-bottom:10px; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">';
-                html += '<div style="background:'+evColor+'; color:'+tc+'; padding:5px 10px; font-size:11px; font-weight:700;">'+ev.name+' &#x20B9;'+evTotal.toLocaleString('en-IN')+'</div>';
-                let categories = [];
-                evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
-                categories.forEach(catName => {
-                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
-                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="background:#EFF6FF; padding:3px 8px; font-size:9px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+' &#x20B9;'+catTotal.toLocaleString('en-IN')+'</div>';
-                    html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
-                    catItems.forEach(item => {
-                        html += '<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:3px 6px;"><b>'+(item.name||'')+'</b>'+(item.desc?'<div style="font-size:8px; color:#64748b;">'+item.desc+'</div>':'')+'</td><td style="padding:3px; text-align:center;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:3px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:3px; text-align:right; font-weight:700;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td></tr>';
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                // Event header row
+                html += '<div style="border-bottom:1px solid var(--border-color);">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + ev.name + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+                html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '<button onclick="document.getElementById(\'poPreviewModal\').style.display=\'none\'; openPOItemPopup(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '</div>';
+                // Category breakdown
+                if (evItems.length > 0) {
+                    let cats = getPOEventCategories(ev.name);
+                    cats.forEach(catName => {
+                        let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                        let catDisplayTotal = getPOCategoryDisplayTotal(ev, catName, catItems);
+                        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 10px 3px 20px; background:var(--surface-color); border-top:1px solid var(--bg-color);">';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ')</span></div>';
+                        if (catDisplayTotal > 0) {
+                            html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u20B9' + catDisplayTotal.toLocaleString('en-IN') + '</div>';
+                        } else {
+                            html += '<div style="font-size:9px; font-weight:600; color:#94A3B8; font-style:italic;">Enter Amount</div>';
+                        }
+                        html += '</div>';
                     });
-                    html += '</table>';
-                });
+                }
                 html += '</div>';
             });
-            // Totals
-            // REFERENCE PHOTOS — auto-attach from lead
+            html += '</div>';
+            // EVENT PHOTOS PREVIEW — auto-attach from lead BEFORE checking if any exist
             let poEvLinkEl = document.getElementById('po_event_link');
-            let poRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : (poEvLinkEl && poEvLinkEl.value ? { eventId: poEvLinkEl.value } : null);
-            let poHasPhotos = poEventsData.some(ev => getLeadEventPhotos(poRec, ev.name, ev.photos).length > 0);
-            if (poHasPhotos) {
+            let quoteRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : (poEvLinkEl && poEvLinkEl.value ? { eventId: poEvLinkEl.value } : null);
+            let hasAnyPhotos = poEventsData.some(ev => getLeadEventPhotos(quoteRec, ev.name, ev.photos).length > 0);
+            if (hasAnyPhotos) {
                 html += '<div style="margin-top:12px;">';
                 html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
                 html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
                 poEventsData.forEach(ev => {
-                    let evPhotos = getLeadEventPhotos(poRec, ev.name, ev.photos).filter(function(p) { return p.selected !== false; });
+                    let evPhotos = getLeadEventPhotos(quoteRec, ev.name, ev.photos);
                     if (evPhotos.length === 0) return;
-                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    let evColor = getEventColor(ev);
+                    let textColor = getContrastColor(evColor);
                     html += '<div style="margin-bottom:10px;">';
-                    html += '<div style="background:' + evColor + '; color:' + tc + '; padding:4px 10px; font-size:10px; font-weight:700; border-radius:4px; margin-bottom:6px;">' + sanitize(ev.name) + '</div>';
-                    html += '<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
-                    evPhotos.forEach(function(photo) {
-                        let url = typeof photo === 'string' ? photo : photo.url;
-                        let label = typeof photo === 'string' ? '' : (photo.label || '');
-                        html += '<div style="text-align:center; border:1px solid var(--border-color); border-radius:6px; padding:4px; background:var(--bg-color);">';
-                        html += '<img src="' + url + '" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color);" onclick="openImgPreview(\'' + url + '\', event)">';
-                        if (label) html += '<div style="font-size:9px; font-weight:700; color:var(--text-primary); margin-top:3px;">' + sanitize(label) + '</div>';
+                    html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block; margin-bottom:6px;">' + ev.name + ' (' + evPhotos.length + ')</div>';
+                    html += '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">';
+                    evPhotos.forEach(photoData => {
+                        let url = typeof photoData === 'string' ? photoData : photoData.url;
+                        let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                        html += '<div style="text-align:center;">';
+                        html += '<img src="' + url + '" style="width:100%; height:60px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                        if (label) html += '<div style="font-size:9px; font-weight:600; color:var(--text-primary); margin-top:2px;">' + label + '</div>';
                         html += '</div>';
                     });
-                    html += '</div></div>';
+                    html += '</div>';
+                    html += '</div>';
                 });
                 html += '</div></div>';
             }
-
-            html += '<div style="border-top:2px solid var(--accent-color); padding-top:8px;">';
-            html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>Subtotal:</span><span>&#x20B9;'+grandTotal.toLocaleString('en-IN')+'</span></div>';
-            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--danger);"><span>Discount:</span><span>-&#x20B9;'+discount.toLocaleString('en-IN')+'</span></div>';
-            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); padding:4px 0; border-top:1px solid var(--border-color);"><span>Grand Total:</span><span>&#x20B9;'+netTotal.toLocaleString('en-IN')+'</span></div>';
-            html += '</div></div>';
+            // SUMMARY
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; margin-top:8px; background:var(--bg-color);">';
+            html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Gross Amount</span><span>\u20B9' + gross.toLocaleString('en-IN') + '</span></div>';
+            if (transport > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Transport</span><span>+\u20B9' + transport.toLocaleString('en-IN') + '</span></div>';
+            if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-secondary); margin-bottom:3px;"><span>Discount</span><span>-\u20B9' + discount.toLocaleString('en-IN') + '</span></div>';
+            html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:var(--accent-color); border-top:1px solid var(--border-color); padding-top:4px;"><span>Net Total</span><span>\u20B9' + net.toLocaleString('en-IN') + '</span></div>';
+            html += '</div>';
+            let remarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : '';
+            if (remarks) html += '<div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; font-size:11px; margin-top:8px;"><strong style="color:var(--text-secondary);">Remarks:</strong> ' + remarks + '</div>';
             document.getElementById('poPreviewBody').innerHTML = html;
             document.getElementById('poPreviewModal').style.display = 'flex';
         }
+
         function showPBPreview() {
             let partyId = document.getElementById('pb_vendor').value;
             if (!partyId) { alert('Please select a vendor!'); return; }
