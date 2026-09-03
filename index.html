@@ -14631,8 +14631,9 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                     l.status !== 'Lost' && l.events &&
                     l.events.some(d => d.name === evName && d.photos && d.photos.length > 0));
             }
-            if (!matchingLead) return photos;
-            // Event-wise photos matching event name
+            if (!matchingLead) return dedupePhotoList(photos);
+            // Event-wise photos matching event name (dedupe by name too, in case a lead
+            // has two functions with the same name — both would otherwise get merged in)
             let eventList = matchingLead.events || matchingLead.dates || [];
             eventList.forEach(d => {
                 if (d.name === evName && d.photos && d.photos.length > 0) {
@@ -14642,14 +14643,30 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                     });
                 }
             });
-            // Lead-level photos (cover photos, general reference)
-            if (matchingLead.photos && matchingLead.photos.length > 0) {
+            // 🐛 FIX: Lead-level general/cover photos are now only used as a FALLBACK —
+            // only when this specific function has NO dedicated photos of its own.
+            // Previously these were always appended too, so a photo already tagged to
+            // the function (e.g. "Haldi") would also get pulled in a second time from
+            // the lead's general reference photos, making the same picture appear twice.
+            if (photos.length === 0 && matchingLead.photos && matchingLead.photos.length > 0) {
                 matchingLead.photos.forEach(p => {
                     let url = typeof p === 'string' ? p : p.url;
                     if (!photos.some(ep => (typeof ep === 'string' ? ep : ep.url) === url)) photos.push(p);
                 });
             }
-            return photos;
+            return dedupePhotoList(photos);
+        }
+        // Safety net: collapse any exact-URL duplicates, whichever source they came from
+        function dedupePhotoList(list) {
+            let seen = [];
+            let out = [];
+            (list || []).forEach(p => {
+                let url = typeof p === 'string' ? p : (p ? p.url : '');
+                if (!url || seen.includes(url)) return;
+                seen.push(url);
+                out.push(p);
+            });
+            return out;
         }
 
         function renderQuoteItemView(scrollToBottom) {
