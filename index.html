@@ -17461,6 +17461,28 @@ function pbImportAllFromInvoice() {
             html += '</div><div class="vendor-info">Date: ' + (date ? new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '') + '</div></div>';
             html += '<div style="text-align:right; font-size:11px; color:#64748B;">PO No: ' + poId + '</div></div>';
             // Function-wise summary
+            // FUNCTION SCHEDULE TABLE
+            if (pbEventsData.length > 0) {
+                html += '<h3 style="font-size:11px; color:#475569; margin:10px 0 4px;">Function Schedule</h3>';
+                html += '<table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:10px;"><thead><tr><th style="border:1px solid #E2E8F0; padding:4px 6px;">Function</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Time</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Guests</th></tr></thead><tbody>';
+                pbEventsData.forEach(ev => {
+                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-';
+                    html += '<tr style="background:' + evColor + ';"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px; font-weight:700;">' + sanitize(ev.name) + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
+            // FUNCTION SCHEDULE TABLE
+            if (poEventsData.length > 0) {
+                html += '<h3 style="font-size:11px; color:#475569; margin:10px 0 4px;">Function Schedule</h3>';
+                html += '<table style="width:100%; border-collapse:collapse; margin-bottom:10px; font-size:10px;"><thead><tr><th style="border:1px solid #E2E8F0; padding:4px 6px;">Function</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Date</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Time</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Venue</th><th style="border:1px solid #E2E8F0; padding:4px 6px;">Guests</th></tr></thead><tbody>';
+                poEventsData.forEach(ev => {
+                    let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
+                    let evDate = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-';
+                    html += '<tr style="background:' + evColor + ';"><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px; font-weight:700;">' + sanitize(ev.name) + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + evDate + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.time || '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.venue ? sanitize(ev.venue) : '-') + '</td><td style="color:' + tc + '; border:1px solid #E2E8F0; padding:4px 6px;">' + (ev.guests ? ev.guests.toLocaleString('en-IN') : '-') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+            }
             html += '<h3 style="font-size:13px; color:#1E40AF; margin:10px 0 6px;">Function-wise Breakdown</h3>';
             html += '<table><thead><tr><th>Function</th><th>Items</th><th style="text-align:right;">Amount</th></tr></thead><tbody>';
             selectedEvents.forEach(ev => {
@@ -17844,7 +17866,15 @@ function openPurchaseOrderModal() {
             handleEventLinkChange('pb');
             renderPBEvents(); renderPBItems();
             calculatePBTotal();
-            document.getElementById('purchaseBillModal').style.display = 'flex';
+            // 🚀 FIX: Close lower modals and set z-index above everything
+            let ebsModal = document.getElementById('eventBalanceSheetModal');
+            if (ebsModal) ebsModal.style.display = 'none';
+            let poPrevMod = document.getElementById('poPreviewModal');
+            if (poPrevMod) poPrevMod.style.display = 'none';
+            let poMod = document.getElementById('purchaseOrderModal');
+            if (poMod) poMod.style.display = 'none';
+            let pbModal = document.getElementById('purchaseBillModal');
+            if (pbModal) { pbModal.style.zIndex = '22000'; pbModal.style.display = 'flex'; }
         }
         function handleVendorSelectionForPB() {
             let pId = document.getElementById('pb_vendor').value;
