@@ -8665,7 +8665,7 @@
 
             let counter = 1; let idToCheck = "";
             while (true) {
-                idToCheck = ((type === 'Invoice' || type === 'PB') && eventCode) ? `${eventCode}/${basePrefix}-${counter}` : `${basePrefix}-${counter}`;
+                idToCheck = ((type === 'Invoice' || type === 'PB' || type === 'PO' || type === 'Quotation') && eventCode) ? `${eventCode}/${basePrefix}-${counter}` : `${basePrefix}-${counter}`;
                 if (!salesDB[idToCheck] && !purchaseDB[idToCheck] && !bankTxDB[idToCheck] && !stockMovementDB[idToCheck]) break;
                 counter++;
             }
@@ -15027,10 +15027,12 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             let discount = parseFloat(document.getElementById('q_discount').value) || 0;
             let transport = parseFloat(document.getElementById('q_transport') ? document.getElementById('q_transport').value : 0) || 0;
             let total = parseFloat(document.getElementById('q_total').value) || 0;
-            let id = editingSalesId ? editingSalesId : generateDocId('Quotation');
             let evIdForQuote = null;
             if (currentQuoteSourceLeadId && !editingSalesId) { evIdForQuote = currentQuoteSourceLeadId; }
             else if (editingSalesId && salesDB[editingSalesId]) { evIdForQuote = salesDB[editingSalesId].eventId || null; }
+            // 🚀 Event-linked Quotation ka ID ab {ClientInitial}{FuncInitial}{DDMMYY}/EST-N format mein banega
+            let qEventCodeStr = evIdForQuote && leadsDB[evIdForQuote] ? createEventCode(leadsDB[evIdForQuote].name, leadsDB[evIdForQuote].func, leadsDB[evIdForQuote].date) : null;
+            let id = editingSalesId ? editingSalesId : generateDocId('Quotation', qEventCodeStr);
             let qRemarks = document.getElementById('q_remarks') ? document.getElementById('q_remarks').value : '';
             let primaryEvent = quoteEventsData.length > 0 ? quoteEventsData[0].name : '';
             let primaryDate = quoteEventsData.length > 0 ? quoteEventsData[0].date : '';
@@ -15424,6 +15426,62 @@ function openPOItemPreviewView(evIdx) {
             let rModal = document.getElementById('quoteItemReadModal');
             rModal.style.setProperty('z-index', '21000', 'important');
             rModal.style.display = 'flex';
+        }
+        // 🚀 Direct mirror of openPOItemPreviewView, for the PB (Vendor Bill) preview's "View" button
+        function openPBItemPreviewView(evIdx) {
+            let ev = pbEventsData[evIdx];
+            if (!ev) return;
+            let evItems = pbItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + sanitize(ev.name) + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No items for this function.</p>';
+            } else {
+                let cats = getPBEventCategories(ev.name);
+                let itemNum = 0;
+                cats.forEach(catName => {
+                    let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 10px; border-radius:6px; margin-bottom:4px;">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">\u20B9' + catTotal.toLocaleString('en-IN') + '</div>';
+                    html += '</div>';
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:8px;">';
+                    html += '<tr style="background:var(--bg-color);"><th style="padding:4px 4px; text-align:center; width:20px; border-bottom:1px solid var(--border-color);">#</th><th style="padding:4px 8px; text-align:left; border-bottom:1px solid var(--border-color);">Item / Service</th><th style="padding:4px 4px; text-align:center; width:40px; border-bottom:1px solid var(--border-color);">Qty</th><th style="padding:4px 4px; text-align:right; width:50px; border-bottom:1px solid var(--border-color);">Rate</th><th style="padding:4px 4px; text-align:right; width:60px; border-bottom:1px solid var(--border-color);">Amount</th></tr>';
+                    catItems.forEach((item) => {
+                        itemNum++;
+                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:4px 4px; text-align:center; color:var(--text-secondary);">' + itemNum + '</td><td style="padding:4px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                        html += '</td>';
+                        html += '<td style="padding:4px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:4px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:4px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                    });
+                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:10px; font-weight:700; color:var(--text-secondary);">' + sanitize(catName) + ' Subtotal:</td><td style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:var(--text-primary);">\u20B9' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</table>';
+                });
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:6px 10px; display:flex; justify-content:space-between; align-items:center; border-radius:6px;">';
+                html += '<div style="font-size:12px; font-weight:800; color:var(--text-primary);">Function Total:</div>';
+                html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
+            }
+            let ipvEvLinkEl = document.getElementById('pb_event_link');
+            let ipvQuoteRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : (ipvEvLinkEl && ipvEvLinkEl.value ? { eventId: ipvEvLinkEl.value } : null);
+            let ipvPhotos = getLeadEventPhotos(ipvQuoteRec, ev.name, ev.photos);
+            if (ipvPhotos.length > 0) {
+                html += '<div style="margin-top:12px;"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid #3B82F6; padding-bottom:3px;">\u{1F4F7} Reference Photos (' + ipvPhotos.length + ')</div><div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+                ipvPhotos.forEach(p => {
+                    let url = typeof p === 'object' ? (p.url||p) : p;
+                    let label = typeof p === 'object' ? (p.label||'') : '';
+                    html += '<div style="text-align:center;"><img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">' + (label ? '<div style="font-size:9px; font-weight:600; color:var(--text-primary); margin-top:2px;">' + sanitize(label) + '</div>' : '') + '</div>';
+                });
+                html += '</div></div>';
+            }
+            document.getElementById('quoteItemReadBody').innerHTML = html;
+            let rModal2 = document.getElementById('quoteItemReadModal');
+            rModal2.style.setProperty('z-index', '21000', 'important');
+            rModal2.style.display = 'flex';
         }
         // Helper: get unique categories for an event from poItemsData
         function getInvEventCategories(evName) {
@@ -17035,7 +17093,12 @@ function getPOEventCategories(evName) {
             html += '</div>';
             container.innerHTML = html; calculatePBTotal();
         }
-        function deletePBItem(idx) { pbItemsData.splice(idx, 1); renderPBItems(); }
+        function deletePBItem(idx) {
+            pbItemsData.splice(idx, 1);
+            renderPBItems();
+            let popup = document.getElementById('pbItemViewModal');
+            if (popup && popup.style.display === 'flex') renderPBItemPopup();
+        }
         function editPBItemInline(idx) {
             let item = pbItemsData[idx]; if (!item) return;
             let newName = prompt('Item Name:', item.name||''); if (newName === null) return;
@@ -17043,6 +17106,8 @@ function getPOEventCategories(evName) {
             let newRate = prompt('Rate:', item.rate||0); if (newRate === null) return;
             item.name = newName.trim(); item.qty = parseFloat(newQty)||1; item.rate = parseFloat(newRate)||0; item.amount = item.qty * item.rate;
             renderPBItems();
+            let popup = document.getElementById('pbItemViewModal');
+            if (popup && popup.style.display === 'flex') renderPBItemPopup();
         }
         function openPBItemPopup(evIdx) {
             pbViewEvIdx = evIdx; let ev = pbEventsData[evIdx]; if (!ev) return;
@@ -17099,7 +17164,14 @@ function renderPBItemPopup() {
         categories.forEach(catName => {
             let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
             let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:3px solid #3B82F6; padding:6px 10px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div><span style="font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</span></div>';
+            let catDisplayTotal = getPBCategoryDisplayTotal(ev, catName, catItems);
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:3px solid #3B82F6; padding:6px 10px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div>';
+            if (catDisplayTotal > 0) {
+                html += '<input type="number" value="'+catDisplayTotal+'" oninput="updatePBCategoryAmount('+pbViewEvIdx+', \''+catName.replace(/'/g,"\\'")+'\', this.value)" style="width:85px; padding:3px 6px; font-size:11px; font-weight:800; color:#1E40AF; background:white; border:1px solid #BFDBFE; border-radius:4px; text-align:right;">';
+            } else {
+                html += '<input type="number" value="" placeholder="Enter Amount" oninput="updatePBCategoryAmount('+pbViewEvIdx+', \''+catName.replace(/'/g,"\\'")+'\', this.value)" style="width:85px; padding:3px 6px; font-size:10px; font-weight:700; color:#94A3B8; background:white; border:1px dashed #3B82F6; border-radius:4px; text-align:right;">';
+            }
+            html += '</div>';
             html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
             catItems.forEach((item) => { let realIdx = pbItemsData.indexOf(item); itemNum++;
                 html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:5px; text-align:center; color:var(--text-secondary); font-weight:700;">'+itemNum+'</td><td style="padding:5px 8px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">'+item.desc+'</div>':'')+'</td><td style="padding:5px; text-align:center; font-size:10px;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:5px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:5px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:3px; white-space:nowrap;"><button onclick="editPBItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; width:22px; height:22px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePBItem('+realIdx+')" style="background:#FEE2E2; border:1px solid #FECACA; color:#DC2626; border-radius:4px; width:22px; height:22px; padding:0; font-size:14px; cursor:pointer; margin-left:2px;">&#x00D7;</button></td></tr>';
@@ -17108,7 +17180,8 @@ function renderPBItemPopup() {
             html += '</table>';
         });
         let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-        html += '<div style="border-top:2px solid #3B82F6; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:white; padding:8px 12px; display:flex; justify-content:space-between; border-radius:0 0 8px 8px;"><div style="font-size:12px; font-weight:800;">Function Total:</div><div style="font-size:15px; font-weight:900;">&#x20B9;'+evTotal.toLocaleString('en-IN')+'</div></div>';
+        let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+        html += '<div style="border-top:2px solid #3B82F6; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:white; padding:8px 12px; display:flex; justify-content:space-between; border-radius:0 0 8px 8px;"><div style="font-size:12px; font-weight:800;">Function Total:</div><div style="font-size:15px; font-weight:900;">&#x20B9;'+evDisplayTotal.toLocaleString('en-IN')+'</div></div>';
         html += '</div>';
     } else {
         html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No items yet</div><div style="font-size:11px; margin-top:4px;">Use "Import from Invoice" or "+ Add New" tabs above</div></div>';
@@ -17178,11 +17251,30 @@ function renderPBItemPopup() {
     html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="pbiv_qty" class="form-input" value="1" oninput="updatePBIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="pbiv_unit" class="form-select" onchange="handleUnitChange(this)">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="pbiv_rate" class="form-input" value="0" oninput="updatePBIVGross()"></div></div>';
     html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Description (Optional)</label><input type="text" id="pbiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
     html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--border-color);"><div style="font-size:13px; font-weight:800; color:var(--text-primary);">Total: <span id="pbiv_gross" style="color:var(--accent-color); font-size:15px;">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePBItemFromView()" style="font-size:12px; padding:10px 18px; width:auto;">+ Add Item</button></div></div>';
-    // Reference Photos
-    let photos = [];
-    if (evId && leadsDB[evId] && leadsDB[evId].events) { let leadEv = leadsDB[evId].events.find(e => e.name === ev.name); if (leadEv && leadEv.photos) photos = leadEv.photos; }
-    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:10px; background:var(--surface-color);"><div style="font-size:11px; font-weight:800; color:var(--accent-color); margin-bottom:6px;">&#x1F4F7; Reference Photos</div>';
-    if (photos.length > 0) { html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">'; photos.forEach(p => { let url=typeof p==='string'?p:(p.url||p); let label=typeof p==='object'?(p.label||''):''; html += '<div style="position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden; border:2px solid var(--border-color);"><img src="'+url+'" style="width:100%; height:100%; object-fit:cover;"><input type="checkbox" class="pb-ref-photo-cb" value="'+url+'" data-label="'+label+'" style="position:absolute; top:2px; right:2px; accent-color:#3B82F6; width:14px; height:14px;"></div>'; }); html += '</div>'; } else { html += '<p style="font-size:10px; color:var(--text-secondary); margin:0 0 6px;">No reference photos for this function.</p>'; }
+    // Reference Photos — same rich feature as PO (upload, delete, label, select, auto-attach from lead)
+    let pbRecForPhotos = (evId) ? { eventId: evId } : ((typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null);
+    let pbEvPhotos = getLeadEventPhotos(pbRecForPhotos, ev.name, ev.photos || []);
+    ev.photos = pbEvPhotos; // sync merged photos back so selection toggles work correctly
+    html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+    html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">&#x1F4F7; Reference Photos ('+pbEvPhotos.length+')</div>';
+    html += '<label style="background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePBEventPhotoUpload(event)"></label>';
+    html += '</div>';
+    html += '<div id="pbiv_photos_grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+    pbEvPhotos.forEach((photoData, index) => {
+        let url = typeof photoData === 'string' ? photoData : photoData.url;
+        let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+        let isSelected = typeof photoData === 'string' ? true : (photoData.selected !== false);
+        html += '<div style="position:relative;">';
+        html += '<div style="position:absolute; top:-4px; left:-4px; z-index:10; background:white; border-radius:4px; padding:1px;">';
+        html += '<input type="checkbox" class="pb-ref-photo-cb" '+(isSelected?'checked':'')+' onchange="togglePBPhotoSelection('+index+', this.checked)" style="width:14px; height:14px; cursor:pointer;">';
+        html += '</div>';
+        html += '<img src="'+url+'" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\''+url+'\', event)">';
+        html += '<button onclick="deletePBIVPhoto('+index+')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
+        html += '<input type="text" value="'+label+'" placeholder="Name (optional)" onchange="updatePBIVPhotoLabel('+index+', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
+        html += '</div>';
+    });
+    html += '</div>';
     html += '</div>';
     html += '</div>';
     
@@ -17295,6 +17387,77 @@ function pbImportAllFromInvoice() {
             document.getElementById('pbiv_name').value=''; document.getElementById('pbiv_qty').value='1'; document.getElementById('pbiv_rate').value='0'; document.getElementById('pbiv_desc').value='';
             let savedCat = category; renderPBItemPopup();
             let catInput = document.getElementById('pbiv_category'); if (catInput && savedCat) catInput.value = savedCat;
+        }
+        // 🚀 Category override + photo handling — direct mirror of PO's equivalents
+        function getPBCategoryDisplayTotal(ev, catName, catItems) {
+            if (ev.catOverrides && ev.catOverrides[catName] !== undefined && ev.catOverrides[catName] > 0) {
+                return ev.catOverrides[catName];
+            }
+            return catItems.reduce((s,i) => s + (i.amount||0), 0);
+        }
+        let _updatePBCategoryTimer = null;
+        function updatePBCategoryAmount(evIdx, catName, val) {
+            let ev = pbEventsData[evIdx];
+            if (!ev) return;
+            if (!ev.catOverrides) ev.catOverrides = {};
+            ev.catOverrides[catName] = parseFloat(val) || 0;
+            let evItems = pbItemsData.filter(i => i.event === ev.name);
+            let cats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!cats.includes(c)) cats.push(c); });
+            let totalFromCats = 0;
+            cats.forEach(c => {
+                let catItems = evItems.filter(i => (i.category || 'General').trim() === c || (!i.category && c === 'General'));
+                if (ev.catOverrides[c] !== undefined && ev.catOverrides[c] > 0) totalFromCats += ev.catOverrides[c];
+                else totalFromCats += catItems.reduce((s,i) => s + (i.amount||0), 0);
+            });
+            ev.manualGross = totalFromCats;
+            clearTimeout(_updatePBCategoryTimer);
+            _updatePBCategoryTimer = setTimeout(function() { renderPBItems(); }, 400);
+        }
+        async function handlePBEventPhotoUpload(event) {
+            let files = event.target.files;
+            if (!files.length) return;
+            let ev = pbEventsData[pbViewEvIdx];
+            if (!ev) return;
+            if (!ev.photos) ev.photos = [];
+            window.showLoader('Uploading to Cloud...');
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    let uploadedUrl = await uploadToCloudinary(files[i]);
+                    if (uploadedUrl) { ev.photos.push({ url: uploadedUrl, label: '' }); }
+                    else { alert('Cloudinary did not return a URL!'); }
+                } catch (e) { alert('Upload Failed! Error: ' + e.message); }
+            }
+            window.hideLoader();
+            renderPBItemPopup();
+            event.target.value = '';
+        }
+        function deletePBIVPhoto(photoIdx) {
+            let ev = pbEventsData[pbViewEvIdx];
+            if (!ev || !ev.photos) return;
+            if (confirm('Delete this photo?')) { ev.photos.splice(photoIdx, 1); renderPBItemPopup(); }
+        }
+        function updatePBIVPhotoLabel(photoIdx, val) {
+            let ev = pbEventsData[pbViewEvIdx];
+            if (!ev || !ev.photos) return;
+            let p = ev.photos[photoIdx];
+            if (typeof p === 'string') { ev.photos[photoIdx] = { url: p, label: val }; }
+            else { p.label = val; }
+        }
+        function togglePBPhotoSelection(photoIdx, isSelected) {
+            let ev = pbEventsData[pbViewEvIdx];
+            if (!ev || !ev.photos) return;
+            let p = ev.photos[photoIdx];
+            if (typeof p === 'string') { ev.photos[photoIdx] = { url: p, selected: isSelected }; }
+            else { p.selected = isSelected; }
+        }
+        function getPBEventCategories(evName) {
+            let cats = [];
+            pbItemsData.filter(i => i.event === evName).forEach(i => {
+                let c = (i.category || 'General').trim();
+                if (!c) c = 'General';
+                if (!cats.includes(c)) cats.push(c);
+            });
+            return cats;
         }
         function uploadPBRefPhotos(input) {
             if (!input.files || input.files.length === 0) return;
@@ -17459,27 +17622,64 @@ function pbImportAllFromInvoice() {
                 });
                 html += '</tbody></table>';
             }
-            selectedEvents.forEach(ev => {
+            // COMPACT EVENT-WISE ITEM SUMMARY (1 line per event + View button) — same style as PO Preview
+            html += '<div style="margin-top:14px; padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Items / Services</div>';
+            html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; overflow:hidden; margin-bottom:12px;">';
+            pbEventsData.forEach((ev, evIdx) => {
                 let evItems = pbItemsData.filter(i => i.event === ev.name);
-                if (evItems.length === 0) return;
-                let evColor = getEventColor(ev); let tc = getContrastColor(evColor);
                 let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                html += '<div style="margin-bottom:10px; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">';
-                html += '<div style="background:'+evColor+'; color:'+tc+'; padding:5px 10px; font-size:11px; font-weight:700;">'+ev.name+' &#x20B9;'+evTotal.toLocaleString('en-IN')+'</div>';
-                let categories = [];
-                evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
-                categories.forEach(catName => {
-                    let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
-                    let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="background:#EFF6FF; padding:3px 8px; font-size:9px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+' &#x20B9;'+catTotal.toLocaleString('en-IN')+'</div>';
-                    html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
-                    catItems.forEach(item => {
-                        html += '<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:3px 6px;"><b>'+(item.name||'')+'</b>'+(item.desc?'<div style="font-size:8px; color:#64748b;">'+item.desc+'</div>':'')+'</td><td style="padding:3px; text-align:center;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:3px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:3px; text-align:right; font-weight:700;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td></tr>';
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                let evColor = getEventColor(ev);
+                let textColor = getContrastColor(evColor);
+                html += '<div style="border-bottom:1px solid var(--border-color);">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:5px 10px; font-size:11px; font-weight:700; flex:1;">' + sanitize(ev.name) + ' <span style="font-size:9px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+                html += '<div style="padding:5px 10px; font-size:12px; font-weight:800; color:var(--text-primary); background:var(--surface-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '<button onclick="document.getElementById(\'pbPreviewModal\').style.display=\'none\'; openPBItemPreviewView(' + evIdx + ');" style="background:var(--accent-light); border:none; border-left:1px solid var(--border-color); color:var(--accent-color); padding:5px 12px; font-size:10px; font-weight:700; cursor:pointer;">View</button>';
+                html += '</div>';
+                if (evItems.length > 0) {
+                    let cats = getPBEventCategories(ev.name);
+                    cats.forEach(catName => {
+                        let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                        let catDisplayTotal = getPBCategoryDisplayTotal(ev, catName, catItems);
+                        html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 10px 3px 20px; background:var(--surface-color); border-top:1px solid var(--bg-color);">';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u00B7 ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6;">(' + catItems.length + ')</span></div>';
+                        html += '<div style="font-size:10px; font-weight:700; color:#1E40AF;">\u20B9' + catDisplayTotal.toLocaleString('en-IN') + '</div>';
+                        html += '</div>';
                     });
-                    html += '</table>';
-                });
+                }
                 html += '</div>';
             });
+            html += '</div>';
+            // REFERENCE PHOTOS — same auto-attach + dedupe source as PO Preview
+            let pbEvLinkEl = document.getElementById('pb_event_link');
+            let pbQuoteRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : (pbEvLinkEl && pbEvLinkEl.value ? { eventId: pbEvLinkEl.value } : null);
+            let pbHasAnyPhotos = pbEventsData.some(ev => getLeadEventPhotos(pbQuoteRec, ev.name, ev.photos).length > 0);
+            if (pbHasAnyPhotos) {
+                html += '<div style="margin-top:12px;">';
+                html += '<div style="padding:6px 10px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:8px 8px 0 0; border-bottom:none; font-size:11px; font-weight:800; color:var(--text-primary);">Reference Photos</div>';
+                html += '<div style="border:1px solid var(--border-color); border-top:none; border-radius:0 0 8px 8px; padding:10px;">';
+                pbEventsData.forEach(ev => {
+                    let evPhotos = getLeadEventPhotos(pbQuoteRec, ev.name, ev.photos);
+                    if (evPhotos.length === 0) return;
+                    let evColor = getEventColor(ev);
+                    let textColor = getContrastColor(evColor);
+                    html += '<div style="margin-bottom:10px;">';
+                    html += '<div style="background:' + evColor + '; color:' + textColor + '; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block; margin-bottom:6px;">' + sanitize(ev.name) + ' (' + evPhotos.length + ')</div>';
+                    html += '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">';
+                    evPhotos.forEach(photoData => {
+                        let url = typeof photoData === 'string' ? photoData : photoData.url;
+                        let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                        html += '<div style="text-align:center;">';
+                        html += '<img src="' + url + '" style="width:100%; height:60px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                        if (label) html += '<div style="font-size:9px; font-weight:600; color:var(--text-primary); margin-top:2px;">' + sanitize(label) + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            }
             html += '<div style="border-top:2px solid var(--accent-color); padding-top:8px;">';
             html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;"><span>Subtotal:</span><span>&#x20B9;'+grandTotal.toLocaleString('en-IN')+'</span></div>';
             if (discount > 0) html += '<div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:var(--danger);"><span>Discount:</span><span>-&#x20B9;'+discount.toLocaleString('en-IN')+'</span></div>';
@@ -17925,7 +18125,9 @@ function openPurchaseOrderModal() {
             let selectedPhotos = [];
             let discount = parseFloat(document.getElementById('po_discount').value) || 0; let total = parseFloat(document.getElementById('po_total').value) || 0;
 
-            let id = editingPurchaseId ? editingPurchaseId : generateDocId('PO');
+            // 🚀 Event-linked PO ka ID ab {ClientInitial}{FuncInitial}{DDMMYY}/PO-N format mein banega
+            let eventCodeStr = evId && leadsDB[evId] ? createEventCode(leadsDB[evId].name, leadsDB[evId].func, leadsDB[evId].date) : null;
+            let id = editingPurchaseId ? editingPurchaseId : generateDocId('PO', eventCodeStr);
             let currentStatus = editingPurchaseId && purchaseDB[editingPurchaseId] ? purchaseDB[editingPurchaseId].status : 'Draft';
 
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
@@ -17978,7 +18180,16 @@ function openPurchaseOrderModal() {
         }
         // Old addPBItem removed — using event-wise pbItemsData system
         function calculatePBTotal() {
-            let total = pbItemsData.reduce((s, i) => s + (i.amount || 0), 0);
+            let total = 0;
+            pbEventsData.forEach(ev => {
+                let evItems = pbItemsData.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                total += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
+            // Fallback: items not tied to any tracked event (safety net, matches old behaviour)
+            let trackedEventNames = pbEventsData.map(e => e.name);
+            let untrackedTotal = pbItemsData.filter(i => !trackedEventNames.includes(i.event)).reduce((s, i) => s + (i.amount || 0), 0);
+            total += untrackedTotal;
             let discount = parseFloat(document.getElementById('pb_discount').value) || 0;
             let gstPercent = parseFloat(document.getElementById('pb_gst') ? document.getElementById('pb_gst').value : 0) || 0;
             let afterDiscount = total - discount;
@@ -18258,7 +18469,18 @@ function openPurchaseOrderModal() {
             if (items.length === 0) return alert("Please add at least one item!");
             let party = partiesDB[partyId];
             if (editingPurchaseId) { party.balance += purchaseDB[editingPurchaseId].finalTotal; }
-            let baseTotal = items.reduce((sum, item) => sum + item.amount, 0); let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount;
+            // 🐛 FIX: baseTotal now respects manualGross overrides per event, same as PO —
+            // previously this always summed raw item amounts, ignoring any category-amount
+            // override the user set, so the saved bill total didn't match what preview showed.
+            let baseTotal = 0;
+            let pbTrackedEventNames = pbEventsData.map(e => e.name);
+            pbEventsData.forEach(ev => {
+                let evItems = items.filter(i => i.event === ev.name);
+                let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
+                baseTotal += (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+            });
+            baseTotal += items.filter(i => !pbTrackedEventNames.includes(i.event)).reduce((sum, item) => sum + item.amount, 0);
+            let discount = parseFloat(document.getElementById('pb_discount').value) || 0; let totalAfterDiscount = baseTotal - discount; if (totalAfterDiscount < 0) totalAfterDiscount = 0; let gstPercent = parseFloat(document.getElementById('pb_gst').value) || 0; let taxAmount = (totalAfterDiscount * gstPercent) / 100; let finalGrandTotal = totalAfterDiscount + taxAmount;
             let manuallyEnteredAdvance = parseFloat(document.getElementById('pb_advance').value) || 0; if (manuallyEnteredAdvance > finalGrandTotal && !editingPurchaseId) manuallyEnteredAdvance = finalGrandTotal;
             let advSel = document.getElementById('pb_use_advance'); let selectedOldAdvanceId = advSel ? advSel.value : ''; let oldAdvanceAmount = 0; let paymentOutToUpdate = null; if (selectedOldAdvanceId !== "0" && purchaseDB[selectedOldAdvanceId]) { paymentOutToUpdate = purchaseDB[selectedOldAdvanceId]; oldAdvanceAmount = Math.min(paymentOutToUpdate.availableAmount, finalGrandTotal); }
             let totalAdvanceApplied = editingPurchaseId ? purchaseDB[editingPurchaseId].advance : (manuallyEnteredAdvance + oldAdvanceAmount);
@@ -18270,7 +18492,7 @@ function openPurchaseOrderModal() {
             // 🚀 NAYA: Tick kiye hue functions/dates nikalne ka code
             let selectedDates = pbEventsData.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'' }));
 
-            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, events: pbEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'' })), remarks: pbRemarks, docUrl: pbDocUrl };
+            let pbRemarks = document.getElementById('pb_remarks') ? document.getElementById('pb_remarks').value : ''; let pbDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PB'] && window.pendingDocUploads['PB'].length > 0) { showLoader('Uploading documents...'); pbDocUrl = await uploadAllDocs('PB', id); hideLoader(); } purchaseDB[id] = { id, type: 'PB', partyId, eventId: evId || null, event: eventTitle, ref: refNo, date, items, discount, total: totalAfterDiscount, gstPercent, taxAmount, finalTotal: finalGrandTotal, advance: totalAdvanceApplied, balanceDue, status, linkedDates: selectedDates, events: pbEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'', manualGross: ev.manualGross||0, catOverrides: ev.catOverrides||{}, photos: ev.photos||[] })), remarks: pbRemarks, docUrl: pbDocUrl };
 
             party.balance -= finalGrandTotal;
             if (convertingPOId && purchaseDB[convertingPOId]) { purchaseDB[convertingPOId].status = 'Invoiced'; }
@@ -18424,19 +18646,36 @@ function openPurchaseOrderModal() {
                 document.getElementById(prefix + '-modal-title').innerText = record.type === 'PB' ? "Edit Vendor Bill" : "Edit Asset Purchase"; loadPartiesIntoSelect(prefix + '_vendor', record.partyId); document.getElementById(prefix + '_date').value = record.date; document.getElementById(prefix + '_ref').value = record.ref || "";
                 if (record.type === 'PB') { loadEventsToLinkSelect('pb_event_link', record.eventId); let badge = document.getElementById('pb_autopilot_badge'); if (badge) badge.style.display = 'none'; }
                 document.getElementById(prefix + '_items_container').innerHTML = '';
+                if (record.type === 'PB') {
+                    // 🐛 FIX: restore full event data (date/time/venue/guests/color/photos/manualGross/catOverrides)
+                    // from record.events, same as PO — previously events were crudely rebuilt from item
+                    // names only, silently discarding all saved photos and manual amount overrides.
+                    pbItemsData = []; pbEventsData = [];
+                    if (record.events && record.events.length > 0) {
+                        pbEventsData = record.events.map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'', manualGross: ev.manualGross||0, catOverrides: ev.catOverrides||{}, photos: ev.photos||[], _selected: true }));
+                    } else if (record.linkedDates && record.linkedDates.length > 0) {
+                        record.linkedDates.forEach(d => { pbEventsData.push({ name: d.name||'Main Event', date: d.date||'', time: d.time||'', venue: d.venue||'', color: d.color||'', _selected: true }); });
+                    } else if (record.event) {
+                        pbEventsData.push({ name: record.event, date: record.date||'', time: '', venue: '', _selected: true });
+                    }
+                    if (record.items) {
+                        record.items.forEach(item => {
+                            if (item.unit && !itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); }
+                            let itemEvent = item.event || (pbEventsData.length > 0 ? pbEventsData[0].name : '');
+                            if (itemEvent && !pbEventsData.find(e => e.name === itemEvent)) { pbEventsData.push({ name: itemEvent, date:'', time:'', venue:'', color:'', _selected: true }); }
+                            pbItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: item.amount||(item.qty||1)*(item.rate||0), event: itemEvent, category: item.category||'General' });
+                        });
+                    }
+                } else {
                 if (record.items) {
                     record.items.forEach(item => {
-                        if (record.type === 'PB') {
-                            pbItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: item.qty||1, rate: item.rate||0, amount: item.amount||(item.qty||1)*(item.rate||0), event: item.event||'' });
-                            if (item.event && !pbEventsData.find(e => e.name === item.event)) { pbEventsData.push({ name: item.event, date:'', time:'', venue:'', color:'' }); }
-                        } else {
                             addAssetItem();
                             let rows = document.querySelectorAll('#' + prefix + '_items_container .quote-item-row'); let lastRow = rows[rows.length - 1];
                             lastRow.querySelector('.i-item-name').value = item.name; lastRow.querySelector('.i-item-qty').value = item.qty; lastRow.querySelector('.i-item-rate').value = item.rate;
                             if (lastRow.querySelector('.i-item-unit') && item.unit) { if (!itemUnits.includes(item.unit)) { itemUnits.push(item.unit); saveDataLocally(); } lastRow.querySelector('.i-item-unit').innerHTML = getUnitOptions(item.unit); }
                             if (lastRow.querySelector('.i-item-desc')) lastRow.querySelector('.i-item-desc').value = item.desc || "";
-                        }
                     });
+                }
                 }
                 if (record.type === 'PB') { pbEventsData.sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1); renderPBEvents(); renderPBItems(); }
                 document.getElementById(prefix + '_discount').value = record.discount; document.getElementById(prefix + '_gst').value = record.gstPercent;
