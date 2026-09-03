@@ -17299,7 +17299,8 @@ function pbImportAllFromInvoice() {
             });
             // Totals
             // REFERENCE PHOTOS — auto-attach from lead
-            let poPrintRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null;
+            let poEvLinkEl = document.getElementById('po_event_link');
+            let poRec = (typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : (poEvLinkEl && poEvLinkEl.value ? { eventId: poEvLinkEl.value } : null);
             let poHasPhotos = poEventsData.some(ev => getLeadEventPhotos(poRec, ev.name, ev.photos).length > 0);
             if (poHasPhotos) {
                 html += '<div style="margin-top:12px;">';
