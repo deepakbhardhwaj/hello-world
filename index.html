@@ -7146,13 +7146,12 @@
         </div>
 
         <div id="pbItemViewModal" class="modal-overlay item-popup-overlay" style="display:none; z-index:22000 !important;">
-            <div class="modal-content" style="max-width:580px; max-height:92vh; overflow-y:auto;">
+            <div class="modal-content" style="max-width:500px; max-height:92vh; overflow-y:auto;">
                 <div class="modal-header">
-                    <h3>Manage Items</h3>
+                    <h3>Item Details</h3>
                     <button class="modal-close" onclick="closePBItemViewPanel()">&times;</button>
                 </div>
                 <div id="pbItemViewBody" style="padding:0 0 12px 0;"></div>
-                <button onclick="closePBItemViewPanel()" class="btn-main" style="font-size:12px;">Done</button>
             </div>
         </div>
         <div id="poPreviewModal" class="modal-overlay item-popup-overlay" style="display:none;">
@@ -17116,259 +17115,129 @@ function getPOEventCategories(evName) {
         }
         function closePBItemViewPanel() { let modal = document.getElementById('pbItemViewModal'); if (modal) modal.style.display = 'none'; renderPBEvents(); renderPBItems(); }
         // ===== ADVANCED PO ITEM POPUP =====
-function renderPBItemPopup() {
-    let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
-    let evColor = getEventColor(ev); let textColor = getContrastColor(evColor);
-    let evItems = pbItemsData.filter(i => i.event === ev.name);
-    let evId = document.getElementById('pb_event_link') ? document.getElementById('pb_event_link').value : '';
-    
-    // Collect invoice items for this function
-    let invCategories = [];
-    let invItemsByCat = {};
-    if (evId) {
-        let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                let eventSales = allSales.filter(s => s.type === 'Invoice');
-                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
-                if (eventSales.length === 0) eventSales = allSales;
-        eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
-            if (!item.event || item.event === ev.name) {
-                let c = (item.category||'General').trim()||'General';
-                if (!invCategories.includes(c)) { invCategories.push(c); invItemsByCat[c] = []; }
-                invItemsByCat[c].push(item);
-            }
-        }); });
-    }
-    
-    let html = '';
-    // Header with function name
-    html += '<div style="background:'+evColor+'; color:'+textColor+'; padding:12px 16px; font-size:14px; font-weight:800; margin:-12px -12px 12px -12px; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">';
-    html += '<span>'+ev.name+'</span>';
-    html += '<span style="font-size:11px; opacity:0.9; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px;">'+evItems.length+' items added</span>';
-    html += '</div>';
-    
-    // Tab buttons
-    html += '<div style="display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid var(--border-color);">';
-    html += '<button id="pb_tab_items" onclick="pbSwitchTab(\'items\')" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-bottom:3px solid #3B82F6; background:transparent; color:#3B82F6; cursor:pointer;">My Items ('+evItems.length+')</button>';
-    if (invCategories.length > 0) {
-        html += '<button id="pb_tab_import" onclick="pbSwitchTab(\'import\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">Import from Invoice</button>';
-    }
-    html += '<button id="pb_tab_add" onclick="pbSwitchTab(\'add\')" style="flex:1; padding:10px; font-size:12px; font-weight:700; border:none; border-bottom:3px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer;">+ Add New</button>';
-    html += '</div>';
-    
-    // === TAB 1: My Items ===
-    html += '<div id="pb_tab_content_items" style="display:block;">';
-    if (evItems.length > 0) {
-        html += '<div style="max-height:350px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:8px;">';
-        let categories = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
-        let itemNum = 0;
-        categories.forEach(catName => {
-            let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
-            let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-            let catDisplayTotal = getPBCategoryDisplayTotal(ev, catName, catItems);
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:3px solid #3B82F6; padding:6px 10px; border-bottom:1px solid var(--border-color);"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase;">&#x1F4E6; '+catName+' <span style="font-size:9px; color:#3B82F6;">('+catItems.length+')</span></div>';
-            if (catDisplayTotal > 0) {
-                html += '<input type="number" value="'+catDisplayTotal+'" oninput="updatePBCategoryAmount('+pbViewEvIdx+', \''+catName.replace(/'/g,"\\'")+'\', this.value)" style="width:85px; padding:3px 6px; font-size:11px; font-weight:800; color:#1E40AF; background:white; border:1px solid #BFDBFE; border-radius:4px; text-align:right;">';
+function renderPBItemPopup(scrollToBottom) {
+            let ev = pbEventsData[pbViewEvIdx];
+            if (!ev) return;
+            let evItems = pbItemsData.filter(i => i.event === ev.name);
+            let evColor = getEventColor(ev);
+            let textColor = getContrastColor(evColor);
+            let html = '<div style="background:' + evColor + '; color:' + textColor + '; padding:10px 14px; font-size:13px; font-weight:700; margin-bottom:10px; border-radius:8px;">' + sanitize(ev.name) + ' <span style="font-size:10px; opacity:0.8;">(' + evItems.length + ' items)</span></div>';
+            // Scrollable item list — grouped by category
+            html += '<div id="pbiv_scroll_list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px;">';
+            if (evItems.length === 0) {
+                html += '<p style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px 0;">No items for this function yet.</p>';
             } else {
-                html += '<input type="number" value="" placeholder="Enter Amount" oninput="updatePBCategoryAmount('+pbViewEvIdx+', \''+catName.replace(/'/g,"\\'")+'\', this.value)" style="width:85px; padding:3px 6px; font-size:10px; font-weight:700; color:#94A3B8; background:white; border:1px dashed #3B82F6; border-radius:4px; text-align:right;">';
+                // Group items by category
+                let categories = getPBEventCategories(ev.name);
+                let itemNum = 0;
+                categories.forEach(catName => {
+                    let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
+                    let catDisplayTotal = getPBCategoryDisplayTotal(ev, catName, catItems);
+                    // Category header — blue tint with left accent border + editable amount
+                    html += '<div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border-left:3px solid #3B82F6; padding:7px 8px; border-bottom:1px solid var(--border-color);">';
+                    html += '<div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; letter-spacing:0.3px;">\u{1F4E6} ' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></div>';
+                    // Editable amount input — shows "Enter Amount" when 0
+                    if (catDisplayTotal > 0) {
+                        html += '<input type="number" value="' + catDisplayTotal + '" oninput="updatePBCategoryAmount(' + pbViewEvIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:90px; padding:3px 6px; font-size:12px; font-weight:800; color:#1E40AF; background:var(--surface-color); border:1px solid #BFDBFE; border-radius:4px; text-align:right;">';
+                    } else {
+                        html += '<input type="number" value="" placeholder="Enter Amount" oninput="updatePBCategoryAmount(' + pbViewEvIdx + ', \'' + catName.replace(/'/g, "\\'") + '\', this.value)" style="width:90px; padding:3px 6px; font-size:10px; font-weight:700; color:#94A3B8; background:var(--surface-color); border:1px dashed #3B82F6; border-radius:4px; text-align:right;">';
+                    }
+                    html += '</div>';
+                    // Category items table
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                    catItems.forEach((item) => {
+                        let realIdx = pbItemsData.indexOf(item);
+                        itemNum++;
+                        html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:6px 4px; text-align:center; color:var(--text-secondary);">' + itemNum + '</td><td style="padding:6px 8px;"><strong style="color:var(--text-primary);">' + sanitize(item.name) + '</strong>';
+                        if (item.desc) html += '<div style="font-size:9px; color:var(--text-secondary);">' + sanitize(item.desc) + '</div>';
+                        html += '</td>';
+                        html += '<td style="padding:6px 4px; text-align:center;">' + item.qty + ' ' + sanitize(item.unit || 'Pcs') + '</td><td style="padding:6px 4px; text-align:right;">\u20B9' + item.rate.toLocaleString('en-IN') + '</td><td style="padding:6px 4px; text-align:right; font-weight:800; color:var(--text-primary);">\u20B9' + item.amount.toLocaleString('en-IN') + '</td>';
+                        html += '<td style="padding:4px;"><button onclick="deletePBItemFromView(' + realIdx + ')" style="background:var(--danger-light); border:1px solid #FECACA; color:var(--danger); border-radius:50%; width:22px; height:22px; padding:0; font-size:14px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;">\u00D7</button></td>';
+                        html += '</tr>';
+                    });
+                    // Category subtotal — uses override if set
+                    html += '<tr style="border-top:1px solid var(--border-color); background:var(--surface-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:10px; font-weight:700; color:var(--text-secondary);">' + sanitize(catName) + ' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:var(--text-primary);">\u20B9' + catDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
+                    html += '</table>';
+                });
+                // Event grand total
+                let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
+                html += '<div style="border-top:2px solid var(--border-color); background:var(--bg-color); padding:6px 8px; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div style="font-size:12px; font-weight:800; color:var(--text-primary);">Event Total:</div>';
+                html += '<div style="font-size:14px; font-weight:800; color:var(--accent-color);">\u20B9' + evDisplayTotal.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
             }
             html += '</div>';
-            html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
-            catItems.forEach((item) => { let realIdx = pbItemsData.indexOf(item); itemNum++;
-                html += '<tr style="border-bottom:1px solid var(--bg-color);"><td style="padding:5px; text-align:center; color:var(--text-secondary); font-weight:700;">'+itemNum+'</td><td style="padding:5px 8px;"><strong>'+(item.name||'')+'</strong>'+(item.desc?'<div style="font-size:9px; color:var(--text-secondary); margin-top:1px;">'+item.desc+'</div>':'')+'</td><td style="padding:5px; text-align:center; font-size:10px;">'+(item.qty||1)+' '+(item.unit||'')+'</td><td style="padding:5px; text-align:right;">&#x20B9;'+(item.rate||0)+'</td><td style="padding:5px; text-align:right; font-weight:800;">&#x20B9;'+((item.amount||0)).toLocaleString('en-IN')+'</td><td style="padding:3px; white-space:nowrap;"><button onclick="editPBItemInline('+realIdx+')" style="background:var(--accent-light); border:1px solid #BFDBFE; color:var(--accent-color); border-radius:4px; width:22px; height:22px; padding:0; font-size:10px; cursor:pointer;">&#x270E;</button><button onclick="deletePBItem('+realIdx+')" style="background:#FEE2E2; border:1px solid #FECACA; color:#DC2626; border-radius:4px; width:22px; height:22px; padding:0; font-size:14px; cursor:pointer; margin-left:2px;">&#x00D7;</button></td></tr>';
-            });
-            html += '<tr style="border-top:1px solid var(--border-color); background:var(--bg-color);"><td colspan="4" style="padding:4px 8px; text-align:right; font-size:9px; font-weight:700; color:var(--text-secondary);">'+catName+' Subtotal:</td><td colspan="2" style="padding:4px 8px; text-align:right; font-size:11px; font-weight:800; color:#1E40AF;">&#x20B9;'+catTotal.toLocaleString('en-IN')+'</td></tr>';
-            html += '</table>';
-        });
-        let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-        let evDisplayTotal = (ev.manualGross && ev.manualGross > 0) ? ev.manualGross : evTotal;
-        html += '<div style="border-top:2px solid #3B82F6; background:linear-gradient(135deg,#1E40AF,#3B82F6); color:white; padding:8px 12px; display:flex; justify-content:space-between; border-radius:0 0 8px 8px;"><div style="font-size:12px; font-weight:800;">Function Total:</div><div style="font-size:15px; font-weight:900;">&#x20B9;'+evDisplayTotal.toLocaleString('en-IN')+'</div></div>';
-        html += '</div>';
-    } else {
-        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No items yet</div><div style="font-size:11px; margin-top:4px;">Use "Import from Invoice" or "+ Add New" tabs above</div></div>';
-    }
-    html += '</div>';
-    
-    // === TAB 2: Import from Invoice ===
-    html += '<div id="pb_tab_content_import" style="display:none;">';
-    if (invCategories.length > 0) {
-        // One-click import all
-        html += '<div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border:1px solid #93C5FD; border-radius:8px; padding:10px; margin-bottom:10px;">';
-        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
-        html += '<div style="font-size:12px; font-weight:800; color:#1E40AF;">&#x1F4C4; Import from Invoices/Quotations</div>';
-        html += '<button onclick="pbImportAllFromInvoice()" style="background:#3B82F6; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(59,130,246,0.3);">&#x26A1 Import All</button>';
-        html += '</div>';
-        html += '<div style="font-size:10px; color:#64748b;">Select items below with qty & rate, then click "Add Selected" per category. Sale rates are NOT shown to vendor.</div>';
-        html += '</div>';
-        
-        // Search bar
-        html += '<input type="text" id="pb_import_search" oninput="pbFilterImportItems()" placeholder="Search items..." class="form-input" style="width:100%; margin-bottom:8px; font-size:12px; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px;">';
-        
-        // Category cards
-        invCategories.forEach(catName => {
-            let catInvItems = invItemsByCat[catName] || [];
-            html += '<div class="pb-import-cat-card" data-cat="'+catName.toLowerCase()+'" style="border:1px solid #BFDBFE; border-radius:8px; margin-bottom:8px; overflow:hidden;">';
-            html += '<div onclick="pbToggleCatCard(this)" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#EFF6FF; cursor:pointer; user-select:none;">';
-            html += '<div style="display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pb-cat-select-all" onchange="pbSelectAllCat(this, \''+catName.replace(/'/g,"\\'")+'\')" style="accent-color:#3B82F6; width:14px; height:14px;"><span style="font-size:12px; font-weight:800; color:#1E40AF; text-transform:uppercase;">'+catName+'</span><span style="font-size:9px; color:#3B82F6; background:white; padding:1px 6px; border-radius:8px;">'+catInvItems.length+'</span></div>';
-            html += '<div style="display:flex; align-items:center; gap:6px;"><span class="pb-cat-total" style="font-size:10px; font-weight:700; color:#3B82F6;">&#x20B9;0</span><span style="font-size:12px; color:#64748b; transition:transform 0.2s;">&#x25BC;</span></div>';
-            html += '</div>';
-            html += '<div class="pb-cat-items-list" style="padding:6px; display:none;">';
-            catInvItems.forEach(item => {
-                let alreadyAdded = pbItemsData.some(i => i.name === item.name && i.event === ev.name);
-                html += '<div class="pb-import-item" data-name="'+(item.name||'').toLowerCase()+'" style="display:flex; align-items:flex-start; gap:8px; padding:8px; border-bottom:1px solid #F1F5F9; background:white; border-radius:4px; margin-bottom:4px; '+(alreadyAdded?'opacity:0.5;':'')+'">';
-                html += '<input type="checkbox" class="pb-inv-item-cb" data-name="'+(item.name||'').replace(/"/g,'"')+'" data-desc="'+(item.desc||'').replace(/"/g,'"')+'" data-unit="'+(item.unit||'Pcs')+'" data-cat="'+catName.replace(/"/g,'"')+'" '+(alreadyAdded?'checked disabled':'')+' style="accent-color:#3B82F6; width:16px; height:16px; margin-top:3px;" onchange="pbUpdateCatTotal(this)">';
-                html += '<div style="flex:1;">';
-                html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">'+(item.name||'Unnamed')+(alreadyAdded?' <span style="font-size:8px; background:#10B981; color:white; padding:1px 5px; border-radius:6px;">ADDED</span>':'')+'</div>';
-                if (item.desc) html += '<div style="font-size:10px; color:#64748b; margin-top:1px;">'+item.desc+'</div>';
-                html += '<div style="display:flex; gap:6px; margin-top:4px; align-items:center;">';
-                html += '<label style="font-size:9px; color:#64748b; font-weight:600;">Qty:</label><input type="number" class="pb-inv-item-qty" value="1" min="1" style="width:50px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="pbUpdateCatTotal(this)">';
-                html += '<select class="pb-inv-item-unit" onchange="handleUnitChange(this)" style="padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:10px;">'+getUnitOptions(item.unit||'Pcs')+'</select>';
-                html += '<label style="font-size:9px; color:#64748b; font-weight:600; margin-left:4px;">Rate:</label><input type="number" class="pb-inv-item-rate" value="0" min="0" placeholder="0" style="width:70px; padding:3px 6px; border:1px solid #E2E8F0; border-radius:4px; font-size:11px; font-weight:700;" oninput="pbUpdateCatTotal(this)">';
-                html += '<span class="pb-inv-item-amount" style="font-size:11px; font-weight:800; color:#1E40AF; min-width:60px; text-align:right;">&#x20B9;0</span>';
-                html += '</div></div></div>';
-            });
-            html += '<button onclick="addSelectedInvItemsPB(\''+catName.replace(/'/g,"\\'")+'\')" style="width:100%; margin-top:6px; background:#3B82F6; color:white; border:none; border-radius:6px; padding:8px; font-size:11px; font-weight:800; cursor:pointer;">+ Add Selected from '+catName+'</button>';
-            html += '</div></div>';
-        });
-    } else {
-        html += '<div style="text-align:center; padding:30px 10px; color:var(--text-secondary);"><div style="font-size:32px; margin-bottom:8px; opacity:0.3;">&#x1F4C4;</div><div style="font-size:13px; font-weight:700;">No invoices found</div><div style="font-size:11px; margin-top:4px;">Create an invoice or quotation for this event first.</div></div>';
-    }
-    html += '</div>';
-    
-    // === TAB 3: Add New Manually ===
-    html += '<div id="pb_tab_content_add" style="display:none;">';
-    let existingCats = []; evItems.forEach(i => { let c=(i.category||'General').trim()||'General'; if(!existingCats.includes(c)) existingCats.push(c); });
-    let savedCats = (appSettings.savedCategories || []);
-    let allCats = existingCats.slice(); savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
+            // Collect categories — merge event-specific + globally saved categories
+            let existingCats = getPBEventCategories(ev.name);
+            let savedCats = (appSettings.savedCategories || []);
+            // Merge without duplicates
+            let allCats = existingCats.slice();
+            savedCats.forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
             getDefaultItemCategories().forEach(c => { if (!allCats.includes(c)) allCats.push(c); });
-    let datalistHtml = allCats.map(c => '<option value="'+c+'">').join('');
-    let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
-    let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\''+c.replace(/'/g,"\\'")+'\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">'+c+'</button>').join('');
-    if (globalChipsHtml) chipsHtml += globalChipsHtml;
-    html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:14px; background:var(--surface-color);">';
-    html += '<div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:10px; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#3B82F6; border-radius:50%;"></span>Add New Item</div>';
-    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label><input type="text" id="pbiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="pbiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;"><datalist id="pbiv_category_list">'+datalistHtml+'</datalist>'+(chipsHtml?'<div style="margin-top:4px;">'+chipsHtml+'</div>':'')+'</div>';
-    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Item / Service Name</label><input type="text" id="pbiv_name" class="form-input" placeholder="Enter item name"></div>';
-    html += '<div class="form-row"><div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="pbiv_qty" class="form-input" value="1" oninput="updatePBIVGross()"></div><div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="pbiv_unit" class="form-select" onchange="handleUnitChange(this)">'+getUnitOptions()+'</select></div><div class="form-group" style="flex:1;"><label class="form-label">Rate (&#x20B9;)</label><input type="number" id="pbiv_rate" class="form-input" value="0" oninput="updatePBIVGross()"></div></div>';
-    html += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">Description (Optional)</label><input type="text" id="pbiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--border-color);"><div style="font-size:13px; font-weight:800; color:var(--text-primary);">Total: <span id="pbiv_gross" style="color:var(--accent-color); font-size:15px;">&#x20B90</span></div><button type="button" class="btn-main" onclick="savePBItemFromView()" style="font-size:12px; padding:10px 18px; width:auto;">+ Add Item</button></div></div>';
-    // Reference Photos — same rich feature as PO (upload, delete, label, select, auto-attach from lead)
-    let pbRecForPhotos = (evId) ? { eventId: evId } : ((typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null);
-    let pbEvPhotos = getLeadEventPhotos(pbRecForPhotos, ev.name, ev.photos || []);
-    ev.photos = pbEvPhotos; // sync merged photos back so selection toggles work correctly
-    html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
-    html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">&#x1F4F7; Reference Photos ('+pbEvPhotos.length+')</div>';
-    html += '<label style="background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePBEventPhotoUpload(event)"></label>';
-    html += '</div>';
-    html += '<div id="pbiv_photos_grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
-    pbEvPhotos.forEach((photoData, index) => {
-        let url = typeof photoData === 'string' ? photoData : photoData.url;
-        let label = typeof photoData === 'string' ? '' : (photoData.label || '');
-        let isSelected = typeof photoData === 'string' ? true : (photoData.selected !== false);
-        html += '<div style="position:relative;">';
-        html += '<div style="position:absolute; top:-4px; left:-4px; z-index:10; background:white; border-radius:4px; padding:1px;">';
-        html += '<input type="checkbox" class="pb-ref-photo-cb" '+(isSelected?'checked':'')+' onchange="togglePBPhotoSelection('+index+', this.checked)" style="width:14px; height:14px; cursor:pointer;">';
-        html += '</div>';
-        html += '<img src="'+url+'" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\''+url+'\', event)">';
-        html += '<button onclick="deletePBIVPhoto('+index+')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
-        html += '<input type="text" value="'+label+'" placeholder="Name (optional)" onchange="updatePBIVPhotoLabel('+index+', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
-        html += '</div>';
-    });
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
-    
-    document.getElementById('pbItemViewBody').innerHTML = html;
-    let nameInput = document.getElementById('pbiv_name'); if (nameInput) nameInput.focus();
-}
-function pbSwitchTab(tab) {
-    ['items','import','add'].forEach(t => {
-        let content = document.getElementById('pb_tab_content_'+t);
-        let btn = document.getElementById('pb_tab_'+t);
-        if (content) content.style.display = (t === tab) ? 'block' : 'none';
-        if (btn) { if (t === tab) { btn.style.borderBottom = '3px solid #3B82F6'; btn.style.color = '#3B82F6'; btn.style.fontWeight = '800'; } else { btn.style.borderBottom = '3px solid transparent'; btn.style.color = 'var(--text-secondary)'; btn.style.fontWeight = '700'; } }
-    });
-}
-function pbToggleCatCard(header) {
-    let card = header.parentElement;
-    let list = card.querySelector('.pb-cat-items-list');
-    let arrow = header.querySelector('span:last-child');
-    if (list.style.display === 'none') { list.style.display = 'block'; if(arrow) arrow.style.transform = 'rotate(180deg)'; } else { list.style.display = 'none'; if(arrow) arrow.style.transform = 'rotate(0deg)'; }
-}
-function pbUpdateCatTotal(elem) {
-    let row = elem.closest('.pb-import-item'); if (!row) return;
-    let qtyInput = row.querySelector('.pb-inv-item-qty');
-    let rateInput = row.querySelector('.pb-inv-item-rate');
-    let amtSpan = row.querySelector('.pb-inv-item-amount');
-    let qty = qtyInput ? parseFloat(qtyInput.value)||0 : 0;
-    let rate = rateInput ? parseFloat(rateInput.value)||0 : 0;
-    let amt = qty * rate;
-    if (amtSpan) amtSpan.innerHTML = '&#x20B9;' + amt.toLocaleString('en-IN');
-    // Update category total
-    let card = row.closest('.pb-import-cat-card');
-    if (card) {
-        let total = 0;
-        card.querySelectorAll('.pb-inv-item-cb:checked').forEach(cb => {
-            let r = cb.closest('.pb-import-item');
-            let q = r.querySelector('.pb-inv-item-qty'); let rr = r.querySelector('.pb-inv-item-rate');
-            total += (q ? parseFloat(q.value)||0 : 0) * (rr ? parseFloat(rr.value)||0 : 0);
-        });
-        let totalSpan = card.querySelector('.pb-cat-total');
-        if (totalSpan) totalSpan.innerHTML = '&#x20B9;' + total.toLocaleString('en-IN');
-    }
-}
-function pbSelectAllCat(cb, catName) {
-    let card = cb.closest('.pb-import-cat-card');
-    if (!card) return;
-    card.querySelectorAll('.pb-inv-item-cb:not(:disabled)').forEach(itemCb => {
-        itemCb.checked = cb.checked;
-        pbUpdateCatTotal(itemCb);
-    });
-}
-function pbFilterImportItems() {
-    let query = (document.getElementById('pb_import_search')?.value || '').toLowerCase();
-    document.querySelectorAll('.pb-import-item').forEach(item => {
-        let name = item.getAttribute('data-name') || '';
-        item.style.display = name.includes(query) ? 'flex' : 'none';
-    });
-}
-function pbImportAllFromInvoice() {
-    let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
-    let evId = document.getElementById('pb_event_link') ? document.getElementById('pb_event_link').value : '';
-    if (!evId) return;
-    let added = 0;
-    let allSales = Object.values(salesDB).filter(s => s.eventId === evId);
-                let eventSales = allSales.filter(s => s.type === 'Invoice');
-                if (eventSales.length === 0) eventSales = allSales.filter(s => s.type === 'Quotation');
-                if (eventSales.length === 0) eventSales = allSales;
-    eventSales.forEach(sale => { if (sale.items) sale.items.forEach(item => {
-        if (!item.event || item.event === ev.name) {
-            let alreadyAdded = pbItemsData.some(i => i.name === item.name && i.event === ev.name);
-            if (!alreadyAdded) {
-                pbItemsData.push({ name: item.name||'', desc: item.desc||'', unit: item.unit||'Pcs', qty: 1, rate: 0, amount: 0, event: ev.name, category: (item.category||'General').trim()||'General' });
-                added++;
-            }
-        }
-    }); });
-    if (added > 0) { renderPBItemPopup(); renderPBItems(); pbSwitchTab('items'); } else { alert('All items already imported!'); }
-}
-                function addSelectedInvItemsPB(catName) {
-            let ev = pbEventsData[pbViewEvIdx]; if (!ev) return;
-            let added = 0;
-            let cbList = document.querySelectorAll('.pb-inv-item-cb:checked:not(:disabled)');
-            cbList.forEach(cb => {
-                let row = cb.parentElement;
-                let qtyInput = row.querySelector('.pb-inv-item-qty');
-                let rateInput = row.querySelector('.pb-inv-item-rate');
-                let unitSel = row.querySelector('.pb-inv-item-unit');
-                let qty = qtyInput ? parseFloat(qtyInput.value)||1 : 1;
-                let rate = rateInput ? parseFloat(rateInput.value)||0 : 0;
-                let unit = unitSel ? unitSel.value : 'Pcs';
-                pbItemsData.push({ name: cb.getAttribute('data-name'), desc: cb.getAttribute('data-desc')||'', unit: unit, qty: qty, rate: rate, amount: qty*rate, event: ev.name, category: catName });
-                cb.disabled = true; added++;
+            let datalistHtml = allCats.map(c => '<option value="' + sanitize(c) + '">').join('');
+            // Build quick-select chips — event-specific first (blue), then global (lighter)
+            let chipsHtml = existingCats.map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:700; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            // Add saved categories that aren't in this event yet
+            let globalChipsHtml = savedCats.filter(c => !existingCats.includes(c)).map(c => '<button type="button" onclick="document.getElementById(\'pbiv_category\').value=\'' + c.replace(/'/g, "\\'") + '\'" style="display:inline-block; background:var(--surface-color); border:1px dashed #94A3B8; color:#64748B; border-radius:12px; padding:2px 8px; font-size:9px; font-weight:600; cursor:pointer; margin-right:4px; margin-bottom:2px;">' + sanitize(c) + '</button>').join('');
+            if (globalChipsHtml) chipsHtml += globalChipsHtml;
+            // Inline Add Item form (always visible at bottom)
+            html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
+            // Category selector — prominent, at top, with quick chips
+            html += '<div class="form-group" style="margin-bottom:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
+            html += '<input type="text" id="pbiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="pbiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<datalist id="pbiv_category_list">' + datalistHtml + '</datalist>';
+            if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Item / Service Name</label><input type="text" id="pbiv_name" class="form-input" placeholder="Enter item name"></div>';
+            html += '<div class="form-row">';
+            html += '<div class="form-group" style="flex:0 0 25%;"><label class="form-label">Qty</label><input type="number" id="pbiv_qty" class="form-input" value="1" oninput="updatePBIVGross()"></div>';
+            html += '<div class="form-group" style="flex:0 0 30%;"><label class="form-label">Unit</label><select id="pbiv_unit" class="form-select" onchange="handleUnitChange(this)">' + getUnitOptions() + '</select></div>';
+            html += '<div class="form-group" style="flex:1;"><label class="form-label">Rate</label><input type="number" id="pbiv_rate" class="form-input" value="0" oninput="updatePBIVGross()"></div>';
+            html += '</div>';
+            html += '<div class="form-group"><label class="form-label">Description (Optional)</label><input type="text" id="pbiv_desc" class="form-input" placeholder="Specification / details" style="font-size:11px;"></div>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Total: <span id="pbiv_gross" style="color:var(--accent-color);">\u20B90</span></div>';
+            html += '<button type="button" class="btn-main" onclick="savePBItemFromView()" style="font-size:12px; padding:8px 14px; width:auto;">+ Add Item</button>';
+            html += '</div></div>';
+            // EVENT PHOTOS SECTION — merge event photos with lead event photos (auto-attach)
+            let pbEvLink = document.getElementById('pb_event_link');
+            let pbRecForPhotos = (pbEvLink && pbEvLink.value) ? { eventId: pbEvLink.value } : ((typeof editingPurchaseId !== 'undefined' && editingPurchaseId && purchaseDB[editingPurchaseId]) ? purchaseDB[editingPurchaseId] : null);
+            let pbEvPhotos = getLeadEventPhotos(pbRecForPhotos, ev.name, ev.photos || []);
+            // Sync merged photos back to event so selection toggles work correctly
+            ev.photos = pbEvPhotos;
+            html += '<div style="margin-top:12px; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+            html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary);">Reference Photos (' + pbEvPhotos.length + ')</div>';
+            html += '<label style="background:var(--success); color:white; border:none; border-radius:6px; padding:5px 12px; font-size:10px; cursor:pointer; font-weight:700;">+ Upload Photos<input type="file" multiple accept="image/*" style="display:none;" onchange="handlePBEventPhotoUpload(event)"></label>';
+            html += '</div>';
+            html += '<div id="pbiv_photos_grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">';
+            pbEvPhotos.forEach((photoData, index) => {
+                let url = typeof photoData === 'string' ? photoData : photoData.url;
+                let label = typeof photoData === 'string' ? '' : (photoData.label || '');
+                let isSelected = typeof photoData === 'string' ? true : (photoData.selected !== false);
+                html += '<div style="position:relative;">';
+                html += '<div style="position:absolute; top:-4px; left:-4px; z-index:10; background:white; border-radius:4px; padding:1px;">';
+                html += '<input type="checkbox" class="pb-ref-photo-cb" ' + (isSelected ? 'checked' : '') + ' onchange="togglePBPhotoSelection(' + index + ', this.checked)" style="width:14px; height:14px; cursor:pointer;">';
+                html += '</div>';
+                html += '<img src="' + url + '" style="width:100%; height:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;" onclick="openImgPreview(\'' + url + '\', event)">';
+                html += '<button onclick="deletePBIVPhoto(' + index + ')" style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</button>';
+                html += '<input type="text" value="' + label + '" placeholder="Name (optional)" onchange="updatePBIVPhotoLabel(' + index + ', this.value)" style="font-size:9px; padding:3px 4px; border:1px dashed #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box; text-align:center; outline:none; background:#F8FAFC; margin-top:3px;">';
+                html += '</div>';
             });
-            if (added === 0) { alert('Select at least one item!'); return; }
-            renderPBItemPopup(); renderPBItems();
+            html += '</div>';
+            html += '</div>';
+            document.getElementById('pbItemViewBody').innerHTML = html;
+            // Auto-scroll to bottom so latest item is visible
+            if (scrollToBottom) {
+                let scrollEl = document.getElementById('pbiv_scroll_list');
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+            }
+            // Keep focus on item name field (keyboard stays open)
+            let nameInput = document.getElementById('pbiv_name');
+            if (nameInput) { nameInput.focus(); }
         }
         function updatePBIVGross() { let qty=parseFloat(document.getElementById('pbiv_qty').value)||0; let rate=parseFloat(document.getElementById('pbiv_rate').value)||0; let g=document.getElementById('pbiv_gross'); if(g) g.innerHTML='&#x20B9;'+(qty*rate).toLocaleString('en-IN'); }
         function savePBItemFromView() {
@@ -17385,8 +17254,12 @@ function pbImportAllFromInvoice() {
             if (!appSettings.savedCategories) appSettings.savedCategories = [];
             if (!appSettings.savedCategories.includes(category)) { appSettings.savedCategories.push(category); saveDataLocally(); }
             document.getElementById('pbiv_name').value=''; document.getElementById('pbiv_qty').value='1'; document.getElementById('pbiv_rate').value='0'; document.getElementById('pbiv_desc').value='';
-            let savedCat = category; renderPBItemPopup();
+            let savedCat = category; renderPBItemPopup(true);
             let catInput = document.getElementById('pbiv_category'); if (catInput && savedCat) catInput.value = savedCat;
+        }
+        function deletePBItemFromView(idx) {
+            pbItemsData.splice(idx, 1);
+            renderPBItemPopup(false);
         }
         // 🚀 Category override + photo handling — direct mirror of PO's equivalents
         function getPBCategoryDisplayTotal(ev, catName, catItems) {
