@@ -1530,7 +1530,10 @@
             display: none;
             align-items: flex-end;
             justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
+        .modal-overlay.overlay-fade-in { opacity: 1; }
 
         .modal-content {
             background: var(--bg-color);
@@ -7673,35 +7676,48 @@
         </div>
 
         <!-- 🚀 Generic Event Document List — reused for Invoice/Quotation, PO/PB, Receipts, Expenses -->
+        <!-- 🚀 PREMIUM Event Document List — reused for Invoice/Quotation, PO/PB, Receipts, Expenses -->
         <div id="eventDocListModal" class="modal-overlay" style="z-index: 9500;">
-            <div class="modal-content" style="max-width:460px; max-height:82vh; display:flex; flex-direction:column;">
-                <div class="modal-header">
-                    <h3 id="edl_title">Documents</h3>
-                    <button class="modal-close" onclick="closeEventDocList()">&times;</button>
+            <div class="modal-content" style="max-width:460px; max-height:85vh; display:flex; flex-direction:column; padding:0; border-radius:20px 20px 0 0; overflow:hidden;">
+                <!-- Gradient Header -->
+                <div style="background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%); padding:18px 18px 16px; position:relative; overflow:hidden; flex-shrink:0;">
+                    <div style="position:absolute; top:-25px; right:-25px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.06);"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:1;">
+                        <div>
+                            <div style="font-size:10px; font-weight:800; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.6px;" id="edl_subtitle">Documents</div>
+                            <div style="font-size:18px; font-weight:900; color:white; margin-top:2px;" id="edl_title">Documents</div>
+                        </div>
+                        <button onclick="closeEventDocList()" style="background:rgba(255,255,255,0.15); border:none; width:30px; height:30px; border-radius:9px; color:white; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">&times;</button>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:12px; position:relative; z-index:1;" id="edl_kpi_row"></div>
                 </div>
-                <div style="padding:14px 0 0; flex:1; overflow-y:auto;">
-                    <button id="edl_add_btn" onclick="handleEventDocListAdd()" class="btn-main" style="width:100%; margin-bottom:14px; background:var(--accent-color);">+ Add New</button>
+                <!-- Body -->
+                <div style="padding:14px 16px 20px; flex:1; overflow-y:auto; background:#F8FAFC;">
+                    <button id="edl_add_btn" onclick="handleEventDocListAdd()" style="width:100%; margin-bottom:14px; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:white; border:none; padding:13px; border-radius:12px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(37,99,235,0.3); display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <span style="font-size:16px; line-height:1;">+</span> Add New
+                    </button>
                     <div id="edl_list_container"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Quotation vs Invoice choice — mirrors the existing PO/PB choice modal -->
+        <!-- Quotation vs Invoice choice — mirrors the existing PO/PB choice modal, premium styled -->
         <div id="qtInvChoiceModal" class="modal-overlay" style="z-index: 9600;">
-            <div class="modal-content" style="max-width: 350px; text-align: center; padding: 30px 20px;">
-                <div class="modal-header" style="border:none; margin:0; padding:0;"><button class="modal-close"
-                        onclick="document.getElementById('qtInvChoiceModal').style.display='none'">&times;</button></div>
-                <div style="font-size: 40px; margin-bottom: 12px;">📄</div>
-                <h3 style="margin-top: 0; color:var(--text-primary); font-size:18px; font-weight:800;">What do you want
-                    to create?</h3>
-                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom:20px;">Select an option for this
-                    event.</p>
-                <button onclick="createQuotationFromEventList()"
-                    style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 2px solid var(--accent-color); background: var(--accent-light); color: var(--accent-color); font-weight: 800; font-size:13px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:0.2s;">📝
-                    Create Quotation</button>
-                <button onclick="createInvoiceFromEventList()"
-                    style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: var(--success); color: white; font-weight: 800; font-size:13px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:0.2s; box-shadow:0 2px 8px rgba(16,185,129,0.2);">🧾
-                    Create Invoice</button>
+            <div class="modal-content" style="max-width: 360px; text-align: center; padding:0; border-radius:20px 20px 0 0; overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%); padding:26px 20px 20px; position:relative;">
+                    <button class="modal-close" onclick="document.getElementById('qtInvChoiceModal').style.display='none'" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.15); border:none; width:28px; height:28px; border-radius:8px; color:white; font-size:15px; cursor:pointer;">&times;</button>
+                    <div style="font-size:38px; margin-bottom:8px;">📄</div>
+                    <h3 style="margin:0; color:white; font-size:17px; font-weight:900;">What do you want to create?</h3>
+                    <p style="color:rgba(255,255,255,0.6); font-size:12px; margin:6px 0 0;">Select an option for this event</p>
+                </div>
+                <div style="padding:20px; background:white;">
+                    <button onclick="createQuotationFromEventList()"
+                        style="width: 100%; margin-bottom: 10px; padding: 14px; border-radius: 12px; border: 2px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size:13px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;">📝
+                        Create Quotation</button>
+                    <button onclick="createInvoiceFromEventList()"
+                        style="width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg,#10B981,#059669); color: white; font-weight: 800; font-size:13px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s; box-shadow:0 4px 14px rgba(16,185,129,0.3);">🧾
+                        Create Invoice</button>
+                </div>
             </div>
         </div>
 
@@ -8315,6 +8331,45 @@
                 });
             }
         });
+
+        // ==========================================
+        // 🚀 UNIVERSAL SMOOTH MODAL FADE-IN
+        // The app opens modals everywhere via `.style.display = 'flex'`, so instead
+        // of touching every single call site, we watch every .modal-overlay for that
+        // display change and trigger a CSS opacity fade automatically. Works for every
+        // modal in the app, including ones that don't exist yet at page-load time.
+        // ==========================================
+        (function() {
+            function attachFade(el) {
+                if (!el || el.dataset.fadeAttached) return;
+                el.dataset.fadeAttached = '1';
+                let wasVisible = false;
+                new MutationObserver(function() {
+                    let isVisible = el.style.display === 'flex' || el.style.display === 'block';
+                    if (isVisible && !wasVisible) {
+                        el.classList.remove('overlay-fade-in');
+                        requestAnimationFrame(function() {
+                            requestAnimationFrame(function() { el.classList.add('overlay-fade-in'); });
+                        });
+                    } else if (!isVisible) {
+                        el.classList.remove('overlay-fade-in');
+                    }
+                    wasVisible = isVisible;
+                }).observe(el, { attributes: true, attributeFilter: ['style'] });
+            }
+            function attachAll() { document.querySelectorAll('.modal-overlay').forEach(attachFade); }
+            document.addEventListener('DOMContentLoaded', attachAll);
+            // Also catch any modal HTML injected dynamically after load
+            new MutationObserver(function(mutations) {
+                mutations.forEach(function(m) {
+                    m.addedNodes.forEach(function(node) {
+                        if (node.nodeType !== 1) return;
+                        if (node.classList && node.classList.contains('modal-overlay')) attachFade(node);
+                        if (node.querySelectorAll) node.querySelectorAll('.modal-overlay').forEach(attachFade);
+                    });
+                });
+            }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+        })();
 
         // ==========================================
         // 🔒 SMART DEVICE SESSION LOCK (1 MOBILE + 1 PC)
@@ -15984,8 +16039,10 @@ function openPOItemPreviewView(evIdx) {
             editingSalesId = null;
             updateDataAndUI();
             document.getElementById('paymentModal').style.display = 'none';
-            setSalesTab('Receipt', document.getElementById('st-receipts'));
-            openTab('sales-hub', null);
+            // 🐛 FIX: return straight to the event workspace when that's where this
+            // payment was opened from, instead of always flashing Sales Hub first.
+            if (typeof activeWorkspaceEventId !== 'undefined' && activeWorkspaceEventId) { renderWorkspace(activeWorkspaceEventId); }
+            else { setSalesTab('Receipt', document.getElementById('st-receipts')); openTab('sales-hub', null); }
             alert(usedAmount > 0 ? "Payment Saved & Bills Updated Automatically!" : "Payment Saved Successfully!");
         }
 
@@ -18065,7 +18122,13 @@ function openPurchaseOrderModal() {
             let poRemarks = document.getElementById('po_remarks') ? document.getElementById('po_remarks').value : ''; let poDocUrl = null; if (window.pendingDocUploads && window.pendingDocUploads['PO'] && window.pendingDocUploads['PO'].length > 0) { showLoader('Uploading documents...'); poDocUrl = await uploadAllDocs('PO', id); hideLoader(); } let selectedEvents = poEventsData.filter(e => e._selected !== false).map(ev => ({ name: ev.name||'Main Event', date: ev.date||'', time: ev.time||'', venue: ev.venue||'', guests: ev.guests||'', color: ev.color||'', manualGross: ev.manualGross||0, catOverrides: ev.catOverrides||{}, photos: ev.photos||[] })); purchaseDB[id] = { id, type: 'PO', partyId, eventId: evId || null, event, date, items, discount, total, status: currentStatus, selectedPhotos: selectedPhotos, linkedDates: selectedDates, events: selectedEvents, remarks: poRemarks, docUrl: poDocUrl };
 
             editingPurchaseId = null;
-            updateDataAndUI(); document.getElementById('poPreviewModal').style.display = 'none'; document.getElementById('purchaseOrderModal').style.display = 'none'; setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); tempEventIdForPurchase = null;
+            updateDataAndUI(); document.getElementById('poPreviewModal').style.display = 'none'; document.getElementById('purchaseOrderModal').style.display = 'none';
+            // 🐛 FIX: previously always jumped to Purchase Hub, causing a jarring flash
+            // when this was actually opened from the event panel — now matches PB's
+            // smarter behaviour of returning straight to the workspace when relevant.
+            if (typeof activeWorkspaceEventId !== 'undefined' && activeWorkspaceEventId) { renderWorkspace(activeWorkspaceEventId); }
+            else { setPurchaseTab('PO', document.getElementById('pt-orders')); openTab('purchase-hub', null); }
+            tempEventIdForPurchase = null;
         }
 
         function openPurchaseBillModal() {
@@ -22100,55 +22163,93 @@ function openPurchaseOrderModal() {
             if (!eventDocListContext) return;
             let eventId = eventDocListContext.eventId, docCategory = eventDocListContext.docCategory;
             let titleEl = document.getElementById('edl_title');
+            let subEl = document.getElementById('edl_subtitle');
+            let kpiEl = document.getElementById('edl_kpi_row');
             let listEl = document.getElementById('edl_list_container');
-            let records = []; let contextType = 'sales'; let emptyMsg = 'No records yet';
+            let records = []; let contextType = 'sales'; let emptyMsg = 'No records yet'; let emptyIcon = '📭';
+            let lead = leadsDB[eventId];
+            subEl.innerText = lead ? sanitize(lead.name) + (lead.func ? ' · ' + sanitize(lead.func) : '') : 'Event';
 
             if (docCategory === 'invoice') {
                 titleEl.innerText = 'Quotations & Invoices';
                 records = Object.values(salesDB).filter(r => r.eventId === eventId && (r.type === 'Quotation' || r.type === 'Invoice'));
-                contextType = 'sales'; emptyMsg = 'No quotations or invoices yet';
+                contextType = 'sales'; emptyMsg = 'No quotations or invoices yet'; emptyIcon = '📄';
             } else if (docCategory === 'po') {
                 titleEl.innerText = 'Purchase Orders & Vendor Bills';
                 records = Object.values(purchaseDB).filter(r => r.eventId === eventId && (r.type === 'PO' || r.type === 'PB'));
-                contextType = 'purchase'; emptyMsg = 'No purchase orders or vendor bills yet';
+                contextType = 'purchase'; emptyMsg = 'No purchase orders or vendor bills yet'; emptyIcon = '📦';
             } else if (docCategory === 'receive') {
                 titleEl.innerText = 'Receipts';
-                let lead = leadsDB[eventId];
                 let partyId = lead ? Object.keys(partiesDB).find(pid => String(partiesDB[pid].phone).trim() === String(lead.phone).trim() && partiesDB[pid].type === 'Customer') : null;
                 records = partyId ? Object.values(salesDB).filter(r => r.type === 'Receipt' && r.partyId === partyId) : [];
-                contextType = 'sales'; emptyMsg = 'No payments received yet';
+                contextType = 'sales'; emptyMsg = 'No payments received yet'; emptyIcon = '💰';
             } else if (docCategory === 'expense') {
                 titleEl.innerText = 'Expenses';
                 records = Object.values(expenseDB).filter(r => r.eventId === eventId);
-                contextType = 'expense'; emptyMsg = 'No expenses recorded yet';
+                contextType = 'expense'; emptyMsg = 'No expenses recorded yet'; emptyIcon = '💸';
             }
 
             records.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
+            // ── KPI strip in header: count, total value, total due (where relevant) ──
+            let totalVal = 0, totalDue = 0, hasDueConcept = (docCategory === 'invoice' || docCategory === 'po' || docCategory === 'expense');
+            records.forEach(r => {
+                totalVal += (r.finalTotal !== undefined ? r.finalTotal : (r.total !== undefined ? r.total : (r.amount || 0)));
+                if (r.type === 'Invoice' || r.type === 'PB') totalDue += (r.balanceDue || 0);
+                else if (r.type === 'Expense' || docCategory === 'expense') totalDue += (r.balanceDue || 0);
+            });
+            let kpiHtml = '<div style="flex:1; background:rgba(255,255,255,0.1); border-radius:10px; padding:8px 10px;"><div style="font-size:9px; color:rgba(255,255,255,0.55); font-weight:700; text-transform:uppercase;">Total</div><div style="font-size:15px; color:white; font-weight:900;">' + records.length + '</div></div>';
+            kpiHtml += '<div style="flex:1; background:rgba(255,255,255,0.1); border-radius:10px; padding:8px 10px;"><div style="font-size:9px; color:rgba(255,255,255,0.55); font-weight:700; text-transform:uppercase;">Value</div><div style="font-size:15px; color:white; font-weight:900;">&#8377;' + totalVal.toLocaleString('en-IN') + '</div></div>';
+            if (hasDueConcept) {
+                kpiHtml += '<div style="flex:1; background:rgba(255,255,255,0.1); border-radius:10px; padding:8px 10px;"><div style="font-size:9px; color:rgba(255,255,255,0.55); font-weight:700; text-transform:uppercase;">Due</div><div style="font-size:15px; color:' + (totalDue > 0 ? '#FCA5A5' : '#6EE7B7') + '; font-weight:900;">&#8377;' + totalDue.toLocaleString('en-IN') + '</div></div>';
+            }
+            kpiEl.innerHTML = kpiHtml;
+
             if (records.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; padding:30px 10px; color:#94A3B8;"><div style="font-size:32px; margin-bottom:8px;">📭</div><div style="font-weight:700; font-size:13px;">' + emptyMsg + '</div><div style="font-size:11px; margin-top:4px;">Tap "+ Add New" above to create one</div></div>';
+                listEl.innerHTML = '<div style="text-align:center; padding:36px 10px; color:#94A3B8;"><div style="font-size:34px; margin-bottom:8px;">' + emptyIcon + '</div><div style="font-weight:800; font-size:13px; color:#475569;">' + emptyMsg + '</div><div style="font-size:11px; margin-top:4px;">Tap "+ Add New" above to create one</div></div>';
                 return;
             }
 
             const typeStyles = {
-                Quotation: { c: '#2563EB', bg: '#EFF6FF' },
-                Invoice:   { c: '#059669', bg: '#ECFDF5' },
-                PO:        { c: '#D97706', bg: '#FFFBEB' },
-                PB:        { c: '#DC2626', bg: '#FEF2F2' },
-                Receipt:   { c: '#059669', bg: '#ECFDF5' },
-                General:   { c: '#7C3AED', bg: '#FAF5FF' },
-                Event:     { c: '#7C3AED', bg: '#FAF5FF' }
+                Quotation: { c: '#2563EB', bg: '#EFF6FF', bar: '#3B82F6' },
+                Invoice:   { c: '#059669', bg: '#ECFDF5', bar: '#10B981' },
+                PO:        { c: '#D97706', bg: '#FFFBEB', bar: '#F59E0B' },
+                PB:        { c: '#DC2626', bg: '#FEF2F2', bar: '#EF4444' },
+                Receipt:   { c: '#059669', bg: '#ECFDF5', bar: '#10B981' },
+                General:   { c: '#7C3AED', bg: '#FAF5FF', bar: '#8B5CF6' },
+                Event:     { c: '#7C3AED', bg: '#FAF5FF', bar: '#8B5CF6' }
             };
             let html = '';
             records.forEach(r => {
-                let ts = typeStyles[r.type] || { c: '#64748B', bg: '#F8FAFC' };
+                let ts = typeStyles[r.type] || { c: '#64748B', bg: '#F8FAFC', bar: '#94A3B8' };
                 let amount = (r.finalTotal !== undefined ? r.finalTotal : (r.total !== undefined ? r.total : (r.amount || 0)));
                 let dateStr = r.date ? new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
                 let labelName = docCategory === 'expense' ? sanitize(r.cat || 'Expense') : sanitize(r.id);
-                html += '<div onclick="viewDetails(\'' + sanitize(r.id) + '\', \'' + contextType + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border:1px solid #E2E8F0; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:0.15s;">';
-                html += '<div><span style="background:' + ts.bg + '; color:' + ts.c + '; font-size:9px; font-weight:800; padding:2px 8px; border-radius:8px; text-transform:uppercase; letter-spacing:0.3px;">' + sanitize(r.type) + '</span><div style="font-size:13px; font-weight:800; color:#0F172A; margin-top:5px;">' + labelName + '</div><div style="font-size:10px; color:#94A3B8; margin-top:2px;">' + dateStr + '</div></div>';
-                html += '<div style="text-align:right; font-size:14px; font-weight:900; color:#0F172A;">&#8377;' + amount.toLocaleString('en-IN') + '</div>';
-                html += '</div>';
+
+                // Payment status chip — only for docs that actually track advance/balanceDue
+                let statusChip = '';
+                if (r.type === 'Invoice' || r.type === 'PB' || (docCategory === 'expense')) {
+                    let due = r.balanceDue || 0;
+                    let paid = r.advance !== undefined ? r.advance : (r.paid !== undefined ? r.paid : (amount - due));
+                    let stat = due <= 0 ? 'Paid' : (paid > 0 ? 'Partial' : 'Due');
+                    let statColor = stat === 'Paid' ? '#059669' : (stat === 'Partial' ? '#D97706' : '#DC2626');
+                    let statBg = stat === 'Paid' ? '#ECFDF5' : (stat === 'Partial' ? '#FFFBEB' : '#FEF2F2');
+                    statusChip = '<div style="margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">';
+                    statusChip += '<span style="background:' + statBg + '; color:' + statColor + '; font-size:9px; font-weight:800; padding:2px 7px; border-radius:7px;">' + stat + (due > 0 ? ': &#8377;' + due.toLocaleString('en-IN') + ' due' : '') + '</span>';
+                    if (paid > 0 && due > 0) statusChip += '<span style="font-size:9px; color:#94A3B8; font-weight:700;">&#8377;' + paid.toLocaleString('en-IN') + ' paid</span>';
+                    statusChip += '</div>';
+                } else if (r.type === 'PO' && r.status) {
+                    let poStatColor = r.status === 'Confirmed' ? '#059669' : (r.status === 'Cancelled' ? '#94A3B8' : '#D97706');
+                    let poStatBg = r.status === 'Confirmed' ? '#ECFDF5' : (r.status === 'Cancelled' ? '#F8FAFC' : '#FFFBEB');
+                    statusChip = '<div style="margin-top:6px;"><span style="background:' + poStatBg + '; color:' + poStatColor + '; font-size:9px; font-weight:800; padding:2px 7px; border-radius:7px;">' + sanitize(r.status) + '</span></div>';
+                }
+
+                html += '<div onclick="viewDetails(\'' + sanitize(r.id) + '\', \'' + contextType + '\')" style="display:flex; align-items:stretch; background:white; border-radius:12px; margin-bottom:9px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.04); overflow:hidden; transition:0.15s;">';
+                html += '<div style="width:4px; background:' + ts.bar + '; flex-shrink:0;"></div>';
+                html += '<div style="flex:1; display:flex; justify-content:space-between; align-items:center; padding:12px 14px;">';
+                html += '<div><span style="background:' + ts.bg + '; color:' + ts.c + '; font-size:9px; font-weight:800; padding:2px 8px; border-radius:7px; text-transform:uppercase; letter-spacing:0.3px;">' + sanitize(r.type) + '</span><div style="font-size:13px; font-weight:800; color:#0F172A; margin-top:5px;">' + labelName + '</div><div style="font-size:10px; color:#94A3B8; margin-top:2px;">' + dateStr + '</div>' + statusChip + '</div>';
+                html += '<div style="text-align:right; font-size:14px; font-weight:900; color:#0F172A; white-space:nowrap; margin-left:8px;">&#8377;' + amount.toLocaleString('en-IN') + '</div>';
+                html += '</div></div>';
             });
             listEl.innerHTML = html;
         }
