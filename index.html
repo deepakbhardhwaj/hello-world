@@ -7672,6 +7672,39 @@
             </div>
         </div>
 
+        <!-- 🚀 Generic Event Document List — reused for Invoice/Quotation, PO/PB, Receipts, Expenses -->
+        <div id="eventDocListModal" class="modal-overlay" style="z-index: 9500;">
+            <div class="modal-content" style="max-width:460px; max-height:82vh; display:flex; flex-direction:column;">
+                <div class="modal-header">
+                    <h3 id="edl_title">Documents</h3>
+                    <button class="modal-close" onclick="closeEventDocList()">&times;</button>
+                </div>
+                <div style="padding:14px 0 0; flex:1; overflow-y:auto;">
+                    <button id="edl_add_btn" onclick="handleEventDocListAdd()" class="btn-main" style="width:100%; margin-bottom:14px; background:var(--accent-color);">+ Add New</button>
+                    <div id="edl_list_container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotation vs Invoice choice — mirrors the existing PO/PB choice modal -->
+        <div id="qtInvChoiceModal" class="modal-overlay" style="z-index: 9600;">
+            <div class="modal-content" style="max-width: 350px; text-align: center; padding: 30px 20px;">
+                <div class="modal-header" style="border:none; margin:0; padding:0;"><button class="modal-close"
+                        onclick="document.getElementById('qtInvChoiceModal').style.display='none'">&times;</button></div>
+                <div style="font-size: 40px; margin-bottom: 12px;">📄</div>
+                <h3 style="margin-top: 0; color:var(--text-primary); font-size:18px; font-weight:800;">What do you want
+                    to create?</h3>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom:20px;">Select an option for this
+                    event.</p>
+                <button onclick="createQuotationFromEventList()"
+                    style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 2px solid var(--accent-color); background: var(--accent-light); color: var(--accent-color); font-weight: 800; font-size:13px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:0.2s;">📝
+                    Create Quotation</button>
+                <button onclick="createInvoiceFromEventList()"
+                    style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: var(--success); color: white; font-weight: 800; font-size:13px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:0.2s; box-shadow:0 2px 8px rgba(16,185,129,0.2);">🧾
+                    Create Invoice</button>
+            </div>
+        </div>
+
         <div id="feedbackModal" class="modal-overlay" style="z-index: 6000;">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
@@ -8564,6 +8597,8 @@
         let stockMovementDB = {}; // Tracks Inward/Outward (Challans)
 
         let currentUser = null; let currentLeadId = null; let editingLeadId = null;
+        let eventDocListContext = null; // { eventId, docCategory } — which list is currently open
+        let pendingEventListReturn = null; // { eventId, docCategory } — armed only when "+ Add New" is tapped
         let activePartyId = null; let editingPartyId = null; let activeBankId = null;
         let currentQuoteSourceLeadId = null; let convertingQuoteId = null;
         let editingSalesId = null; let editingPurchaseId = null; let activeWorkspaceEventId = null;
@@ -11731,10 +11766,10 @@ function openTeamModal() {
                     <div style="font-size:11px; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; font-weight:700;">Financial Overview <div style="display:flex; gap:8px; align-items:center;"><button onclick="togglePrivacy()" style="background:none; border:none; color:#94A3B8; cursor:pointer; font-size:16px;" title="Toggle Privacy">👁️</button>${ledgerBtnHtml}</div></div>
                     <button onclick="openEventBalanceSheet('${ev.id}')" style="width:100%; padding:14px; background:rgba(255,255,255,0.1); color:white; border:1px dashed rgba(255,255,255,0.3); border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; transition:0.2s;">📊 Detailed Balance Sheet</button>
                     <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
-                        <button onclick="createBillFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--accent-color); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">📄 Invoice</button>
-                        <button onclick="receivePaymentFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--success); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💰 Receive</button>
-                        <button onclick="openPoPbChoiceModal('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--warning); color:#000; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">📦 Vendor PO / Bill</button>
-                        <button onclick="createExpenseFromEvent('${ev.id}')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
+                        <button onclick="openEventDocList('${ev.id}', 'invoice')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--accent-color); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">📄 Invoice</button>
+                        <button onclick="openEventDocList('${ev.id}', 'receive')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--success); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💰 Receive</button>
+                        <button onclick="openEventDocList('${ev.id}', 'po')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--warning); color:#000; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">📦 Vendor PO / Bill</button>
+                        <button onclick="openEventDocList('${ev.id}', 'expense')" style="flex:1; min-width:45%; padding:10px; border-radius:8px; background:var(--purple); color:white; border:none; cursor:pointer; font-size:13px; font-weight:700; transition:0.2s;">💸 Expense</button>
                     </div>
                 </div>
                 <h4 style="margin:24px 0 12px 0; font-size:12px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">&#x1F389; Functions</h4>
@@ -14666,6 +14701,27 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                 out.push(p);
             });
             return out;
+        }
+        // 🚀 Smart print photo sizing — when a function has few items, there's lots of
+        // leftover page space, so photos should be MUCH bigger to actually use it.
+        // When a function has many items (items already fill/spill the page), photos
+        // shrink back down since there isn't much room left before the next page.
+        function getPrintPhotoLayout(photoCount, itemCount) {
+            let baseHeight;
+            let gridCols;
+            if (photoCount === 1) { gridCols = '1fr'; baseHeight = 420; }
+            else if (photoCount === 2) { gridCols = 'repeat(2, 1fr)'; baseHeight = 320; }
+            else if (photoCount <= 4) { gridCols = 'repeat(2, 1fr)'; baseHeight = 240; }
+            else { gridCols = 'repeat(3, 1fr)'; baseHeight = 170; }
+            let scale;
+            if (itemCount <= 5) scale = 1.4;
+            else if (itemCount <= 15) scale = 1.15;
+            else if (itemCount <= 30) scale = 0.95;
+            else scale = 0.75;
+            let finalHeight = Math.round(baseHeight * scale);
+            if (finalHeight > 600) finalHeight = 600; // safety cap — stays within one printable page
+            if (finalHeight < 110) finalHeight = 110;
+            return { gridCols: gridCols, imgHeight: finalHeight + 'px' };
         }
 
         function renderQuoteItemView(scrollToBottom) {
@@ -19712,9 +19768,11 @@ function openPurchaseOrderModal() {
                     // Skip events with no items and no photos — no point printing empty pages
                     if (evItems.length === 0 && evPhotos.length === 0) return;
 
-                    // EVENT WRAPPER — first event gets a page break from summary page,
-                    // subsequent events flow naturally to fill available space
-                    let breakStyle = (evLoopIdx === 0) ? 'page-break-before: always;' : '';
+                    // EVENT WRAPPER — 🐛 FIX: every function gets its own fresh page now.
+                    // Previously only the FIRST function got page-break-before, so later
+                    // functions (e.g. Mehndi after Haldi) just ran on wherever there was
+                    // room instead of always starting a clean new page.
+                    let breakStyle = 'page-break-before: always;';
                     html += '<div style="' + breakStyle + ' padding: 25px; background: white; max-width: 800px; margin: auto; box-sizing:border-box;">';
 
                     // EVENT HEADER
@@ -19755,23 +19813,19 @@ function openPurchaseOrderModal() {
                         html += '<tr style="background:#F8FAFC;"><td colspan="4" style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800;">Event Total:</td><td style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800; font-size:14px; color:#2563eb;">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                         html += '</table>';
                     }
-                    // EVENT PHOTOS — large layout to fill page space, with event name header
+                    // EVENT PHOTOS — smart sizing to fill leftover page space, with event name header
                     if (evPhotos.length > 0) {
                         let photoCount = evPhotos.length;
-                        // 1 photo = full width large; 2 = side by side; 3-4 = 2x2 grid; 5+ = 3 cols
-                        let gridCols, imgHeight;
-                        if (photoCount === 1) { gridCols = '1fr'; imgHeight = '380px'; }
-                        else if (photoCount === 2) { gridCols = 'repeat(2, 1fr)'; imgHeight = '300px'; }
-                        else if (photoCount <= 4) { gridCols = 'repeat(2, 1fr)'; imgHeight = '220px'; }
-                        else { gridCols = 'repeat(3, 1fr)'; imgHeight = '160px'; }
-                        html += '<div style="margin-top:10px; break-inside: avoid;">';
+                        let layout = getPrintPhotoLayout(photoCount, evItems.length);
+                        let gridCols = layout.gridCols, imgHeight = layout.imgHeight;
+                        html += '<div style="margin-top:10px; break-inside: avoid; page-break-inside: avoid;">';
                         html += '<div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid ' + evColor + '; padding-bottom:3px;">' + sanitize(ev.name) + ' — Reference Photos (' + photoCount + ')</div>';
                         html += '<div style="display:grid; grid-template-columns:' + gridCols + '; gap:8px;">';
                         evPhotos.forEach(photo => {
                             let url = typeof photo === 'string' ? photo : photo.url;
                             let label = typeof photo === 'string' ? '' : (photo.label || '');
-                            html += '<div style="text-align:center; border:1px solid #E2E8F0; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid;">';
-                            html += '<img src="' + url + '" style="width:100%; height:' + imgHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff;">';
+                            html += '<div style="text-align:center; border:1px solid #E2E8F0; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid; page-break-inside:avoid;">';
+                            html += '<img src="' + url + '" style="width:100%; height:' + imgHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff; page-break-inside:avoid;">';
                             if (label) html += '<div style="font-size:10px; font-weight:700; color:#0f172a; text-transform:uppercase; margin-top:3px;">' + sanitize(label) + '</div>';
                             html += '</div>';
                         });
@@ -19799,11 +19853,17 @@ function openPurchaseOrderModal() {
                 html += '<div style="margin-top:20px; display:flex; justify-content:space-between; font-size:10px; font-weight:600; color:#64748b; border-top:1px solid #e2e8f0; padding-top:10px;"><div>' + cName + '</div><div>UTSAVhq ERP</div></div>';
                 html += '</div>';
             }
-            // OLD PHOTO COLLAGE FOR INVOICES (unchanged)
+            // OLD PHOTO COLLAGE FOR INVOICES — 🐛 FIX: only used as a FALLBACK now.
+            // Previously this fired unconditionally for any Invoice with a linked event,
+            // even when the new per-function block above had ALREADY printed that exact
+            // same event's photos — causing every reference photo to print twice (once
+            // properly sized next to its items, once again in this old crude collage),
+            // which is what was making photos look broken/cut when pages ran long.
             let photosToPrint = [];
             let collageTitle = "Reference Images";
+            let alreadyHandledByPerEventBlock = (record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0;
 
-            if (record.type === 'Invoice' && record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
+            if (record.type === 'Invoice' && !alreadyHandledByPerEventBlock && record.eventId && typeof leadsDB !== 'undefined' && leadsDB[record.eventId]) {
                 let ev = leadsDB[record.eventId];
                 if (ev.photos && ev.photos.length > 0) {
                     photosToPrint = ev.photos;
@@ -19866,7 +19926,7 @@ function openPurchaseOrderModal() {
                     let evPhotosCheck = getLeadEventPhotos(record, ev.name, ev.photos);
                     if (evItems.length === 0 && evPhotosCheck.length === 0) return;
                     html += '<div style="page-break-after: always;"></div>';
-                    html += '<div style="margin-top:20px;"><h2 style="font-size:16px; color:#1E40AF; border-bottom:2px solid #3B82F6; padding-bottom:6px; margin-bottom:12px;">' + (ev.name||'Function') + ' - Items</h2>';
+                    html += '<div style="margin-top:20px;"><h2 style="font-size:16px; color:#1E40AF; border-bottom:2px solid #3B82F6; padding-bottom:6px; margin-bottom:12px;">' + (ev.name||'Function') + (evItems.length > 0 ? ' - Items' : ' - Reference Photos') + '</h2>';
                     // Group by category
                     let categories = [];
                     evItems.forEach(i => { let c = (i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
@@ -19886,18 +19946,20 @@ function openPurchaseOrderModal() {
                     let funcPhotos = getLeadEventPhotos(record, ev.name, ev.photos);
                     if (funcPhotos.length > 0) {
                         let fpCount = funcPhotos.length;
-                        let fpCols = fpCount === 1 ? '1fr' : (fpCount <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)');
-                        let fpHeight = fpCount === 1 ? '260px' : (fpCount <= 4 ? '150px' : '120px');
-                        html += '<div style="margin-top:12px; break-inside:avoid;"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid #3B82F6; padding-bottom:3px;">' + (ev.name||'Function') + ' — Reference Photos (' + fpCount + ')</div><div style="display:grid; grid-template-columns:' + fpCols + '; gap:8px;">';
+                        let fpLayout = getPrintPhotoLayout(fpCount, evItems.length);
+                        let fpCols = fpLayout.gridCols, fpHeight = fpLayout.imgHeight;
+                        html += '<div style="margin-top:12px; break-inside:avoid; page-break-inside:avoid;"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid #3B82F6; padding-bottom:3px;">' + (ev.name||'Function') + ' — Reference Photos (' + fpCount + ')</div><div style="display:grid; grid-template-columns:' + fpCols + '; gap:8px;">';
                         funcPhotos.forEach(p => {
                             let url = typeof p === 'object' ? (p.url||p) : p;
                             let label = typeof p === 'object' ? (p.label||'') : '';
-                            html += '<div style="text-align:center; border:1px solid #CBD5E1; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid;"><img src="' + url + '" style="width:100%; height:' + fpHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff;">' + (label ? '<div style="font-size:9px; font-weight:700; color:#0f172a; margin-top:3px;">' + sanitize(label) + '</div>' : '') + '</div>';
+                            html += '<div style="text-align:center; border:1px solid #CBD5E1; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid; page-break-inside:avoid;"><img src="' + url + '" style="width:100%; height:' + fpHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff; page-break-inside:avoid;">' + (label ? '<div style="font-size:9px; font-weight:700; color:#0f172a; margin-top:3px;">' + sanitize(label) + '</div>' : '') + '</div>';
                         });
                         html += '</div></div>';
                     }
-                    let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                    html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:8px;"><span>' + (ev.name||'Function') + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                    if (evItems.length > 0) {
+                        let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
+                        html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:8px;"><span>' + (ev.name||'Function') + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                    }
                     html += '</div>';
                 });
             }
@@ -22018,6 +22080,131 @@ function openPurchaseOrderModal() {
         function createExpenseFromEvent(leadId) { setTimeout(() => { openExpenseModal(leadId); }, 50); }
         function receivePaymentFromEvent(leadId) { let lead = leadsDB[leadId]; let partyId = Object.keys(partiesDB).find(id => String(partiesDB[id].phone).trim() === String(lead.phone).trim() && partiesDB[id].type === 'Customer'); if (!partyId) { partyId = "P" + Date.now(); partiesDB[partyId] = { id: partyId, name: lead.name, phone: String(lead.phone).trim(), type: "Customer", subCategory: "", address: "", gst: "", balance: 0, balType: "Receivable", transactions: [] }; updateDataAndUI(); } setTimeout(() => { openPaymentModal(partyId); }, 50); }
 
+        // ══════════════════════════════════════════════
+        // 🚀 EVENT DOCUMENT LIST — Invoice/Quotation, PO/PB, Receipts, Expenses
+        // Each of the 4 event-panel buttons opens this list (filtered by category)
+        // instead of jumping straight to a blank form. Tapping a row shows its
+        // preview (reusing the existing viewDetails()); "+ Add New" opens the
+        // right create-flow, and after saving the user lands back on this list.
+        // ══════════════════════════════════════════════
+        function openEventDocList(eventId, docCategory) {
+            eventDocListContext = { eventId: eventId, docCategory: docCategory };
+            renderEventDocList();
+            document.getElementById('eventDocListModal').style.display = 'flex';
+        }
+        function closeEventDocList() {
+            document.getElementById('eventDocListModal').style.display = 'none';
+            eventDocListContext = null;
+        }
+        function renderEventDocList() {
+            if (!eventDocListContext) return;
+            let eventId = eventDocListContext.eventId, docCategory = eventDocListContext.docCategory;
+            let titleEl = document.getElementById('edl_title');
+            let listEl = document.getElementById('edl_list_container');
+            let records = []; let contextType = 'sales'; let emptyMsg = 'No records yet';
+
+            if (docCategory === 'invoice') {
+                titleEl.innerText = 'Quotations & Invoices';
+                records = Object.values(salesDB).filter(r => r.eventId === eventId && (r.type === 'Quotation' || r.type === 'Invoice'));
+                contextType = 'sales'; emptyMsg = 'No quotations or invoices yet';
+            } else if (docCategory === 'po') {
+                titleEl.innerText = 'Purchase Orders & Vendor Bills';
+                records = Object.values(purchaseDB).filter(r => r.eventId === eventId && (r.type === 'PO' || r.type === 'PB'));
+                contextType = 'purchase'; emptyMsg = 'No purchase orders or vendor bills yet';
+            } else if (docCategory === 'receive') {
+                titleEl.innerText = 'Receipts';
+                let lead = leadsDB[eventId];
+                let partyId = lead ? Object.keys(partiesDB).find(pid => String(partiesDB[pid].phone).trim() === String(lead.phone).trim() && partiesDB[pid].type === 'Customer') : null;
+                records = partyId ? Object.values(salesDB).filter(r => r.type === 'Receipt' && r.partyId === partyId) : [];
+                contextType = 'sales'; emptyMsg = 'No payments received yet';
+            } else if (docCategory === 'expense') {
+                titleEl.innerText = 'Expenses';
+                records = Object.values(expenseDB).filter(r => r.eventId === eventId);
+                contextType = 'expense'; emptyMsg = 'No expenses recorded yet';
+            }
+
+            records.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+            if (records.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; padding:30px 10px; color:#94A3B8;"><div style="font-size:32px; margin-bottom:8px;">📭</div><div style="font-weight:700; font-size:13px;">' + emptyMsg + '</div><div style="font-size:11px; margin-top:4px;">Tap "+ Add New" above to create one</div></div>';
+                return;
+            }
+
+            const typeStyles = {
+                Quotation: { c: '#2563EB', bg: '#EFF6FF' },
+                Invoice:   { c: '#059669', bg: '#ECFDF5' },
+                PO:        { c: '#D97706', bg: '#FFFBEB' },
+                PB:        { c: '#DC2626', bg: '#FEF2F2' },
+                Receipt:   { c: '#059669', bg: '#ECFDF5' },
+                General:   { c: '#7C3AED', bg: '#FAF5FF' },
+                Event:     { c: '#7C3AED', bg: '#FAF5FF' }
+            };
+            let html = '';
+            records.forEach(r => {
+                let ts = typeStyles[r.type] || { c: '#64748B', bg: '#F8FAFC' };
+                let amount = (r.finalTotal !== undefined ? r.finalTotal : (r.total !== undefined ? r.total : (r.amount || 0)));
+                let dateStr = r.date ? new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                let labelName = docCategory === 'expense' ? sanitize(r.cat || 'Expense') : sanitize(r.id);
+                html += '<div onclick="viewDetails(\'' + sanitize(r.id) + '\', \'' + contextType + '\')" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border:1px solid #E2E8F0; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:0.15s;">';
+                html += '<div><span style="background:' + ts.bg + '; color:' + ts.c + '; font-size:9px; font-weight:800; padding:2px 8px; border-radius:8px; text-transform:uppercase; letter-spacing:0.3px;">' + sanitize(r.type) + '</span><div style="font-size:13px; font-weight:800; color:#0F172A; margin-top:5px;">' + labelName + '</div><div style="font-size:10px; color:#94A3B8; margin-top:2px;">' + dateStr + '</div></div>';
+                html += '<div style="text-align:right; font-size:14px; font-weight:900; color:#0F172A;">&#8377;' + amount.toLocaleString('en-IN') + '</div>';
+                html += '</div>';
+            });
+            listEl.innerHTML = html;
+        }
+        function handleEventDocListAdd() {
+            if (!eventDocListContext) return;
+            let eventId = eventDocListContext.eventId, docCategory = eventDocListContext.docCategory;
+            document.getElementById('eventDocListModal').style.display = 'none';
+            if (docCategory === 'invoice') {
+                // Flag armed later (see createQuotationFromEventList/createInvoiceFromEventList) —
+                // no party gets created just by showing this choice, so nothing to guard yet.
+                document.getElementById('qtInvChoiceModal').style.display = 'flex';
+            } else if (docCategory === 'po') {
+                // openPurchaseOrderModal/openPurchaseBillModal never auto-create a party, safe to arm now.
+                pendingEventListReturn = { eventId: eventId, docCategory: docCategory };
+                openPoPbChoiceModal(eventId);
+            } else if (docCategory === 'receive') {
+                // 🐛 GUARD: if this is the client's first-ever transaction, receivePaymentFromEvent
+                // creates their party record and calls updateDataAndUI() synchronously, BEFORE the
+                // payment form even opens. Arming the flag only AFTER that call (via setTimeout)
+                // stops it from being consumed by that premature save instead of the real one.
+                receivePaymentFromEvent(eventId);
+                setTimeout(() => { pendingEventListReturn = { eventId: eventId, docCategory: docCategory }; }, 20);
+            } else if (docCategory === 'expense') {
+                // openExpenseModal never auto-creates a party, safe to arm now.
+                pendingEventListReturn = { eventId: eventId, docCategory: docCategory };
+                createExpenseFromEvent(eventId);
+            }
+        }
+        function createQuotationFromEventList() {
+            document.getElementById('qtInvChoiceModal').style.display = 'none';
+            if (!eventDocListContext) return;
+            let eventId = eventDocListContext.eventId, docCategory = eventDocListContext.docCategory;
+            currentLeadId = eventId;
+            createQuoteFromLead(); // may synchronously create+save a new party first — see guard note above
+            setTimeout(() => { pendingEventListReturn = { eventId: eventId, docCategory: docCategory }; }, 20);
+        }
+        function createInvoiceFromEventList() {
+            document.getElementById('qtInvChoiceModal').style.display = 'none';
+            if (!eventDocListContext) return;
+            let eventId = eventDocListContext.eventId, docCategory = eventDocListContext.docCategory;
+            createBillFromEvent(eventId); // may synchronously create+save a new party first — see guard note above
+            setTimeout(() => { pendingEventListReturn = { eventId: eventId, docCategory: docCategory }; }, 20);
+        }
+        // After any save completes (hooked from updateDataAndUI), bring the user
+        // back to the list they were adding to, now showing the new entry.
+        function returnToEventDocListIfPending() {
+            if (!pendingEventListReturn) return;
+            let ctx = pendingEventListReturn;
+            pendingEventListReturn = null;
+            if (!leadsDB[ctx.eventId]) return;
+            setTimeout(() => {
+                openPanel(ctx.eventId);
+                setTimeout(() => { openEventDocList(ctx.eventId, ctx.docCategory); }, 350);
+            }, 150);
+        }
+
         // App exit — never call window.close() in browser; it fails silently or closes tab
         function confirmExitApp() {
             let exitM = document.getElementById('exitConfirmModal');
@@ -23729,6 +23916,10 @@ function openPurchaseOrderModal() {
             // 👇 YAHAN INVENTORY LIST RENDER MISSING THA, YE LINE ADD KI HAI 👇
             if (typeof renderInventoryHubList === 'function') renderInventoryHubList();
 
+            // 🚀 Agar user "Event Document List" se + Add New karke koi form save kar
+            // ke aaya hai, toh use wapas usi list par le jao (ab naya entry saath dikhega)
+            if (typeof returnToEventDocListIfPending === 'function') returnToEventDocListIfPending();
+
             // 🔔 Notification badge + due-date/assignment checks — har data update par
             if (typeof debouncedRenderNotificationPanel === 'function') debouncedRenderNotificationPanel();
             if (typeof refreshNotifEnableButtonVisibility === 'function') refreshNotifEnableButtonVisibility();
@@ -24449,6 +24640,9 @@ function openPurchaseOrderModal() {
         //     hota tha.
         // Ab sab ek hi (asli, active) jagah hai.
         window.openTab = function(tabName, btnElement) {
+            // Safety net: if user navigates away from CRM entirely, cancel any
+            // pending "return to event document list" from an abandoned Add flow
+            if (tabName !== 'crm') { pendingEventListReturn = null; }
             // 1. SECURITY & PERMISSIONS CHECK
             if (typeof currentPermissions !== 'undefined' && currentPermissions.modules) {
                 let p = currentPermissions.modules;
