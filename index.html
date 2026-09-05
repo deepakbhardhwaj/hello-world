@@ -5894,6 +5894,10 @@
                             <div class="form-group"><label class="form-label">Website</label><input type="text"
                                     id="cp_web" class="form-input" placeholder="www.example.com"></div>
                         </div>
+                        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Company Address</label><textarea
+                                id="cp_address" class="form-input" style="height:55px; resize:none;"
+                                placeholder="Shop/Office address — shown on invoices, quotations & all printouts"></textarea>
+                        </div>
                     </div>
 
                     <div class="profile-bento-card" style="margin-bottom: 0;">
@@ -5914,6 +5918,40 @@
                     <button type="button" class="btn-main"
                         style="background: linear-gradient(135deg, var(--accent-color), #1E3A8A); padding: 14px; font-size: 14px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 15px rgba(37,99,235,0.3); width: 100%;"
                         onclick="saveProfileData()">💾 Update Profile & Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🚀 PERSONAL "My Profile" — separate from Company Profile above -->
+        <div id="myProfileModal" class="modal-overlay" style="z-index: 8100;">
+            <div class="modal-content profile-modal-content">
+                <div style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px;">👤 My Profile</h3>
+                    <button class="modal-close" onclick="document.getElementById('myProfileModal').style.display='none'"
+                        style="background: #F1F5F9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; color: #64748B; display: flex; align-items: center; justify-content: center; transition: 0.2s;">&times;</button>
+                </div>
+                <form id="myProfileForm" onsubmit="event.preventDefault();" style="padding: 20px; overflow-y: auto; flex: 1;">
+                    <div class="profile-bento-card">
+                        <div class="profile-label-badge" style="color: #7C3AED; background: #FAF5FF;">🙋 Personal Details</div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="mp_name" class="form-input" required></div>
+                            <div class="form-group"><label class="form-label">Designation</label><input type="text" id="mp_designation" class="form-input" placeholder="e.g. Owner, Manager, Sales Executive"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Mobile Number</label><input type="tel" id="mp_mobile" class="form-input" placeholder="10-digit mobile number"></div>
+                            <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" id="mp_dob" class="form-input"></div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label">Email ID (Login)</label>
+                            <input type="email" id="mp_email" class="form-input" disabled style="background:#F1F5F9; color:#64748B;">
+                            <div style="font-size:10px; color:#94A3B8; margin-top:4px; font-weight:600;">This is your login email and can't be changed here.</div>
+                        </div>
+                    </div>
+                </form>
+                <div style="background: white; padding: 16px 20px; border-top: 1px solid #E2E8F0; z-index: 10;">
+                    <button type="button" class="btn-main"
+                        style="background: linear-gradient(135deg, #7C3AED, #4C1D95); padding: 14px; font-size: 14px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 15px rgba(124,58,237,0.3); width: 100%;"
+                        onclick="saveMyProfileData()">💾 Save My Profile</button>
                 </div>
             </div>
         </div>
@@ -6011,6 +6049,18 @@
                         <div class="set-hero-sub" id="set_hero_phone">Tap card to edit profile →</div>
                     </div>
                     <button class="set-hero-edit" onclick="event.stopPropagation(); openCompanyProfile()">✏️ Edit</button>
+                </div>
+                <!-- 🔷 Personal "My Profile" Hero Card — separate from Company details -->
+                <div class="set-profile-hero" style="background:linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%); margin-top:10px;" onclick="openMyProfileModal()">
+                    <div class="set-hero-logo" style="background:rgba(255,255,255,0.15);">
+                        <span style="font-size:22px;">👤</span>
+                    </div>
+                    <div class="set-hero-info">
+                        <div class="set-hero-name" id="mp_hero_name">My Profile</div>
+                        <div class="set-hero-sub" id="mp_hero_role">Your personal details</div>
+                        <div class="set-hero-sub">Tap card to edit →</div>
+                    </div>
+                    <button class="set-hero-edit" onclick="event.stopPropagation(); openMyProfileModal()">✏️ Edit</button>
                 </div>
             </div>
 
@@ -14927,8 +14977,8 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
             // Category selector — prominent, at top, with quick chips
             html += '<div class="form-group" style="margin-bottom:6px;">';
-            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
-            html += '<input type="text" id="qiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="qiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;">Category <span style="background:#F1F5F9; color:#94A3B8; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">OPTIONAL</span></label>';
+            html += '<input type="text" id="qiv_category" class="form-input" placeholder="Leave blank for a simple flat list — or type e.g. Mandap, Catering..." list="qiv_category_list" style="font-size:12px; font-weight:700; border:1.5px solid #E2E8F0; border-radius:6px;">';
             html += '<datalist id="qiv_category_list">' + datalistHtml + '</datalist>';
             if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
             html += '</div>';
@@ -14980,8 +15030,12 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
             if (!ev) return;
             let name = document.getElementById('qiv_name').value.trim();
             if (!name) { alert('Please enter item name!'); return; }
+            // 🐛 FIX: category is now OPTIONAL — some businesses want to organize
+            // items by category (Mandap, Catering, etc.), others just want a flat
+            // item list. Leaving it blank now defaults to "General" instead of
+            // blocking the save with an alert.
             let category = document.getElementById('qiv_category') ? document.getElementById('qiv_category').value.trim() : '';
-            if (!category) { alert('Please enter a category (e.g. Mandap, Floral, Catering)!'); document.getElementById('qiv_category').focus(); return; }
+            if (!category) category = 'General';
             let qty = parseFloat(document.getElementById('qiv_qty').value) || 0;
             let rate = parseFloat(document.getElementById('qiv_rate').value) || 0;
             let unit = document.getElementById('qiv_unit') ? document.getElementById('qiv_unit').value : 'Pcs';
@@ -15746,8 +15800,8 @@ function openPOItemPreviewView(evIdx) {
             html += '<div style="border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--surface-color);">';
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
             html += '<div class="form-group" style="margin-bottom:6px;">';
-            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
-            html += '<input type="text" id="iiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="iiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;">Category <span style="background:#F1F5F9; color:#94A3B8; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">OPTIONAL</span></label>';
+            html += '<input type="text" id="iiv_category" class="form-input" placeholder="Leave blank for a simple flat list — or type e.g. Mandap, Catering..." list="iiv_category_list" style="font-size:12px; font-weight:700; border:1.5px solid #E2E8F0; border-radius:6px;">';
             html += '<datalist id="iiv_category_list">' + datalistHtml + '</datalist>';
             if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
             html += '</div>';
@@ -15781,7 +15835,7 @@ function openPOItemPreviewView(evIdx) {
             let name = document.getElementById('iiv_name').value.trim();
             if (!name) { alert('Please enter item name!'); return; }
             let category = document.getElementById('iiv_category') ? document.getElementById('iiv_category').value.trim() : '';
-            if (!category) { alert('Please enter a category (e.g. Mandap, Floral, Catering)!'); document.getElementById('iiv_category').focus(); return; }
+            if (!category) category = 'General';
             let qty = parseFloat(document.getElementById('iiv_qty').value) || 0;
             let rate = parseFloat(document.getElementById('iiv_rate').value) || 0;
             let unit = document.getElementById('iiv_unit') ? document.getElementById('iiv_unit').value : 'Pcs';
@@ -16987,8 +17041,8 @@ function renderPOItemPopup(scrollToBottom) {
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
             // Category selector — prominent, at top, with quick chips
             html += '<div class="form-group" style="margin-bottom:6px;">';
-            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
-            html += '<input type="text" id="poiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="poiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;">Category <span style="background:#F1F5F9; color:#94A3B8; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">OPTIONAL</span></label>';
+            html += '<input type="text" id="poiv_category" class="form-input" placeholder="Leave blank for a simple flat list — or type e.g. Mandap, Catering..." list="poiv_category_list" style="font-size:12px; font-weight:700; border:1.5px solid #E2E8F0; border-radius:6px;">';
             html += '<datalist id="poiv_category_list">' + datalistHtml + '</datalist>';
             if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
             html += '</div>';
@@ -17046,7 +17100,7 @@ function savePOItemFromView() {
             let name = document.getElementById('poiv_name').value.trim();
             if (!name) { alert('Please enter item name!'); return; }
             let category = document.getElementById('poiv_category') ? document.getElementById('poiv_category').value.trim() : '';
-            if (!category) { alert('Please enter a category (e.g. Mandap, Floral, Catering)!'); document.getElementById('poiv_category').focus(); return; }
+            if (!category) category = 'General';
             let qty = parseFloat(document.getElementById('poiv_qty').value) || 0;
             let rate = parseFloat(document.getElementById('poiv_rate').value) || 0;
             let unit = document.getElementById('poiv_unit') ? document.getElementById('poiv_unit').value : 'Pcs';
@@ -17375,8 +17429,8 @@ function renderPBItemPopup(scrollToBottom) {
             html += '<div style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Add New Item</div>';
             // Category selector — prominent, at top, with quick chips
             html += '<div class="form-group" style="margin-bottom:6px;">';
-            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;"><span style="background:#3B82F6; color:white; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">REQUIRED</span> Category</label>';
-            html += '<input type="text" id="pbiv_category" class="form-input" placeholder="e.g. Mandap, Floral, Catering..." list="pbiv_category_list" style="font-size:12px; font-weight:700; border:2px solid #3B82F6; border-radius:6px;">';
+            html += '<label class="form-label" style="display:flex; align-items:center; gap:4px;">Category <span style="background:#F1F5F9; color:#94A3B8; border-radius:3px; padding:1px 5px; font-size:8px; font-weight:800;">OPTIONAL</span></label>';
+            html += '<input type="text" id="pbiv_category" class="form-input" placeholder="Leave blank for a simple flat list — or type e.g. Mandap, Catering..." list="pbiv_category_list" style="font-size:12px; font-weight:700; border:1.5px solid #E2E8F0; border-radius:6px;">';
             html += '<datalist id="pbiv_category_list">' + datalistHtml + '</datalist>';
             if (chipsHtml) html += '<div style="margin-top:4px;">' + chipsHtml + '</div>';
             html += '</div>';
@@ -17434,7 +17488,7 @@ function renderPBItemPopup(scrollToBottom) {
             let name = document.getElementById('pbiv_name').value.trim();
             if (!name) { alert('Please enter item name!'); return; }
             let category = document.getElementById('pbiv_category') ? document.getElementById('pbiv_category').value.trim() : '';
-            if (!category) { alert('Please enter a category!'); document.getElementById('pbiv_category').focus(); return; }
+            if (!category) category = 'General';
             let qty = parseFloat(document.getElementById('pbiv_qty').value)||0;
             let rate = parseFloat(document.getElementById('pbiv_rate').value)||0;
             let unit = document.getElementById('pbiv_unit') ? document.getElementById('pbiv_unit').value : 'Pcs';
@@ -19581,12 +19635,14 @@ function openPurchaseOrderModal() {
             // 🐛 BUG FIX: currentUser.email is compId not actual email — use profileDB.email
             let cCompanyEmail = (typeof profileDB !== 'undefined' && profileDB.email) ? profileDB.email : '';
             let cCompanyPhone = (typeof profileDB !== 'undefined' && profileDB.phone1) ? profileDB.phone1 : '';
+            let cCompanyAddress = (typeof profileDB !== 'undefined' && profileDB.address) ? profileDB.address : '';
             let cEmailHtml = cCompanyEmail ? `<div style="font-size:12px; color:#475569;">📧 ${cCompanyEmail}</div>` : '';
             let cPhoneHtml = cCompanyPhone ? `<div style="font-size:12px; color:#475569;">📞 ${cCompanyPhone}</div>` : '';
+            let cAddressHtml = cCompanyAddress ? `<div style="font-size:12px; color:#475569; max-width:260px;">📍 ${sanitize(cCompanyAddress)}</div>` : '';
 
             html += `
                 <div class="header-flex">
-                    <div>${cLogo}<div class="comp-name">${cName}</div>${cEmailHtml}${cPhoneHtml}</div>
+                    <div>${cLogo}<div class="comp-name">${cName}</div>${cAddressHtml}${cPhoneHtml}${cEmailHtml}</div>
                     <div style="text-align:right;"><div class="doc-title">${docTitle}</div><div style="font-weight:800; font-size:15px;">#${record.id}</div><div style="font-weight:600; color:#64748b; font-size:13px;">Date: ${dateStr}</div></div>
                 </div>`;
 
@@ -22514,6 +22570,7 @@ function openPurchaseOrderModal() {
             document.getElementById('cp_insta').value = profileDB.insta || "";
             document.getElementById('cp_google').value = profileDB.google || "";
             document.getElementById('cp_review').value = profileDB.review || "";
+            if (document.getElementById('cp_address')) document.getElementById('cp_address').value = profileDB.address || "";
 
             document.getElementById('companyProfileModal').style.display = 'flex';
         }
@@ -24464,6 +24521,55 @@ function openPurchaseOrderModal() {
                 if (heroLogoImg)   heroLogoImg.style.display = 'none';
                 if (heroLogoEmoji) heroLogoEmoji.style.display = 'block';
             }
+
+            // 🔷 My Profile (personal) hero card
+            let me = masterUsersDB[loggedInEmail] || {};
+            let mpName = document.getElementById('mp_hero_name');
+            let mpRole = document.getElementById('mp_hero_role');
+            if (mpName) mpName.textContent = me.name || 'My Profile';
+            if (mpRole) mpRole.textContent = me.designation ? me.designation : (me.mobile ? '📞 ' + me.mobile : 'Your personal details');
+        }
+
+        // 🚀 PERSONAL PROFILE — separate from Company Profile (openCompanyProfile)
+        function openMyProfileModal() {
+            let me = masterUsersDB[loggedInEmail] || {};
+            document.getElementById('mp_name').value = me.name || '';
+            document.getElementById('mp_designation').value = me.designation || '';
+            document.getElementById('mp_mobile').value = me.mobile || '';
+            document.getElementById('mp_dob').value = me.dob || '';
+            document.getElementById('mp_email').value = loggedInEmail || '';
+            document.getElementById('myProfileModal').style.display = 'flex';
+        }
+        async function saveMyProfileData() {
+            let name = document.getElementById('mp_name').value.trim();
+            if (!name) { alert('Please enter your name!'); return; }
+            if (typeof window.showLoader === 'function') window.showLoader('Saving your profile...');
+            if (!masterUsersDB[loggedInEmail]) masterUsersDB[loggedInEmail] = { email: loggedInEmail, companies: currentWorkspaceId ? [currentWorkspaceId] : [] };
+            masterUsersDB[loggedInEmail].name = name;
+            masterUsersDB[loggedInEmail].designation = document.getElementById('mp_designation').value.trim();
+            masterUsersDB[loggedInEmail].mobile = document.getElementById('mp_mobile').value.trim();
+            masterUsersDB[loggedInEmail].dob = document.getElementById('mp_dob').value;
+            localStorage.setItem('utsav_master_users', JSON.stringify(masterUsersDB));
+            try {
+                if (typeof db !== 'undefined' && loggedInEmail) {
+                    await db.collection("users").doc(loggedInEmail).set({
+                        name: masterUsersDB[loggedInEmail].name,
+                        designation: masterUsersDB[loggedInEmail].designation,
+                        mobile: masterUsersDB[loggedInEmail].mobile,
+                        dob: masterUsersDB[loggedInEmail].dob
+                    }, { merge: true });
+                }
+            } catch (e) { console.error("My Profile cloud sync error", e); }
+            // Keep the staff record (team member list) in sync with the new name too
+            if (currentWorkspaceId && masterCompsDB[currentWorkspaceId] && masterCompsDB[currentWorkspaceId].staff) {
+                let staffRec = masterCompsDB[currentWorkspaceId].staff.find(s => s.email === loggedInEmail || s.mobile === loggedInEmail);
+                if (staffRec) staffRec.name = name;
+            }
+            if (typeof window.hideLoader === 'function') window.hideLoader();
+            refreshSettingsHeroCard();
+            document.getElementById('myProfileModal').style.display = 'none';
+            if (typeof showToast === 'function') showToast('✅ Profile saved!', 'success', 2000);
+            else alert('✅ Profile saved!');
         }
 
         // 🔷 WA Template quick-insert helper
