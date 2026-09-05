@@ -18231,15 +18231,26 @@ function openPurchaseOrderModal() {
                 handleEventLinkChange('pb');
 
                 // Auto-tick dates that were selected in the PO
-                if (po.linkedDates && po.linkedDates.length > 0) {
-                    let checkboxes = document.querySelectorAll('.pb-func-cb');
-                    checkboxes.forEach(cb => {
-                        let idx = parseInt(cb.value);
-                        let cbDateObj = leadsDB[po.eventId].dates[idx];
-                        let isMatch = po.linkedDates.some(pd => pd.name === cbDateObj.name && pd.date === cbDateObj.date);
-                        if (isMatch) cb.checked = true;
-                    });
-                }
+                // 🐛 FIX: checkboxes are rendered from pbEventsData (via loadPBEventsFromLead,
+                // which reads lead.events), but this was looking up leadsDB[...].dates[idx]
+                // instead — a DIFFERENT array that can have a different length/order. When it
+                // didn't line up, cbDateObj came back undefined and .name crashed the whole
+                // function, which is why items/total never got prefilled and the error toast
+                // showed up — everything after this point in the function never ran.
+                // Wrapped in try/catch too, so this cosmetic step can never again block the
+                // more important item/total prefill that follows.
+                try {
+                    if (po.linkedDates && po.linkedDates.length > 0) {
+                        let checkboxes = document.querySelectorAll('.pb-func-cb');
+                        checkboxes.forEach(cb => {
+                            let idx = parseInt(cb.value);
+                            let cbDateObj = pbEventsData[idx];
+                            if (!cbDateObj) return;
+                            let isMatch = po.linkedDates.some(pd => pd.name === cbDateObj.name && pd.date === cbDateObj.date);
+                            if (isMatch) cb.checked = true;
+                        });
+                    }
+                } catch (e) { console.warn('PO→PB auto-tick skipped:', e); }
             } else {
                 eventSelect.value = "";
                 handleEventLinkChange('pb');
