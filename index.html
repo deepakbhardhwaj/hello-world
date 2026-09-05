@@ -1796,7 +1796,7 @@
         }
 
         .panel-body {
-            padding: 12px 16px;
+            padding: 12px 16px 100px 16px;
             flex: 1;
             overflow-y: auto;
             background: var(--bg-color);
@@ -18131,7 +18131,7 @@ function openPurchaseOrderModal() {
             tempEventIdForPurchase = null;
         }
 
-        function openPurchaseBillModal() {
+        function openPurchaseBillModal(preFillPartyId = null) {
             document.getElementById('pbForm').reset();
             loadVendorsIntoSelect('pb_vendor');
             loadEventsToLinkSelect('pb_event_link', tempEventIdForPurchase);
@@ -18140,6 +18140,13 @@ function openPurchaseOrderModal() {
             handleEventLinkChange('pb');
             renderPBEvents(); renderPBItems();
             calculatePBTotal();
+            // 🐛 FIX: this parameter was already being passed by several callers
+            // (Party Ledger "+ Add Purchase", PO→PB conversion) but silently ignored
+            // since the function never declared/used it — vendor never got pre-selected.
+            if (preFillPartyId && partiesDB[preFillPartyId]) {
+                document.getElementById('pb_vendor').value = preFillPartyId;
+                handleVendorSelectionForPB();
+            }
             // 🚀 FIX: Close lower modals and set z-index above everything
             let ebsModal = document.getElementById('eventBalanceSheetModal');
             if (ebsModal) ebsModal.style.display = 'none';
@@ -18147,6 +18154,11 @@ function openPurchaseOrderModal() {
             if (poPrevMod) poPrevMod.style.display = 'none';
             let poMod = document.getElementById('purchaseOrderModal');
             if (poMod) poMod.style.display = 'none';
+            // 🐛 FIX: the Event Document List (if open behind this) shares the same
+            // z-index as every other modal and sits later in the page, so it was
+            // painting ON TOP of this form instead of behind it — close it explicitly.
+            let edlModal = document.getElementById('eventDocListModal');
+            if (edlModal) edlModal.style.display = 'none';
             let pbModal = document.getElementById('purchaseBillModal');
             if (pbModal) { pbModal.style.zIndex = '22000'; pbModal.style.display = 'flex'; }
         }
@@ -18193,9 +18205,20 @@ function openPurchaseOrderModal() {
             if (document.getElementById('pb_balance_due')) document.getElementById('pb_balance_due').innerHTML = '\u20B9' + balanceDue.toLocaleString('en-IN');
         }
         function handlePOSelectionForPB() {
-            let poLinkEl = document.getElementById('pb_linked_po'); let poId = poLinkEl ? poLinkEl.value : ''; let badge = document.getElementById('pb_autopilot_badge');
-            if (!poId) { convertingPOId = null; if (badge) badge.style.display = 'none'; return; }
-            let po = purchaseDB[poId]; convertingPOId = poId;
+            let poLinkEl = document.getElementById('pb_linked_po');
+            let poId = poLinkEl ? poLinkEl.value : '';
+            if (!poId) { convertingPOId = null; let badge = document.getElementById('pb_autopilot_badge'); if (badge) badge.style.display = 'none'; return; }
+            prefillPBFromPO(poId);
+        }
+        // 🐛 FIX: PO→PB conversion used to depend on a "pb_linked_po" dropdown that no
+        // longer exists in the redesigned PB form (removed when PB was rebuilt to match
+        // PO). Since the dropdown never had that PO as an option, selecting it silently
+        // failed and NONE of the vendor/item prefill below ever ran. This function now
+        // takes the poId directly — no dropdown required — so conversion always works.
+        function prefillPBFromPO(poId) {
+            let po = purchaseDB[poId]; if (!po) return;
+            convertingPOId = poId;
+            let badge = document.getElementById('pb_autopilot_badge');
             if (badge) { badge.style.display = 'flex'; badge.innerHTML = `🔄 Auto-filled from Purchase Order: <b style="font-family:monospace; margin-left:4px;">${po.id}</b>`; }
 
             document.getElementById('pb_vendor').value = po.partyId; handleVendorSelectionForPB();
@@ -18205,7 +18228,7 @@ function openPurchaseOrderModal() {
             let eventSelect = document.getElementById('pb_event_link');
             if (po.eventId && leadsDB[po.eventId]) {
                 eventSelect.value = po.eventId;
-                handleEventLinkChange('pb'); 
+                handleEventLinkChange('pb');
 
                 // Auto-tick dates that were selected in the PO
                 if (po.linkedDates && po.linkedDates.length > 0) {
@@ -18843,20 +18866,24 @@ function openPurchaseOrderModal() {
         function openConvertPOModal(poId) {
             closeAllMenus();
             let po = purchaseDB[poId];
+            if (!po) return;
             tempEventIdForPurchase = po.eventId;
+            // 🐛 FIX: close the Event Document List if it's open behind this flow,
+            // otherwise it sits on top of the Vendor Bill form (same z-index, later
+            // in the page) and makes the form look like it never opened at all.
+            let edlModal = document.getElementById('eventDocListModal');
+            if (edlModal) edlModal.style.display = 'none';
             setTimeout(() => {
-                openTab('purchase-hub', document.getElementById('btn-erp'));
+                // 🐛 FIX: previously always jumped to Purchase Hub even when converting
+                // from the event panel — now only does that when there's nowhere more
+                // specific to return to, matching the pattern used elsewhere in the app.
+                if (!(typeof activeWorkspaceEventId !== 'undefined' && activeWorkspaceEventId)) {
+                    openTab('purchase-hub', document.getElementById('btn-erp'));
+                }
                 openPurchaseBillModal(po.partyId);
-
-                // 🚀 NAYA: Auto-select PO in dropdown and trigger conversion
-                setTimeout(() => {
-                    let poSelect = document.getElementById('pb_linked_po');
-                    if (poSelect) {
-                        poSelect.value = poId;
-                        handlePOSelectionForPB(); // Data fetch karo!
-                    }
-                }, 150);
-
+                // 🐛 FIX: the old flow tried to select this PO in a "pb_linked_po"
+                // dropdown that no longer exists in the form — prefill directly instead.
+                prefillPBFromPO(poId);
             }, 200);
         }
         function actionConvertPO(id) { document.getElementById('quoteViewModal').style.display = 'none'; setTimeout(() => { openConvertPOModal(id); }, 200); }
