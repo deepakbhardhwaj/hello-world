@@ -5335,10 +5335,18 @@
                 .task-pill:hover { border-color:#94A3B8; color:#0F172A; }
                 .task-pill.active-task-pill { background:linear-gradient(135deg,#1D4ED8,#1E40AF) !important; color:white !important; border-color:transparent !important; box-shadow:0 4px 14px rgba(29,78,216,0.3) !important; transform:translateY(-1px); }
 
-                .task-card { background:white; border:1.5px solid #E8EDF5; border-radius:16px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 2px 8px rgba(15,23,42,0.04); transition:all 0.2s; }
+                .task-card { background:white; border:1.5px solid #E8EDF5; border-radius:16px; padding:14px 16px 14px 13px; margin-bottom:10px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 2px 8px rgba(15,23,42,0.04); transition:all 0.2s; border-left:4px solid #3B82F6; }
                 .task-card:hover { border-color:#C7D7F0; box-shadow:0 4px 16px rgba(29,78,216,0.08); transform:translateY(-1px); }
-                .task-card.task-done-card { opacity:0.6; background:#FAFBFC; }
-                .task-card.task-overdue { border-color:#FCA5A5; background:linear-gradient(135deg,#FFF5F5,white); }
+                .task-card.task-done-card { opacity:0.6; background:#FAFBFC; border-left-color:#10B981; }
+                .task-card.task-overdue { border-left-color:#EF4444; background:linear-gradient(135deg,#FFF5F5,white); }
+
+                .task-group-label { font-size:10.5px; font-weight:900; color:#94A3B8; text-transform:uppercase; letter-spacing:0.6px; margin:16px 2px 8px; display:flex; align-items:center; gap:6px; }
+                .task-group-label:first-child { margin-top:0; }
+                .task-group-count { background:#F1F5F9; color:#64748B; font-size:9px; font-weight:800; padding:1px 7px; border-radius:10px; }
+                .task-group-label.overdue-label { color:#DC2626; }
+                .task-group-label.overdue-label .task-group-count { background:#FEE2E2; color:#DC2626; }
+                .task-group-label.today-label { color:#D97706; }
+                .task-group-label.today-label .task-group-count { background:#FEF3C7; color:#D97706; }
                 
                 .task-check-wrap { width:22px; height:22px; flex-shrink:0; margin-top:1px; }
                 .task-check-wrap input[type=checkbox] { width:20px; height:20px; accent-color:#059669; cursor:pointer; border-radius:6px; }
@@ -8369,6 +8377,38 @@
                     });
                 });
             }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+        })();
+
+        // ==========================================
+        // 🚀 FUTURE-PROOFING: Event Document List vs full-screen forms
+        // The Event Document List (eventDocListModal) is designed to stay open
+        // BEHIND lightweight things (the PO/PB and Quotation/Invoice choice
+        // popups, the record preview) so closing them returns to the list.
+        // But if a full create/edit FORM opens while the list is still open
+        // (e.g. converting a document, or editing one straight from a preview
+        // reached via the list), both sit at the same z-index and whichever is
+        // later in the page wins — which made the form invisible behind the
+        // list in at least one flow already. Rather than patching every place
+        // that can open these forms one at a time (and re-breaking this for
+        // any new one added later), this watches the known full-form modals
+        // directly and auto-closes the list the moment any of them opens.
+        // ==========================================
+        (function() {
+            const FULL_FORM_MODAL_IDS = ['quotationModal', 'directInvoiceModal', 'purchaseOrderModal', 'purchaseBillModal', 'paymentModal', 'expenseModal'];
+            function watchForm(el) {
+                if (!el || el.dataset.edlGuardAttached) return;
+                el.dataset.edlGuardAttached = '1';
+                new MutationObserver(function() {
+                    let isVisible = el.style.display === 'flex' || el.style.display === 'block';
+                    if (!isVisible) return;
+                    let listModal = document.getElementById('eventDocListModal');
+                    if (listModal && (listModal.style.display === 'flex' || listModal.style.display === 'block')) {
+                        listModal.style.display = 'none';
+                    }
+                }).observe(el, { attributes: true, attributeFilter: ['style'] });
+            }
+            function attachAllForms() { FULL_FORM_MODAL_IDS.forEach(id => watchForm(document.getElementById(id))); }
+            document.addEventListener('DOMContentLoaded', attachAllForms);
         })();
 
         // ==========================================
@@ -12514,7 +12554,47 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                 return;
             }
 
+            // 🚀 Group tasks by due date so the list reads like a real planner
+            // instead of one long flat pile — Overdue first, then Today,
+            // Tomorrow, This Week, Later, and finally tasks with no due date.
+            let todayStart = new Date(); todayStart.setHours(0,0,0,0);
+            let tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+            let weekEnd = new Date(todayStart); weekEnd.setDate(weekEnd.getDate() + 7);
+            function taskDueDate(t) {
+                if (t.deadline) return new Date(t.deadline);
+                if (t.date) return new Date(t.date + (t.time ? 'T' + t.time : 'T00:00'));
+                return null;
+            }
+            let groups = { done: [], overdue: [], today: [], tomorrow: [], week: [], later: [], noDate: [] };
             allTasks.forEach(t => {
+                if (t.done) { groups.done.push(t); return; }
+                let d = taskDueDate(t);
+                if (!d) { groups.noDate.push(t); return; }
+                if (d < todayStart) groups.overdue.push(t);
+                else if (d < tomorrowStart) groups.today.push(t);
+                else if (d < new Date(tomorrowStart.getTime() + 86400000)) groups.tomorrow.push(t);
+                else if (d < weekEnd) groups.week.push(t);
+                else groups.later.push(t);
+            });
+            const groupDefs = [
+                { key: 'overdue',  label: '⚠️ Overdue',        cls: 'overdue-label' },
+                { key: 'today',    label: '📅 Today',          cls: 'today-label' },
+                { key: 'tomorrow', label: '🌅 Tomorrow',       cls: '' },
+                { key: 'week',     label: '📆 This Week',      cls: '' },
+                { key: 'later',    label: '🗓️ Later',          cls: '' },
+                { key: 'noDate',   label: '📋 No Due Date',    cls: '' },
+                { key: 'done',     label: '✅ Completed',      cls: '' }
+            ];
+
+            groupDefs.forEach(g => {
+                let list = groups[g.key];
+                if (!list || list.length === 0) return;
+                container.innerHTML += `<div class="task-group-label ${g.cls}">${g.label} <span class="task-group-count">${list.length}</span></div>`;
+                list.forEach(t => renderOneTaskCard(t, container, now));
+            });
+        };
+
+        function renderOneTaskCard(t, container, now) {
                 let isOverdue = !t.done && t.deadline && new Date(t.deadline) < now;
                 let deadlineStr = '';
                 if (t.deadline) {
@@ -12542,12 +12622,10 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                         if (s) assigneeName = s.name;
                     }
                 }
-                
+
                 let assigneeBadge = assigneeName ? `<span class="task-meta-chip">👤 ${sanitize(assigneeName)}</span>` : '';
                 let deadlineBadge = deadlineStr ? `<span class="task-meta-chip ${isOverdue ? 'overdue' : ''}">⏰ ${isOverdue ? 'Overdue: ' : ''}${deadlineStr}</span>` : '';
-                
-                let priorityColor = isOverdue ? '#EF4444' : (t.done ? '#10B981' : '#3B82F6');
-                
+
                 let toggleFn = t._source === 'event'
                     ? `toggleTaskStatus('${t.id}', false, '${t._leadId}')`
                     : `toggleTaskStatus('${t.id}', true)`;
@@ -12561,7 +12639,6 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                     <div class="task-check-wrap">
                         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="${toggleFn}">
                     </div>
-                    <div style="width:8px; height:8px; border-radius:50%; background:${priorityColor}; flex-shrink:0; margin-top:5px;"></div>
                     <div class="task-body">
                         <div class="task-title-row">
                             <span class="task-text ${t.done ? 'done' : ''}">${sanitize(t.text)}</span>
@@ -12579,8 +12656,7 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                         <button class="task-act-btn" onclick="${delFn}" title="Delete" style="color:#94A3B8;">✕</button>
                     </div>
                 </div>`;
-            });
-        };
+        }
 
                 // ✅ Task WhatsApp sender
         window.sendTaskWA = function(taskId, source, leadId) {
@@ -18585,6 +18661,11 @@ function openPurchaseOrderModal() {
             closeAllOverlays(); closeAllMenus(); hideNavAndFabs(); let record = salesDB[id]; editingSalesId = id;
             if (record.type === 'Quotation') {
                 document.getElementById('quote-modal-title').innerText = "Edit Quotation";
+                // 🐛 FIX: without this, saving an edited quotation couldn't tell which
+                // event it belonged to (this is only ever set when CREATING a new one),
+                // so it would either skip returning to the workspace or use a stale ID
+                // left over from a previous quotation.
+                currentQuoteSourceLeadId = record.eventId || null;
                 loadPartiesIntoSelect('q_party', record.partyId);
                 let etEl = document.getElementById('q_event_title');
                 if (etEl) etEl.value = record.eventTitle || '';
