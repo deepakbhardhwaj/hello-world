@@ -6310,17 +6310,17 @@
                                 </div>
                                 <div class="ptheme-name">⚪ Modern Minimal</div>
                             </div>
-                            <!-- Elegant Gold -->
-                            <div class="ptheme-card" id="ptheme-gold" onclick="selectPrintTheme('gold')">
-                                <div class="ptheme-preview" style="background:linear-gradient(135deg,#1c1917,#292524);">
-                                    <div style="border-bottom:1px solid #d4af37; padding-bottom:4px; margin-bottom:6px;">
-                                        <div style="font-size:8px; font-weight:700; color:#d4af37; letter-spacing:1px;">COMPANY</div>
+                            <!-- Pure White -->
+                            <div class="ptheme-card" id="ptheme-white" onclick="selectPrintTheme('white')">
+                                <div class="ptheme-preview" style="background:#ffffff; border-bottom:1px solid #f4f4f5;">
+                                    <div style="border-bottom:1px solid #d4d4d4; padding-bottom:4px; margin-bottom:6px;">
+                                        <div style="font-size:8px; font-weight:700; color:#1a1a1a;">COMPANY</div>
                                     </div>
-                                    <div style="height:2px; background:#44403c; margin-bottom:3px; width:80%;"></div>
-                                    <div style="height:2px; background:#44403c; margin-bottom:3px; width:65%;"></div>
-                                    <div style="position:absolute; bottom:6px; right:10px; font-size:8px; font-weight:900; color:#d4af37;">₹0</div>
+                                    <div style="height:2px; background:#f0f0f0; margin-bottom:3px; width:82%;"></div>
+                                    <div style="height:2px; background:#f0f0f0; margin-bottom:3px; width:60%;"></div>
+                                    <div style="position:absolute; bottom:6px; right:10px; font-size:8px; font-weight:700; color:#1a1a1a;">₹0</div>
                                 </div>
-                                <div class="ptheme-name">✨ Elegant Gold</div>
+                                <div class="ptheme-name">⚪ Pure White</div>
                             </div>
                             <!-- Bold Corporate -->
                             <div class="ptheme-card" id="ptheme-bold" onclick="selectPrintTheme('bold')">
@@ -12375,146 +12375,155 @@ function openPoPbChoiceModal(id) { tempEventIdForPurchase = id; document.getElem
                 return `<span style="font-size:9px; font-weight:800; text-transform:uppercase; background:${bg}; color:${col}; border:1px solid ${border}; padding:2px 6px; border-radius:4px; margin-left:6px;">${stTxt}</span>`;
             };
 
-            // === SALES SECTION: Quotations + Invoices ===
-            html += `<div style="margin:15px 0 10px; padding:10px 14px; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border-left:4px solid var(--accent-color); border-radius:8px;"><span style="font-size:13px; font-weight:900; color:var(--accent-color); text-transform:uppercase; letter-spacing:0.5px;">Sales (Quotations & Invoices)</span></div>`;
-            
-            // Quotations
-            let qList = Object.values(salesDB).filter(s => s.type === 'Quotation' && s.eventId === evId);
-            if (qList.length === 0) {
-                html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500; margin-bottom:8px;">No quotations created yet.</div>`;
-            }
-            qList.forEach(q => {
-                totQuot += q.finalTotal || 0;
-                let isConverted = q.convertedToInvoice || q.status === 'Invoiced' || false;
-                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #BFDBFE; border-radius:8px; margin-bottom:6px; background:#EFF6FF; cursor:pointer;" onclick="viewDetails('${q.id}', 'sales');">
-                            <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;">
-                                    <b style="color:var(--accent-color); font-size:13px;">${q.id}</b>
-                                    ${!isConverted ? `<span style="font-size:9px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; padding:2px 6px; border-radius:4px; margin-left:4px;">NOT INVOICED</span>` : `<span style="font-size:9px; font-weight:800; background:#DCFCE7; color:#166534; border:1px solid #BBF7D0; padding:2px 6px; border-radius:4px; margin-left:4px;">INVOICED</span>`}
-                                </div>
-                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[q.partyId]?.name || 'Unknown'}</span>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-weight:800; font-size:14px; color:var(--accent-color);">&#x20B9;${(q.finalTotal || 0).toLocaleString('en-IN')}</div>
-                                <div style="font-size:9px; color:var(--text-secondary); font-weight:600;">Quotation</div>
-                            </div>
-                         </div>`;
-            });
+            // === INCOME (left) vs EXPENSE (right) — side-by-side grid ===
+            // 🚀 REDESIGN: previously every document (Quotation, Invoice, PO, PB, Expense)
+            // was just stacked one after another in a single column, which is why it was
+            // easy to lose track of "am I looking at income or expense right now" while
+            // scrolling. Income now lives entirely on the left, Expense entirely on the
+            // right — like a classic accounting ledger — and auto-collapses back to a
+            // single column on very narrow phones instead of squeezing unreadably.
+            html += `<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px; align-items:start; margin-top:15px;">`;
 
-            // Invoices
+            // Helper: find receipts linked to an invoice, or payment-outs linked to a PB/expense
+            let findLinkedReceipts = (invId) => Object.values(salesDB).filter(r => r.type === 'Receipt' && r.linkedInvoices && r.linkedInvoices.includes(invId));
+            let findLinkedPayouts  = (billId) => Object.values(purchaseDB).filter(p => p.type === 'PaymentOut' && p.linkedInvoices && p.linkedInvoices.includes(billId));
+            let linkedRowHtml = (list, verb, context) => {
+                if (!list || list.length === 0) return '';
+                return list.map(r => `<div onclick="event.stopPropagation(); viewDetails('${r.id}', '${context}');" style="display:flex; justify-content:space-between; align-items:center; font-size:10px; font-weight:600; color:#475569; background:rgba(255,255,255,0.6); border:1px dashed #CBD5E1; border-radius:6px; padding:4px 8px; margin-top:5px; cursor:pointer;">
+                            <span>&#x21B3; ${verb} ${r.date ? new Date(r.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short'}) : ''} &middot; ${r.mode || ''}</span>
+                            <span style="font-weight:800; color:#0F172A;">&#x20B9;${(r.amount||r.usedAmount||0).toLocaleString('en-IN')}</span>
+                        </div>`).join('');
+            };
+
+            // ── LEFT: INCOME ──
+            let qList = Object.values(salesDB).filter(s => s.type === 'Quotation' && s.eventId === evId);
             let sList = Object.values(salesDB).filter(s => s.type === 'Invoice' && s.eventId === evId);
-            if (sList.length === 0 && qList.length === 0) {
+            qList.forEach(q => { totQuot += q.finalTotal || 0; });
+            sList.forEach(s => { totSales += s.finalTotal; });
+
+            html += `<div>
+                        <div style="padding:9px 12px; background:linear-gradient(135deg,#ECFDF5,#D1FAE5); border-left:4px solid var(--success); border-radius:8px; margin-bottom:10px;">
+                            <span style="font-size:12px; font-weight:900; color:#047857; text-transform:uppercase; letter-spacing:0.5px;">&#x1F4B0; Income</span>
+                        </div>`;
+
+            if (qList.length === 0 && sList.length === 0) {
                 html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500;">No sales billed yet.</div>`;
             }
-            sList.forEach(s => {
-                totSales += s.finalTotal;
-                let sPaid = s.advance || 0;
-                let sDue = s.balanceDue || 0;
-                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #BBF7D0; border-radius:8px; margin-bottom:6px; background:#F0FDF4; cursor:pointer;" onclick="viewDetails('${s.id}', 'sales');">
-                            <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;">
-                                    <b style="color:var(--text-primary); font-size:13px;">${s.id}</b>
-                                    ${getStatusBadge(s.status)}
+            qList.forEach(q => {
+                let isConverted = q.convertedToInvoice || q.status === 'Invoiced' || false;
+                html += `<div style="padding:9px 10px; border:1px solid #BFDBFE; border-radius:8px; margin-bottom:7px; background:#EFF6FF; cursor:pointer;" onclick="viewDetails('${q.id}', 'sales');">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <span style="font-size:9px; font-weight:800; background:#DBEAFE; color:#1D4ED8; padding:2px 6px; border-radius:4px; text-transform:uppercase;">Quotation</span>
+                                    <div style="font-weight:800; font-size:12.5px; color:var(--text-primary); margin-top:3px;">${q.id}</div>
+                                    <div style="font-size:10.5px; color:var(--text-secondary); margin-top:1px;">${partiesDB[q.partyId]?.name || 'Unknown'}</div>
                                 </div>
-                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[s.partyId]?.name || 'Unknown'}</span>
-                                <div style="font-size:10px; margin-top:3px;">
-                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${s.finalTotal.toLocaleString('en-IN')}</span>
-                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${sPaid.toLocaleString('en-IN')}</span>
-                                    ${sDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${sDue.toLocaleString('en-IN')}</span>` : ''}
+                                <div style="text-align:right;">
+                                    <div style="font-weight:800; font-size:13px; color:#1D4ED8;">&#x20B9;${(q.finalTotal||0).toLocaleString('en-IN')}</div>
+                                    ${!isConverted ? `<span style="font-size:8px; font-weight:800; color:#DC2626;">NOT INVOICED</span>` : `<span style="font-size:8px; font-weight:800; color:#059669;">INVOICED</span>`}
                                 </div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-weight:800; font-size:14px; color:var(--success);">+ &#x20B9;${s.finalTotal.toLocaleString('en-IN')}</div>
                             </div>
                          </div>`;
             });
+            sList.forEach(s => {
+                let sPaid = s.advance || 0;
+                let sDue = s.balanceDue || 0;
+                let receipts = findLinkedReceipts(s.id);
+                html += `<div style="padding:9px 10px; border:1px solid #BBF7D0; border-radius:8px; margin-bottom:7px; background:#F0FDF4; cursor:pointer;" onclick="viewDetails('${s.id}', 'sales');">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    ${getStatusBadge(s.status)}
+                                    <div style="font-weight:800; font-size:12.5px; color:var(--text-primary); margin-top:3px;">${s.id}</div>
+                                    <div style="font-size:10.5px; color:var(--text-secondary); margin-top:1px;">${partiesDB[s.partyId]?.name || 'Unknown'}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:800; font-size:13px; color:var(--success);">+&#x20B9;${s.finalTotal.toLocaleString('en-IN')}</div>
+                                    ${sDue > 0 ? `<span style="font-size:8px; font-weight:800; color:var(--danger);">DUE &#x20B9;${sDue.toLocaleString('en-IN')}</span>` : ''}
+                                </div>
+                            </div>
+                            ${linkedRowHtml(receipts, 'Received', 'sales')}
+                         </div>`;
+            });
+            html += `</div>`;
 
-            // Sales sub-totals
-            let actualReceivedForEvent = sList.reduce((sum, s) => sum + (s.advance || 0), 0);
-            let dueAmount = totSales - actualReceivedForEvent;
-            html += `<div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin:8px 0 15px;">
-                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-secondary); font-weight:600;">Total Billed (Invoices): <span style="font-weight:800; color:var(--text-primary);">&#x20B9;${totSales.toLocaleString('en-IN')}</span></div>
-                        ${totQuot > 0 ? `<div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; color:var(--text-secondary); font-weight:500;">Quotation Value (Not Billed): <span style="font-weight:700; color:var(--accent-color);">&#x20B9;${totQuot.toLocaleString('en-IN')}</span></div>` : ''}
-                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-secondary); font-weight:600;">Amount Received: <span style="font-weight:800; color:var(--success);">&#x20B9;${actualReceivedForEvent.toLocaleString('en-IN')}</span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); font-weight:600;">Pending Due: <span style="font-weight:800; color:var(--danger);">&#x20B9;${dueAmount.toLocaleString('en-IN')}</span></div>
-                     </div>`;
+            // ── RIGHT: EXPENSE ──
+            html += `<div>
+                        <div style="padding:9px 12px; background:linear-gradient(135deg,#FEF2F2,#FEE2E2); border-left:4px solid var(--danger); border-radius:8px; margin-bottom:10px;">
+                            <span style="font-size:12px; font-weight:900; color:#B91C1C; text-transform:uppercase; letter-spacing:0.5px;">&#x1F4B8; Expense</span>
+                        </div>`;
 
-            // === PURCHASE & EXPENSES SECTION ===
-            html += `<div style="margin:15px 0 10px; padding:10px 14px; background:linear-gradient(135deg,#FEF2F2,#FEE2E2); border-left:4px solid var(--danger); border-radius:8px;"><span style="font-size:13px; font-weight:900; color:var(--danger); text-transform:uppercase; letter-spacing:0.5px;">Purchase & Expenses</span></div>`;
             let totExpPaid = 0; let totExpDue = 0;
-
-            // Pending POs
             let poList = Object.values(purchaseDB).filter(p => p.type === 'PO' && p.eventId === evId && p.status !== 'Invoiced' && p.status !== 'Rejected');
-            if (poList.length > 0) {
-                html += `<div style="font-size:10px; font-weight:700; color:var(--warning); margin-bottom:4px; text-transform:uppercase;">Pending POs</div>`;
+            let pList  = Object.values(purchaseDB).filter(p => p.type === 'PB' && p.eventId === evId);
+            let eList  = Object.values(expenseDB).filter(e => e.eventId === evId);
+
+            if (poList.length === 0 && pList.length === 0 && eList.length === 0) {
+                html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500;">No purchase or expenses recorded.</div>`;
             }
             poList.forEach(po => {
                 totExp += po.total;
                 let poPaid = po.advance || 0; let poDue = po.total - poPaid;
                 totExpPaid += poPaid; totExpDue += poDue;
-                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #FDE68A; border-radius:8px; margin-bottom:6px; background:#FFFBEB; cursor:pointer;" onclick="viewDetails('${po.id}', 'purchase');">
-                            <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--warning); font-size:13px;">${po.id} (PO)</b> ${getStatusBadge(po.status)}</div>
-                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[po.partyId]?.name || 'Unknown'}</span>
-                                <div style="font-size:10px; margin-top:3px;">
-                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${po.total.toLocaleString('en-IN')}</span>
-                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${poPaid.toLocaleString('en-IN')}</span>
-                                    ${poDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${poDue.toLocaleString('en-IN')}</span>` : ''}
+                html += `<div style="padding:9px 10px; border:1px solid #FDE68A; border-radius:8px; margin-bottom:7px; background:#FFFBEB; cursor:pointer;" onclick="viewDetails('${po.id}', 'purchase');">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <span style="font-size:9px; font-weight:800; background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px; text-transform:uppercase;">Purchase Order</span>
+                                    <div style="font-weight:800; font-size:12.5px; color:var(--text-primary); margin-top:3px;">${po.id}</div>
+                                    <div style="font-size:10.5px; color:var(--text-secondary); margin-top:1px;">${partiesDB[po.partyId]?.name || 'Unknown'}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:800; font-size:13px; color:var(--warning);">-&#x20B9;${po.total.toLocaleString('en-IN')}</div>
+                                    ${getStatusBadge(po.status)}
                                 </div>
                             </div>
-                            <div style="font-weight:800; font-size:14px; color:var(--warning);">- &#x20B9;${po.total.toLocaleString('en-IN')}</div>
                          </div>`;
             });
-
-            // Purchase Bills
-            let pList = Object.values(purchaseDB).filter(p => p.type === 'PB' && p.eventId === evId);
-            if (pList.length > 0) {
-                html += `<div style="font-size:10px; font-weight:700; color:var(--danger); margin:8px 0 4px; text-transform:uppercase;">Purchase Bills</div>`;
-            }
             pList.forEach(p => {
                 totPurch += p.finalTotal;
                 let pPaid = p.advance || 0; let pDue = p.balanceDue || 0;
                 totExpPaid += pPaid; totExpDue += pDue;
-                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #FECACA; border-radius:8px; margin-bottom:6px; background:#FEF2F2; cursor:pointer;" onclick="viewDetails('${p.id}', 'purchase');">
-                            <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:13px;">${p.id}</b> ${getStatusBadge(p.status)}</div>
-                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${partiesDB[p.partyId]?.name || 'Unknown'}</span>
-                                <div style="font-size:10px; margin-top:3px;">
-                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${p.finalTotal.toLocaleString('en-IN')}</span>
-                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${pPaid.toLocaleString('en-IN')}</span>
-                                    ${pDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${pDue.toLocaleString('en-IN')}</span>` : ''}
+                let payouts = findLinkedPayouts(p.id);
+                html += `<div style="padding:9px 10px; border:1px solid #FECACA; border-radius:8px; margin-bottom:7px; background:#FEF2F2; cursor:pointer;" onclick="viewDetails('${p.id}', 'purchase');">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <span style="font-size:9px; font-weight:800; background:#FEE2E2; color:#B91C1C; padding:2px 6px; border-radius:4px; text-transform:uppercase;">Vendor Bill</span>
+                                    <div style="font-weight:800; font-size:12.5px; color:var(--text-primary); margin-top:3px;">${p.id}</div>
+                                    <div style="font-size:10.5px; color:var(--text-secondary); margin-top:1px;">${partiesDB[p.partyId]?.name || 'Unknown'}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:800; font-size:13px; color:var(--danger);">-&#x20B9;${p.finalTotal.toLocaleString('en-IN')}</div>
+                                    ${pDue > 0 ? `<span style="font-size:8px; font-weight:800; color:var(--danger);">DUE &#x20B9;${pDue.toLocaleString('en-IN')}</span>` : ''}
                                 </div>
                             </div>
-                            <div style="font-weight:800; font-size:14px; color:var(--danger);">- &#x20B9;${p.finalTotal.toLocaleString('en-IN')}</div>
+                            ${linkedRowHtml(payouts, 'Paid', 'purchase')}
                          </div>`;
             });
-
-            // Other Expenses
-            let eList = Object.values(expenseDB).filter(e => e.eventId === evId);
-            if (eList.length > 0) {
-                html += `<div style="font-size:10px; font-weight:700; color:var(--purple); margin:8px 0 4px; text-transform:uppercase;">Other Expenses</div>`;
-            }
             eList.forEach(e => {
                 totExp += e.amount;
                 let ePaid = e.amountPaid || e.amount; let eDue = e.balanceDue || 0;
                 totExpPaid += ePaid; totExpDue += eDue;
-                html += `<div style="display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #E9D5FF; border-radius:8px; margin-bottom:6px; background:#FAF5FF; cursor:pointer;" onclick="viewDetails('${e.id}', 'expense');">
-                            <div>
-                                <div style="display:flex; align-items:center; margin-bottom:2px;"><b style="color:var(--text-primary); font-size:13px;">${e.cat}</b> ${getStatusBadge(e.status)}</div>
-                                <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">${e.notes || 'No notes'}</span>
-                                <div style="font-size:10px; margin-top:3px;">
-                                    <span style="color:var(--text-secondary);">Bill: </span><span style="font-weight:700;">&#x20B9;${e.amount.toLocaleString('en-IN')}</span>
-                                    <span style="color:var(--success); margin-left:6px;">Paid: </span><span style="font-weight:700; color:var(--success);">&#x20B9;${ePaid.toLocaleString('en-IN')}</span>
-                                    ${eDue > 0 ? `<span style="color:var(--danger); margin-left:6px;">Due: </span><span style="font-weight:700; color:var(--danger);">&#x20B9;${eDue.toLocaleString('en-IN')}</span>` : ''}
+                let payouts = findLinkedPayouts(e.id);
+                html += `<div style="padding:9px 10px; border:1px solid #E9D5FF; border-radius:8px; margin-bottom:7px; background:#FAF5FF; cursor:pointer;" onclick="viewDetails('${e.id}', 'expense');">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <span style="font-size:9px; font-weight:800; background:#F3E8FF; color:#7E22CE; padding:2px 6px; border-radius:4px; text-transform:uppercase;">Expense</span>
+                                    <div style="font-weight:800; font-size:12.5px; color:var(--text-primary); margin-top:3px;">${e.cat}</div>
+                                    <div style="font-size:10.5px; color:var(--text-secondary); margin-top:1px;">${e.notes || 'No notes'}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:800; font-size:13px; color:var(--purple);">-&#x20B9;${e.amount.toLocaleString('en-IN')}</div>
+                                    ${eDue > 0 ? `<span style="font-size:8px; font-weight:800; color:var(--danger);">DUE &#x20B9;${eDue.toLocaleString('en-IN')}</span>` : ''}
                                 </div>
                             </div>
-                            <div style="font-weight:800; font-size:14px; color:var(--purple);">- &#x20B9;${e.amount.toLocaleString('en-IN')}</div>
+                            ${linkedRowHtml(payouts, 'Paid', 'purchase')}
                          </div>`;
             });
+            html += `</div>`; // close right column
+            html += `</div>`; // close grid
 
-            if (poList.length === 0 && pList.length === 0 && eList.length === 0) {
-                html += `<div style="color:var(--text-secondary); font-size:12px; font-weight:500;">No purchase or expenses recorded.</div>`;
-            }
+            // Sales sub-totals (for the final summary calc below)
+            let actualReceivedForEvent = sList.reduce((sum, s) => sum + (s.advance || 0), 0);
+            let dueAmount = totSales - actualReceivedForEvent;
 
             // === FINAL SUMMARY ===
             let totalExpenses = totPurch + totExp;
@@ -19698,9 +19707,22 @@ function openPurchaseOrderModal() {
         const PRINT_THEMES = {
             classic: { font: "'Inter', sans-serif", bg:'#fff', text:'#0f172a', accent:'#2563eb', headerBorder:'3px solid #0f172a', tableHead:'#f1f5f9', tableBorder:'#cbd5e1', totalsBg:'#f8fafc', companyNameCase:'uppercase', companyNameWeight:'900', radius:'4px' },
             modern: { font:"'Inter', sans-serif", bg:'#fafafa', text:'#18181b', accent:'#18181b', headerBorder:'1.5px solid #18181b', tableHead:'#fafafa', tableBorder:'#e4e4e7', totalsBg:'#ffffff', companyNameCase:'none', companyNameWeight:'300', radius:'0px' },
-            gold: { font:"'Playfair Display', 'Inter', serif", bg:'#1c1917', text:'#e7e5e4', accent:'#d4af37', headerBorder:'1.5px solid #d4af37', tableHead:'#292524', tableBorder:'#44403c', totalsBg:'#292524', companyNameCase:'uppercase', companyNameWeight:'700', radius:'2px', dark:true },
+            white: { font:"'Inter', sans-serif", bg:'#ffffff', text:'#1a1a1a', accent:'#1a1a1a', headerBorder:'1px solid #d4d4d4', tableHead:'#fafafa', tableBorder:'#d4d4d4', totalsBg:'#fafafa', companyNameCase:'none', companyNameWeight:'700', radius:'0px' },
             bold: { font:"'Inter', sans-serif", bg:'#fff', text:'#0f172a', accent:'#0f172a', headerBorder:'4px solid #fbbf24', tableHead:'#0f172a', tableBorder:'#0f172a', totalsBg:'#0f172a', companyNameCase:'uppercase', companyNameWeight:'900', radius:'0px', boldHeader:true }
         };
+        // 🚀 Turns a theme's accent color into a light "tint" for section headers/backgrounds
+        // on the per-function pages, so those pages match whichever theme is selected
+        // instead of always showing hardcoded blue regardless of theme (the bug behind
+        // "print themes sahi se work nahi kar raha" — page 1 changed with the theme,
+        // every page after it never did).
+        function hexToRgba(hex, alpha) {
+            let h = (hex || '#2563eb').replace('#', '');
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            let r = parseInt(h.substring(0, 2), 16) || 0;
+            let g = parseInt(h.substring(2, 4), 16) || 0;
+            let b = parseInt(h.substring(4, 6), 16) || 0;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
 
         function printVoucher(id, context) {
             let printWin = window.open('', '_blank');
@@ -20134,6 +20156,12 @@ function openPurchaseOrderModal() {
             // PER-EVENT DETAIL PAGES (items + photos) — Quotation + Event-Wise Invoice
             // ==========================================
             if ((record.type === 'Quotation' || (record.type === 'Invoice' && record.events && record.events.length > 0)) && record.events && record.events.length > 0) {
+                // 🐛 FIX: category headers/borders on these per-function pages used to be
+                // hardcoded blue no matter what — so picking any theme other than Classic
+                // changed page 1 but every page after it stayed the same fixed blue style.
+                // These now derive from the selected theme's own accent color instead.
+                let catHeadBg = hexToRgba(pt.accent, 0.08);
+                let catHeadBorder = hexToRgba(pt.accent, 0.35);
                 record.events.forEach((ev, evLoopIdx) => {
                     let evItems = (record.items || []).filter(i => i.event === ev.name);
                     let evTotal = evItems.reduce((s, i) => s + (i.amount || 0), 0);
@@ -20176,19 +20204,19 @@ function openPurchaseOrderModal() {
                             let catItems = evItems.filter(i => (i.category || 'General').trim() === catName || (!i.category && catName === 'General'));
                             let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
                             html += '<table style="width:100%; border-collapse:collapse; margin-bottom:4px; font-size:12px;">';
-                            html += '<tr style="background:#EFF6FF; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td colspan="5" style="border:1px solid #BFDBFE; border-left:3px solid #3B82F6; padding:6px 8px; font-weight:800; color:#1E40AF; text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">' + sanitize(catName) + ' <span style="font-size:9px; color:#3B82F6; font-weight:600;">(' + catItems.length + ' items)</span></td></tr>';
-                            html += '<tr><th style="width:8%; border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">#</th><th style="width:52%; border:1px solid #E2E8F0; padding:5px 6px; text-align:left;">Item / Service</th><th style="width:13%; border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">Qty</th><th style="width:13%; border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">Rate</th><th style="width:14%; border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">Amount</th></tr>';
+                            html += '<tr style="background:' + catHeadBg + '; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;"><td colspan="5" style="border:1px solid ' + catHeadBorder + '; border-left:3px solid ' + pt.accent + '; padding:6px 8px; font-weight:800; color:' + pt.accent + '; text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">' + sanitize(catName) + ' <span style="font-size:9px; color:' + pt.accent + '; font-weight:600;">(' + catItems.length + ' items)</span></td></tr>';
+                            html += '<tr><th style="width:8%; border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:center;">#</th><th style="width:52%; border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:left;">Item / Service</th><th style="width:13%; border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:center;">Qty</th><th style="width:13%; border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:right;">Rate</th><th style="width:14%; border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:right;">Amount</th></tr>';
                             catItems.forEach((item) => {
                                 printItemNum++;
                                 let descHtml = item.desc ? '<div style="font-size:9px; color:#64748b; margin-top:2px;"><i>' + sanitize(item.desc) + '</i></div>' : '';
                                 let unitHtml = item.unit ? item.unit : 'Pcs';
-                                html += '<tr><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + printItemNum + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px;"><strong>' + sanitize(item.name) + '</strong>' + descHtml + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:center;">' + item.qty + ' ' + unitHtml + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right;">₹' + item.rate.toLocaleString('en-IN') + '</td><td style="border:1px solid #E2E8F0; padding:5px 6px; text-align:right; font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</td></tr>';
+                                html += '<tr><td style="border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:center;">' + printItemNum + '</td><td style="border:1px solid ' + pt.tableBorder + '; padding:5px 6px;"><strong>' + sanitize(item.name) + '</strong>' + descHtml + '</td><td style="border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:center;">' + item.qty + ' ' + unitHtml + '</td><td style="border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:right;">₹' + item.rate.toLocaleString('en-IN') + '</td><td style="border:1px solid ' + pt.tableBorder + '; padding:5px 6px; text-align:right; font-weight:800;">₹' + item.amount.toLocaleString('en-IN') + '</td></tr>';
                             });
-                            html += '<tr style="background:#F8FAFC;"><td colspan="4" style="border:1px solid #E2E8F0; padding:4px 6px; text-align:right; font-size:11px; font-weight:700; color:#475569;">' + sanitize(catName) + ' Subtotal:</td><td style="border:1px solid #E2E8F0; padding:4px 6px; text-align:right; font-size:12px; font-weight:800; color:#0f172a;">₹' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                            html += '<tr style="background:' + pt.totalsBg + ';"><td colspan="4" style="border:1px solid ' + pt.tableBorder + '; padding:4px 6px; text-align:right; font-size:11px; font-weight:700; color:#475569;">' + sanitize(catName) + ' Subtotal:</td><td style="border:1px solid ' + pt.tableBorder + '; padding:4px 6px; text-align:right; font-size:12px; font-weight:800; color:' + pt.text + ';">₹' + catTotal.toLocaleString('en-IN') + '</td></tr>';
                             html += '</table>';
                         });
                         html += '<table style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:12px;">';
-                        html += '<tr style="background:#F8FAFC;"><td colspan="4" style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800;">Event Total:</td><td style="border:1px solid #E2E8F0; padding:6px; text-align:right; font-weight:800; font-size:14px; color:#2563eb;">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
+                        html += '<tr style="background:' + pt.totalsBg + ';"><td colspan="4" style="border:1px solid ' + pt.tableBorder + '; padding:6px; text-align:right; font-weight:800;">Event Total:</td><td style="border:1px solid ' + pt.tableBorder + '; padding:6px; text-align:right; font-weight:800; font-size:14px; color:' + pt.accent + ';">₹' + evDisplayTotal.toLocaleString('en-IN') + '</td></tr>';
                         html += '</table>';
                     }
                     // EVENT PHOTOS — smart sizing to fill leftover page space, with event name header
@@ -20299,24 +20327,27 @@ function openPurchaseOrderModal() {
             /* FUNCTION-WISE PAGES FOR PO/PB */
             if ((record.type === 'PO' || record.type === 'PB') && record.events && record.events.length > 0) {
                 let isPO = record.type === 'PO';
+                // 🐛 FIX: same theme-blindness bug as the Quotation/Invoice pages above —
+                // these headers/borders were hardcoded blue no matter which theme was picked.
+                let pbCatHeadBg = hexToRgba(pt.accent, 0.08);
                 record.events.forEach((ev, evIdx) => {
                     let evItems = (record.items || []).filter(i => i.event === ev.name);
                     let evPhotosCheck = getLeadEventPhotos(record, ev.name, ev.photos);
                     if (evItems.length === 0 && evPhotosCheck.length === 0) return;
                     html += '<div style="page-break-after: always;"></div>';
-                    html += '<div style="margin-top:20px;"><h2 style="font-size:16px; color:#1E40AF; border-bottom:2px solid #3B82F6; padding-bottom:6px; margin-bottom:12px;">' + (ev.name||'Function') + (evItems.length > 0 ? ' - Items' : ' - Reference Photos') + '</h2>';
+                    html += '<div style="margin-top:20px;"><h2 style="font-size:16px; color:' + pt.accent + '; border-bottom:2px solid ' + pt.accent + '; padding-bottom:6px; margin-bottom:12px;">' + (ev.name||'Function') + (evItems.length > 0 ? ' - Items' : ' - Reference Photos') + '</h2>';
                     // Group by category
                     let categories = [];
                     evItems.forEach(i => { let c = (i.category||'General').trim()||'General'; if(!categories.includes(c)) categories.push(c); });
                     categories.forEach(catName => {
                         let catItems = evItems.filter(i => ((i.category||'General').trim()||'General') === catName);
                         let catTotal = catItems.reduce((s,i) => s + (i.amount||0), 0);
-                        html += '<div style="background:#EFF6FF; border-left:3px solid #3B82F6; padding:5px 8px; font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px;">' + catName + ' (&#8377;' + catTotal.toLocaleString('en-IN') + ')</div>';
-                        html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:10px;"><thead><tr style="background:#F1F5F9;"><th style="padding:5px 8px; text-align:left; border:1px solid #E2E8F0;">#</th><th style="padding:5px 8px; text-align:left; border:1px solid #E2E8F0;">Item / Service</th><th style="padding:5px 8px; text-align:center; border:1px solid #E2E8F0;">Qty</th><th style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">Rate</th><th style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">Amount</th></tr></thead><tbody>';
+                        html += '<div style="background:' + pbCatHeadBg + '; border-left:3px solid ' + pt.accent + '; padding:5px 8px; font-size:11px; font-weight:800; color:' + pt.accent + '; text-transform:uppercase; margin-bottom:6px;">' + catName + ' (&#8377;' + catTotal.toLocaleString('en-IN') + ')</div>';
+                        html += '<table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:10px;"><thead><tr style="background:' + pt.tableHead + ';"><th style="padding:5px 8px; text-align:left; border:1px solid ' + pt.tableBorder + ';">#</th><th style="padding:5px 8px; text-align:left; border:1px solid ' + pt.tableBorder + ';">Item / Service</th><th style="padding:5px 8px; text-align:center; border:1px solid ' + pt.tableBorder + ';">Qty</th><th style="padding:5px 8px; text-align:right; border:1px solid ' + pt.tableBorder + ';">Rate</th><th style="padding:5px 8px; text-align:right; border:1px solid ' + pt.tableBorder + ';">Amount</th></tr></thead><tbody>';
                         catItems.forEach((item, i) => {
-                            html += '<tr><td style="padding:5px 8px; border:1px solid #E2E8F0;">' + (i+1) + '</td><td style="padding:5px 8px; border:1px solid #E2E8F0;"><strong>' + (item.name||'') + '</strong>' + (item.desc ? '<div style="font-size:9px; color:#64748B;">' + item.desc + '</div>' : '') + '</td><td style="padding:5px 8px; text-align:center; border:1px solid #E2E8F0;">' + (item.qty||1) + ' ' + (item.unit||'') + '</td><td style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">&#8377;' + (item.rate||0) + '</td><td style="padding:5px 8px; text-align:right; font-weight:700; border:1px solid #E2E8F0;">&#8377;' + ((item.amount||0)).toLocaleString('en-IN') + '</td></tr>';
+                            html += '<tr><td style="padding:5px 8px; border:1px solid ' + pt.tableBorder + ';">' + (i+1) + '</td><td style="padding:5px 8px; border:1px solid ' + pt.tableBorder + ';"><strong>' + (item.name||'') + '</strong>' + (item.desc ? '<div style="font-size:9px; color:#64748B;">' + item.desc + '</div>' : '') + '</td><td style="padding:5px 8px; text-align:center; border:1px solid ' + pt.tableBorder + ';">' + (item.qty||1) + ' ' + (item.unit||'') + '</td><td style="padding:5px 8px; text-align:right; border:1px solid ' + pt.tableBorder + ';">&#8377;' + (item.rate||0) + '</td><td style="padding:5px 8px; text-align:right; font-weight:700; border:1px solid ' + pt.tableBorder + ';">&#8377;' + ((item.amount||0)).toLocaleString('en-IN') + '</td></tr>';
                         });
-                        html += '<tr style="background:#F8FAFC; font-weight:800;"><td colspan="4" style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">' + catName + ' Subtotal:</td><td style="padding:5px 8px; text-align:right; border:1px solid #E2E8F0;">&#8377;' + catTotal.toLocaleString('en-IN') + '</td></tr>';
+                        html += '<tr style="background:' + pt.totalsBg + '; font-weight:800;"><td colspan="4" style="padding:5px 8px; text-align:right; border:1px solid ' + pt.tableBorder + ';">' + catName + ' Subtotal:</td><td style="padding:5px 8px; text-align:right; border:1px solid ' + pt.tableBorder + ';">&#8377;' + catTotal.toLocaleString('en-IN') + '</td></tr>';
                         html += '</tbody></table>';
                     });
                     // Reference photos for this function — 🐛 FIX: read from ev.photos (same source
@@ -20326,17 +20357,17 @@ function openPurchaseOrderModal() {
                         let fpCount = funcPhotos.length;
                         let fpLayout = getPrintPhotoLayout(fpCount, evItems.length);
                         let fpCols = fpLayout.gridCols, fpHeight = fpLayout.imgHeight;
-                        html += '<div style="margin-top:12px; break-inside:avoid; page-break-inside:avoid;"><div style="font-size:11px; font-weight:800; color:#1E40AF; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid #3B82F6; padding-bottom:3px;">' + (ev.name||'Function') + ' — Reference Photos (' + fpCount + ')</div><div style="display:grid; grid-template-columns:' + fpCols + '; gap:8px;">';
+                        html += '<div style="margin-top:12px; break-inside:avoid; page-break-inside:avoid;"><div style="font-size:11px; font-weight:800; color:' + pt.accent + '; text-transform:uppercase; margin-bottom:6px; border-bottom:2px solid ' + pt.accent + '; padding-bottom:3px;">' + (ev.name||'Function') + ' — Reference Photos (' + fpCount + ')</div><div style="display:grid; grid-template-columns:' + fpCols + '; gap:8px;">';
                         funcPhotos.forEach(p => {
                             let url = typeof p === 'object' ? (p.url||p) : p;
                             let label = typeof p === 'object' ? (p.label||'') : '';
-                            html += '<div style="text-align:center; border:1px solid #CBD5E1; border-radius:6px; padding:4px; background:#f8fafc; break-inside:avoid; page-break-inside:avoid;"><img src="' + url + '" style="width:100%; height:' + fpHeight + '; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:#fff; page-break-inside:avoid;">' + (label ? '<div style="font-size:9px; font-weight:700; color:#0f172a; margin-top:3px;">' + sanitize(label) + '</div>' : '') + '</div>';
+                            html += '<div style="text-align:center; border:1px solid ' + pt.tableBorder + '; border-radius:6px; padding:4px; background:' + pt.totalsBg + '; break-inside:avoid; page-break-inside:avoid;"><img src="' + url + '" style="width:100%; height:' + fpHeight + '; object-fit:cover; border-radius:4px; border:1px solid ' + pt.tableBorder + '; background:#fff; page-break-inside:avoid;">' + (label ? '<div style="font-size:9px; font-weight:700; color:' + pt.text + '; margin-top:3px;">' + sanitize(label) + '</div>' : '') + '</div>';
                         });
                         html += '</div></div>';
                     }
                     if (evItems.length > 0) {
                         let evTotal = evItems.reduce((s,i) => s + (i.amount||0), 0);
-                        html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:#1E40AF; border-top:2px solid #3B82F6; padding-top:6px; margin-top:8px;"><span>' + (ev.name||'Function') + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
+                        html += '<div style="display:flex; justify-content:space-between; font-size:14px; font-weight:800; color:' + pt.accent + '; border-top:2px solid ' + pt.accent + '; padding-top:6px; margin-top:8px;"><span>' + (ev.name||'Function') + ' Total:</span><span>&#8377;' + evTotal.toLocaleString('en-IN') + '</span></div>';
                     }
                     html += '</div>';
                 });
